@@ -1,38 +1,58 @@
 
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import ShiftDetail from "@/components/shifts/ShiftDetail";
 import { Shift } from "@/components/shifts/ShiftCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
-// Mock shifts data (in a real app, this would come from an API)
+// Import mock shifts data
 import { mockShifts } from "./Shifts";
 
 const ShiftDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [shift, setShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     // Simulate API request
     setLoading(true);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       const foundShift = mockShifts.find(s => s.id === id);
       if (foundShift) {
         setShift(foundShift);
       }
       setLoading(false);
     }, 500);
+    
+    return () => clearTimeout(timer);
   }, [id]);
+
+  if (!isAuthenticated) {
+    return null; // Don't render anything while redirecting
+  }
 
   const handleCheckIn = () => {
     if (shift) {
       // Simulate API update
       const updatedShift = { ...shift, status: "ongoing" as const };
       setShift(updatedShift);
+      toast({
+        title: "Checked In",
+        description: "You have successfully checked in for this shift",
+      });
     }
   };
 
@@ -41,6 +61,10 @@ const ShiftDetails = () => {
       // Simulate API update
       const updatedShift = { ...shift, status: "completed" as const };
       setShift(updatedShift);
+      toast({
+        title: "Checked Out",
+        description: "You have successfully checked out from this shift",
+      });
     }
   };
 

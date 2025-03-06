@@ -1,5 +1,6 @@
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import ShiftList from "@/components/shifts/ShiftList";
 import { Shift } from "@/components/shifts/ShiftCard";
@@ -111,14 +112,21 @@ export const mockShifts: Shift[] = [
 ];
 
 const Shifts = () => {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
 
   useEffect(() => {
     // Simulate API request
-    setLoading(true);
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       // If user is a promoter, filter shifts (in a real app, the API would do this)
       const filteredShifts = user?.role === "promoter" 
         ? mockShifts.filter(shift => true) // In real app, filter by assigned promoter
@@ -127,7 +135,13 @@ const Shifts = () => {
       setShifts(filteredShifts);
       setLoading(false);
     }, 500);
+    
+    return () => clearTimeout(timer);
   }, [user]);
+
+  if (!isAuthenticated) {
+    return null; // Don't render anything while redirecting
+  }
 
   return (
     <AppLayout title={user?.role === "promoter" ? "My Shifts" : "All Shifts"}>

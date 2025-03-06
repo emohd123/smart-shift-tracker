@@ -1,10 +1,12 @@
 
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
 import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import PrometerDashboard from "@/components/dashboard/PromoterDashboard";
 import { Shift } from "@/components/shifts/ShiftCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Mock data for shifts
 const mockShifts: Shift[] = [
@@ -111,18 +113,45 @@ const mockShifts: Shift[] = [
 ];
 
 const Dashboard = () => {
-  const { user } = useAuth();
-  const [shifts, setShifts] = useState<Shift[]>(mockShifts);
+  const { user, isAuthenticated } = useAuth();
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
-  // In a real app, you would fetch shifts from an API
+  // Redirect to login if not authenticated
   useEffect(() => {
-    // This would be an API call in a real application
-    setShifts(mockShifts);
+    if (!isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Load mock shifts
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShifts(mockShifts);
+      setLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
   }, []);
+
+  if (!isAuthenticated) {
+    return null; // Don't render anything while redirecting
+  }
 
   return (
     <AppLayout title="Dashboard">
-      {user?.role === "admin" ? (
+      {loading ? (
+        <div className="space-y-6">
+          <Skeleton className="h-8 w-64" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-32 w-full" />
+            ))}
+          </div>
+          <Skeleton className="h-64 w-full" />
+        </div>
+      ) : user?.role === "admin" ? (
         <AdminDashboard shifts={shifts} />
       ) : (
         <PrometerDashboard shifts={shifts} />
