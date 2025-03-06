@@ -1,9 +1,10 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
-type UserRole = "admin" | "promoter";
+// Export the UserRole and User types so they can be used in other components
+export type UserRole = "admin" | "promoter";
 
-interface User {
+export interface User {
   id: string;
   name: string;
   email: string;
@@ -13,7 +14,9 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
   logout: () => void;
 }
 
@@ -21,7 +24,9 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
+  loading: false,
   login: async () => {},
+  signup: async () => {},
   logout: () => {},
 });
 
@@ -45,6 +50,7 @@ const mockUsers = [
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   
   // Check for existing session on mount
   useEffect(() => {
@@ -60,18 +66,59 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    // Mock authentication
-    const foundUser = mockUsers.find(
-      (u) => u.email === email && u.password === password
-    );
+    setLoading(true);
+    try {
+      // Mock authentication
+      const foundUser = mockUsers.find(
+        (u) => u.email === email && u.password === password
+      );
 
-    if (!foundUser) {
-      throw new Error("Invalid credentials");
+      if (!foundUser) {
+        throw new Error("Invalid credentials");
+      }
+
+      const { password: _, ...userWithoutPassword } = foundUser;
+      setUser(userWithoutPassword);
+      localStorage.setItem("user", JSON.stringify(userWithoutPassword));
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const { password: _, ...userWithoutPassword } = foundUser;
-    setUser(userWithoutPassword);
-    localStorage.setItem("user", JSON.stringify(userWithoutPassword));
+  const signup = async (name: string, email: string, password: string, role: UserRole) => {
+    setLoading(true);
+    try {
+      // Check if user already exists
+      const userExists = mockUsers.some(u => u.email === email);
+      
+      if (userExists) {
+        throw new Error("User with this email already exists");
+      }
+
+      // Create new user (in a real app, this would be an API call)
+      const newUser = {
+        id: (mockUsers.length + 1).toString(),
+        name,
+        email,
+        password,
+        role,
+      };
+      
+      // In a real app, mockUsers would be updated via an API
+      // For this example, we'll simulate successful registration
+      const { password: _, ...userWithoutPassword } = newUser;
+      
+      // Set user in state and localStorage
+      setUser(userWithoutPassword);
+      localStorage.setItem("user", JSON.stringify(userWithoutPassword));
+      
+    } catch (error) {
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = () => {
@@ -84,7 +131,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         isAuthenticated: !!user,
+        loading,
         login,
+        signup,
         logout,
       }}
     >

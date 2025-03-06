@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function LoginForm() {
   const { login, loading } = useAuth();
@@ -84,10 +85,18 @@ export default function LoginForm() {
           {loading ? "Signing in..." : "Sign in"}
         </Button>
 
-        <div className="text-center text-xs text-muted-foreground">
-          <p>Demo credentials:</p>
-          <p>Admin: admin@example.com / password</p>
-          <p>Promoter: promoter@example.com / password</p>
+        <div className="text-center">
+          <div className="text-sm">
+            Don't have an account?{" "}
+            <Link to="/signup" className="text-primary hover:underline">
+              Sign up
+            </Link>
+          </div>
+          <div className="text-xs text-muted-foreground mt-4">
+            <p>Demo credentials:</p>
+            <p>Admin: admin@example.com / password123</p>
+            <p>Promoter: promoter@example.com / password123</p>
+          </div>
         </div>
       </form>
     </div>

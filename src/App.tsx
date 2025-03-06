@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import Shifts from "./pages/Shifts";
 import ShiftDetails from "./pages/ShiftDetails";
 
@@ -24,6 +25,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/shifts" element={<Shifts />} />
             <Route path="/shifts/:id" element={<ShiftDetails />} />

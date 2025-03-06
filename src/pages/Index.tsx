@@ -6,7 +6,8 @@ import {
   Clock, 
   Users, 
   BarChart,
-  User
+  User,
+  UserPlus
 } from "lucide-react";
 
 const Index = () => {
@@ -27,6 +28,11 @@ const Index = () => {
                 Login
               </Button>
             </Link>
+            <Link to="/signup">
+              <Button variant="default" size="sm">
+                Sign Up
+              </Button>
+            </Link>
           </div>
         </div>
       </header>
@@ -42,14 +48,16 @@ const Index = () => {
             for part-time promoters.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/login">
+            <Link to="/signup">
               <Button size="lg" className="w-full sm:w-auto">
+                <UserPlus size={18} className="mr-2" />
                 Get Started
               </Button>
             </Link>
-            <Link to="/dashboard">
+            <Link to="/login">
               <Button size="lg" variant="outline" className="w-full sm:w-auto">
-                View Dashboard
+                <User size={18} className="mr-2" />
+                Sign In
               </Button>
             </Link>
           </div>
@@ -92,12 +100,20 @@ const Index = () => {
           <p className="text-muted-foreground mb-8">
             Join the growing number of companies that use our smart timesheet system to streamline their operations.
           </p>
-          <Link to="/login">
-            <Button size="lg">
-              <User size={18} className="mr-2" />
-              Login Now
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row justify-center gap-4">
+            <Link to="/signup">
+              <Button size="lg">
+                <UserPlus size={18} className="mr-2" />
+                Create Account
+              </Button>
+            </Link>
+            <Link to="/login">
+              <Button size="lg" variant="outline">
+                <User size={18} className="mr-2" />
+                Sign In
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
