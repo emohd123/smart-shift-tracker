@@ -207,7 +207,7 @@ export default function ShiftDetail({ shift, onCheckIn, onCheckOut }: ShiftDetai
             {!isCheckedIn ? (
               <Button 
                 onClick={handleCheckIn} 
-                disabled={shift.status === "completed"}
+                disabled={shift.status === "completed" || shift.status === "cancelled"}
               >
                 <Clock size={16} className="mr-2" />
                 Check In
