@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Shift } from "./ShiftCard";
 import { Button } from "@/components/ui/button";
@@ -104,6 +103,9 @@ export default function ShiftDetail({ shift, onCheckIn, onCheckOut }: ShiftDetai
 
   const statusBadge = getStatusBadge(shift.status);
   
+  // Check if the status is not "upcoming" or "ongoing"
+  const isNotActiveShift = shift.status === "completed" || shift.status === "cancelled";
+  
   return (
     <div className="max-w-3xl mx-auto animate-fade-in">
       <Button 
@@ -202,12 +204,12 @@ export default function ShiftDetail({ shift, onCheckIn, onCheckOut }: ShiftDetai
           </div>
         </CardContent>
         
-        {user?.role === "promoter" && shift.status !== "completed" && shift.status !== "cancelled" && (
+        {user?.role === "promoter" && !isNotActiveShift && (
           <CardFooter className="flex justify-end gap-3">
             {!isCheckedIn ? (
               <Button 
                 onClick={handleCheckIn} 
-                disabled={shift.status === "completed" || shift.status === "cancelled"}
+                disabled={isNotActiveShift}
               >
                 <Clock size={16} className="mr-2" />
                 Check In
