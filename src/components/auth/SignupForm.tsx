@@ -4,7 +4,6 @@ import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { Clock } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -16,7 +15,6 @@ export default function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [role, setRole] = useState<"admin" | "promoter">("promoter");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +29,7 @@ export default function SignupForm() {
     }
     
     try {
-      await signup(name, email, password, role);
+      await signup(name, email, password);
       toast({
         title: "Account created successfully",
         description: "Welcome to SmartShift",
@@ -109,24 +107,6 @@ export default function SignupForm() {
             required
             className="h-11"
           />
-        </div>
-
-        <div className="space-y-2">
-          <Label>Account Type</Label>
-          <RadioGroup 
-            value={role} 
-            onValueChange={(value) => setRole(value as "admin" | "promoter")}
-            className="flex space-x-4"
-          >
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="promoter" id="promoter" />
-              <Label htmlFor="promoter">Promoter</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <RadioGroupItem value="admin" id="admin" />
-              <Label htmlFor="admin">Admin</Label>
-            </div>
-          </RadioGroup>
         </div>
 
         <Button 

@@ -14,9 +14,9 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
-  loading: boolean;  // This was missing in the type definition
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string, role: UserRole) => Promise<void>;
+  signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -35,7 +35,7 @@ const mockUsers = [
   {
     id: "1",
     name: "Admin User",
-    email: "admin@example.com",
+    email: "emohd123@gmail.com",
     password: "password123",
     role: "admin" as UserRole,
   },
@@ -87,7 +87,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const signup = async (name: string, email: string, password: string, role: UserRole) => {
+  const signup = async (name: string, email: string, password: string) => {
     setLoading(true);
     try {
       // Check if user already exists
@@ -96,6 +96,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       if (userExists) {
         throw new Error("User with this email already exists");
       }
+
+      // Set role based on email
+      const role: UserRole = email === "emohd123@gmail.com" ? "admin" : "promoter";
 
       // Create new user (in a real app, this would be an API call)
       const newUser = {
