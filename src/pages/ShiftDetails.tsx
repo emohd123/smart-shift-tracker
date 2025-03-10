@@ -11,10 +11,16 @@ import { useAuth } from "@/context/AuthContext";
 // Import mock shifts data
 import { mockShifts } from "./Shifts";
 
+declare global {
+  interface Window {
+    deleteShift: (id: string) => void;
+  }
+}
+
 const ShiftDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { toast } = useToast();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [shift, setShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,6 +74,23 @@ const ShiftDetails = () => {
     }
   };
 
+  const handleDelete = (shiftId: string) => {
+    // Check if user has permission (admin only)
+    if (user?.role !== "admin") {
+      toast({
+        title: "Permission Denied",
+        description: "Only admin users can delete shifts",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    // Call the global deleteShift function to remove from the main list
+    if (window.deleteShift) {
+      window.deleteShift(shiftId);
+    }
+  };
+
   return (
     <AppLayout title="Shift Details">
       {loading ? (
@@ -80,6 +103,7 @@ const ShiftDetails = () => {
           shift={shift} 
           onCheckIn={handleCheckIn} 
           onCheckOut={handleCheckOut} 
+          onDelete={handleDelete}
         />
       ) : (
         <div className="max-w-3xl mx-auto text-center py-12">

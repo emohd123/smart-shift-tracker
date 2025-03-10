@@ -111,6 +111,9 @@ export const mockShifts: Shift[] = [
   },
 ];
 
+// Create a copy of mockShifts that can be modified
+let activeShifts = [...mockShifts];
+
 const Shifts = () => {
   const { user, isAuthenticated } = useAuth();
   const [shifts, setShifts] = useState<Shift[]>([]);
@@ -129,8 +132,8 @@ const Shifts = () => {
     const timer = setTimeout(() => {
       // If user is a promoter, filter shifts (in a real app, the API would do this)
       const filteredShifts = user?.role === "promoter" 
-        ? mockShifts.filter(shift => true) // In real app, filter by assigned promoter
-        : mockShifts;
+        ? activeShifts.filter(shift => true) // In real app, filter by assigned promoter
+        : activeShifts;
       
       setShifts(filteredShifts);
       setLoading(false);
@@ -138,6 +141,13 @@ const Shifts = () => {
     
     return () => clearTimeout(timer);
   }, [user]);
+
+  // This function could be called from other components via a context
+  // For now we're just exposing it so ShiftDetails can update the master list
+  window.deleteShift = (id: string) => {
+    activeShifts = activeShifts.filter(shift => shift.id !== id);
+    setShifts(prev => prev.filter(shift => shift.id !== id));
+  };
 
   if (!isAuthenticated) {
     return null; // Don't render anything while redirecting

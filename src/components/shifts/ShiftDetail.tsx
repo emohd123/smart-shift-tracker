@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Shift } from "./ShiftCard";
 import { Button } from "@/components/ui/button";
@@ -33,9 +34,10 @@ type ShiftDetailProps = {
   shift: Shift;
   onCheckIn?: () => void;
   onCheckOut?: () => void;
+  onDelete?: (id: string) => void;
 };
 
-export default function ShiftDetail({ shift, onCheckIn, onCheckOut }: ShiftDetailProps) {
+export default function ShiftDetail({ shift, onCheckIn, onCheckOut, onDelete }: ShiftDetailProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -101,6 +103,18 @@ export default function ShiftDetail({ shift, onCheckIn, onCheckOut }: ShiftDetai
     if (onCheckOut) onCheckOut();
   };
 
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(shift.id);
+      toast({
+        title: "Shift Deleted",
+        description: `The shift "${shift.title}" has been deleted`,
+        variant: "destructive"
+      });
+      navigate("/shifts");
+    }
+  };
+
   const statusBadge = getStatusBadge(shift.status);
   
   // Check if the status is not "upcoming" or "ongoing"
@@ -137,7 +151,12 @@ export default function ShiftDetail({ shift, onCheckIn, onCheckOut }: ShiftDetai
                   <Edit size={14} className="mr-2" />
                   Edit
                 </Button>
-                <Button variant="outline" size="sm" className="text-destructive hover:text-destructive">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-destructive hover:text-destructive"
+                  onClick={handleDelete}
+                >
                   <Trash size={14} className="mr-2" />
                   Delete
                 </Button>
