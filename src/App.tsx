@@ -13,6 +13,7 @@ import Signup from "./pages/Signup";
 import Shifts from "./pages/Shifts";
 import ShiftDetails from "./pages/ShiftDetails";
 
+// Create a new QueryClient instance
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -29,7 +30,14 @@ const App = () => (
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/shifts" element={<Shifts />} />
             <Route path="/shifts/:id" element={<ShiftDetails />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            
+            {/* Redirects for potential 404s */}
+            <Route path="/time-tracking" element={<Navigate to="/dashboard" />} />
+            <Route path="/promoters" element={<Navigate to="/dashboard" />} />
+            <Route path="/reports" element={<Navigate to="/dashboard" />} />
+            <Route path="/settings" element={<Navigate to="/dashboard" />} />
+            
+            {/* Catch-all 404 route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
