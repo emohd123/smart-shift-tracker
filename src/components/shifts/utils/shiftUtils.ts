@@ -1,0 +1,49 @@
+
+import { Shift } from "../ShiftCard";
+import { Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
+
+/**
+ * Format date to display in a more readable format
+ */
+export const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = { 
+    weekday: 'long', 
+    year: 'numeric', 
+    month: 'long', 
+    day: 'numeric' 
+  };
+  return new Date(dateString).toLocaleDateString(undefined, options);
+};
+
+/**
+ * Get status badge design based on shift status
+ */
+export const getStatusBadge = (status: Shift["status"]) => {
+  switch (status) {
+    case "upcoming":
+      return { 
+        color: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+        icon: <Calendar size={14} className="mr-1" />
+      };
+    case "ongoing":
+      return { 
+        color: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+        icon: <Clock size={14} className="mr-1" />
+      };
+    case "completed":
+      return { 
+        color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
+        icon: <CheckCircle size={14} className="mr-1" />
+      };
+    case "cancelled":
+      return { 
+        color: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+        icon: <XCircle size={14} className="mr-1" />
+      };
+    default:
+      return { 
+        color: "bg-gray-100 text-gray-700",
+        icon: <AlertCircle size={14} className="mr-1" />
+      };
+  }
+};
