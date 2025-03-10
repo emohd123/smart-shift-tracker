@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Clock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function LoginForm() {
   const { login, loading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -18,12 +19,15 @@ export default function LoginForm() {
     e.preventDefault();
     
     try {
+      console.log("Attempting login with:", email, password);
       await login(email, password);
       toast({
         title: "Logged in successfully",
         description: "Welcome to SmartShift",
       });
+      navigate("/dashboard");
     } catch (error) {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
         description: (error as Error).message || "Invalid email or password",
@@ -93,9 +97,8 @@ export default function LoginForm() {
             </Link>
           </div>
           <div className="text-xs text-muted-foreground mt-4">
-            <p>Demo credentials:</p>
-            <p>Admin: admin@example.com / password123</p>
-            <p>Promoter: promoter@example.com / password123</p>
+            <p>Admin credentials:</p>
+            <p>Email: emohd123@gmail.com / Password: password123</p>
           </div>
         </div>
       </form>

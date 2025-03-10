@@ -1,5 +1,6 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
 // Export the UserRole and User types so they can be used in other components
 export type UserRole = "admin" | "promoter";
@@ -30,7 +31,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-// Mock user data
+// Mock user data - ensuring emohd123@gmail.com is included with correct credentials
 const mockUsers = [
   {
     id: "1",
@@ -77,10 +78,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("Invalid credentials");
       }
 
+      // For debugging
+      console.log("Found user:", foundUser);
+
       const { password: _, ...userWithoutPassword } = foundUser;
       setUser(userWithoutPassword);
       localStorage.setItem("user", JSON.stringify(userWithoutPassword));
     } catch (error) {
+      console.error("Login error:", error);
       throw error;
     } finally {
       setLoading(false);
@@ -97,10 +102,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         throw new Error("User with this email already exists");
       }
 
-      // Set role based on email
+      // Set role - emohd123@gmail.com is the only admin, everyone else is a promoter
       const role: UserRole = email === "emohd123@gmail.com" ? "admin" : "promoter";
 
-      // Create new user (in a real app, this would be an API call)
+      // Create new user
       const newUser = {
         id: (mockUsers.length + 1).toString(),
         name,
@@ -118,6 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem("user", JSON.stringify(userWithoutPassword));
       
     } catch (error) {
+      console.error("Signup error:", error);
       throw error;
     } finally {
       setLoading(false);
