@@ -104,7 +104,7 @@ export default function LoginForm() {
       ) : adminCreated && (
         <Alert className="text-sm bg-green-50 border-green-200">
           <AlertDescription>
-            Admin account is ready. Use email: emohd123@gmail.com and password: password123
+            Admin account setup complete
           </AlertDescription>
         </Alert>
       )}
