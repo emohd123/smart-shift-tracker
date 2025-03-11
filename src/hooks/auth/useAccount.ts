@@ -42,27 +42,53 @@ export const useAccount = () => {
     setAuthError(null);
     try {
       // Get the current user's ID
-      const userId = (await supabase.auth.getUser()).data.user?.id;
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!userId) {
+      if (!user || !user.id) {
         throw new Error("Unable to determine user ID");
       }
       
+      const userId = user.id;
       toast.info("Deleting account and all associated data...");
       
-      // First, delete user's time logs to handle the foreign key constraint
-      console.log("Deleting time logs for user:", userId);
-      const { error: timeLogsError } = await supabase
-        .from('time_logs')
-        .delete()
-        .eq('user_id', userId);
+      // First, delete ALL time logs for this user with a more thorough approach
+      console.log("Attempting to delete time logs for user:", userId);
       
-      if (timeLogsError) {
-        console.error("Failed to delete user time logs:", timeLogsError);
-        // Continue with account deletion even if time logs deletion fails
+      // Try direct SQL deletion through RPC to ensure all time logs are removed
+      const { error: rpcError } = await supabase.rpc('delete_user_time_logs', { user_id_param: userId });
+      
+      if (rpcError) {
+        console.error("RPC delete time logs error:", rpcError);
+        
+        // Fallback to direct deletion if RPC fails
+        console.log("Falling back to direct deletion of time logs");
+        const { error: directDeleteError } = await supabase
+          .from('time_logs')
+          .delete()
+          .eq('user_id', userId);
+          
+        if (directDeleteError) {
+          console.error("Direct deletion of time logs failed:", directDeleteError);
+          throw new Error(`Failed to delete time logs: ${directDeleteError.message}`);
+        }
       }
       
-      // Call the delete_user RPC function
+      // Verify time logs are deleted before proceeding
+      const { data: remainingLogs, error: checkError } = await supabase
+        .from('time_logs')
+        .select('id')
+        .eq('user_id', userId);
+      
+      if (checkError) {
+        console.error("Error checking remaining logs:", checkError);
+      } else if (remainingLogs && remainingLogs.length > 0) {
+        console.warn(`${remainingLogs.length} time logs still remain for user ${userId}`);
+        throw new Error("Could not delete all time logs - account deletion aborted");
+      } else {
+        console.log("All time logs successfully deleted");
+      }
+      
+      // Now call the delete_user RPC function
       console.log("Calling delete_user RPC for user:", userId);
       const { error } = await supabase.rpc('delete_user', {});
       
@@ -75,10 +101,10 @@ export const useAccount = () => {
       // Sign out the user after deletion
       await supabase.auth.signOut();
       
-      // Redirect to home page with a delay to ensure sign out completes
+      // Redirect to home page with a longer delay to ensure sign out completes
       setTimeout(() => {
         window.location.href = "/";
-      }, 1000);
+      }, 2000);
     } catch (error: any) {
       console.error("Account deletion error:", error);
       setAuthError(error.message || "Failed to delete account");
