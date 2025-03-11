@@ -48,13 +48,35 @@ export const useAuthentication = () => {
         password,
         options: {
           data: {
-            name,
+            full_name: name // Make sure we pass the full_name here
           },
         },
       });
 
       if (error) {
         throw error;
+      }
+
+      // Insert into profiles table directly to ensure data consistency
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .insert({
+          id: data.user?.id,
+          full_name: name,
+          nationality: '',  // Set default values for required fields
+          age: 18,
+          phone_number: '',
+          gender: 'Other',
+          height: 0,
+          weight: 0,
+          is_student: false,
+          address: '',
+          role: 'user'
+        });
+
+      if (profileError) {
+        console.error("Profile creation error:", profileError);
+        throw new Error("Failed to create user profile");
       }
 
       console.log("Signup successful:", data.user);
