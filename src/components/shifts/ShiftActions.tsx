@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Clock, AlertCircle, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -31,7 +30,6 @@ export function ShiftActions({
   const [loading, setLoading] = useState(false);
   const [showLocationError, setShowLocationError] = useState(false);
   
-  // Check if the status is not "upcoming" or "ongoing"
   const isNotActiveShift = shift.status === "completed" || shift.status === "cancelled";
   
   if (!isPromoter && !isAdmin) {
@@ -43,27 +41,23 @@ export function ShiftActions({
       setLoading(true);
       setShowLocationError(false);
       
-      // Check if there's a location set for this shift
       const { data: shiftLocation, error } = await supabase
         .from('shift_locations')
         .select('*')
         .eq('shift_id', shift.id)
         .single();
       
-      if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows returned"
+      if (error && error.code !== 'PGRST116') {
         throw new Error("Failed to check location requirements");
       }
       
-      // If there's no location requirement, allow check in
       if (!shiftLocation) {
         onCheckIn();
         return;
       }
       
-      // Get user's current location
       const currentCoords = await getCurrentLocation();
       
-      // Check if user is within the allowed radius
       const withinRadius = isWithinRadius(
         currentCoords.latitude,
         currentCoords.longitude,
@@ -98,7 +92,6 @@ export function ShiftActions({
     }
   };
   
-  // If admin, show set location button
   if (isAdmin) {
     return (
       <CardFooter className="flex justify-end gap-3">

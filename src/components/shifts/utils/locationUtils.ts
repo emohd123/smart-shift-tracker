@@ -68,3 +68,21 @@ export function getCurrentLocation(): Promise<GeolocationCoordinates> {
     );
   });
 }
+
+// Add a type declaration for Google Maps to avoid TypeScript errors
+declare global {
+  interface Window {
+    google: {
+      maps: {
+        Map: typeof google.maps.Map;
+        Marker: typeof google.maps.Marker;
+        Circle: typeof google.maps.Circle;
+        MapMouseEvent: google.maps.MapMouseEvent;
+        Animation: {
+          DROP: number;
+        };
+        NavigationControl: typeof google.maps.NavigationControl;
+      };
+    };
+  }
+}
