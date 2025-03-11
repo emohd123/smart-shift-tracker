@@ -43,6 +43,8 @@ export const useAuthentication = () => {
     setLoading(true);
     setAuthError(null);
     try {
+      console.log("Signing up with:", { name, email });
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -54,29 +56,13 @@ export const useAuthentication = () => {
       });
 
       if (error) {
+        console.error("Supabase signup error:", error);
         throw error;
       }
 
-      // Insert into profiles table directly to ensure data consistency
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert({
-          id: data.user?.id,
-          full_name: name,
-          nationality: '',  // Set default values for required fields
-          age: 18,
-          phone_number: '',
-          gender: 'Other',
-          height: 0,
-          weight: 0,
-          is_student: false,
-          address: '',
-          role: 'user'
-        });
-
-      if (profileError) {
-        console.error("Profile creation error:", profileError);
-        throw new Error("Failed to create user profile");
+      if (!data.user) {
+        console.error("No user returned from signup");
+        throw new Error("Failed to create user account");
       }
 
       console.log("Signup successful:", data.user);

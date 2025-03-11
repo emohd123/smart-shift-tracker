@@ -59,17 +59,26 @@ export const useSignupForm = () => {
     
     try {
       setFormError(null);
+      console.log("Form data to submit:", formData);
       
       const { fullName, email, password } = formData;
+      
+      console.log("Creating user with:", { fullName, email });
       const userData = await signup(fullName, email, password);
       
       if (!userData || !userData.id) {
         throw new Error("Failed to create user account");
       }
       
-      const { idCardUrl, profilePhotoUrl } = await uploadFiles(userData.id, fileData);
+      console.log("User created successfully:", userData);
       
+      // Upload files
+      const { idCardUrl, profilePhotoUrl } = await uploadFiles(userData.id, fileData);
+      console.log("Files uploaded:", { idCardUrl, profilePhotoUrl });
+      
+      // Update profile
       await updateUserProfile(userData.id, formData, idCardUrl || '', profilePhotoUrl || '');
+      console.log("Profile updated successfully");
       
       setIsSuccess(true);
       toast({

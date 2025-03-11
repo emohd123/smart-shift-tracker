@@ -8,6 +8,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
       let idCardUrl = null;
       let profilePhotoUrl = null;
       
+      // Create storage buckets if they don't exist
       const { data: buckets } = await supabase.storage.listBuckets();
       
       if (!buckets?.find(b => b.name === 'id_cards')) {
@@ -22,6 +23,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         });
       }
       
+      // Upload ID card if provided
       if (fileData.idCard) {
         const fileExt = fileData.idCard.name.split('.').pop();
         const fileName = `${userId}/id_card.${fileExt}`;
@@ -34,6 +36,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         idCardUrl = `${fileName}`;
       }
       
+      // Upload profile photo if provided
       if (fileData.profilePhoto) {
         const fileExt = fileData.profilePhoto.name.split('.').pop();
         const fileName = `${userId}/profile_photo.${fileExt}`;
@@ -57,6 +60,9 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
 
   const updateUserProfile = async (userId: string, formData: any, idCardUrl: string, profilePhotoUrl: string) => {
     try {
+      console.log("Updating profile for user ID:", userId);
+      console.log("Form data:", formData);
+      
       // First check if a profile already exists
       const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
@@ -64,43 +70,60 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         .eq('id', userId)
         .maybeSingle();
         
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error("Error fetching existing profile:", fetchError);
+        throw fetchError;
+      }
 
       const profileData = {
-        full_name: formData.fullName,
-        nationality: formData.nationality,
-        age: parseInt(formData.age),
-        phone_number: formData.phoneNumber,
-        gender: formData.gender as any,
-        height: parseInt(formData.height),
-        weight: parseInt(formData.weight),
-        is_student: formData.isStudent,
-        address: formData.address,
+        full_name: formData.fullName || 'New User',
+        nationality: formData.nationality || '',
+        age: parseInt(formData.age) || 18,
+        phone_number: formData.phoneNumber || '',
+        gender: formData.gender || 'Other',
+        height: parseInt(formData.height) || 0,
+        weight: parseInt(formData.weight) || 0,
+        is_student: Boolean(formData.isStudent),
+        address: formData.address || '',
         bank_details: formData.bankDetails || null,
-        id_card_url: idCardUrl,
-        profile_photo_url: profilePhotoUrl,
+        id_card_url: idCardUrl || null,
+        profile_photo_url: profilePhotoUrl || null,
         verification_status: 'pending',
         role: 'promoter'  // Explicitly set role to promoter
       };
+      
+      console.log("Profile data to save:", profileData);
         
       // If profile exists, update it
       if (existingProfile) {
-        const { error } = await supabase
+        console.log("Updating existing profile");
+        const { data, error } = await supabase
           .from('profiles')
           .update(profileData)
           .eq('id', userId);
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error updating profile:", error);
+          throw error;
+        }
+        
+        console.log("Profile updated successfully:", data);
       } else {
         // If profile doesn't exist, insert a new one
-        const { error } = await supabase
+        console.log("Creating new profile");
+        const { data, error } = await supabase
           .from('profiles')
           .insert({
             id: userId,
             ...profileData
           });
           
-        if (error) throw error;
+        if (error) {
+          console.error("Error creating profile:", error);
+          throw error;
+        }
+        
+        console.log("Profile created successfully:", data);
       }
     } catch (error: any) {
       console.error("Error updating profile:", error);
