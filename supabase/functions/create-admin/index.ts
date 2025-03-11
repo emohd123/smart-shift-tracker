@@ -25,52 +25,64 @@ serve(async (req) => {
       }
     )
 
-    // Check if admin already exists
-    const { data: existingUsers, error: checkError } = await supabaseAdminClient.auth.admin.listUsers({
-      filter: {
-        email: 'emohd123@gmail.com',
-      },
+    // First, attempt to delete any existing admin user with this email
+    // This helps if there was a previously created account with wrong credentials
+    try {
+      const { data: existingUsers, error: checkError } = await supabaseAdminClient.auth.admin.listUsers()
+
+      if (!checkError && existingUsers) {
+        const adminUser = existingUsers.users.find(user => user.email === 'emohd123@gmail.com')
+        
+        if (adminUser) {
+          console.log('Found existing admin user, attempting to delete it first:', adminUser.id)
+          const { error: deleteError } = await supabaseAdminClient.auth.admin.deleteUser(
+            adminUser.id
+          )
+
+          if (deleteError) {
+            console.error('Error deleting existing admin user:', deleteError)
+          } else {
+            console.log('Successfully deleted existing admin user')
+          }
+        }
+      }
+    } catch (deleteAttemptError) {
+      console.error('Error during delete attempt:', deleteAttemptError)
+      // Continue with the rest of the function, even if deletion failed
+    }
+
+    console.log('Creating new admin user with email: emohd123@gmail.com')
+
+    // Create the admin user
+    const { data, error: createError } = await supabaseAdminClient.auth.admin.createUser({
+      email: 'emohd123@gmail.com',
+      password: 'password123',
+      email_confirm: true,
+      user_metadata: { name: 'Admin User' }
     })
 
-    if (checkError) {
-      console.error('Error checking user:', checkError)
+    if (createError) {
+      console.error('Error creating admin user:', createError)
       return new Response(
-        JSON.stringify({ error: 'Error checking user' }),
+        JSON.stringify({ error: 'Error creating admin user', details: createError }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       )
     }
 
-    // If admin doesn't exist, create it
-    if (!existingUsers || existingUsers.users.length === 0) {
-      const { data, error: createError } = await supabaseAdminClient.auth.admin.createUser({
-        email: 'emohd123@gmail.com',
-        password: 'password123',
-        email_confirm: true, // Auto-confirm email
-        user_metadata: { name: 'Admin User' }
-      })
-
-      if (createError) {
-        console.error('Error creating admin user:', createError)
-        return new Response(
-          JSON.stringify({ error: 'Error creating admin user' }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-        )
-      }
-
-      return new Response(
-        JSON.stringify({ message: 'Admin user created successfully', user: data.user }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    console.log('Admin user created or updated successfully:', data)
 
     return new Response(
-      JSON.stringify({ message: 'Admin user already exists' }),
+      JSON.stringify({ 
+        message: 'Admin user created successfully', 
+        user: data.user,
+        instructions: 'You can now login with emohd123@gmail.com and password123'  
+      }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   } catch (error) {
     console.error('Function error:', error)
     return new Response(
-      JSON.stringify({ error: 'Internal Server Error' }),
+      JSON.stringify({ error: 'Internal Server Error', details: error.message }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }

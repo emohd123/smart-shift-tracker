@@ -29,18 +29,12 @@ export const useAuthMethods = () => {
     setLoading(true);
     setAuthError(null);
     try {
-      // Handle the case where user enters just "emohd123" instead of full email
+      // Convert username to email if needed
       let email = emailOrUsername;
       
       // If no @ symbol is present, assume it's a username and add the domain
       if (!email.includes('@')) {
-        // Check if this is the admin username
-        if (email === "emohd123") {
-          email = "emohd123@gmail.com";
-        } else {
-          // For other usernames, assume they're using hotmail
-          email = `${email}@hotmail.com`;
-        }
+        email = `${email}@gmail.com`;
       }
       
       console.log("Attempting login with:", email);
@@ -51,7 +45,6 @@ export const useAuthMethods = () => {
       });
 
       if (error) {
-        // Don't check for email confirmation as we're disabling that requirement
         throw error;
       }
       
@@ -76,8 +69,7 @@ export const useAuthMethods = () => {
           data: {
             name,
           },
-          // Auto-confirm emails for better testing experience
-          emailRedirectTo: `${window.location.origin}/login`,
+          // No need to set emailRedirectTo since email confirmation is disabled
         },
       });
 
@@ -95,85 +87,77 @@ export const useAuthMethods = () => {
     }
   };
 
-  const resetPassword = async (email: string) => {
-    setLoading(true);
-    setAuthError(null);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      console.error("Reset password error:", error);
-      setAuthError(error.message || "Failed to send password reset email");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updatePassword = async (password: string) => {
-    setLoading(true);
-    setAuthError(null);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password,
-      });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      console.error("Update password error:", error);
-      setAuthError(error.message || "Failed to update password");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateProfile = async (profile: ProfileUpdate) => {
-    setLoading(true);
-    setAuthError(null);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        data: {
-          name: profile.name,
-        },
-      });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      console.error("Update profile error:", error);
-      setAuthError(error.message || "Failed to update profile");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await supabase.auth.signOut();
-      setAuthError(null);
-    } catch (error: any) {
-      console.error("Error signing out:", error);
-      setAuthError(error.message || "Error signing out");
-    }
-  };
-
   return {
     login,
     signup,
-    resetPassword,
-    updatePassword,
-    updateProfile,
-    logout,
+    resetPassword: async (email: string) => {
+      setLoading(true);
+      setAuthError(null);
+      try {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        
+        if (error) {
+          throw error;
+        }
+      } catch (error: any) {
+        console.error("Reset password error:", error);
+        setAuthError(error.message || "Failed to send password reset email");
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    updatePassword: async (password: string) => {
+      setLoading(true);
+      setAuthError(null);
+      try {
+        const { error } = await supabase.auth.updateUser({
+          password,
+        });
+        
+        if (error) {
+          throw error;
+        }
+      } catch (error: any) {
+        console.error("Update password error:", error);
+        setAuthError(error.message || "Failed to update password");
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    updateProfile: async (profile: ProfileUpdate) => {
+      setLoading(true);
+      setAuthError(null);
+      try {
+        const { error } = await supabase.auth.updateUser({
+          data: {
+            name: profile.name,
+          },
+        });
+        
+        if (error) {
+          throw error;
+        }
+      } catch (error: any) {
+        console.error("Update profile error:", error);
+        setAuthError(error.message || "Failed to update profile");
+        throw error;
+      } finally {
+        setLoading(false);
+      }
+    },
+    logout: async () => {
+      try {
+        await supabase.auth.signOut();
+        setAuthError(null);
+      } catch (error: any) {
+        console.error("Error signing out:", error);
+        setAuthError(error.message || "Error signing out");
+      }
+    },
     loading,
     authError,
   };

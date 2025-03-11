@@ -18,25 +18,43 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+  const [adminCreated, setAdminCreated] = useState(false);
 
   // Attempt to create admin user on component mount
   useEffect(() => {
     const createAdminUser = async () => {
       try {
         setIsCreatingAdmin(true);
-        const { error } = await supabase.functions.invoke('create-admin');
+        setFormError(null);
+        
+        const { data, error } = await supabase.functions.invoke('create-admin');
+        
         if (error) {
           console.error('Error creating admin:', error);
+          setFormError(`Failed to set up admin account: ${error.message}`);
+        } else {
+          console.log('Admin creation response:', data);
+          setAdminCreated(true);
+          
+          // Auto-fill the admin credentials for convenience
+          setEmail('emohd123@gmail.com');
+          setPassword('password123');
+          
+          toast({
+            title: "Admin account ready",
+            description: "You can now login with the admin credentials",
+          });
         }
       } catch (err) {
         console.error('Failed to create admin user:', err);
+        setFormError(`Error setting up admin: ${err instanceof Error ? err.message : String(err)}`);
       } finally {
         setIsCreatingAdmin(false);
       }
     };
 
     createAdminUser();
-  }, []);
+  }, [toast]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,9 +97,15 @@ export default function LoginForm() {
         </Alert>
       )}
 
-      {isCreatingAdmin && (
+      {isCreatingAdmin ? (
         <Alert className="text-sm bg-yellow-50 border-yellow-200">
           <AlertDescription>Setting up admin account...</AlertDescription>
+        </Alert>
+      ) : adminCreated && (
+        <Alert className="text-sm bg-green-50 border-green-200">
+          <AlertDescription>
+            Admin account is ready. Use email: emohd123@gmail.com and password: password123
+          </AlertDescription>
         </Alert>
       )}
 
@@ -124,7 +148,7 @@ export default function LoginForm() {
         <Button 
           type="submit" 
           className="w-full h-11 font-medium"
-          disabled={loading}
+          disabled={loading || isCreatingAdmin}
         >
           {loading ? "Signing in..." : "Sign in"}
         </Button>
