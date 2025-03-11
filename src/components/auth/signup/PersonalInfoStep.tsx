@@ -11,6 +11,11 @@ interface PersonalInfoStepProps {
 }
 
 export function PersonalInfoStep({ formData, handleChange, setFormData }: PersonalInfoStepProps) {
+  // Create a specific handler for gender selection
+  const handleGenderChange = (value: string) => {
+    setFormData(prev => ({ ...prev, gender: value }));
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Personal Details</h3>
@@ -64,9 +69,9 @@ export function PersonalInfoStep({ formData, handleChange, setFormData }: Person
         <Label htmlFor="gender">Gender</Label>
         <Select
           value={formData.gender}
-          onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}
+          onValueChange={handleGenderChange}
         >
-          <SelectTrigger className="h-11">
+          <SelectTrigger id="gender" className="h-11">
             <SelectValue placeholder="Select your gender" />
           </SelectTrigger>
           <SelectContent>
