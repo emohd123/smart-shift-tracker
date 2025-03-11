@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 export const useAccount = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -22,11 +23,14 @@ export const useAccount = () => {
       // Sign out the user after deactivation
       await supabase.auth.signOut();
       
+      toast.success("Account deactivated successfully");
+      
       // Redirect to home page
       window.location.href = "/";
     } catch (error: any) {
       console.error("Account deactivation error:", error);
       setAuthError(error.message || "Failed to deactivate account");
+      toast.error(error.message || "Failed to deactivate account");
       throw error;
     } finally {
       setLoading(false);
@@ -44,14 +48,19 @@ export const useAccount = () => {
         throw error;
       }
       
+      toast.success("Account deleted successfully");
+      
       // Sign out the user after deletion
       await supabase.auth.signOut();
       
-      // Redirect to home page
-      window.location.href = "/";
+      // Redirect to home page with a small delay to ensure sign out completes
+      setTimeout(() => {
+        window.location.href = "/";
+      }, 300);
     } catch (error: any) {
       console.error("Account deletion error:", error);
       setAuthError(error.message || "Failed to delete account");
+      toast.error(error.message || "Failed to delete account");
       throw error;
     } finally {
       setLoading(false);

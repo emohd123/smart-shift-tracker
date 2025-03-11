@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Label } from "@/components/ui/label";
 import { 
   Select,
@@ -28,10 +28,10 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function AccountRemovalForm() {
   const { deactivateAccount, deleteAccount } = useAuth();
-  const { toast } = useToast();
   const [removalType, setRemovalType] = useState<"deactivate" | "delete" | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const handleRemoveAccount = async () => {
     if (!removalType) {
@@ -41,14 +41,15 @@ export default function AccountRemovalForm() {
 
     setLoading(true);
     setError(null);
+    setDialogOpen(false);
 
     try {
       if (removalType === "deactivate") {
         await deactivateAccount();
-        // No need to show toast as user will be redirected
+        // No need to show toast or redirect as it's handled in the hook
       } else if (removalType === "delete") {
         await deleteAccount();
-        // No need to show toast as user will be redirected
+        // No need to show toast or redirect as it's handled in the hook
       }
     } catch (error: any) {
       console.error("Account removal error:", error);
@@ -90,12 +91,13 @@ export default function AccountRemovalForm() {
             </Select>
           </div>
 
-          <AlertDialog>
+          <AlertDialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button 
                 variant="destructive" 
                 className="w-full"
                 disabled={!removalType || loading}
+                onClick={() => setDialogOpen(true)}
               >
                 {loading ? "Processing..." : "Remove Account"}
               </Button>
