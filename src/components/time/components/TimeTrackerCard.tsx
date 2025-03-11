@@ -6,6 +6,8 @@ import TimeDisplay from "./TimeDisplay";
 import LocationVerification from "./LocationVerification";
 import LocationError from "./LocationError";
 import TrackingControls from "./TrackingControls";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 type TimeTrackerCardProps = {
   isTracking: boolean;
@@ -14,6 +16,7 @@ type TimeTrackerCardProps = {
   earnings: number;
   locationVerified: boolean;
   showLocationError: boolean;
+  permissionDenied?: boolean;
   loading: boolean;
   isNotActiveShift: boolean;
   handleStartTracking: () => void;
@@ -29,6 +32,7 @@ const TimeTrackerCard = ({
   earnings,
   locationVerified,
   showLocationError,
+  permissionDenied,
   loading,
   isNotActiveShift,
   handleStartTracking,
@@ -71,6 +75,15 @@ const TimeTrackerCard = ({
         />
         
         {showLocationError && <LocationError />}
+        
+        {permissionDenied && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Location permission denied. Please enable location access in your browser settings to track time.
+            </AlertDescription>
+          </Alert>
+        )}
         
         {!autoStart && !autoStop && (
           <TrackingControls

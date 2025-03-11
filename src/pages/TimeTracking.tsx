@@ -6,19 +6,25 @@ import AppLayout from "@/components/layout/AppLayout";
 import TimeTracker from "@/components/time/TimeTracker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Calendar } from "lucide-react";
+import { ArrowRight, Calendar, Clock } from "lucide-react";
 import { Shift } from "@/components/shifts/ShiftCard";
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const TimeTracking = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
+  const [timeLogHistory, setTimeLogHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(true);
 
   // Check for any active time tracking session on component mount
   useEffect(() => {
     const checkActiveTimeTracking = async () => {
+      if (!user) return;
+      
       setLoading(true);
       
       try {
@@ -28,7 +34,7 @@ const TimeTracking = () => {
         if (activeTrackingInfo) {
           const { shiftId } = JSON.parse(activeTrackingInfo);
           
-          // Fetch the shift details from time_logs and join with shift information
+          // Fetch the shift details from time_logs
           const { data: timeLogData, error: timeLogError } = await supabase
             .from('time_logs')
             .select(`
@@ -38,44 +44,137 @@ const TimeTracking = () => {
               check_out_time
             `)
             .eq('shift_id', shiftId)
+            .eq('user_id', user.id)
             .is('check_out_time', null)
             .maybeSingle();
             
           if (timeLogError) {
             console.error("Error fetching time log:", timeLogError);
+            toast.error("Could not retrieve active time tracking session");
             setLoading(false);
             return;
           }
           
           if (timeLogData) {
-            // For now, we'll use the mock shift data since we haven't migrated real shift data yet
-            // In a real app, we would query the shifts table here
-            const mockShift: Shift = {
-              id: timeLogData.shift_id,
-              title: "Active Shift",
-              date: new Date().toISOString().split('T')[0],
-              startTime: new Date(timeLogData.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-              endTime: "End Time TBD",
-              location: "Current Location",
-              status: "ongoing",
-              payRate: 10.00, // Default pay rate until we get actual data
-            };
-            
-            setActiveShift(mockShift);
+            try {
+              // Try to get the actual shift data if available
+              const { data: shiftData, error: shiftError } = await supabase
+                .from('shifts')
+                .select('*')
+                .eq('id', timeLogData.shift_id)
+                .maybeSingle();
+                
+              if (shiftData && !shiftError) {
+                // Convert from database schema to Shift type
+                const shift: Shift = {
+                  id: shiftData.id,
+                  title: shiftData.title,
+                  date: shiftData.date,
+                  startTime: shiftData.start_time,
+                  endTime: shiftData.end_time,
+                  location: shiftData.location,
+                  status: shiftData.status,
+                  payRate: shiftData.pay_rate,
+                  isPaid: shiftData.is_paid || false
+                };
+                
+                setActiveShift(shift);
+              } else {
+                // Fallback to mock shift if we can't get the real data
+                const mockShift: Shift = {
+                  id: timeLogData.shift_id,
+                  title: "Active Shift",
+                  date: new Date().toISOString().split('T')[0],
+                  startTime: new Date(timeLogData.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                  endTime: "End Time TBD",
+                  location: "Current Location",
+                  status: "ongoing",
+                  payRate: 10.00,
+                };
+                
+                setActiveShift(mockShift);
+              }
+            } catch (error) {
+              console.error("Error retrieving shift data:", error);
+              // Still create a mock shift so the UI works
+              const mockShift: Shift = {
+                id: timeLogData.shift_id,
+                title: "Active Shift",
+                date: new Date().toISOString().split('T')[0],
+                startTime: new Date(timeLogData.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+                endTime: "End Time TBD",
+                location: "Current Location",
+                status: "ongoing",
+                payRate: 10.00,
+              };
+              
+              setActiveShift(mockShift);
+            }
           }
         }
       } catch (error) {
         console.error("Error checking active time tracking:", error);
+        toast.error("Error loading time tracking data");
       } finally {
         setLoading(false);
       }
     };
     
-    checkActiveTimeTracking();
-  }, []);
+    // Fetch time log history
+    const fetchTimeLogHistory = async () => {
+      if (!user) return;
+      
+      setLoadingHistory(true);
+      try {
+        const { data, error } = await supabase
+          .from('time_logs')
+          .select(`
+            id,
+            shift_id,
+            check_in_time,
+            check_out_time,
+            total_hours,
+            earnings
+          `)
+          .eq('user_id', user.id)
+          .not('check_out_time', 'is', null)
+          .order('check_in_time', { ascending: false })
+          .limit(5);
+          
+        if (error) {
+          console.error("Error fetching time log history:", error);
+        } else {
+          setTimeLogHistory(data || []);
+        }
+      } catch (error) {
+        console.error("Error retrieving time log history:", error);
+      } finally {
+        setLoadingHistory(false);
+      }
+    };
+    
+    if (user) {
+      checkActiveTimeTracking();
+      fetchTimeLogHistory();
+    }
+  }, [user]);
 
   const handleViewAllShifts = () => {
     navigate('/shifts');
+  };
+
+  const formatTime = (isoString: string) => {
+    return new Date(isoString).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+  };
+
+  const formatDate = (isoString: string) => {
+    return new Date(isoString).toLocaleDateString();
+  };
+
+  const formatDuration = (hours: number) => {
+    const h = Math.floor(hours);
+    const m = Math.round((hours - h) * 60);
+    return `${h}h ${m}m`;
   };
 
   return (
@@ -94,10 +193,10 @@ const TimeTracking = () => {
             </CardHeader>
             <CardContent>
               {loading ? (
-                <div className="flex justify-center py-8">
-                  <div className="animate-pulse text-muted-foreground">
-                    Loading time tracking data...
-                  </div>
+                <div className="flex flex-col space-y-4 py-8">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-3/4" />
+                  <Skeleton className="h-12 w-1/2" />
                 </div>
               ) : activeShift ? (
                 <TimeTracker shift={activeShift} />
@@ -117,7 +216,7 @@ const TimeTracking = () => {
             </CardContent>
           </Card>
 
-          {/* Time Log History - Could be implemented in the future */}
+          {/* Time Log History */}
           <Card>
             <CardHeader>
               <CardTitle>Time Tracking History</CardTitle>
@@ -126,12 +225,50 @@ const TimeTracking = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="bg-muted/30 rounded-lg p-6 text-center">
-                <h3 className="text-lg font-medium mb-2">Coming Soon</h3>
-                <p className="text-muted-foreground">
-                  Time tracking history will be available in a future update.
-                </p>
-              </div>
+              {loadingHistory ? (
+                <div className="flex flex-col space-y-4">
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                  <Skeleton className="h-16 w-full" />
+                </div>
+              ) : timeLogHistory.length > 0 ? (
+                <div className="space-y-4">
+                  {timeLogHistory.map((log) => (
+                    <div key={log.id} className="border rounded-md p-4 hover:bg-muted/50 transition-colors">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <h4 className="font-medium flex items-center">
+                            <Clock className="h-4 w-4 mr-2 text-primary" />
+                            {formatDate(log.check_in_time)}
+                          </h4>
+                          <div className="text-sm text-muted-foreground mt-1">
+                            {formatTime(log.check_in_time)} - {formatTime(log.check_out_time)}
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">
+                            {log.earnings ? `BHD ${log.earnings.toFixed(2)}` : 'N/A'}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {log.total_hours ? formatDuration(log.total_hours) : 'N/A'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  <Button variant="outline" className="w-full" onClick={() => navigate('/time-history')}>
+                    View Full History
+                  </Button>
+                </div>
+              ) : (
+                <div className="bg-muted/30 rounded-lg p-6 text-center">
+                  <h3 className="text-lg font-medium mb-2">No Time Logs Yet</h3>
+                  <p className="text-muted-foreground">
+                    Your completed time tracking sessions will appear here.
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

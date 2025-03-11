@@ -18,6 +18,7 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
   const [locationVerified, setLocationVerified] = useState(false);
   const [showLocationError, setShowLocationError] = useState(false);
   const [timeLogId, setTimeLogId] = useState<string | null>(null);
+  const [permissionDenied, setPermissionDenied] = useState(false);
   
   const { elapsedTime, setElapsedTime, earnings, resetTimeAndEarnings } = useTimeCalculation(isTracking, shift);
   const { verifyLocation } = useLocationVerification();
@@ -29,28 +30,37 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
   useEffect(() => {
     if (shift && user) {
       const fetchExistingTimeLog = async () => {
-        const data = await checkExistingTimeLog(shift.id, user.id);
-        
-        if (data) {
-          // We have an active time log, so let's resume tracking
-          setTimeLogId(data.id);
-          setStartTime(new Date(data.check_in_time));
-          setIsTracking(true);
-          setLocationVerified(true);
+        try {
+          const data = await checkExistingTimeLog(shift.id, user.id);
           
-          // Calculate elapsed time since check-in
-          const startTimeMs = new Date(data.check_in_time).getTime();
-          const nowMs = new Date().getTime();
-          const elapsedSeconds = Math.floor((nowMs - startTimeMs) / 1000);
-          setElapsedTime(elapsedSeconds);
-          
-          // Notify if returning to an active session
-          if (startTimeMs < (nowMs - 60000)) { // Only notify if more than a minute has passed
-            toast({
-              title: "Session Resumed",
-              description: `Continuing time tracking for ${shift.title}`,
-            });
+          if (data) {
+            // We have an active time log, so let's resume tracking
+            setTimeLogId(data.id);
+            setStartTime(new Date(data.check_in_time));
+            setIsTracking(true);
+            setLocationVerified(true);
+            
+            // Calculate elapsed time since check-in
+            const startTimeMs = new Date(data.check_in_time).getTime();
+            const nowMs = new Date().getTime();
+            const elapsedSeconds = Math.floor((nowMs - startTimeMs) / 1000);
+            setElapsedTime(elapsedSeconds);
+            
+            // Notify if returning to an active session
+            if (startTimeMs < (nowMs - 60000)) { // Only notify if more than a minute has passed
+              toast({
+                title: "Session Resumed",
+                description: `Continuing time tracking for ${shift.title}`,
+              });
+            }
           }
+        } catch (error) {
+          console.error("Error checking existing time logs:", error);
+          toast({
+            title: "Error",
+            description: "Could not check for existing time logs. Please try again.",
+            variant: "destructive"
+          });
         }
       };
       
@@ -93,17 +103,33 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     if (!user || !shift) return;
     
     setLoading(true);
+    setPermissionDenied(false);
     
     try {
+      // Request permission for notifications if not already granted
+      if (Notification && Notification.permission !== "granted" && Notification.permission !== "denied") {
+        await Notification.requestPermission();
+      }
+      
       const locationValid = await verifyLocation(shift.id);
       if (!locationValid) {
-        setShowLocationError(true);
+        if (locationValid === null) {
+          setPermissionDenied(true);
+          toast({
+            title: "Location Permission Denied",
+            description: "Please enable location access in your browser settings to track time.",
+            variant: "destructive"
+          });
+        } else {
+          setShowLocationError(true);
+        }
         setLoading(false);
         return;
       }
       
       setLocationVerified(true);
       setShowLocationError(false);
+      setPermissionDenied(false);
       
       const now = new Date();
       setStartTime(now);
@@ -122,6 +148,14 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
       });
       
       if (onCheckIn) onCheckIn();
+      
+      // Send a notification if permission was granted
+      if (Notification && Notification.permission === "granted") {
+        new Notification("Time Tracking Started", {
+          body: `Now tracking time for ${shift.title}`,
+          icon: "/favicon.ico"
+        });
+      }
     } catch (error) {
       console.error("Error starting time tracking:", error);
       toast({
@@ -136,7 +170,9 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
   
   // Stop time tracking
   const handleStopTracking = () => {
-    if (shift && (timeLogId || isTracking)) {
+    if (!shift) return;
+    
+    if (timeLogId || isTracking) {
       logTimeEntry(shift.id, timeLogId, isTracking, startTime, elapsedTime);
     }
     
@@ -152,6 +188,14 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     
     if (onCheckOut) onCheckOut();
     
+    // Send a notification if permission was granted
+    if (Notification && Notification.permission === "granted") {
+      new Notification("Time Tracking Completed", {
+        body: `You worked for ${duration} and earned ${formatBHD(earnings)}`,
+        icon: "/favicon.ico"
+      });
+    }
+    
     resetTimeAndEarnings();
     setStartTime(null);
   };
@@ -164,6 +208,7 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     loading,
     locationVerified,
     showLocationError,
+    permissionDenied,
     isNotActiveShift,
     handleStartTracking,
     handleStopTracking,
