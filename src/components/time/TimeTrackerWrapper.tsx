@@ -53,7 +53,9 @@ const TimeTrackerWrapper = forwardRef(({
       handleStopTracking();
       
       // Log the time entry when stopping automatically
-      logTimeEntry(shift.id, timeLogId, isTracking, startTime, elapsedTime);
+      if (shift) {
+        logTimeEntry(shift.id, timeLogId, isTracking, startTime, elapsedTime);
+      }
     }
   }, [autoStop, isTracking, handleStopTracking, logTimeEntry, shift, timeLogId, startTime, elapsedTime]);
   

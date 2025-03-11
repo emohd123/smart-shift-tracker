@@ -130,6 +130,7 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     handleStartTracking,
     handleStopTracking,
     setShowLocationError,
-    logTimeEntry
+    logTimeEntry,
+    timeLogId
   };
 }
