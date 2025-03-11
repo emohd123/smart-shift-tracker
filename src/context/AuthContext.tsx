@@ -1,7 +1,6 @@
-
 import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useAuthState } from "@/hooks/useAuthState";
-import { useAuthMethods } from "@/hooks/useAuthHooks";
+import { useAuthMethods, ProfileUpdate } from "@/hooks/useAuthHooks";
 
 export type UserRole = "admin" | "promoter";
 
@@ -31,10 +30,6 @@ export interface UserProfile {
   role: string;
   created_at: string;
   updated_at: string;
-}
-
-interface ProfileUpdate {
-  name?: string;
 }
 
 interface AuthContextType {
@@ -87,12 +82,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const [authErrorState, setAuthErrorState] = useState<string | null>(null);
   
-  // Wrap login method to match the expected void return type
   const login = async (email: string, password: string): Promise<void> => {
     await loginMethod(email, password);
   };
   
-  // Wrap getUserProfile to match the expected UserProfile return type
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
     const profile = await getUserProfileMethod(userId);
     return {
@@ -101,12 +94,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } as UserProfile;
   };
 
-  // Wrap updateProfile to match the expected void return type
   const updateProfile = async (userId: string, profile: ProfileUpdate): Promise<void> => {
     await updateProfileMethod(userId, profile);
   };
 
-  // Wrap account removal methods
   const deactivateAccount = async (): Promise<void> => {
     await deactivateAccountMethod();
   };
@@ -115,12 +106,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await deleteAccountMethod();
   };
   
-  // Sync authError from hook with the context state
   useEffect(() => {
     setAuthErrorState(authError);
   }, [authError]);
   
-  // Clear auth errors on sign out
   useEffect(() => {
     if (!isAuthenticated) {
       setAuthErrorState(null);

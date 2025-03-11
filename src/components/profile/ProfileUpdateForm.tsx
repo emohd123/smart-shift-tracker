@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -14,6 +13,7 @@ import ProfileHeader from "./ProfileHeader";
 import { useProfileData } from "./hooks/useProfileData";
 import { useFileUpload } from "./hooks/useFileUpload";
 import { useProfile } from "@/hooks/auth/useProfile";
+import { ProfileUpdate } from "@/hooks/useAuthHooks";
 
 const formSchema = z.object({
   full_name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -90,11 +90,10 @@ export default function ProfileUpdateForm() {
     setLoading(true);
 
     try {
-      let updates: Partial<UserProfile> = {
+      let updates: ProfileUpdate = {
         ...values,
       };
 
-      // Handle file uploads
       if (idCardFile || profilePhotoFile) {
         const { idCardUrl, profilePhotoUrl } = await uploadFiles(user.id);
         
@@ -109,10 +108,8 @@ export default function ProfileUpdateForm() {
 
       console.log("Updating profile with:", updates);
       
-      // Update the profile using the updated hook
       await updateProfile(user.id, updates);
       
-      // Refresh the profile data
       const updatedProfile = await fetch(`/api/profiles/${user.id}`).then(res => res.json());
       
       if (updatedProfile) {

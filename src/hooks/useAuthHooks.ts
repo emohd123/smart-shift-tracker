@@ -3,11 +3,13 @@ import { useState } from "react";
 import { useAuthentication } from "./auth/useAuthentication";
 import { useAccount } from "./auth/useAccount";
 import { useProfile } from "./auth/useProfile";
+import { UserProfile } from "@/context/AuthContext";
 
 export { formatUser } from "./auth/userFormat";
 
-interface ProfileUpdate {
-  name?: string;
+// Update ProfileUpdate to match properties in UserProfile
+export interface ProfileUpdate extends Partial<UserProfile> {
+  // This now extends Partial<UserProfile> so it has all the same properties
 }
 
 export const useAuthMethods = () => {
