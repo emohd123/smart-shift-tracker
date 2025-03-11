@@ -48,11 +48,6 @@ export const useSignupFormValidation = (
       return false;
     }
     
-    if (formData.gender !== 'Male' && formData.gender !== 'Female') {
-      setFormError("Please select a gender");
-      return false;
-    }
-    
     const age = parseInt(formData.age);
     if (isNaN(age) || age < 18) {
       setFormError("You must be at least 18 years old");

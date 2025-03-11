@@ -1,7 +1,6 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { FormData } from "./types";
 
 interface PersonalInfoStepProps {
@@ -11,11 +10,6 @@ interface PersonalInfoStepProps {
 }
 
 export function PersonalInfoStep({ formData, handleChange, setFormData }: PersonalInfoStepProps) {
-  // Create a specific handler for gender selection
-  const handleGenderChange = (value: string) => {
-    setFormData(prev => ({ ...prev, gender: value }));
-  };
-
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Personal Details</h3>
@@ -66,21 +60,17 @@ export function PersonalInfoStep({ formData, handleChange, setFormData }: Person
       </div>
 
       <div className="space-y-2">
-        <Label>Gender</Label>
-        <RadioGroup 
-          value={formData.gender} 
-          onValueChange={handleGenderChange}
-          className="flex space-x-8"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="Male" id="gender-male" />
-            <Label htmlFor="gender-male">Male</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="Female" id="gender-female" />
-            <Label htmlFor="gender-female">Female</Label>
-          </div>
-        </RadioGroup>
+        <Label htmlFor="gender">Gender</Label>
+        <Input
+          id="gender"
+          name="gender"
+          type="text"
+          placeholder="Enter your gender"
+          value={formData.gender}
+          onChange={handleChange}
+          required
+          className="h-11"
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
