@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole } from "@/context/AuthContext";
@@ -111,6 +112,7 @@ export const useAuthMethods = () => {
     setLoading(true);
     setAuthError(null);
     try {
+      // Update user metadata to mark as deactivated
       const { error } = await supabase.auth.updateUser({
         data: { deactivated: true }
       });
@@ -119,7 +121,11 @@ export const useAuthMethods = () => {
         throw error;
       }
       
+      // Sign out the user after deactivation
       await supabase.auth.signOut();
+      
+      // Redirect to home page
+      window.location.href = "/";
     } catch (error: any) {
       console.error("Account deactivation error:", error);
       setAuthError(error.message || "Failed to deactivate account");
@@ -133,13 +139,18 @@ export const useAuthMethods = () => {
     setLoading(true);
     setAuthError(null);
     try {
+      // Call the delete_user RPC function
       const { error } = await supabase.rpc('delete_user');
       
       if (error) {
         throw error;
       }
       
+      // Sign out the user after deletion
       await supabase.auth.signOut();
+      
+      // Redirect to home page
+      window.location.href = "/";
     } catch (error: any) {
       console.error("Account deletion error:", error);
       setAuthError(error.message || "Failed to delete account");

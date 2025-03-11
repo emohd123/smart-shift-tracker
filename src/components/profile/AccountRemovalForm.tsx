@@ -45,21 +45,14 @@ export default function AccountRemovalForm() {
     try {
       if (removalType === "deactivate") {
         await deactivateAccount();
-        toast({
-          title: "Account Deactivated",
-          description: "Your account has been temporarily deactivated"
-        });
+        // No need to show toast as user will be redirected
       } else if (removalType === "delete") {
         await deleteAccount();
-        toast({
-          title: "Account Deleted",
-          description: "Your account has been permanently deleted"
-        });
+        // No need to show toast as user will be redirected
       }
     } catch (error: any) {
       console.error("Account removal error:", error);
       setError(error.message || "Failed to process your request");
-    } finally {
       setLoading(false);
     }
   };
