@@ -7,6 +7,7 @@ import { Shift } from "@/components/shifts/ShiftCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 // Import mock shifts data
 import { mockShifts } from "./Shifts";
@@ -50,7 +51,7 @@ const ShiftDetails = () => {
     return null; // Don't render anything while redirecting
   }
 
-  const handleCheckIn = () => {
+  const handleCheckIn = async () => {
     if (shift) {
       // Simulate API update
       const updatedShift = { ...shift, status: "ongoing" as const };
@@ -59,10 +60,19 @@ const ShiftDetails = () => {
         title: "Checked In",
         description: "You have successfully checked in for this shift",
       });
+      
+      // In a real app, you'd update the database here
+      try {
+        // This is just for demonstration - in a real app, you would update
+        // the check-in status in the database
+        console.log("Updating shift status to ongoing:", shift.id);
+      } catch (error) {
+        console.error("Error updating shift status:", error);
+      }
     }
   };
 
-  const handleCheckOut = () => {
+  const handleCheckOut = async () => {
     if (shift) {
       // Simulate API update
       const updatedShift = { ...shift, status: "completed" as const };
@@ -71,6 +81,15 @@ const ShiftDetails = () => {
         title: "Checked Out",
         description: "You have successfully checked out from this shift",
       });
+      
+      // In a real app, you'd update the database here
+      try {
+        // This is just for demonstration - in a real app, you would update
+        // the check-out status in the database
+        console.log("Updating shift status to completed:", shift.id);
+      } catch (error) {
+        console.error("Error updating shift status:", error);
+      }
     }
   };
 
@@ -88,6 +107,15 @@ const ShiftDetails = () => {
     // Call the global deleteShift function to remove from the main list
     if (window.deleteShift) {
       window.deleteShift(shiftId);
+    }
+    
+    // In a real app, you'd also delete any associated locations
+    try {
+      // This is just for demonstration - in a real app, you would delete
+      // the associated location data from the database
+      console.log("Deleting shift location data for:", shiftId);
+    } catch (error) {
+      console.error("Error deleting shift location:", error);
     }
   };
 

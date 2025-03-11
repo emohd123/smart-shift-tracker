@@ -3,10 +3,12 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, Calendar, DollarSign, PlayCircle, StopCircle } from "lucide-react";
+import { Clock, MapPin, Calendar, DollarSign, PlayCircle, StopCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Shift } from "../shifts/ShiftCard";
+import { supabase } from "@/integrations/supabase/client";
+import { getCurrentLocation, isWithinRadius } from "../shifts/utils/locationUtils";
 
 type TimeTrackerProps = {
   shift?: Shift;
@@ -20,6 +22,8 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
   const [elapsedTime, setElapsedTime] = useState(0);
   const [earnings, setEarnings] = useState(0);
   const [startTime, setStartTime] = useState<Date | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [locationVerified, setLocationVerified] = useState(false);
   
   // Format seconds into HH:MM:SS
   const formatTime = (seconds: number) => {
@@ -56,22 +60,98 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
     return () => clearInterval(interval);
   }, [isTracking]);
   
-  const handleStartTracking = () => {
-    setIsTracking(true);
-    setStartTime(new Date());
+  const verifyLocation = async (): Promise<boolean> => {
+    if (!shift) return true; // If no shift, no verification needed
     
-    toast({
-      title: "Time Tracking Started",
-      description: shift 
-        ? `Now tracking time for ${shift.title}` 
-        : "Your time is now being tracked",
-    });
+    try {
+      // Check if location is required for this shift
+      const { data: shiftLocation, error } = await supabase
+        .from('shift_locations')
+        .select('*')
+        .eq('shift_id', shift.id)
+        .single();
+      
+      if (error && error.code !== 'PGRST116') {
+        console.error("Error checking location:", error);
+        return false;
+      }
+      
+      // If no location requirement, allow check in
+      if (!shiftLocation) {
+        return true;
+      }
+      
+      // Get user's location
+      const coords = await getCurrentLocation();
+      
+      // Check if within radius
+      const within = isWithinRadius(
+        coords.latitude,
+        coords.longitude,
+        parseFloat(shiftLocation.latitude),
+        parseFloat(shiftLocation.longitude),
+        shiftLocation.radius
+      );
+      
+      if (!within) {
+        toast({
+          title: "Wrong Location",
+          description: "You must be at the shift location to start tracking time.",
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Location verification error:", error);
+      toast({
+        title: "Location Error",
+        description: "Could not verify your location. Please check your location permissions.",
+        variant: "destructive"
+      });
+      return false;
+    }
+  };
+  
+  const handleStartTracking = async () => {
+    setLoading(true);
     
-    if (onCheckIn) onCheckIn();
+    try {
+      // Verify location before starting
+      const locationValid = await verifyLocation();
+      if (!locationValid) {
+        setLoading(false);
+        return;
+      }
+      
+      setLocationVerified(true);
+      setIsTracking(true);
+      setStartTime(new Date());
+      
+      toast({
+        title: "Time Tracking Started",
+        description: shift 
+          ? `Now tracking time for ${shift.title}` 
+          : "Your time is now being tracked",
+      });
+      
+      if (onCheckIn) onCheckIn();
+    } catch (error) {
+      console.error("Error starting time tracking:", error);
+      toast({
+        title: "Error",
+        description: "Could not start time tracking. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleStopTracking = () => {
     setIsTracking(false);
+    setLocationVerified(false);
     
     toast({
       title: "Time Tracking Stopped",
@@ -129,6 +209,16 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
           )}
         </div>
         
+        {/* Location verification badge */}
+        {locationVerified && (
+          <div className="flex items-center justify-center">
+            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
+              <MapPin size={12} />
+              Location Verified
+            </Badge>
+          </div>
+        )}
+        
         {/* Shift details if provided */}
         {shift && (
           <div className="space-y-3 text-sm">
@@ -161,9 +251,16 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
               onClick={handleStartTracking} 
               className="w-full"
               variant="default"
+              disabled={loading}
             >
-              <PlayCircle size={18} className="mr-2" />
-              Start Tracking
+              {loading ? (
+                <>Verifying Location...</>
+              ) : (
+                <>
+                  <PlayCircle size={18} className="mr-2" />
+                  Start Tracking
+                </>
+              )}
             </Button>
           ) : (
             <Button 

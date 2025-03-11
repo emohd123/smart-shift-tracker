@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ShiftHeader } from "./ShiftHeader";
 import { ShiftInfo } from "./ShiftInfo";
 import { ShiftActions } from "./ShiftActions";
+import MapSelector from "./MapSelector";
 
 type ShiftDetailProps = {
   shift: Shift;
@@ -33,6 +34,7 @@ export default function ShiftDetail({
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isCheckedIn, setIsCheckedIn] = useState(shift.status === "ongoing");
+  const [showLocationMap, setShowLocationMap] = useState(false);
   
   const isAdmin = user?.role === "admin";
   const isPromoter = user?.role === "promoter";
@@ -66,6 +68,10 @@ export default function ShiftDetail({
       navigate("/shifts");
     }
   };
+
+  const handleSetLocation = () => {
+    setShowLocationMap(!showLocationMap);
+  };
   
   return (
     <div className="max-w-3xl mx-auto animate-fade-in">
@@ -94,11 +100,22 @@ export default function ShiftDetail({
         <ShiftActions 
           shift={shift}
           isPromoter={isPromoter}
+          isAdmin={isAdmin}
           isCheckedIn={isCheckedIn}
           onCheckIn={handleCheckIn}
           onCheckOut={handleCheckOut}
+          onSetLocation={handleSetLocation}
         />
       </Card>
+      
+      {showLocationMap && isAdmin && (
+        <div className="mt-6">
+          <MapSelector 
+            shiftId={shift.id} 
+            onSave={() => setShowLocationMap(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }
