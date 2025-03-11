@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole } from "@/context/AuthContext";
@@ -49,6 +50,7 @@ export const useAuthMethods = () => {
       }
       
       console.log("Login successful:", data.user);
+      return data.user;
     } catch (error: any) {
       console.error("Login error:", error);
       setAuthError(error.message || "Invalid login credentials");
@@ -69,7 +71,6 @@ export const useAuthMethods = () => {
           data: {
             name,
           },
-          // No need to set emailRedirectTo since email confirmation is disabled
         },
       });
 
@@ -78,6 +79,7 @@ export const useAuthMethods = () => {
       }
 
       console.log("Signup successful:", data.user);
+      return data.user;
     } catch (error: any) {
       console.error("Signup error:", error);
       setAuthError(error.message || "Could not create account");
@@ -87,9 +89,26 @@ export const useAuthMethods = () => {
     }
   };
 
+  const getUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
+        
+      if (error) throw error;
+      return data;
+    } catch (error: any) {
+      console.error("Error fetching user profile:", error);
+      throw error;
+    }
+  };
+
   return {
     login,
     signup,
+    getUserProfile,
     resetPassword: async (email: string) => {
       setLoading(true);
       setAuthError(null);

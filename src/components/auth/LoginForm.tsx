@@ -39,11 +39,6 @@ export default function LoginForm() {
           // Auto-fill the admin credentials for convenience
           setEmail('emohd123@gmail.com');
           setPassword('password123');
-          
-          toast({
-            title: "Admin account ready",
-            description: "You can now login with the admin credentials",
-          });
         }
       } catch (err) {
         console.error('Failed to create admin user:', err);

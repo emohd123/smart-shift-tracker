@@ -9,6 +9,66 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      profiles: {
+        Row: {
+          address: string
+          age: number
+          bank_details: string | null
+          created_at: string
+          full_name: string
+          gender: Database["public"]["Enums"]["gender_type"]
+          height: number
+          id: string
+          id_card_url: string | null
+          is_student: boolean
+          nationality: string
+          phone_number: string
+          profile_photo_url: string | null
+          role: string
+          updated_at: string
+          verification_status: string
+          weight: number
+        }
+        Insert: {
+          address: string
+          age: number
+          bank_details?: string | null
+          created_at?: string
+          full_name: string
+          gender: Database["public"]["Enums"]["gender_type"]
+          height: number
+          id: string
+          id_card_url?: string | null
+          is_student: boolean
+          nationality: string
+          phone_number: string
+          profile_photo_url?: string | null
+          role?: string
+          updated_at?: string
+          verification_status?: string
+          weight: number
+        }
+        Update: {
+          address?: string
+          age?: number
+          bank_details?: string | null
+          created_at?: string
+          full_name?: string
+          gender?: Database["public"]["Enums"]["gender_type"]
+          height?: number
+          id?: string
+          id_card_url?: string | null
+          is_student?: boolean
+          nationality?: string
+          phone_number?: string
+          profile_photo_url?: string | null
+          role?: string
+          updated_at?: string
+          verification_status?: string
+          weight?: number
+        }
+        Relationships: []
+      }
       shift_locations: {
         Row: {
           created_at: string
@@ -44,7 +104,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      gender_type: "Male" | "Female" | "Other"
     }
     CompositeTypes: {
       [_ in never]: never

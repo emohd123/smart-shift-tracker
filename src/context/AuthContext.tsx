@@ -12,6 +12,26 @@ export interface User {
   role: UserRole;
 }
 
+export interface UserProfile {
+  id: string;
+  full_name: string;
+  nationality: string;
+  age: number;
+  phone_number: string;
+  gender: "Male" | "Female" | "Other";
+  height: number;
+  weight: number;
+  is_student: boolean;
+  address: string;
+  bank_details?: string;
+  id_card_url?: string;
+  profile_photo_url?: string;
+  verification_status: "pending" | "approved" | "rejected";
+  role: string;
+  created_at: string;
+  updated_at: string;
+}
+
 interface ProfileUpdate {
   name?: string;
 }
@@ -21,11 +41,12 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
   updateProfile: (profile: ProfileUpdate) => Promise<void>;
+  getUserProfile: (userId: string) => Promise<UserProfile>;
   authError: string | null;
 }
 
@@ -39,6 +60,7 @@ const AuthContext = createContext<AuthContextType>({
   resetPassword: async () => {},
   updatePassword: async () => {},
   updateProfile: async () => {},
+  getUserProfile: async () => ({} as UserProfile),
   authError: null,
 });
 
@@ -51,6 +73,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     resetPassword, 
     updatePassword, 
     updateProfile,
+    getUserProfile,
     loading: methodsLoading, 
     authError 
   } = useAuthMethods();
@@ -81,6 +104,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         resetPassword,
         updatePassword,
         updateProfile,
+        getUserProfile,
         authError: authErrorState,
       }}
     >

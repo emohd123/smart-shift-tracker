@@ -35,3 +35,4 @@ enabled = true
 [functions]
 [functions.create-admin]
 verify_jwt = false
+
