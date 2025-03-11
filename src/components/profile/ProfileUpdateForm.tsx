@@ -229,8 +229,8 @@ export default function ProfileUpdateForm() {
           <div className="flex items-center space-x-2">
             <Checkbox
               id="is_student"
-              checked={form.watch("is_student")}
-              onCheckedChange={(checked) => form.setValue("is_student", checked)}
+              checked={form.watch("is_student") as boolean}
+              onCheckedChange={(checked) => form.setValue("is_student", !!checked)}
             />
             <Label htmlFor="is_student">I am a student</Label>
           </div>
