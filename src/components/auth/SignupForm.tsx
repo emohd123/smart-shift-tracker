@@ -1,39 +1,15 @@
-
 import { useState, ChangeEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Upload, ArrowLeft, Home } from "lucide-react";
+import { Clock, ArrowLeft, Home } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { countries } from "@/lib/countries";
-
-// Define types for form data
-interface FormData {
-  fullName: string;
-  email: string;
-  password: string;
-  confirmPassword: string;
-  nationality: string;
-  age: string;
-  phoneNumber: string;
-  gender: string;
-  height: string;
-  weight: string;
-  isStudent: boolean;
-  address: string;
-  bankDetails: string;
-}
+import { AccountInfoStep } from "./signup/AccountInfoStep";
+import { PersonalInfoStep } from "./signup/PersonalInfoStep";
+import { DocumentUploadStep } from "./signup/DocumentUploadStep";
+import { FormData, FileData } from "./signup/types";
 
 export default function SignupForm() {
   const { signup, loading, authError } = useAuth();
@@ -58,13 +34,14 @@ export default function SignupForm() {
   });
   
   // File upload states
-  const [idCard, setIdCard] = useState<File | null>(null);
-  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [idCardPreview, setIdCardPreview] = useState<string | null>(null);
-  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
-  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const [fileData, setFileData] = useState<FileData>({
+    idCard: null,
+    profilePhoto: null,
+    idCardPreview: null,
+    profilePhotoPreview: null,
+  });
   
-  // Form submission state
+  const [uploadingFiles, setUploadingFiles] = useState(false);
   const [step, setStep] = useState(1);
   const [formError, setFormError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
@@ -106,21 +83,21 @@ export default function SignupForm() {
       }
       
       if (fileType === 'idCard') {
-        setIdCard(file);
+        setFileData({ ...fileData, idCard: file });
         if (file.type !== 'application/pdf') {
           const reader = new FileReader();
           reader.onload = (e) => {
-            setIdCardPreview(e.target?.result as string);
+            setFileData({ ...fileData, idCardPreview: e.target?.result as string });
           };
           reader.readAsDataURL(file);
         } else {
-          setIdCardPreview('/placeholder.svg');
+          setFileData({ ...fileData, idCardPreview: '/placeholder.svg' });
         }
       } else {
-        setProfilePhoto(file);
+        setFileData({ ...fileData, profilePhoto: file });
         const reader = new FileReader();
         reader.onload = (e) => {
-          setProfilePhotoPreview(e.target?.result as string);
+          setFileData({ ...fileData, profilePhotoPreview: e.target?.result as string });
         };
         reader.readAsDataURL(file);
       }
@@ -184,12 +161,12 @@ export default function SignupForm() {
       return true;
     } else if (step === 3) {
       // Validate file uploads
-      if (!idCard) {
+      if (!fileData.idCard) {
         setFormError("Please upload your ID card");
         return false;
       }
       
-      if (!profilePhoto) {
+      if (!fileData.profilePhoto) {
         setFormError("Please upload your profile photo");
         return false;
       }
@@ -219,25 +196,25 @@ export default function SignupForm() {
       let idCardUrl = null;
       let profilePhotoUrl = null;
       
-      if (idCard) {
-        const fileExt = idCard.name.split('.').pop();
+      if (fileData.idCard) {
+        const fileExt = fileData.idCard.name.split('.').pop();
         const fileName = `${userId}/id_card.${fileExt}`;
         
         const { data: idCardData, error: idCardError } = await supabase.storage
           .from('id_cards')
-          .upload(fileName, idCard);
+          .upload(fileName, fileData.idCard);
           
         if (idCardError) throw idCardError;
         idCardUrl = `${fileName}`;
       }
       
-      if (profilePhoto) {
-        const fileExt = profilePhoto.name.split('.').pop();
+      if (fileData.profilePhoto) {
+        const fileExt = fileData.profilePhoto.name.split('.').pop();
         const fileName = `${userId}/profile_photo.${fileExt}`;
         
         const { data: profilePhotoData, error: profilePhotoError } = await supabase.storage
           .from('profile_photos')
-          .upload(fileName, profilePhoto);
+          .upload(fileName, fileData.profilePhoto);
           
         if (profilePhotoError) throw profilePhotoError;
         profilePhotoUrl = `${fileName}`;
@@ -386,328 +363,29 @@ export default function SignupForm() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {step === 1 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Account Information</h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="fullName">Full Name</Label>
-                  <Input
-                    id="fullName"
-                    name="fullName"
-                    type="text"
-                    placeholder="John Doe"
-                    value={formData.fullName}
-                    onChange={handleChange}
-                    required
-                    className="h-11"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    placeholder="yourname@example.com"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    autoComplete="email"
-                    className="h-11"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    name="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    className="h-11"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Password must be at least 8 characters
-                  </p>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password</Label>
-                  <Input
-                    id="confirmPassword"
-                    name="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={formData.confirmPassword}
-                    onChange={handleChange}
-                    required
-                    className="h-11"
-                  />
-                </div>
-              </div>
+              <AccountInfoStep
+                formData={formData}
+                handleChange={handleChange}
+              />
             )}
 
             {step === 2 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Personal Details</h3>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="nationality">Nationality</Label>
-                  <Select
-                    value={formData.nationality}
-                    onValueChange={(value) => setFormData({...formData, nationality: value})}
-                  >
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Select your country" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countries.map((country) => (
-                        <SelectItem key={country.code} value={country.name}>
-                          {country.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="age">Age (18+)</Label>
-                    <Input
-                      id="age"
-                      name="age"
-                      type="number"
-                      min="18"
-                      placeholder="21"
-                      value={formData.age}
-                      onChange={handleChange}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="phoneNumber">Phone Number</Label>
-                    <Input
-                      id="phoneNumber"
-                      name="phoneNumber"
-                      type="tel"
-                      placeholder="+1 123 456 7890"
-                      value={formData.phoneNumber}
-                      onChange={handleChange}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
-                  <Select
-                    value={formData.gender}
-                    onValueChange={(value) => setFormData({...formData, gender: value})}
-                  >
-                    <SelectTrigger className="h-11">
-                      <SelectValue placeholder="Select your gender" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Male">Male</SelectItem>
-                      <SelectItem value="Female">Female</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="height">Height (cm)</Label>
-                    <Input
-                      id="height"
-                      name="height"
-                      type="number"
-                      placeholder="175"
-                      value={formData.height}
-                      onChange={handleChange}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="weight">Weight (kg)</Label>
-                    <Input
-                      id="weight"
-                      name="weight"
-                      type="number"
-                      placeholder="70"
-                      value={formData.weight}
-                      onChange={handleChange}
-                      required
-                      className="h-11"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      id="isStudent"
-                      name="isStudent"
-                      type="checkbox"
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      checked={formData.isStudent}
-                      onChange={handleChange}
-                    />
-                    <Label htmlFor="isStudent">Are you a student?</Label>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <textarea
-                    id="address"
-                    name="address"
-                    rows={3}
-                    placeholder="Enter your full address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    required
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="bankDetails">Bank Account Details (Optional)</Label>
-                  <textarea
-                    id="bankDetails"
-                    name="bankDetails"
-                    rows={3}
-                    placeholder="Enter your bank account details for payment processing"
-                    value={formData.bankDetails}
-                    onChange={handleChange}
-                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    This information is securely stored and only accessible to admins for payment processing.
-                  </p>
-                </div>
-              </div>
+              <PersonalInfoStep
+                formData={formData}
+                handleChange={handleChange}
+                setFormData={setFormData}
+              />
             )}
 
             {step === 3 && (
-              <div className="space-y-6">
-                <h3 className="text-lg font-medium">Document Upload</h3>
-                
-                <div className="space-y-4">
-                  <Label htmlFor="idCard">ID Card (Required)</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    {idCardPreview ? (
-                      <div className="space-y-4">
-                        <div className="relative mx-auto max-w-xs overflow-hidden rounded-lg">
-                          <img
-                            src={idCardPreview}
-                            alt="ID Card Preview"
-                            className="h-40 mx-auto object-contain"
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setIdCard(null);
-                            setIdCardPreview(null);
-                          }}
-                        >
-                          Change
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                          <Upload className="h-6 w-6 text-gray-500" />
-                        </div>
-                        <div className="flex flex-col items-center text-sm text-gray-500">
-                          <span>Click to upload your ID card</span>
-                          <span className="text-xs">(JPEG, PNG, or PDF, max 5MB)</span>
-                        </div>
-                        <Input
-                          id="idCard"
-                          type="file"
-                          accept=".jpg,.jpeg,.png,.pdf"
-                          onChange={(e) => handleFileChange(e, 'idCard')}
-                          className="hidden"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => document.getElementById('idCard')?.click()}
-                        >
-                          Select File
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <Label htmlFor="profilePhoto">Profile Photo (Required)</Label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    {profilePhotoPreview ? (
-                      <div className="space-y-4">
-                        <div className="relative mx-auto max-w-xs overflow-hidden rounded-lg">
-                          <img
-                            src={profilePhotoPreview}
-                            alt="Profile Photo Preview"
-                            className="h-60 mx-auto object-contain"
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => {
-                            setProfilePhoto(null);
-                            setProfilePhotoPreview(null);
-                          }}
-                        >
-                          Change
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                          <Upload className="h-6 w-6 text-gray-500" />
-                        </div>
-                        <div className="flex flex-col items-center text-sm text-gray-500">
-                          <span>Click to upload a full-length profile photo</span>
-                          <span className="text-xs">(JPEG or PNG, clear background, max 5MB)</span>
-                        </div>
-                        <Input
-                          id="profilePhoto"
-                          type="file"
-                          accept=".jpg,.jpeg,.png"
-                          onChange={(e) => handleFileChange(e, 'profilePhoto')}
-                          className="hidden"
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => document.getElementById('profilePhoto')?.click()}
-                        >
-                          Select File
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <DocumentUploadStep
+                fileData={fileData}
+                handleFileChange={handleFileChange}
+                setIdCard={(file) => setFileData(prev => ({ ...prev, idCard: file }))}
+                setIdCardPreview={(preview) => setFileData(prev => ({ ...prev, idCardPreview: preview }))}
+                setProfilePhoto={(file) => setFileData(prev => ({ ...prev, profilePhoto: file }))}
+                setProfilePhotoPreview={(preview) => setFileData(prev => ({ ...prev, profilePhotoPreview: preview }))}
+              />
             )}
 
             <div className="flex justify-between mt-8">
@@ -724,19 +402,13 @@ export default function SignupForm() {
               ) : (
                 <div className="flex space-x-2">
                   <Link to="/login">
-                    <Button
-                      type="button"
-                      variant="outline"
-                    >
+                    <Button type="button" variant="outline">
                       <ArrowLeft size={16} className="mr-2" />
                       Back to Login
                     </Button>
                   </Link>
                   <Link to="/">
-                    <Button
-                      type="button"
-                      variant="outline"
-                    >
+                    <Button type="button" variant="outline">
                       <Home size={16} className="mr-2" />
                       Home
                     </Button>
@@ -745,17 +417,11 @@ export default function SignupForm() {
               )}
 
               {step < 3 ? (
-                <Button
-                  type="button"
-                  onClick={handleNextStep}
-                >
+                <Button type="button" onClick={handleNextStep}>
                   Next
                 </Button>
               ) : (
-                <Button
-                  type="submit"
-                  disabled={loading || uploadingFiles}
-                >
+                <Button type="submit" disabled={loading || uploadingFiles}>
                   {loading || uploadingFiles ? "Processing..." : "Complete Registration"}
                 </Button>
               )}
