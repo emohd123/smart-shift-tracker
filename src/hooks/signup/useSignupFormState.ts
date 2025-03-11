@@ -11,7 +11,7 @@ export const useSignupFormState = () => {
     nationality: "",
     age: "",
     phoneNumber: "",
-    gender: "",
+    gender: "",  // This will be set to "Male" or "Female" via radio buttons
     height: "",
     weight: "",
     isStudent: false,
