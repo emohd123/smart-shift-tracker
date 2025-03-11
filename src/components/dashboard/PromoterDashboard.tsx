@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   CheckCircle, 
@@ -5,7 +6,8 @@ import {
   DollarSign, 
   MapPin, 
   Calendar, 
-  AlertCircle 
+  AlertCircle,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +39,15 @@ export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
       return sum + (shift.payRate * hours);
     }, 0);
   
+  // Calculate unpaid amount (in a real app, this would come from an API)
+  const unpaidAmount = shifts
+    .filter(shift => shift.status === "completed" && !shift.isPaid)
+    .reduce((sum, shift) => {
+      // Assuming 8 hour shifts for simplicity
+      const hours = 8;
+      return sum + (shift.payRate * hours);
+    }, 0);
+  
   const completedShifts = shifts.filter(shift => shift.status === "completed").length;
   
   return (
@@ -49,7 +60,7 @@ export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
           {/* Stats cards */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center text-base font-medium">
@@ -91,6 +102,21 @@ export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
                 <div className="text-2xl font-bold">{formatBHD(totalEarned)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Total earned this month
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center text-base font-medium">
+                  <Wallet className="h-4 w-4 mr-2 text-muted-foreground" />
+                  Unpaid Amount
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{formatBHD(unpaidAmount)}</div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Pending payment
                 </p>
               </CardContent>
             </Card>
