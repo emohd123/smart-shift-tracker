@@ -2,7 +2,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { UploadCloud } from "lucide-react";
 
 interface FileUploadProps {
@@ -19,6 +19,7 @@ export default function FileUpload({
   description
 }: FileUploadProps) {
   const [filePreview, setFilePreview] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const inputId = `${label.toLowerCase().replace(/\s/g, '-')}-upload`;
 
   useEffect(() => {
@@ -30,9 +31,10 @@ export default function FileUpload({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    onFileChange(file);
-    
     if (file) {
+      console.log(`File selected for ${label}:`, file.name);
+      onFileChange(file);
+      
       const reader = new FileReader();
       reader.onload = (e) => {
         setFilePreview(e.target?.result as string);
@@ -44,6 +46,14 @@ export default function FileUpload({
   const clearFile = () => {
     onFileChange(null);
     setFilePreview(currentFileUrl);
+    // Reset the input field value
+    if (inputRef.current) {
+      inputRef.current.value = '';
+    }
+  };
+
+  const triggerFileInput = () => {
+    inputRef.current?.click();
   };
 
   return (
@@ -58,22 +68,22 @@ export default function FileUpload({
             className="max-h-40 object-contain mb-2" 
           />
           <div className="flex space-x-2">
-            <label htmlFor={inputId} className="cursor-pointer">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                type="button"
-              >
-                Change
-              </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              type="button"
+              onClick={triggerFileInput}
+            >
+              Change
               <Input
+                ref={inputRef}
                 id={inputId}
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
                 className="hidden"
               />
-            </label>
+            </Button>
             <Button 
               variant="outline" 
               size="sm" 
@@ -91,22 +101,22 @@ export default function FileUpload({
             <p className="text-sm text-gray-500 mb-2">
               {description || `Upload ${label}`}
             </p>
-            <label htmlFor={inputId} className="cursor-pointer">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                type="button"
-              >
-                Select File
-              </Button>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              type="button"
+              onClick={triggerFileInput}
+            >
+              Select File
               <Input
+                ref={inputRef}
                 id={inputId}
                 type="file"
                 accept="image/*"
                 onChange={handleFileChange}
                 className="hidden"
               />
-            </label>
+            </Button>
           </div>
         </div>
       )}

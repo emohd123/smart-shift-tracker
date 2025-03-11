@@ -13,6 +13,7 @@ export function useFileUpload() {
    */
   const createFilePath = (userId: string, file: File): string => {
     const fileExt = file.name.split('.').pop();
+    // Using userId as the folder name to organize files by user
     return `${userId}/${Date.now()}.${fileExt}`;
   };
 
@@ -26,6 +27,7 @@ export function useFileUpload() {
       setIsUploading(true);
       const fileName = createFilePath(userId, file);
       
+      console.log(`Starting upload to ${bucket}/${fileName}`);
       const { url, error } = await uploadFileToBucket(file, bucket, fileName);
 
       if (error) {
@@ -34,6 +36,7 @@ export function useFileUpload() {
         return null;
       }
 
+      console.log(`Upload successful to ${bucket}/${fileName}`);
       return url;
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error during upload';
