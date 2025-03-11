@@ -4,7 +4,6 @@ import { supabase } from "./client";
 export type StorageError = {
   message: string;
   code: string;
-  details?: string;
 };
 
 /**
@@ -20,8 +19,7 @@ export const createBucketIfNotExists = async (bucketName: string): Promise<{ suc
         success: false,
         error: {
           message: `Error checking buckets: ${bucketsError.message}`,
-          code: 'BUCKET_CHECK_ERROR',
-          details: bucketsError.details
+          code: 'BUCKET_CHECK_ERROR'
         }
       };
     }
@@ -38,8 +36,7 @@ export const createBucketIfNotExists = async (bucketName: string): Promise<{ suc
           success: false,
           error: {
             message: `Error creating bucket ${bucketName}: ${error.message}`,
-            code: 'BUCKET_CREATE_ERROR',
-            details: error.details
+            code: 'BUCKET_CREATE_ERROR'
           }
         };
       }
@@ -89,8 +86,7 @@ export const uploadFileToBucket = async (
         url: null,
         error: {
           message: `Error uploading file to ${bucket}/${path}: ${uploadError.message}`,
-          code: 'FILE_UPLOAD_ERROR',
-          details: uploadError.details
+          code: 'FILE_UPLOAD_ERROR'
         }
       };
     }
