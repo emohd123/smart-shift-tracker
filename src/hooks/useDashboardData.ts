@@ -29,6 +29,7 @@ export function useDashboardData(shifts: Shift[]) {
       return sum + (shift.payRate * hours);
     }, 0);
   
+  // Count of completed shifts (not the actual shifts array)
   const completedShifts = shifts.filter(shift => shift.status === "completed").length;
 
   return {

@@ -19,6 +19,9 @@ export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
   const { upcomingShifts, nextShift, completedShifts, totalEarned, unpaidAmount } = useDashboardData(shifts);
   const [loaded, setLoaded] = useState(false);
   
+  // Get completed shifts for display in the Recent Activity section
+  const completedShiftsList = shifts.filter(shift => shift.status === "completed");
+  
   useEffect(() => {
     const timer = setTimeout(() => {
       setLoaded(true);
@@ -66,7 +69,7 @@ export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
         )}
         
         {/* Recent activity card - adding a new section */}
-        {completedShifts.length > 0 && (
+        {completedShiftsList.length > 0 && (
           <Card className="transition-all duration-500 delay-300 shadow-sm border-border/50 hover:shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-semibold">Recent Activity</CardTitle>
@@ -74,7 +77,7 @@ export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {completedShifts.slice(0, 3).map((shift, index) => (
+                {completedShiftsList.slice(0, 3).map((shift, index) => (
                   <div 
                     key={shift.id} 
                     className="flex items-center justify-between p-3 rounded-md bg-secondary/50 hover:bg-secondary cursor-pointer"
