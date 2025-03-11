@@ -48,8 +48,8 @@ export default function SaveLocation({
         result = await supabase
           .from('shift_locations')
           .update({
-            latitude: location.lat,
-            longitude: location.lng,
+            latitude: location.lat.toString(),
+            longitude: location.lng.toString(),
             radius: radius
           })
           .eq('id', existingLocation.id);
@@ -59,8 +59,8 @@ export default function SaveLocation({
           .from('shift_locations')
           .insert({
             shift_id: shiftId,
-            latitude: location.lat,
-            longitude: location.lng,
+            latitude: location.lat.toString(),
+            longitude: location.lng.toString(),
             radius: radius
           });
       }
