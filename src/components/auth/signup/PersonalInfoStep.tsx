@@ -2,7 +2,6 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { countries } from "@/lib/countries";
 import { FormData } from "./types";
 
 interface PersonalInfoStepProps {
@@ -12,33 +11,22 @@ interface PersonalInfoStepProps {
 }
 
 export function PersonalInfoStep({ formData, handleChange, setFormData }: PersonalInfoStepProps) {
-  // Function to handle nationality change specifically
-  const handleNationalityChange = (value: string) => {
-    console.log("Selected nationality:", value);
-    setFormData(prev => ({ ...prev, nationality: value }));
-  };
-
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Personal Details</h3>
       
       <div className="space-y-2">
         <Label htmlFor="nationality">Nationality</Label>
-        <Select
+        <Input
+          id="nationality"
+          name="nationality"
+          type="text"
+          placeholder="Enter your nationality"
           value={formData.nationality}
-          onValueChange={handleNationalityChange}
-        >
-          <SelectTrigger id="nationality" className="h-11">
-            <SelectValue placeholder="Select your country" />
-          </SelectTrigger>
-          <SelectContent className="max-h-[300px]">
-            {countries.map((country) => (
-              <SelectItem key={country.code} value={country.code}>
-                {country.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          onChange={handleChange}
+          required
+          className="h-11"
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
