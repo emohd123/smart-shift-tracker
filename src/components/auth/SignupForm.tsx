@@ -39,8 +39,11 @@ export default function SignupForm() {
       setIsSuccess(true);
       toast({
         title: "Account created successfully",
-        description: "Please check your email to confirm your account",
+        description: "You can now log in with your credentials",
       });
+      // Redirect to login instead of showing the success message
+      // This is because we've disabled email confirmation
+      navigate("/login");
     } catch (error) {
       setFormError((error as Error).message || "Could not create account");
       toast({
@@ -73,11 +76,11 @@ export default function SignupForm() {
         <div className="text-center space-y-6">
           <div className="bg-primary/10 rounded-lg p-4 text-center">
             <p className="text-sm">
-              Registration successful! Please check your email at <strong>{email}</strong> to verify your account.
+              Registration successful! You can now log in with your credentials.
             </p>
           </div>
           <Link to="/login" className="text-primary hover:underline">
-            Return to login
+            Go to login
           </Link>
         </div>
       ) : (

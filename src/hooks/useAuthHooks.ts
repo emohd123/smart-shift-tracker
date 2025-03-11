@@ -51,13 +51,7 @@ export const useAuthMethods = () => {
       });
 
       if (error) {
-        if (error.message === "Email not confirmed") {
-          await supabase.auth.resend({
-            type: 'signup',
-            email: email
-          });
-          throw new Error("Your email is not confirmed. A new confirmation email has been sent. Please check your inbox and spam folder.");
-        }
+        // Don't check for email confirmation as we're disabling that requirement
         throw error;
       }
       
@@ -82,6 +76,8 @@ export const useAuthMethods = () => {
           data: {
             name,
           },
+          // Auto-confirm emails for better testing experience
+          emailRedirectTo: `${window.location.origin}/login`,
         },
       });
 

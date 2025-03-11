@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function LoginForm() {
   const { login, loading, authError } = useAuth();
@@ -16,6 +17,26 @@ export default function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
+
+  // Attempt to create admin user on component mount
+  useEffect(() => {
+    const createAdminUser = async () => {
+      try {
+        setIsCreatingAdmin(true);
+        const { error } = await supabase.functions.invoke('create-admin');
+        if (error) {
+          console.error('Error creating admin:', error);
+        }
+      } catch (err) {
+        console.error('Failed to create admin user:', err);
+      } finally {
+        setIsCreatingAdmin(false);
+      }
+    };
+
+    createAdminUser();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +76,12 @@ export default function LoginForm() {
       {formError && (
         <Alert variant="destructive" className="text-sm">
           <AlertDescription>{formError}</AlertDescription>
+        </Alert>
+      )}
+
+      {isCreatingAdmin && (
+        <Alert className="text-sm bg-yellow-50 border-yellow-200">
+          <AlertDescription>Setting up admin account...</AlertDescription>
         </Alert>
       )}
 
