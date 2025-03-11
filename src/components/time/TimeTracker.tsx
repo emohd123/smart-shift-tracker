@@ -64,8 +64,8 @@ const TimeTracker = forwardRef(({
     }
   }, [autoStop, isTracking, handleStopTracking, logTimeEntry, shift]);
   
-  // Don't render the component if there's nothing to show
-  if (!isTracking && !autoStart) {
+  // Don't render the component if there's nothing to show and it's not supposed to autoStart
+  if (!isTracking && !shift) {
     return null;
   }
   
@@ -78,7 +78,7 @@ const TimeTracker = forwardRef(({
         <div className="flex items-center justify-between">
           <CardTitle>Time Tracker</CardTitle>
           {isTracking && (
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 flex items-center">
               Active
             </Badge>
           )}

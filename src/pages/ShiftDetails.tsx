@@ -1,4 +1,3 @@
-
 import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
@@ -176,15 +175,14 @@ const ShiftDetails = () => {
             onDelete={handleDelete}
           />
           
-          {isCheckedIn && (
-            <TimeTracker 
-              shift={shift}
-              onCheckIn={handleCheckIn}
-              onCheckOut={handleCheckOut}
-              ref={timeTrackerRef}
-              autoStop={isCheckingOut}
-            />
-          )}
+          {/* Always render TimeTracker but it will conditionally show based on its internal logic */}
+          <TimeTracker 
+            shift={shift}
+            onCheckIn={handleCheckIn}
+            onCheckOut={handleCheckOut}
+            ref={timeTrackerRef}
+            autoStop={isCheckingOut}
+          />
         </div>
       ) : (
         <div className="max-w-3xl mx-auto text-center py-12">

@@ -26,7 +26,7 @@ export default function TimeDisplay({ elapsedTime, earnings, isTracking }: TimeD
       <div className="text-4xl font-mono font-semibold mb-2">
         {formatTime(elapsedTime)}
       </div>
-      {isTracking && (
+      {isTracking && earnings > 0 && (
         <div className="text-muted-foreground text-sm mt-1">
           Current earnings: {formatBHD(earnings)}
         </div>
