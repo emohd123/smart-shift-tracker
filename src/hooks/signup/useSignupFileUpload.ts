@@ -89,7 +89,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         id_card_url: idCardUrl || null,
         profile_photo_url: profilePhotoUrl || null,
         verification_status: 'pending',
-        role: 'promoter'  // Explicitly set role to promoter
+        role: 'promoter'
       };
       
       console.log("Profile data to save:", profileData);
@@ -125,6 +125,20 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         
         console.log("Profile created successfully:", data);
       }
+
+      // Also update the user metadata to match the profile
+      const { error: updateUserError } = await supabase.auth.updateUser({
+        data: {
+          full_name: formData.fullName,
+          nationality: formData.nationality,
+          gender: formData.gender
+        }
+      });
+
+      if (updateUserError) {
+        console.error("Error updating user metadata:", updateUserError);
+      }
+      
     } catch (error: any) {
       console.error("Error updating profile:", error);
       throw error;

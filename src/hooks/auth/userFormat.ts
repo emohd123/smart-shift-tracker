@@ -11,13 +11,17 @@ export const formatUser = (supabaseUser: SupabaseUser | null): User | null => {
                   supabaseUser.user_metadata?.name || 
                   (supabaseUser.email ? supabaseUser.email.split('@')[0] : "User");
   
-  // Determine role - you can customize this logic based on your needs
+  // Determine role - this can be customized based on your needs
   const role: UserRole = supabaseUser.email === "emohd123@gmail.com" ? "admin" : "promoter";
+
+  // Get additional metadata if available
+  const metadata = supabaseUser.user_metadata || {};
 
   return {
     id: supabaseUser.id,
     name: fullName,
     email: supabaseUser.email || "",
     role: role,
+    metadata: metadata
   };
 };

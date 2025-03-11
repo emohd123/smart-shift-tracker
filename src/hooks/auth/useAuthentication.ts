@@ -45,13 +45,13 @@ export const useAuthentication = () => {
     try {
       console.log("Signing up with:", { name, email });
       
-      // Make sure we set full_name in the user metadata
+      // Set full_name in the user metadata
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: name // Important: This matches the field name expected in handle_new_user()
+            full_name: name
           },
         },
       });

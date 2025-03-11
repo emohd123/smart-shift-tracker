@@ -27,6 +27,7 @@ export default function ProfileHeader({ profilePhotoUrl, userName }: ProfileHead
       <div className="text-center">
         <h2 className="text-2xl font-bold">{userName}</h2>
         {user?.email && <p className="text-sm text-muted-foreground">{user.email}</p>}
+        {user?.role && <p className="text-xs font-medium text-primary-foreground bg-primary px-2 py-0.5 rounded-full inline-block mt-1">{user.role}</p>}
       </div>
     </div>
   );
