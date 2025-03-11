@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -6,13 +7,13 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
 import { UserProfile } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import ProfileFormFields from "./ProfileFormFields";
 import FileUploadFields from "./FileUploadFields";
 import ProfileHeader from "./ProfileHeader";
 import { useProfileData } from "./hooks/useProfileData";
 import { useFileUpload } from "./hooks/useFileUpload";
+import { useProfile } from "@/hooks/auth/useProfile";
 
 const formSchema = z.object({
   full_name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -30,6 +31,7 @@ const formSchema = z.object({
 export default function ProfileUpdateForm() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const { updateProfile } = useProfile();
   
   const { 
     profileData, 
@@ -37,7 +39,8 @@ export default function ProfileUpdateForm() {
     currentProfilePhotoUrl, 
     setCurrentProfilePhotoUrl,
     currentIdCardUrl, 
-    setCurrentIdCardUrl
+    setCurrentIdCardUrl,
+    loading: profileLoading
   } = useProfileData(user);
   
   const {
@@ -89,7 +92,6 @@ export default function ProfileUpdateForm() {
     try {
       let updates: Partial<UserProfile> = {
         ...values,
-        id: user.id,
       };
 
       // Handle file uploads
@@ -107,44 +109,21 @@ export default function ProfileUpdateForm() {
 
       console.log("Updating profile with:", updates);
       
-      // Update the profile in Supabase
-      const { error } = await supabase
-        .from('profiles')
-        .update(updates)
-        .eq('id', user.id);
-
-      if (error) {
-        console.error("Profile update error:", error);
-        toast.error(`Error updating profile: ${error.message}`);
-        throw error;
-      }
-
-      toast.success("Profile updated successfully");
+      // Update the profile using the updated hook
+      await updateProfile(user.id, updates);
       
       // Refresh the profile data
-      const { data: updatedProfile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .maybeSingle();
-        
-      if (fetchError) {
-        console.error("Error fetching updated profile:", fetchError);
-      } else if (updatedProfile) {
-        const typedProfile = {
-          ...updatedProfile,
-          verification_status: updatedProfile.verification_status as "pending" | "approved" | "rejected"
-        } as UserProfile;
-        
-        setProfileData(typedProfile);
-        setCurrentProfilePhotoUrl(typedProfile.profile_photo_url || null);
-        setCurrentIdCardUrl(typedProfile.id_card_url || null);
+      const updatedProfile = await fetch(`/api/profiles/${user.id}`).then(res => res.json());
+      
+      if (updatedProfile) {
+        setProfileData(updatedProfile);
+        setCurrentProfilePhotoUrl(updatedProfile.profile_photo_url || null);
+        setCurrentIdCardUrl(updatedProfile.id_card_url || null);
       }
       
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error("Error updating profile:", errorMessage);
-      toast.error(`Error updating profile: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -152,27 +131,35 @@ export default function ProfileUpdateForm() {
 
   return (
     <div className="space-y-8">
-      <ProfileHeader 
-        profilePhotoUrl={currentProfilePhotoUrl} 
-        userName={profileData?.full_name || user?.name || "User"} 
-      />
-      
-      <Card className="p-6">
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <ProfileFormFields form={form} />
-          
-          <FileUploadFields 
-            setIdCardFile={setIdCardFile} 
-            setProfilePhotoFile={setProfilePhotoFile}
-            currentIdCardUrl={currentIdCardUrl}
-            currentProfilePhotoUrl={currentProfilePhotoUrl}
+      {profileLoading ? (
+        <div className="flex justify-center items-center h-24">
+          <div className="animate-pulse text-primary">Loading profile data...</div>
+        </div>
+      ) : (
+        <>
+          <ProfileHeader 
+            profilePhotoUrl={currentProfilePhotoUrl} 
+            userName={profileData?.full_name || user?.name || "User"} 
           />
+          
+          <Card className="p-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <ProfileFormFields form={form} />
+              
+              <FileUploadFields 
+                setIdCardFile={setIdCardFile} 
+                setProfilePhotoFile={setProfilePhotoFile}
+                currentIdCardUrl={currentIdCardUrl}
+                currentProfilePhotoUrl={currentProfilePhotoUrl}
+              />
 
-          <Button type="submit" disabled={loading || isUploading}>
-            {loading || isUploading ? "Updating..." : "Update Profile"}
-          </Button>
-        </form>
-      </Card>
+              <Button type="submit" disabled={loading || isUploading}>
+                {loading || isUploading ? "Updating..." : "Update Profile"}
+              </Button>
+            </form>
+          </Card>
+        </>
+      )}
     </div>
   );
 }

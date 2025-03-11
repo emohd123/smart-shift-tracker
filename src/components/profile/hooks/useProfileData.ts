@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { UserProfile, User } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useProfile } from "@/hooks/auth/useProfile";
 
 export function useProfileData(user: User | null) {
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
@@ -10,6 +11,7 @@ export function useProfileData(user: User | null) {
   const [currentIdCardUrl, setCurrentIdCardUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { getUserProfile } = useProfile();
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -18,48 +20,29 @@ export function useProfileData(user: User | null) {
         try {
           console.log("Fetching profile for user ID:", user.id);
           
-          // Direct Supabase query to get profile data
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .maybeSingle();
-          
-          if (error) {
-            console.error("Error loading profile:", error);
-            setError(error.message);
-            toast.error("Failed to load profile");
-            return;
-          }
-          
-          console.log("Profile data retrieved:", data);
+          // Use the getUserProfile function from useProfile hook
+          const data = await getUserProfile(user.id);
           
           if (data) {
-            // Ensure the verification_status has the correct type
-            const typedProfile = {
-              ...data,
-              verification_status: data.verification_status as "pending" | "approved" | "rejected"
-            } as UserProfile;
-            
-            setProfileData(typedProfile);
+            setProfileData(data);
             
             // Set photo URLs if they exist
-            if (typedProfile.profile_photo_url) {
-              const profilePhotoUrl = await getPublicUrl('profile_photos', typedProfile.profile_photo_url);
+            if (data.profile_photo_url) {
+              const profilePhotoUrl = await getPublicUrl('profile_photos', data.profile_photo_url);
               setCurrentProfilePhotoUrl(profilePhotoUrl);
             }
             
-            if (typedProfile.id_card_url) {
-              const idCardUrl = await getPublicUrl('id_cards', typedProfile.id_card_url);
+            if (data.id_card_url) {
+              const idCardUrl = await getPublicUrl('id_cards', data.id_card_url);
               setCurrentIdCardUrl(idCardUrl);
             }
           } else {
             console.log("No profile data found for user");
+            toast.error("No profile data found. Please contact support.");
           }
         } catch (error: any) {
           console.error("Error loading profile:", error);
           setError(error.message);
-          toast.error("Failed to load profile");
         } finally {
           setLoading(false);
         }
@@ -67,7 +50,7 @@ export function useProfileData(user: User | null) {
     };
     
     loadProfile();
-  }, [user]);
+  }, [user, getUserProfile]);
 
   // Helper function to get public URL for storage items
   const getPublicUrl = async (bucketName: string, filePath: string) => {
