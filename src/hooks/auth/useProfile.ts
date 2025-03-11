@@ -48,7 +48,7 @@ export const useProfile = () => {
     }
   };
 
-  const updateProfile = async (userId: string, profileData: Partial<UserProfile>) => {
+  const updateProfile = async (userId: string, profileData: Partial<UserProfile>): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
@@ -81,7 +81,6 @@ export const useProfile = () => {
       }
       
       toast.success("Profile updated successfully");
-      return true;
     } catch (error: any) {
       console.error("Update profile error:", error);
       setError(error.message || "Failed to update profile");

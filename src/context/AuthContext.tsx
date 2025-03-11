@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useAuthMethods } from "@/hooks/useAuthHooks";
@@ -45,7 +46,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
-  updateProfile: (profile: ProfileUpdate) => Promise<void>;
+  updateProfile: (userId: string, profile: ProfileUpdate) => Promise<void>;
   getUserProfile: (userId: string) => Promise<UserProfile>;
   deactivateAccount: () => Promise<void>;
   deleteAccount: () => Promise<void>;
@@ -76,7 +77,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout, 
     resetPassword, 
     updatePassword, 
-    updateProfile,
+    updateProfile: updateProfileMethod,
     getUserProfile: getUserProfileMethod,
     deactivateAccount: deactivateAccountMethod,
     deleteAccount: deleteAccountMethod,
@@ -98,6 +99,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ...profile,
       verification_status: profile.verification_status as "pending" | "approved" | "rejected"
     } as UserProfile;
+  };
+
+  // Wrap updateProfile to match the expected void return type
+  const updateProfile = async (userId: string, profile: ProfileUpdate): Promise<void> => {
+    await updateProfileMethod(userId, profile);
   };
 
   // Wrap account removal methods

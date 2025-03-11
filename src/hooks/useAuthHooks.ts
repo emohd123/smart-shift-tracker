@@ -46,7 +46,7 @@ export const useAuthMethods = () => {
     getUserProfile,
     resetPassword,
     updatePassword,
-    updateProfile: (profile: ProfileUpdate) => updateProfile(profile),
+    updateProfile: (userId: string, profile: ProfileUpdate) => updateProfile(userId, profile),
     deactivateAccount,
     deleteAccount,
     loading,
