@@ -96,6 +96,39 @@ export type Database = {
         }
         Relationships: []
       }
+      time_logs: {
+        Row: {
+          check_in_time: string
+          check_out_time: string | null
+          created_at: string
+          earnings: number | null
+          id: string
+          shift_id: string
+          total_hours: number | null
+          user_id: string
+        }
+        Insert: {
+          check_in_time?: string
+          check_out_time?: string | null
+          created_at?: string
+          earnings?: number | null
+          id?: string
+          shift_id: string
+          total_hours?: number | null
+          user_id: string
+        }
+        Update: {
+          check_in_time?: string
+          check_out_time?: string | null
+          created_at?: string
+          earnings?: number | null
+          id?: string
+          shift_id?: string
+          total_hours?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

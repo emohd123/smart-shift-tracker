@@ -1,12 +1,11 @@
 
-import { Shift } from "../../shifts/ShiftCard";
 import { formatBHD } from "../../shifts/utils/currencyUtils";
 
 type TimeDisplayProps = {
   elapsedTime: number;
   earnings: number;
-  shift?: Shift;
   isTracking: boolean;
+  shift?: any;
 };
 
 export const formatTime = (seconds: number) => {
@@ -14,21 +13,20 @@ export const formatTime = (seconds: number) => {
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
   
-  const parts = [];
-  if (hours > 0) parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`);
-  if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
-  if (secs > 0 || parts.length === 0) parts.push(`${secs} ${secs === 1 ? 'second' : 'seconds'}`);
-  
-  return parts.join(', ');
+  return [
+    hours.toString().padStart(2, '0'),
+    minutes.toString().padStart(2, '0'),
+    secs.toString().padStart(2, '0')
+  ].join(':');
 };
 
-export default function TimeDisplay({ elapsedTime, earnings, shift, isTracking }: TimeDisplayProps) {
+export default function TimeDisplay({ elapsedTime, earnings, isTracking }: TimeDisplayProps) {
   return (
     <div className="bg-muted/50 rounded-lg p-6 flex flex-col items-center justify-center">
       <div className="text-4xl font-mono font-semibold mb-2">
         {formatTime(elapsedTime)}
       </div>
-      {isTracking && shift && (
+      {isTracking && (
         <div className="text-muted-foreground text-sm mt-1">
           Current earnings: {formatBHD(earnings)}
         </div>

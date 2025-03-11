@@ -27,7 +27,12 @@ const ShiftDetails = () => {
   const navigate = useNavigate();
   const [shift, setShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
-  const timeTrackerRef = useRef<{ handleStartTracking: () => void } | null>(null);
+  const [isCheckedIn, setIsCheckedIn] = useState(false);
+  const [isCheckingOut, setIsCheckingOut] = useState(false);
+  const timeTrackerRef = useRef<{ 
+    handleStartTracking: () => void;
+    handleStopTracking: () => void;
+  } | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -43,6 +48,8 @@ const ShiftDetails = () => {
       const foundShift = mockShifts.find(s => s.id === id);
       if (foundShift) {
         setShift(foundShift);
+        // If the shift is already ongoing, mark as checked in
+        setIsCheckedIn(foundShift.status === "ongoing");
       }
       setLoading(false);
     }, 500);
@@ -72,10 +79,17 @@ const ShiftDetails = () => {
       // Simulate API update
       const updatedShift = { ...shift, status: "ongoing" as const };
       setShift(updatedShift);
+      setIsCheckedIn(true);
+      
       toast({
         title: "Checked In",
         description: "You have successfully checked in for this shift",
       });
+      
+      // Start time tracking automatically
+      if (timeTrackerRef.current) {
+        timeTrackerRef.current.handleStartTracking();
+      }
       
       // In a real app, you'd update the database here
       try {
@@ -90,9 +104,18 @@ const ShiftDetails = () => {
 
   const handleCheckOut = async () => {
     if (shift) {
+      setIsCheckingOut(true);
+      
+      // Stop time tracking first
+      if (timeTrackerRef.current) {
+        timeTrackerRef.current.handleStopTracking();
+      }
+      
       // Simulate API update
       const updatedShift = { ...shift, status: "completed" as const };
       setShift(updatedShift);
+      setIsCheckedIn(false);
+      
       toast({
         title: "Checked Out",
         description: "You have successfully checked out from this shift",
@@ -105,6 +128,8 @@ const ShiftDetails = () => {
         console.log("Updating shift status to completed:", shift.id);
       } catch (error) {
         console.error("Error updating shift status:", error);
+      } finally {
+        setIsCheckingOut(false);
       }
     }
   };
@@ -151,12 +176,15 @@ const ShiftDetails = () => {
             onDelete={handleDelete}
           />
           
-          <TimeTracker 
-            shift={shift}
-            onCheckIn={handleCheckIn}
-            onCheckOut={handleCheckOut}
-            ref={timeTrackerRef}
-          />
+          {isCheckedIn && (
+            <TimeTracker 
+              shift={shift}
+              onCheckIn={handleCheckIn}
+              onCheckOut={handleCheckOut}
+              ref={timeTrackerRef}
+              autoStop={isCheckingOut}
+            />
+          )}
         </div>
       ) : (
         <div className="max-w-3xl mx-auto text-center py-12">

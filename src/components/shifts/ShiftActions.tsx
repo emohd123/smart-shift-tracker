@@ -69,8 +69,7 @@ export function ShiftActions({
       
       if (withinRadius) {
         onCheckIn();
-        // Automatically trigger time tracking
-        window.startTimeTracking?.(shift);
+        // Time tracking is now handled by the TimeTracker component automatically
         
         toast({
           title: "Location Verified",
@@ -94,6 +93,11 @@ export function ShiftActions({
     } finally {
       setLoading(false);
     }
+  };
+  
+  const handleCheckOut = () => {
+    // The actual time tracking will be stopped in the TimeTracker component
+    onCheckOut();
   };
   
   if (isAdmin) {
@@ -133,7 +137,7 @@ export function ShiftActions({
           </Button>
         ) : (
           <Button 
-            onClick={onCheckOut}
+            onClick={handleCheckOut}
             variant="outline"
           >
             <Clock size={16} className="mr-2" />

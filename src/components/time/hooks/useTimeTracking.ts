@@ -1,12 +1,15 @@
-import { useState, useEffect } from "react";
+
+import { useState, useEffect, useCallback } from "react";
 import { Shift } from "../../shifts/ShiftCard";
 import { useToast } from "@/hooks/use-toast";
 import { formatTime } from "../components/TimeDisplay";
 import { formatBHD } from "../../shifts/utils/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentLocation, isWithinRadius } from "../../shifts/utils/locationUtils";
+import { useAuth } from "@/context/AuthContext";
 
 export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOut?: () => void) {
+  const { user } = useAuth();
   const { toast } = useToast();
   const [isTracking, setIsTracking] = useState(false);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -15,9 +18,51 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
   const [loading, setLoading] = useState(false);
   const [locationVerified, setLocationVerified] = useState(false);
   const [showLocationError, setShowLocationError] = useState(false);
+  const [timeLogId, setTimeLogId] = useState<string | null>(null);
   
   const isNotActiveShift = shift ? (shift.status === "completed" || shift.status === "cancelled") : false;
   
+  // Check if there's an active time log for this shift when component mounts
+  useEffect(() => {
+    if (shift && user) {
+      const checkExistingTimeLog = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('time_logs')
+            .select('*')
+            .eq('shift_id', shift.id)
+            .eq('user_id', user.id)
+            .is('check_out_time', null)
+            .single();
+          
+          if (error && error.code !== 'PGRST116') {
+            console.error("Error checking time logs:", error);
+            return;
+          }
+          
+          if (data) {
+            // We have an active time log, so let's resume tracking
+            setTimeLogId(data.id);
+            setStartTime(new Date(data.check_in_time));
+            setIsTracking(true);
+            setLocationVerified(true);
+            
+            // Calculate elapsed time since check-in
+            const startTimeMs = new Date(data.check_in_time).getTime();
+            const nowMs = new Date().getTime();
+            const elapsedSeconds = Math.floor((nowMs - startTimeMs) / 1000);
+            setElapsedTime(elapsedSeconds);
+          }
+        } catch (error) {
+          console.error("Error checking existing time logs:", error);
+        }
+      };
+      
+      checkExistingTimeLog();
+    }
+  }, [shift, user]);
+  
+  // Update earnings based on elapsed time
   useEffect(() => {
     if (shift && isTracking) {
       const hourlyRate = shift.payRate;
@@ -26,6 +71,7 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     }
   }, [elapsedTime, shift, isTracking]);
   
+  // Timer effect to update elapsed time
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
@@ -38,6 +84,54 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     return () => clearInterval(interval);
   }, [isTracking]);
   
+  // Function to log time entry to database
+  const logTimeEntry = useCallback(async (shiftId: string) => {
+    if (!user) return;
+    
+    try {
+      if (timeLogId) {
+        // Update existing time log with check-out time
+        const checkOutTime = new Date();
+        const hours = elapsedTime / 3600;
+        
+        await supabase
+          .from('time_logs')
+          .update({
+            check_out_time: checkOutTime.toISOString(),
+            total_hours: hours,
+            earnings: shift ? hours * shift.payRate : 0
+          })
+          .eq('id', timeLogId);
+        
+        setTimeLogId(null);
+      } else if (isTracking) {
+        // Create new time log entry
+        const checkInTime = startTime || new Date();
+        const checkOutTime = new Date();
+        const hours = elapsedTime / 3600;
+        
+        await supabase
+          .from('time_logs')
+          .insert({
+            user_id: user.id,
+            shift_id: shiftId,
+            check_in_time: checkInTime.toISOString(),
+            check_out_time: checkOutTime.toISOString(),
+            total_hours: hours,
+            earnings: shift ? hours * shift.payRate : 0
+          });
+      }
+    } catch (error) {
+      console.error("Error logging time entry:", error);
+      toast({
+        title: "Error",
+        description: "Could not save your time entry.",
+        variant: "destructive"
+      });
+    }
+  }, [timeLogId, user, isTracking, startTime, elapsedTime, shift, toast]);
+  
+  // Verify location for check-in
   const verifyLocation = async (): Promise<boolean> => {
     if (!shift) return true;
     
@@ -88,7 +182,10 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     }
   };
   
+  // Start time tracking
   const handleStartTracking = async () => {
+    if (!user) return;
+    
     setLoading(true);
     
     try {
@@ -101,8 +198,35 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
       
       setLocationVerified(true);
       setShowLocationError(false);
+      
+      const now = new Date();
+      setStartTime(now);
       setIsTracking(true);
-      setStartTime(new Date());
+      setElapsedTime(0);
+      
+      // Create time log entry when starting
+      if (shift) {
+        const { data, error } = await supabase
+          .from('time_logs')
+          .insert({
+            user_id: user.id,
+            shift_id: shift.id,
+            check_in_time: now.toISOString()
+          })
+          .select()
+          .single();
+          
+        if (error) {
+          console.error("Error creating time log:", error);
+          toast({
+            title: "Error",
+            description: "Could not create time log entry.",
+            variant: "destructive"
+          });
+        } else if (data) {
+          setTimeLogId(data.id);
+        }
+      }
       
       toast({
         title: "Time Tracking Started",
@@ -124,7 +248,12 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     }
   };
   
+  // Stop time tracking
   const handleStopTracking = () => {
+    if (shift && timeLogId) {
+      logTimeEntry(shift.id);
+    }
+    
     setIsTracking(false);
     setLocationVerified(false);
     
@@ -154,6 +283,7 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     isNotActiveShift,
     handleStartTracking,
     handleStopTracking,
-    setShowLocationError
+    setShowLocationError,
+    logTimeEntry
   };
 }

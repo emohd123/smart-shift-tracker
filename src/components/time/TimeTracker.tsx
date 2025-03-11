@@ -6,18 +6,25 @@ import { cn } from "@/lib/utils";
 import { useTimeTracking } from "./hooks/useTimeTracking";
 import TimeDisplay from "./components/TimeDisplay";
 import LocationVerification from "./components/LocationVerification";
-import ShiftDetails from "./components/ShiftDetails";
 import LocationError from "./components/LocationError";
 import TrackingControls from "./components/TrackingControls";
-import { forwardRef, useImperativeHandle } from "react";
+import { forwardRef, useImperativeHandle, useEffect } from "react";
 
 type TimeTrackerProps = {
   shift?: Shift;
   onCheckIn?: () => void;
   onCheckOut?: () => void;
+  autoStart?: boolean;
+  autoStop?: boolean;
 };
 
-const TimeTracker = forwardRef(({ shift, onCheckIn, onCheckOut }: TimeTrackerProps, ref) => {
+const TimeTracker = forwardRef(({ 
+  shift, 
+  onCheckIn, 
+  onCheckOut,
+  autoStart,
+  autoStop
+}: TimeTrackerProps, ref) => {
   const {
     isTracking,
     elapsedTime,
@@ -28,13 +35,39 @@ const TimeTracker = forwardRef(({ shift, onCheckIn, onCheckOut }: TimeTrackerPro
     showLocationError,
     isNotActiveShift,
     handleStartTracking,
-    handleStopTracking
+    handleStopTracking,
+    logTimeEntry
   } = useTimeTracking(shift, onCheckIn, onCheckOut);
   
   // Expose the handleStartTracking method to parent components
   useImperativeHandle(ref, () => ({
-    handleStartTracking
+    handleStartTracking,
+    handleStopTracking
   }));
+  
+  // Auto-start tracking when the autoStart prop is true
+  useEffect(() => {
+    if (autoStart && shift && !isTracking && !isNotActiveShift) {
+      handleStartTracking();
+    }
+  }, [autoStart, shift, isTracking, isNotActiveShift, handleStartTracking]);
+  
+  // Auto-stop tracking when the autoStop prop is true
+  useEffect(() => {
+    if (autoStop && isTracking) {
+      handleStopTracking();
+      
+      // Log the time entry when stopping automatically
+      if (shift) {
+        logTimeEntry(shift.id);
+      }
+    }
+  }, [autoStop, isTracking, handleStopTracking, logTimeEntry, shift]);
+  
+  // Don't render the component if there's nothing to show
+  if (!isTracking && !autoStart) {
+    return null;
+  }
   
   return (
     <Card className={cn(
@@ -62,7 +95,6 @@ const TimeTracker = forwardRef(({ shift, onCheckIn, onCheckOut }: TimeTrackerPro
         <TimeDisplay
           elapsedTime={elapsedTime}
           earnings={earnings}
-          shift={shift}
           isTracking={isTracking}
         />
         
@@ -73,15 +105,15 @@ const TimeTracker = forwardRef(({ shift, onCheckIn, onCheckOut }: TimeTrackerPro
         
         {showLocationError && <LocationError />}
         
-        {shift && <ShiftDetails shift={shift} />}
-        
-        <TrackingControls
-          isTracking={isTracking}
-          onStartTracking={handleStartTracking}
-          onStopTracking={handleStopTracking}
-          loading={loading}
-          isShiftActive={!isNotActiveShift}
-        />
+        {!autoStart && !autoStop && (
+          <TrackingControls
+            isTracking={isTracking}
+            onStartTracking={handleStartTracking}
+            onStopTracking={handleStopTracking}
+            loading={loading}
+            isShiftActive={!isNotActiveShift}
+          />
+        )}
       </CardContent>
     </Card>
   );
