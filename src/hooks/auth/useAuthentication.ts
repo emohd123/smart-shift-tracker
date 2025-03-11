@@ -1,7 +1,6 @@
 
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User as SupabaseUser } from "@supabase/supabase-js";
 
 export const useAuthentication = () => {
   const [loading, setLoading] = useState<boolean>(false);

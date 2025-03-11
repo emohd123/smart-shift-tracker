@@ -37,7 +37,7 @@ export const useAccount = () => {
     setLoading(true);
     setAuthError(null);
     try {
-      // Call the delete_user RPC function with proper typing
+      // Call the delete_user RPC function
       const { error } = await supabase.rpc('delete_user', {});
       
       if (error) {
