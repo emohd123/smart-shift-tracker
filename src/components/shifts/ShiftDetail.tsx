@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Shift } from "./ShiftCard";
 import { 
   Card
@@ -16,6 +16,7 @@ import { ShiftHeader } from "./ShiftHeader";
 import { ShiftInfo } from "./ShiftInfo";
 import { ShiftActions } from "./ShiftActions";
 import MapSelector from "./MapSelector";
+import { useResponsive } from "@/hooks/useResponsive";
 
 type ShiftDetailProps = {
   shift: Shift;
@@ -33,11 +34,22 @@ export default function ShiftDetail({
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isMobile } = useResponsive();
   const [isCheckedIn, setIsCheckedIn] = useState(shift.status === "ongoing");
   const [showLocationMap, setShowLocationMap] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
   
   const isAdmin = user?.role === "admin";
   const isPromoter = user?.role === "promoter";
+  
+  useEffect(() => {
+    // Add animation effect on load
+    const timer = setTimeout(() => {
+      setIsLoaded(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
   
   const handleCheckIn = () => {
     setIsCheckedIn(true);
@@ -74,18 +86,21 @@ export default function ShiftDetail({
   };
   
   return (
-    <div className="max-w-3xl mx-auto animate-fade-in">
+    <div className={cn(
+      "max-w-3xl mx-auto transition-all duration-500", 
+      isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+    )}>
       <Button 
         variant="ghost" 
         size="sm" 
-        className="mb-4" 
+        className="mb-4 group hover:bg-primary/10" 
         onClick={() => navigate(-1)}
       >
-        <ArrowLeft size={16} className="mr-1" />
+        <ArrowLeft size={16} className="mr-1 group-hover:-translate-x-1 transition-transform" />
         Back
       </Button>
       
-      <Card className="shadow-sm border-border/50">
+      <Card className="shadow-sm border-border/50 overflow-hidden">
         <ShiftHeader 
           shift={shift} 
           isAdmin={isAdmin} 
@@ -109,7 +124,7 @@ export default function ShiftDetail({
       </Card>
       
       {showLocationMap && isAdmin && (
-        <div className="mt-6">
+        <div className="mt-6 animate-fade-in">
           <MapSelector 
             shiftId={shift.id} 
             onSave={() => setShowLocationMap(false)}

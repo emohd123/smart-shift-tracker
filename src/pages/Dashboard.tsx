@@ -7,6 +7,7 @@ import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import PrometerDashboard from "@/components/dashboard/PromoterDashboard";
 import { Shift } from "@/components/shifts/ShiftCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useResponsive } from "@/hooks/useResponsive";
 
 // Mock data for shifts
 const mockShifts: Shift[] = [
@@ -117,6 +118,7 @@ const Dashboard = () => {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { isMobile } = useResponsive();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -125,15 +127,22 @@ const Dashboard = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Load mock shifts
+  // Load mock shifts with staggered timing to feel more realistic
   useEffect(() => {
+    if (!isAuthenticated) return;
+    
     const timer = setTimeout(() => {
-      setShifts(mockShifts);
-      setLoading(false);
+      // Simulate a network request with gradual data loading
+      setShifts(mockShifts.slice(0, 3));
+      
+      setTimeout(() => {
+        setShifts(mockShifts);
+        setLoading(false);
+      }, 300);
     }, 500);
     
     return () => clearTimeout(timer);
-  }, []);
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return null; // Don't render anything while redirecting
@@ -143,13 +152,20 @@ const Dashboard = () => {
     <AppLayout title="Dashboard">
       {loading ? (
         <div className="space-y-6">
-          <Skeleton className="h-8 w-64" />
+          <div className="animate-pulse space-y-2">
+            <Skeleton className="h-8 w-64 bg-primary/5" />
+            <Skeleton className="h-4 w-48 bg-primary/5" />
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
-              <Skeleton key={i} className="h-32 w-full" />
+              <Skeleton 
+                key={i} 
+                className="h-32 w-full rounded-lg bg-primary/5 animate-pulse"
+                style={{ animationDelay: `${i * 100}ms` }}
+              />
             ))}
           </div>
-          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-64 w-full rounded-lg bg-primary/5 animate-pulse" />
         </div>
       ) : user?.role === "admin" ? (
         <AdminDashboard shifts={shifts} />
