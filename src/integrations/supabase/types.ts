@@ -180,6 +180,12 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      delete_user_time_logs: {
+        Args: {
+          user_id_param: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       gender_type: "Male" | "Female" | "Other"

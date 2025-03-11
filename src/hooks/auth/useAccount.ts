@@ -51,11 +51,13 @@ export const useAccount = () => {
       const userId = user.id;
       toast.info("Deleting account and all associated data...");
       
-      // First, delete ALL time logs for this user with a more thorough approach
+      // First, delete ALL time logs for this user using our custom RPC function
       console.log("Attempting to delete time logs for user:", userId);
       
-      // Try direct SQL deletion through RPC to ensure all time logs are removed
-      const { error: rpcError } = await supabase.rpc('delete_user_time_logs', { user_id_param: userId });
+      // Use the RPC function we created with the correct parameter name
+      const { error: rpcError } = await supabase.rpc('delete_user_time_logs', { 
+        user_id_param: userId 
+      });
       
       if (rpcError) {
         console.error("RPC delete time logs error:", rpcError);
