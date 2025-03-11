@@ -1,8 +1,9 @@
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 
-// Export the UserRole and User types so they can be used in other components
+// Export the UserRole and User types
 export type UserRole = "admin" | "promoter";
 
 export interface User {
@@ -18,7 +19,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 // Create a default context
@@ -28,62 +29,78 @@ const AuthContext = createContext<AuthContextType>({
   loading: false,
   login: async () => {},
   signup: async () => {},
-  logout: () => {},
+  logout: async () => {},
 });
-
-// Mock user data - ensuring emohd123@gmail.com is included with correct credentials
-const mockUsers = [
-  {
-    id: "1",
-    name: "Admin User",
-    email: "emohd123@gmail.com",
-    password: "password123",
-    role: "admin" as UserRole,
-  },
-  {
-    id: "2",
-    name: "Promoter User",
-    email: "promoter@example.com",
-    password: "password123",
-    role: "promoter" as UserRole,
-  },
-];
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  
+  const [loading, setLoading] = useState<boolean>(true);
+  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
+
+  // Function to format user data
+  const formatUser = (supabaseUser: SupabaseUser | null): User | null => {
+    if (!supabaseUser) return null;
+
+    // Default role is promoter, admin is for special accounts
+    const role: UserRole = supabaseUser.email === "emohd123@gmail.com" ? "admin" : "promoter";
+
+    return {
+      id: supabaseUser.id,
+      name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || "User",
+      email: supabaseUser.email || "",
+      role: role,
+    };
+  };
+
   // Check for existing session on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    const initializeAuth = async () => {
       try {
-        setUser(JSON.parse(storedUser));
+        // Get session
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session) {
+          setSupabaseUser(session.user);
+          setUser(formatUser(session.user));
+        }
       } catch (error) {
-        console.error("Failed to parse stored user:", error);
-        localStorage.removeItem("user");
+        console.error("Error checking auth session:", error);
+      } finally {
+        setLoading(false);
       }
-    }
+    };
+
+    initializeAuth();
+
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log("Auth state changed:", event);
+        setSupabaseUser(session?.user || null);
+        setUser(formatUser(session?.user || null));
+        setLoading(false);
+      }
+    );
+
+    // Cleanup subscription
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // Mock authentication
-      const foundUser = mockUsers.find(
-        (u) => u.email === email && u.password === password
-      );
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      if (!foundUser) {
-        throw new Error("Invalid credentials");
+      if (error) {
+        throw error;
       }
-
-      // For debugging
-      console.log("Found user:", foundUser);
-
-      const { password: _, ...userWithoutPassword } = foundUser;
-      setUser(userWithoutPassword);
-      localStorage.setItem("user", JSON.stringify(userWithoutPassword));
+      
+      console.log("Login successful:", data.user);
     } catch (error) {
       console.error("Login error:", error);
       throw error;
@@ -95,33 +112,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signup = async (name: string, email: string, password: string) => {
     setLoading(true);
     try {
-      // Check if user already exists
-      const userExists = mockUsers.some(u => u.email === email);
-      
-      if (userExists) {
-        throw new Error("User with this email already exists");
-      }
-
-      // Set role - emohd123@gmail.com is the only admin, everyone else is a promoter
-      const role: UserRole = email === "emohd123@gmail.com" ? "admin" : "promoter";
-
-      // Create new user
-      const newUser = {
-        id: (mockUsers.length + 1).toString(),
-        name,
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        role,
-      };
-      
-      // In a real app, mockUsers would be updated via an API
-      // For this example, we'll simulate successful registration
-      const { password: _, ...userWithoutPassword } = newUser;
-      
-      // Set user in state and localStorage
-      setUser(userWithoutPassword);
-      localStorage.setItem("user", JSON.stringify(userWithoutPassword));
-      
+        options: {
+          data: {
+            name,
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log("Signup successful:", data.user);
     } catch (error) {
       console.error("Signup error:", error);
       throw error;
@@ -130,9 +135,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem("user");
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error("Error signing out:", error);
+    }
   };
 
   return (

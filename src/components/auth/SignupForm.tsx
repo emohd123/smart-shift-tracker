@@ -6,11 +6,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Clock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function SignupForm() {
   const { signup, loading } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,8 +33,9 @@ export default function SignupForm() {
       await signup(name, email, password);
       toast({
         title: "Account created successfully",
-        description: "Welcome to SmartShift",
+        description: "Please check your email to confirm your account",
       });
+      navigate("/login");
     } catch (error) {
       toast({
         title: "Registration failed",

@@ -19,7 +19,7 @@ export default function LoginForm() {
     e.preventDefault();
     
     try {
-      console.log("Attempting login with:", email, password);
+      console.log("Attempting login with:", email);
       await login(email, password);
       toast({
         title: "Logged in successfully",
