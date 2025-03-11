@@ -9,7 +9,11 @@ import { Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function ResetPasswordForm() {
+interface ResetPasswordFormProps {
+  token: string | null;
+}
+
+export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const { updatePassword, loading, authError } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -20,6 +24,11 @@ export default function ResetPasswordForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
+    
+    if (!token) {
+      setFormError("Invalid or missing reset token. Please request a new password reset link.");
+      return;
+    }
     
     if (password !== confirmPassword) {
       setFormError("Passwords do not match");
