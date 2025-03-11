@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { NavigationLinks } from "./NavigationLinks";
 import { User as UserType } from "@/context/AuthContext";
 import { UserProfile } from "./UserProfile";
+import { useAuth } from "@/context/AuthContext";
 
 interface AppSidebarProps {
   user: UserType | null;
@@ -21,11 +22,15 @@ export function AppSidebar({
   isMobile,
   navigate
 }: AppSidebarProps) {
-  const handleLogout = () => {
-    // Import the logout function
-    const { logout } = require("@/context/AuthContext").useAuth();
-    logout();
-    navigate("/login");
+  const { logout } = useAuth();
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   const navItems = user?.role === "admin" 
