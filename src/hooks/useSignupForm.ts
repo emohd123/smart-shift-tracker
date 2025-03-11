@@ -25,27 +25,37 @@ export const useSignupForm = () => {
     setIsSuccess,
     uploadingFiles,
     setUploadingFiles,
-    handleChange
+    handleChange,
+    activeSection,
+    setActiveSection
   } = useSignupFormState();
   
-  const { handleFileChange } = useSignupFileHandling(setFileData);
-  const { validateForm } = useSignupFormValidation(formData, fileData, setFormError);
+  const { handleFileChange, cleanupFilePreview } = useSignupFileHandling(setFileData);
+  const { validateForm, validateSection } = useSignupFormValidation(formData, fileData, setFormError);
   const { uploadFiles, updateUserProfile } = useSignupFileUpload(setUploadingFiles);
 
   const handleNextStep = () => {
-    if (validateForm(step)) {
-      setStep(prevStep => prevStep + 1);
+    if (validateSection(activeSection)) {
+      if (activeSection === "account") {
+        setActiveSection("personal");
+      } else if (activeSection === "personal") {
+        setActiveSection("documents");
+      }
     }
   };
 
   const handlePrevStep = () => {
-    setStep(prevStep => prevStep - 1);
+    if (activeSection === "personal") {
+      setActiveSection("account");
+    } else if (activeSection === "documents") {
+      setActiveSection("personal");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!validateForm(step)) return;
+    if (!validateForm()) return;
     
     try {
       setFormError(null);
@@ -95,6 +105,8 @@ export const useSignupForm = () => {
     loading,
     uploadingFiles,
     setFileData,
-    authError
+    authError,
+    activeSection,
+    setActiveSection
   };
 };

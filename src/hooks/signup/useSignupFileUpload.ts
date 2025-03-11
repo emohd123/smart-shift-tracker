@@ -57,26 +57,51 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
 
   const updateUserProfile = async (userId: string, formData: any, idCardUrl: string, profilePhotoUrl: string) => {
     try {
-      const { error } = await supabase
+      // First check if a profile already exists
+      const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
-        .update({
-          full_name: formData.fullName,
-          nationality: formData.nationality,
-          age: parseInt(formData.age),
-          phone_number: formData.phoneNumber,
-          gender: formData.gender as any,
-          height: parseInt(formData.height),
-          weight: parseInt(formData.weight),
-          is_student: formData.isStudent,
-          address: formData.address,
-          bank_details: formData.bankDetails || null,
-          id_card_url: idCardUrl,
-          profile_photo_url: profilePhotoUrl,
-          verification_status: 'pending'
-        })
-        .eq('id', userId);
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
         
-      if (error) throw error;
+      if (fetchError) throw fetchError;
+
+      const profileData = {
+        full_name: formData.fullName,
+        nationality: formData.nationality,
+        age: parseInt(formData.age),
+        phone_number: formData.phoneNumber,
+        gender: formData.gender as any,
+        height: parseInt(formData.height),
+        weight: parseInt(formData.weight),
+        is_student: formData.isStudent,
+        address: formData.address,
+        bank_details: formData.bankDetails || null,
+        id_card_url: idCardUrl,
+        profile_photo_url: profilePhotoUrl,
+        verification_status: 'pending',
+        role: 'promoter'  // Explicitly set role to promoter
+      };
+        
+      // If profile exists, update it
+      if (existingProfile) {
+        const { error } = await supabase
+          .from('profiles')
+          .update(profileData)
+          .eq('id', userId);
+          
+        if (error) throw error;
+      } else {
+        // If profile doesn't exist, insert a new one
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            ...profileData
+          });
+          
+        if (error) throw error;
+      }
     } catch (error: any) {
       console.error("Error updating profile:", error);
       throw error;
