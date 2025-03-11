@@ -41,7 +41,7 @@ export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
   
   // Calculate unpaid amount (in a real app, this would come from an API)
   const unpaidAmount = shifts
-    .filter(shift => shift.status === "completed" && !shift.isPaid)
+    .filter(shift => shift.status === "completed" && shift.isPaid === false)
     .reduce((sum, shift) => {
       // Assuming 8 hour shifts for simplicity
       const hours = 8;

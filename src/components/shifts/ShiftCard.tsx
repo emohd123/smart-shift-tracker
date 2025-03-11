@@ -13,6 +13,7 @@ export type Shift = {
   location: string;
   status: "upcoming" | "ongoing" | "completed" | "cancelled";
   payRate: number;
+  isPaid?: boolean; // Added this optional property
 };
 
 type ShiftCardProps = {

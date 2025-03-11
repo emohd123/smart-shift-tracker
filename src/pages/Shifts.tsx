@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
@@ -18,6 +17,7 @@ export const mockShifts: Shift[] = [
     location: "Central Mall, 123 Main St",
     status: "completed",
     payRate: 15,
+    isPaid: true
   },
   {
     id: "2",
@@ -28,6 +28,7 @@ export const mockShifts: Shift[] = [
     location: "Convention Center, 456 Tech Blvd",
     status: "completed",
     payRate: 18,
+    isPaid: false
   },
   {
     id: "3",
@@ -38,6 +39,7 @@ export const mockShifts: Shift[] = [
     location: "SuperMart, 789 Food Ave",
     status: "ongoing",
     payRate: 14,
+    isPaid: true
   },
   {
     id: "4",
@@ -48,6 +50,7 @@ export const mockShifts: Shift[] = [
     location: "Fashion Mall, 321 Style St",
     status: "upcoming",
     payRate: 16,
+    isPaid: false
   },
   {
     id: "5",
@@ -58,6 +61,7 @@ export const mockShifts: Shift[] = [
     location: "Downtown Plaza, 654 App Rd",
     status: "upcoming",
     payRate: 20,
+    isPaid: true
   },
   {
     id: "6",
@@ -68,6 +72,7 @@ export const mockShifts: Shift[] = [
     location: "Wellness Center, 987 Health Pkwy",
     status: "upcoming",
     payRate: 15,
+    isPaid: false
   },
   {
     id: "7",
@@ -78,6 +83,7 @@ export const mockShifts: Shift[] = [
     location: "Kids Mall, 135 Toy Lane",
     status: "upcoming",
     payRate: 14,
+    isPaid: true
   },
   {
     id: "8",
@@ -88,6 +94,7 @@ export const mockShifts: Shift[] = [
     location: "City Market, 246 Market Square",
     status: "upcoming",
     payRate: 15,
+    isPaid: false
   },
   {
     id: "9",
@@ -98,6 +105,7 @@ export const mockShifts: Shift[] = [
     location: "Sports Arena, 357 Athletic Dr",
     status: "upcoming",
     payRate: 17,
+    isPaid: true
   },
   {
     id: "10",
@@ -108,6 +116,7 @@ export const mockShifts: Shift[] = [
     location: "Auto Dealership, 468 Car St",
     status: "upcoming",
     payRate: 20,
+    isPaid: false
   },
 ];
 
