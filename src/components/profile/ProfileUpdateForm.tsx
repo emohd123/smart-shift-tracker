@@ -1,326 +1,200 @@
 
-import { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { AlertCircle, Upload } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { 
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from "@/components/ui/select";
-import { countries } from "@/lib/countries";
+import { toast } from "sonner";
+import { useAuth } from "@/context/AuthContext";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useEffect, useState } from "react";
+import { UserProfile } from "@/context/AuthContext";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
+
+const formSchema = z.object({
+  full_name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  nationality: z.string().min(2, { message: "Nationality is required." }),
+  age: z.number().min(18, { message: "Must be at least 18 years old." }),
+  phone_number: z.string().min(8, { message: "Valid phone number is required." }),
+  gender: z.enum(["Male", "Female", "Other"]),
+  height: z.number().min(100, { message: "Enter height in cm" }),
+  weight: z.number().min(30, { message: "Enter weight in kg" }),
+  is_student: z.boolean(),
+  address: z.string().min(5, { message: "Address is required." }),
+  bank_details: z.string().optional(),
+});
 
 export default function ProfileUpdateForm() {
   const { user, getUserProfile } = useAuth();
-  const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [profileData, setProfileData] = useState<UserProfile | null>(null);
+  const [idCardFile, setIdCardFile] = useState<File | null>(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    name: user?.name || "",
-    nationality: "",
-    age: "",
-    phoneNumber: "",
-    gender: "",
-    height: "",
-    weight: "",
-    isStudent: false,
-    address: "",
-    bankDetails: "",
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      full_name: "",
+      nationality: "",
+      age: 18,
+      phone_number: "",
+      gender: "Male",
+      height: 170,
+      weight: 70,
+      is_student: false,
+      address: "",
+      bank_details: "",
+    },
   });
 
-  // File states
-  const [idCard, setIdCard] = useState<File | null>(null);
-  const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [idCardPreview, setIdCardPreview] = useState<string | null>(null);
-  const [profilePhotoPreview, setProfilePhotoPreview] = useState<string | null>(null);
-
-  // Load user profile data
   useEffect(() => {
     const loadProfile = async () => {
-      if (user?.id) {
+      if (user) {
         try {
           const profile = await getUserProfile(user.id);
-          setFormData({
-            name: profile.full_name,
+          setProfileData(profile);
+          form.reset({
+            full_name: profile.full_name,
             nationality: profile.nationality,
-            age: profile.age.toString(),
-            phoneNumber: profile.phone_number,
+            age: profile.age,
+            phone_number: profile.phone_number,
             gender: profile.gender,
-            height: profile.height.toString(),
-            weight: profile.weight.toString(),
-            isStudent: profile.is_student,
+            height: profile.height,
+            weight: profile.weight,
+            is_student: profile.is_student,
             address: profile.address,
-            bankDetails: profile.bank_details || "",
+            bank_details: profile.bank_details || "",
           });
-
-          // Set file previews if they exist
-          if (profile.id_card_url) {
-            setIdCardPreview(profile.id_card_url);
-          }
-          if (profile.profile_photo_url) {
-            setProfilePhotoPreview(profile.profile_photo_url);
-          }
         } catch (error) {
           console.error("Error loading profile:", error);
-          setError("Failed to load profile data");
+          toast.error("Failed to load profile");
         }
       }
     };
-
     loadProfile();
-  }, [user, getUserProfile]);
+  }, [user, getUserProfile, form]);
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>, fileType: 'idCard' | 'profilePhoto') => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
-      
-      if (!allowedTypes.includes(file.type)) {
-        toast({
-          title: "Invalid file type",
-          description: "Please upload a JPEG, PNG, or PDF file",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (file.size > 5 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please upload a file smaller than 5MB",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      if (fileType === 'idCard') {
-        setIdCard(file);
-        if (file.type !== 'application/pdf') {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            setIdCardPreview(e.target?.result as string);
-          };
-          reader.readAsDataURL(file);
-        } else {
-          setIdCardPreview('/placeholder.svg');
-        }
-      } else {
-        setProfilePhoto(file);
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setProfilePhotoPreview(e.target?.result as string);
-        };
-        reader.readAsDataURL(file);
-      }
+  const handleFileUpload = async (file: File, bucket: string, userId: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+    const { error: uploadError, data } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, file);
+
+    if (uploadError) {
+      throw uploadError;
     }
+
+    const { data: { publicUrl } } = supabase.storage
+      .from(bucket)
+      .getPublicUrl(fileName);
+
+    return publicUrl;
   };
 
-  const uploadFiles = async (userId: string) => {
-    try {
-      let idCardUrl = null;
-      let profilePhotoUrl = null;
-      
-      if (idCard) {
-        const fileExt = idCard.name.split('.').pop();
-        const fileName = `${userId}/id_card.${fileExt}`;
-        
-        const { error: idCardError } = await supabase.storage
-          .from('id_cards')
-          .upload(fileName, idCard, { upsert: true });
-          
-        if (idCardError) throw idCardError;
-        idCardUrl = fileName;
-      }
-      
-      if (profilePhoto) {
-        const fileExt = profilePhoto.name.split('.').pop();
-        const fileName = `${userId}/profile_photo.${fileExt}`;
-        
-        const { error: profilePhotoError } = await supabase.storage
-          .from('profile_photos')
-          .upload(fileName, profilePhoto, { upsert: true });
-          
-        if (profilePhotoError) throw profilePhotoError;
-        profilePhotoUrl = fileName;
-      }
-      
-      return { idCardUrl, profilePhotoUrl };
-    } catch (error: any) {
-      console.error("Error uploading files:", error);
-      throw error;
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!user) return;
     setLoading(true);
 
     try {
-      if (!user?.id) throw new Error("User not found");
+      let updates: Partial<UserProfile> = {
+        ...values,
+        id: user.id,
+      };
 
-      // Upload files if they've been changed
-      const { idCardUrl, profilePhotoUrl } = await uploadFiles(user.id);
+      if (idCardFile) {
+        const idCardUrl = await handleFileUpload(idCardFile, 'id_cards', user.id);
+        updates.id_card_url = idCardUrl;
+      }
 
-      // Update profile in database
-      const { error: updateError } = await supabase
+      if (profilePhotoFile) {
+        const photoUrl = await handleFileUpload(profilePhotoFile, 'profile_photos', user.id);
+        updates.profile_photo_url = photoUrl;
+      }
+
+      const { error } = await supabase
         .from('profiles')
-        .update({
-          full_name: formData.name,
-          nationality: formData.nationality,
-          age: parseInt(formData.age),
-          phone_number: formData.phoneNumber,
-          gender: formData.gender as "Male" | "Female" | "Other",
-          height: parseInt(formData.height),
-          weight: parseInt(formData.weight),
-          is_student: formData.isStudent,
-          address: formData.address,
-          bank_details: formData.bankDetails || null,
-          ...(idCardUrl && { id_card_url: idCardUrl }),
-          ...(profilePhotoUrl && { profile_photo_url: profilePhotoUrl }),
-        })
+        .update(updates)
         .eq('id', user.id);
 
-      if (updateError) throw updateError;
+      if (error) throw error;
 
-      toast({
-        title: "Profile updated",
-        description: "Your profile information has been updated successfully",
-      });
-    } catch (error: any) {
-      console.error("Profile update error:", error);
-      setError(error.message || "Failed to update profile");
-      toast({
-        title: "Update failed",
-        description: error.message || "Could not update profile",
-        variant: "destructive",
-      });
+      toast.success("Profile updated successfully");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      toast.error("Error updating profile");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Profile Information</CardTitle>
-        <CardDescription>
-          Update your personal information
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {error && (
-          <Alert variant="destructive" className="mb-4">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
-          </Alert>
-        )}
+    <div className="space-y-8">
+      <Card className="p-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="full_name">Full Name</Label>
+              <Input
+                id="full_name"
+                type="text"
+                {...form.register("full_name")}
+              />
+            </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              value={user?.email || ""}
-              disabled
-              className="bg-muted"
-            />
-            <p className="text-xs text-muted-foreground">
-              Email cannot be changed
-            </p>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="nationality">Nationality</Label>
+              <Input
+                id="nationality"
+                type="text"
+                {...form.register("nationality")}
+              />
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input
-              id="name"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="nationality">Nationality</Label>
-            <Select
-              value={formData.nationality}
-              onValueChange={(value) => setFormData({...formData, nationality: value})}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your country" />
-              </SelectTrigger>
-              <SelectContent>
-                {countries.map((country) => (
-                  <SelectItem key={country.code} value={country.name}>
-                    {country.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="age">Age</Label>
               <Input
                 id="age"
                 type="number"
-                min="18"
-                value={formData.age}
-                onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                required
+                {...form.register("age", { valueAsNumber: true })}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="phoneNumber">Phone Number</Label>
+              <Label htmlFor="phone_number">Phone Number</Label>
               <Input
-                id="phoneNumber"
+                id="phone_number"
                 type="tel"
-                value={formData.phoneNumber}
-                onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                required
+                {...form.register("phone_number")}
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="gender">Gender</Label>
-            <Select
-              value={formData.gender}
-              onValueChange={(value) => setFormData({...formData, gender: value})}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select your gender" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Male">Male</SelectItem>
-                <SelectItem value="Female">Female</SelectItem>
-                <SelectItem value="Other">Other</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gender</Label>
+              <Select 
+                onValueChange={(value) => form.setValue("gender", value as "Male" | "Female" | "Other")}
+                defaultValue={form.getValues("gender")}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="height">Height (cm)</Label>
               <Input
                 id="height"
                 type="number"
-                value={formData.height}
-                onChange={(e) => setFormData({ ...formData, height: e.target.value })}
-                required
+                {...form.register("height", { valueAsNumber: true })}
               />
             </div>
 
@@ -329,164 +203,65 @@ export default function ProfileUpdateForm() {
               <Input
                 id="weight"
                 type="number"
-                value={formData.weight}
-                onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
-                required
+                {...form.register("weight", { valueAsNumber: true })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Address</Label>
+              <Input
+                id="address"
+                type="text"
+                {...form.register("address")}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="bank_details">Bank Details</Label>
+              <Input
+                id="bank_details"
+                type="text"
+                {...form.register("bank_details")}
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <input
-                id="isStudent"
-                type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                checked={formData.isStudent}
-                onChange={(e) => setFormData({ ...formData, isStudent: e.target.checked })}
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="is_student"
+              checked={form.watch("is_student")}
+              onCheckedChange={(checked) => form.setValue("is_student", checked)}
+            />
+            <Label htmlFor="is_student">I am a student</Label>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="id_card">ID Card</Label>
+              <Input
+                id="id_card"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
               />
-              <Label htmlFor="isStudent">Are you a student?</Label>
+            </div>
+
+            <div>
+              <Label htmlFor="profile_photo">Profile Photo</Label>
+              <Input
+                id="profile_photo"
+                type="file"
+                accept="image/*"
+                onChange={(e) => setProfilePhotoFile(e.target.files?.[0] || null)}
+              />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="address">Address</Label>
-            <textarea
-              id="address"
-              rows={3}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              value={formData.address}
-              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="bankDetails">Bank Account Details (Optional)</Label>
-            <textarea
-              id="bankDetails"
-              rows={3}
-              className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              value={formData.bankDetails}
-              onChange={(e) => setFormData({ ...formData, bankDetails: e.target.value })}
-            />
-          </div>
-
-          <div className="space-y-4">
-            <Label>ID Card</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              {idCardPreview ? (
-                <div className="space-y-4">
-                  <div className="relative mx-auto max-w-xs overflow-hidden rounded-lg">
-                    <img
-                      src={idCardPreview}
-                      alt="ID Card Preview"
-                      className="h-40 mx-auto object-contain"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setIdCard(null);
-                      setIdCardPreview(null);
-                    }}
-                  >
-                    Change
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                    <Upload className="h-6 w-6 text-gray-500" />
-                  </div>
-                  <div className="flex flex-col items-center text-sm text-gray-500">
-                    <span>Click to upload your ID card</span>
-                    <span className="text-xs">(JPEG, PNG, or PDF, max 5MB)</span>
-                  </div>
-                  <Input
-                    id="idCard"
-                    type="file"
-                    accept=".jpg,.jpeg,.png,.pdf"
-                    onChange={(e) => handleFileChange(e, 'idCard')}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('idCard')?.click()}
-                  >
-                    Select File
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <Label>Profile Photo</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-              {profilePhotoPreview ? (
-                <div className="space-y-4">
-                  <div className="relative mx-auto max-w-xs overflow-hidden rounded-lg">
-                    <img
-                      src={profilePhotoPreview}
-                      alt="Profile Photo Preview"
-                      className="h-60 mx-auto object-contain"
-                    />
-                  </div>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setProfilePhoto(null);
-                      setProfilePhotoPreview(null);
-                    }}
-                  >
-                    Change
-                  </Button>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
-                    <Upload className="h-6 w-6 text-gray-500" />
-                  </div>
-                  <div className="flex flex-col items-center text-sm text-gray-500">
-                    <span>Click to upload a profile photo</span>
-                    <span className="text-xs">(JPEG or PNG, clear background, max 5MB)</span>
-                  </div>
-                  <Input
-                    id="profilePhoto"
-                    type="file"
-                    accept=".jpg,.jpeg,.png"
-                    onChange={(e) => handleFileChange(e, 'profilePhoto')}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => document.getElementById('profilePhoto')?.click()}
-                  >
-                    Select File
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <Button 
-            type="submit" 
-            className="w-full"
-            disabled={loading}
-          >
+          <Button type="submit" disabled={loading}>
             {loading ? "Updating..." : "Update Profile"}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+      </Card>
+    </div>
   );
 }
