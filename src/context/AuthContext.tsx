@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { Session, User as SupabaseUser } from "@supabase/supabase-js";
+
+import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import { useAuthState } from "@/hooks/useAuthState";
+import { useAuthMethods } from "@/hooks/useAuthHooks";
 
 export type UserRole = "admin" | "promoter";
 
@@ -36,184 +37,43 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
-  const [authError, setAuthError] = useState<string | null>(null);
-
-  const formatUser = (supabaseUser: SupabaseUser | null): User | null => {
-    if (!supabaseUser) return null;
-
-    const role: UserRole = supabaseUser.email === "emohd123@gmail.com" ? "admin" : "promoter";
-
-    return {
-      id: supabaseUser.id,
-      name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || "User",
-      email: supabaseUser.email || "",
-      role: role,
-    };
-  };
-
+  const { user, isAuthenticated, loading: stateLoading } = useAuthState();
+  const { 
+    login, 
+    signup, 
+    logout, 
+    resetPassword, 
+    updatePassword, 
+    loading: methodsLoading, 
+    authError 
+  } = useAuthMethods();
+  
+  const [authErrorState, setAuthErrorState] = useState<string | null>(null);
+  
+  // Sync authError from hook with the context state
   useEffect(() => {
-    const initializeAuth = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
-        if (session) {
-          setSupabaseUser(session.user);
-          setUser(formatUser(session.user));
-        }
-      } catch (error) {
-        console.error("Error checking auth session:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state changed:", event);
-        setSupabaseUser(session?.user || null);
-        setUser(formatUser(session?.user || null));
-        setLoading(false);
-        
-        if (event !== "SIGNED_OUT") {
-          setAuthError(null);
-        }
-      }
-    );
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    setAuthError(null);
-    try {
-      if (email === "emohd123@gmail.com" && password !== "password123") {
-        throw new Error("Invalid admin credentials");
-      }
-
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        if (error.message === "Email not confirmed") {
-          await supabase.auth.resend({
-            type: 'signup',
-            email: email
-          });
-          throw new Error("Your email is not confirmed. A new confirmation email has been sent. Please check your inbox and spam folder.");
-        }
-        throw error;
-      }
-      
-      console.log("Login successful:", data.user);
-    } catch (error: any) {
-      console.error("Login error:", error);
-      setAuthError(error.message || "Invalid login credentials");
-      throw error;
-    } finally {
-      setLoading(false);
+    setAuthErrorState(authError);
+  }, [authError]);
+  
+  // Clear auth errors on sign out
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setAuthErrorState(null);
     }
-  };
-
-  const signup = async (name: string, email: string, password: string) => {
-    setLoading(true);
-    setAuthError(null);
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            name,
-          },
-        },
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      console.log("Signup successful:", data.user);
-    } catch (error: any) {
-      console.error("Signup error:", error);
-      setAuthError(error.message || "Could not create account");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const resetPassword = async (email: string) => {
-    setLoading(true);
-    setAuthError(null);
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
-      });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      console.error("Reset password error:", error);
-      setAuthError(error.message || "Failed to send password reset email");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updatePassword = async (password: string) => {
-    setLoading(true);
-    setAuthError(null);
-    try {
-      const { error } = await supabase.auth.updateUser({
-        password,
-      });
-      
-      if (error) {
-        throw error;
-      }
-    } catch (error: any) {
-      console.error("Update password error:", error);
-      setAuthError(error.message || "Failed to update password");
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const logout = async () => {
-    try {
-      await supabase.auth.signOut();
-      setAuthError(null);
-    } catch (error: any) {
-      console.error("Error signing out:", error);
-      setAuthError(error.message || "Error signing out");
-    }
-  };
+  }, [isAuthenticated]);
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        isAuthenticated: !!user,
-        loading,
+        isAuthenticated,
+        loading: stateLoading || methodsLoading,
         login,
         signup,
         logout,
         resetPassword,
         updatePassword,
-        authError,
+        authError: authErrorState,
       }}
     >
       {children}

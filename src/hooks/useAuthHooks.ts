@@ -1,0 +1,146 @@
+
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { User, UserRole } from "@/context/AuthContext";
+import { User as SupabaseUser } from "@supabase/supabase-js";
+
+// Utility function to format user data
+export const formatUser = (supabaseUser: SupabaseUser | null): User | null => {
+  if (!supabaseUser) return null;
+
+  const role: UserRole = supabaseUser.email === "emohd123@gmail.com" ? "admin" : "promoter";
+
+  return {
+    id: supabaseUser.id,
+    name: supabaseUser.user_metadata?.name || supabaseUser.email?.split('@')[0] || "User",
+    email: supabaseUser.email || "",
+    role: role,
+  };
+};
+
+export const useAuthMethods = () => {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+
+  const login = async (email: string, password: string) => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      if (email === "emohd123@gmail.com" && password !== "password123") {
+        throw new Error("Invalid admin credentials");
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        if (error.message === "Email not confirmed") {
+          await supabase.auth.resend({
+            type: 'signup',
+            email: email
+          });
+          throw new Error("Your email is not confirmed. A new confirmation email has been sent. Please check your inbox and spam folder.");
+        }
+        throw error;
+      }
+      
+      console.log("Login successful:", data.user);
+    } catch (error: any) {
+      console.error("Login error:", error);
+      setAuthError(error.message || "Invalid login credentials");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signup = async (name: string, email: string, password: string) => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name,
+          },
+        },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      console.log("Signup successful:", data.user);
+    } catch (error: any) {
+      console.error("Signup error:", error);
+      setAuthError(error.message || "Could not create account");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      setAuthError(error.message || "Failed to send password reset email");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePassword = async (password: string) => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error("Update password error:", error);
+      setAuthError(error.message || "Failed to update password");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await supabase.auth.signOut();
+      setAuthError(null);
+    } catch (error: any) {
+      console.error("Error signing out:", error);
+      setAuthError(error.message || "Error signing out");
+    }
+  };
+
+  return {
+    login,
+    signup,
+    resetPassword,
+    updatePassword,
+    logout,
+    loading,
+    authError,
+  };
+};
