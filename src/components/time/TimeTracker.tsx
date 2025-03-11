@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Clock, MapPin, Calendar, DollarSign, PlayCircle, StopCircle, AlertTriangle } from "lucide-react";
+import { Clock, MapPin, Calendar, BanknoteIcon, PlayCircle, StopCircle, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Shift } from "../shifts/ShiftCard";
@@ -29,11 +30,16 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     
-    return [
-      hours.toString().padStart(2, '0'),
-      minutes.toString().padStart(2, '0'),
-      secs.toString().padStart(2, '0')
-    ].join(':');
+    const parts = [];
+    if (hours > 0) parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`);
+    if (minutes > 0) parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
+    if (secs > 0 || parts.length === 0) parts.push(`${secs} ${secs === 1 ? 'second' : 'seconds'}`);
+    
+    return parts.join(', ');
+  };
+
+  const formatBHD = (amount: number) => {
+    return `BHD ${(amount * 0.377).toFixed(3)}`; // Converting USD to BHD (1 USD ≈ 0.377 BHD)
   };
   
   useEffect(() => {
@@ -144,9 +150,10 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
     setIsTracking(false);
     setLocationVerified(false);
     
+    const duration = formatTime(elapsedTime);
     toast({
       title: "Time Tracking Stopped",
-      description: `You worked for ${formatTime(elapsedTime)} and earned $${earnings.toFixed(2)}`,
+      description: `You worked for ${duration} and earned ${formatBHD(earnings)}`,
     });
     
     if (onCheckOut) onCheckOut();
@@ -192,7 +199,7 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
           </div>
           {isTracking && shift && (
             <div className="text-muted-foreground text-sm mt-1">
-              Current earnings: ${earnings.toFixed(2)}
+              Current earnings: {formatBHD(earnings)}
             </div>
           )}
         </div>
@@ -224,8 +231,8 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
             </div>
             
             <div className="flex items-center text-muted-foreground">
-              <DollarSign size={14} className="mr-2" />
-              <span>${shift.payRate.toFixed(2)}/hr</span>
+              <BanknoteIcon size={14} className="mr-2" />
+              <span>{formatBHD(shift.payRate)}/hr</span>
             </div>
           </div>
         )}

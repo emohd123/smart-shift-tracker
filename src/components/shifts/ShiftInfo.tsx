@@ -4,7 +4,7 @@ import {
   MapPin, 
   Clock, 
   Calendar, 
-  DollarSign, 
+  BanknoteIcon, 
   Users 
 } from "lucide-react";
 import { CardContent } from "@/components/ui/card";
@@ -17,6 +17,10 @@ type ShiftInfoProps = {
 };
 
 export function ShiftInfo({ shift, isPromoter }: ShiftInfoProps) {
+  const formatBHD = (amount: number) => {
+    return `BHD ${(amount * 0.377).toFixed(3)}`; // Converting USD to BHD
+  };
+
   return (
     <CardContent className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -48,10 +52,10 @@ export function ShiftInfo({ shift, isPromoter }: ShiftInfoProps) {
         
         <div className="space-y-4">
           <div className="flex items-center">
-            <DollarSign size={18} className="mr-3 text-muted-foreground" />
+            <BanknoteIcon size={18} className="mr-3 text-muted-foreground" />
             <div>
               <div className="text-sm text-muted-foreground">Pay Rate</div>
-              <div>${shift.payRate.toFixed(2)}/hr</div>
+              <div>{formatBHD(shift.payRate)}/hr</div>
             </div>
           </div>
           

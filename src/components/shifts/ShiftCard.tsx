@@ -1,6 +1,5 @@
-
 import { Card } from "@/components/ui/card";
-import { MapPin, Clock, Calendar, DollarSign } from "lucide-react";
+import { MapPin, Clock, Calendar, BanknoteIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +46,10 @@ export default function ShiftCard({ shift, onClick }: ShiftCardProps) {
     }
   };
 
+  const formatBHD = (amount: number) => {
+    return `BHD ${(amount * 0.377).toFixed(3)}`; // Converting USD to BHD
+  };
+
   return (
     <Card 
       className={cn(
@@ -84,8 +87,8 @@ export default function ShiftCard({ shift, onClick }: ShiftCardProps) {
         </div>
         
         <div className="flex items-center text-muted-foreground">
-          <DollarSign size={14} className="mr-2 flex-shrink-0" />
-          <span>${shift.payRate.toFixed(2)}/hr</span>
+          <BanknoteIcon size={14} className="mr-2 flex-shrink-0" />
+          <span>{formatBHD(shift.payRate)}/hr</span>
         </div>
       </div>
     </Card>
