@@ -28,15 +28,40 @@ const TimeTracking = () => {
         if (activeTrackingInfo) {
           const { shiftId } = JSON.parse(activeTrackingInfo);
           
-          // Fetch the shift details
-          const { data, error } = await supabase
-            .from('shifts')
-            .select('*')
-            .eq('id', shiftId)
-            .single();
+          // Fetch the shift details from time_logs and join with shift information
+          const { data: timeLogData, error: timeLogError } = await supabase
+            .from('time_logs')
+            .select(`
+              id,
+              shift_id,
+              check_in_time,
+              check_out_time
+            `)
+            .eq('shift_id', shiftId)
+            .is('check_out_time', null)
+            .maybeSingle();
             
-          if (data && !error) {
-            setActiveShift(data);
+          if (timeLogError) {
+            console.error("Error fetching time log:", timeLogError);
+            setLoading(false);
+            return;
+          }
+          
+          if (timeLogData) {
+            // For now, we'll use the mock shift data since we haven't migrated real shift data yet
+            // In a real app, we would query the shifts table here
+            const mockShift: Shift = {
+              id: timeLogData.shift_id,
+              title: "Active Shift",
+              date: new Date().toISOString().split('T')[0],
+              startTime: new Date(timeLogData.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+              endTime: "End Time TBD",
+              location: "Current Location",
+              status: "ongoing",
+              payRate: 10.00, // Default pay rate until we get actual data
+            };
+            
+            setActiveShift(mockShift);
           }
         }
       } catch (error) {

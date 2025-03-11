@@ -96,6 +96,48 @@ export type Database = {
         }
         Relationships: []
       }
+      shifts: {
+        Row: {
+          created_at: string
+          date: string
+          end_time: string
+          id: string
+          is_paid: boolean | null
+          location: string
+          pay_rate: number
+          start_time: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          end_time: string
+          id?: string
+          is_paid?: boolean | null
+          location: string
+          pay_rate: number
+          start_time: string
+          status: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          end_time?: string
+          id?: string
+          is_paid?: boolean | null
+          location?: string
+          pay_rate?: number
+          start_time?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       time_logs: {
         Row: {
           check_in_time: string
