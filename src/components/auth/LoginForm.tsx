@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Clock } from "lucide-react";
+import { Clock, Home } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
@@ -97,15 +97,9 @@ export default function LoginForm() {
         </Alert>
       )}
 
-      {isCreatingAdmin ? (
+      {isCreatingAdmin && (
         <Alert className="text-sm bg-yellow-50 border-yellow-200">
           <AlertDescription>Setting up admin account...</AlertDescription>
-        </Alert>
-      ) : adminCreated && (
-        <Alert className="text-sm bg-green-50 border-green-200">
-          <AlertDescription>
-            Admin account setup complete
-          </AlertDescription>
         </Alert>
       )}
 
@@ -152,8 +146,14 @@ export default function LoginForm() {
         >
           {loading ? "Signing in..." : "Sign in"}
         </Button>
-
-        <div className="text-center">
+        
+        <div className="flex justify-between items-center">
+          <Link to="/">
+            <Button variant="outline" size="sm" className="h-9">
+              <Home size={16} className="mr-2" />
+              Home
+            </Button>
+          </Link>
           <div className="text-sm">
             Don't have an account?{" "}
             <Link to="/signup" className="text-primary hover:underline">
