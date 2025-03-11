@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole } from "@/context/AuthContext";
@@ -40,17 +39,11 @@ export const useAuthMethods = () => {
           email = "emohd123@gmail.com";
         } else {
           // For other usernames, assume they're using hotmail
-          // You can adjust this based on your user base
           email = `${email}@hotmail.com`;
         }
       }
       
       console.log("Attempting login with:", email);
-      
-      // Special case for admin validation
-      if (email === "emohd123@gmail.com" && password !== "password123") {
-        throw new Error("Invalid admin credentials");
-      }
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
