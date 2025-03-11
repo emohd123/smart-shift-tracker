@@ -6,6 +6,7 @@ import { Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
+import { useResponsive } from "@/hooks/useResponsive";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -15,23 +16,17 @@ type AppLayoutProps = {
 export default function AppLayout({ children, title }: AppLayoutProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile } = useResponsive();
+  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
 
   // Handle responsive behavior
   useEffect(() => {
-    const checkSize = () => {
-      const mobileView = window.innerWidth < 768;
-      setIsMobile(mobileView);
-      if (mobileView) {
-        setSidebarOpen(false);
-      }
-    };
-    
-    checkSize();
-    window.addEventListener("resize", checkSize);
-    return () => window.removeEventListener("resize", checkSize);
-  }, []);
+    if (isMobile) {
+      setSidebarOpen(false);
+    } else {
+      setSidebarOpen(true);
+    }
+  }, [isMobile]);
 
   return (
     <div className="min-h-screen w-full flex bg-background">

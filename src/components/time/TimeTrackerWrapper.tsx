@@ -30,8 +30,10 @@ const TimeTrackerWrapper = forwardRef(({
     isNotActiveShift,
     handleStartTracking,
     handleStopTracking,
+    setShowLocationError,
     logTimeEntry,
-    timeLogId
+    timeLogId,
+    handleLocationError
   } = useTimeTracking(shift, onCheckIn, onCheckOut);
   
   // Expose the handleStartTracking method to parent components
@@ -53,7 +55,7 @@ const TimeTrackerWrapper = forwardRef(({
       handleStopTracking();
       
       // Log the time entry when stopping automatically
-      if (shift) {
+      if (shift && timeLogId) {
         logTimeEntry(shift.id, timeLogId, isTracking, startTime, elapsedTime);
       }
     }
@@ -76,6 +78,7 @@ const TimeTrackerWrapper = forwardRef(({
       isNotActiveShift={isNotActiveShift}
       handleStartTracking={handleStartTracking}
       handleStopTracking={handleStopTracking}
+      handleDismissError={handleLocationError}
       autoStart={autoStart}
       autoStop={autoStop}
     />

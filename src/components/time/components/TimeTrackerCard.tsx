@@ -6,8 +6,9 @@ import TimeDisplay from "./TimeDisplay";
 import LocationVerification from "./LocationVerification";
 import LocationError from "./LocationError";
 import TrackingControls from "./TrackingControls";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, X } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 type TimeTrackerCardProps = {
   isTracking: boolean;
@@ -21,6 +22,7 @@ type TimeTrackerCardProps = {
   isNotActiveShift: boolean;
   handleStartTracking: () => void;
   handleStopTracking: () => void;
+  handleDismissError?: () => void;
   autoStart?: boolean;
   autoStop?: boolean;
 };
@@ -37,6 +39,7 @@ const TimeTrackerCard = ({
   isNotActiveShift,
   handleStartTracking,
   handleStopTracking,
+  handleDismissError,
   autoStart,
   autoStop
 }: TimeTrackerCardProps) => {
@@ -74,7 +77,21 @@ const TimeTrackerCard = ({
           showLocationError={showLocationError}
         />
         
-        {showLocationError && <LocationError />}
+        {showLocationError && (
+          <div className="relative">
+            <LocationError />
+            {handleDismissError && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="absolute top-1 right-1 h-6 w-6" 
+                onClick={handleDismissError}
+              >
+                <X size={14} />
+              </Button>
+            )}
+          </div>
+        )}
         
         {permissionDenied && (
           <Alert variant="destructive" className="mb-4">

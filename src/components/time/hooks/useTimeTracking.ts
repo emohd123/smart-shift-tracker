@@ -9,6 +9,7 @@ import { useTimeTrackingActions } from "./useTimeTrackingActions";
 import { useTimeCalculation } from "./useTimeCalculation";
 import { useLocationVerification } from "./useLocationVerification";
 import { useTimeLogs } from "./useTimeLogs";
+import { toast } from "sonner";
 
 export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOut?: () => void) {
   const { user } = useAuth();
@@ -83,12 +84,18 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     resetTimeAndEarnings,
     elapsedTime,
     earnings,
-    timeLogId,     // Pass timeLogId
-    isTracking,    // Pass isTracking
-    startTime,     // Pass startTime
+    timeLogId,
+    isTracking,
+    startTime,
     onCheckIn,
     onCheckOut
   });
+
+  // Error handling for location verification
+  const handleLocationError = useCallback(() => {
+    setShowLocationError(false);
+    toast("Location verification will be attempted again on next check-in");
+  }, [setShowLocationError]);
 
   return {
     isTracking,
@@ -104,6 +111,7 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     handleStopTracking,
     setShowLocationError,
     logTimeEntry,
-    timeLogId
+    timeLogId,
+    handleLocationError
   };
 }
