@@ -41,6 +41,17 @@ export const useAccount = () => {
     setLoading(true);
     setAuthError(null);
     try {
+      // First, delete user's time logs as they have a foreign key constraint
+      const { error: timeLogsError } = await supabase
+        .from('time_logs')
+        .delete()
+        .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+      
+      if (timeLogsError) {
+        console.error("Failed to delete user time logs:", timeLogsError);
+        // Continue with account deletion even if time logs deletion fails
+      }
+      
       // Call the delete_user RPC function
       const { error } = await supabase.rpc('delete_user', {});
       
@@ -56,7 +67,7 @@ export const useAccount = () => {
       // Redirect to home page with a small delay to ensure sign out completes
       setTimeout(() => {
         window.location.href = "/";
-      }, 300);
+      }, 500);
     } catch (error: any) {
       console.error("Account deletion error:", error);
       setAuthError(error.message || "Failed to delete account");
