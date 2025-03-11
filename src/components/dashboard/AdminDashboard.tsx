@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   CheckCircle, 
@@ -14,6 +13,7 @@ import ShiftList from "../shifts/ShiftList";
 import { Shift } from "../shifts/ShiftCard";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
+import { formatBHD } from "../shifts/utils/currencyUtils";
 
 type AdminDashboardProps = {
   shifts: Shift[];
@@ -102,7 +102,7 @@ export default function AdminDashboard({ shifts }: AdminDashboardProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">${totalPayable.toFixed(2)}</div>
+            <div className="text-2xl font-bold">{formatBHD(totalPayable)}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Pending approval
             </p>

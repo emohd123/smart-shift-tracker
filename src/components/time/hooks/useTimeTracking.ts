@@ -1,8 +1,8 @@
-
 import { useState, useEffect } from "react";
 import { Shift } from "../../shifts/ShiftCard";
 import { useToast } from "@/hooks/use-toast";
-import { formatTime, formatBHD } from "../components/TimeDisplay";
+import { formatTime } from "../components/TimeDisplay";
+import { formatBHD } from "../../shifts/utils/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentLocation, isWithinRadius } from "../../shifts/utils/locationUtils";
 

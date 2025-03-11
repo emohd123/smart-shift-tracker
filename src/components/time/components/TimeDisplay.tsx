@@ -1,5 +1,6 @@
 
 import { Shift } from "../../shifts/ShiftCard";
+import { formatBHD } from "../../shifts/utils/currencyUtils";
 
 type TimeDisplayProps = {
   elapsedTime: number;
@@ -19,10 +20,6 @@ export const formatTime = (seconds: number) => {
   if (secs > 0 || parts.length === 0) parts.push(`${secs} ${secs === 1 ? 'second' : 'seconds'}`);
   
   return parts.join(', ');
-};
-
-export const formatBHD = (amount: number) => {
-  return `BHD ${(amount * 0.377).toFixed(3)}`; // Converting USD to BHD (1 USD ≈ 0.377 BHD)
 };
 
 export default function TimeDisplay({ elapsedTime, earnings, shift, isTracking }: TimeDisplayProps) {

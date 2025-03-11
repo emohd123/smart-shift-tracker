@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { MapPin, Clock, Calendar, BanknoteIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { formatBHD } from "./utils/currencyUtils";
 
 export type Shift = {
   id: string;
@@ -44,10 +45,6 @@ export default function ShiftCard({ shift, onClick }: ShiftCardProps) {
       default:
         return "bg-gray-100 text-gray-700";
     }
-  };
-
-  const formatBHD = (amount: number) => {
-    return `BHD ${(amount * 0.377).toFixed(3)}`; // Converting USD to BHD
   };
 
   return (

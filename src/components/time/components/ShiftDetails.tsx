@@ -1,7 +1,7 @@
 
 import { Shift } from "../../shifts/ShiftCard";
 import { Calendar, Clock, MapPin, BanknoteIcon } from "lucide-react";
-import { formatBHD } from "./TimeDisplay";
+import { formatBHD } from "../../shifts/utils/currencyUtils";
 
 type ShiftDetailsProps = {
   shift: Shift;

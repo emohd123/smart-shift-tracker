@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   CheckCircle, 
@@ -14,6 +13,7 @@ import { Shift } from "../shifts/ShiftCard";
 import TimeTracker from "../time/TimeTracker";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { formatBHD } from "../shifts/utils/currencyUtils";
 
 type PrometerDashboardProps = {
   shifts: Shift[];
@@ -88,7 +88,7 @@ export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${totalEarned.toFixed(2)}</div>
+                <div className="text-2xl font-bold">{formatBHD(totalEarned)}</div>
                 <p className="text-xs text-muted-foreground mt-1">
                   Total earned this month
                 </p>
@@ -135,7 +135,7 @@ export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
                     
                     <div className="flex items-center text-muted-foreground">
                       <DollarSign size={16} className="mr-3" />
-                      <span>${nextShift.payRate.toFixed(2)}/hr</span>
+                      <span>{formatBHD(nextShift.payRate)}/hr</span>
                     </div>
                   </div>
                 </CardContent>
@@ -200,7 +200,7 @@ export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
                             {shift.startTime} - {shift.endTime}
                           </div>
                           <div className="text-sm text-muted-foreground mt-1">
-                            ${shift.payRate.toFixed(2)}/hr
+                            {formatBHD(shift.payRate)}/hr
                           </div>
                         </div>
                       </div>

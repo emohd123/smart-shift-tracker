@@ -1,4 +1,3 @@
-
 import { Shift } from "./ShiftCard";
 import { 
   MapPin, 
@@ -10,6 +9,7 @@ import {
 import { CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatDate } from "./utils/shiftUtils";
+import { formatBHD } from "./utils/currencyUtils";
 
 type ShiftInfoProps = {
   shift: Shift;
@@ -17,10 +17,6 @@ type ShiftInfoProps = {
 };
 
 export function ShiftInfo({ shift, isPromoter }: ShiftInfoProps) {
-  const formatBHD = (amount: number) => {
-    return `BHD ${(amount * 0.377).toFixed(3)}`; // Converting USD to BHD
-  };
-
   return (
     <CardContent className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
