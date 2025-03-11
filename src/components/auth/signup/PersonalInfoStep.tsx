@@ -12,6 +12,12 @@ interface PersonalInfoStepProps {
 }
 
 export function PersonalInfoStep({ formData, handleChange, setFormData }: PersonalInfoStepProps) {
+  // Function to handle nationality change specifically
+  const handleNationalityChange = (value: string) => {
+    console.log("Selected nationality:", value);
+    setFormData(prev => ({ ...prev, nationality: value }));
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Personal Details</h3>
@@ -20,17 +26,14 @@ export function PersonalInfoStep({ formData, handleChange, setFormData }: Person
         <Label htmlFor="nationality">Nationality</Label>
         <Select
           value={formData.nationality}
-          onValueChange={(value) => {
-            console.log("Selected nationality:", value);
-            setFormData(prev => ({ ...prev, nationality: value }));
-          }}
+          onValueChange={handleNationalityChange}
         >
           <SelectTrigger id="nationality" className="h-11">
             <SelectValue placeholder="Select your country" />
           </SelectTrigger>
           <SelectContent className="max-h-[300px]">
             {countries.map((country) => (
-              <SelectItem key={country.code} value={country.name}>
+              <SelectItem key={country.code} value={country.code}>
                 {country.name}
               </SelectItem>
             ))}
@@ -73,7 +76,7 @@ export function PersonalInfoStep({ formData, handleChange, setFormData }: Person
         <Label htmlFor="gender">Gender</Label>
         <Select
           value={formData.gender}
-          onValueChange={(value) => setFormData({...formData, gender: value})}
+          onValueChange={(value) => setFormData(prev => ({ ...prev, gender: value }))}
         >
           <SelectTrigger className="h-11">
             <SelectValue placeholder="Select your gender" />
