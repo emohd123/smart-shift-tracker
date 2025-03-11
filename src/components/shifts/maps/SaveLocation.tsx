@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
@@ -34,7 +33,6 @@ export default function SaveLocation({
     try {
       setSaveLoading(true);
       
-      // Check if location already exists for this shift
       const { data: existingLocation } = await supabase
         .from('shift_locations')
         .select('id')
@@ -44,23 +42,21 @@ export default function SaveLocation({
       let result;
       
       if (existingLocation) {
-        // Update existing location
         result = await supabase
           .from('shift_locations')
           .update({
-            latitude: location.lat.toString(),
-            longitude: location.lng.toString(),
+            latitude: location.lat,
+            longitude: location.lng,
             radius: radius
           })
           .eq('id', existingLocation.id);
       } else {
-        // Insert new location
         result = await supabase
           .from('shift_locations')
           .insert({
             shift_id: shiftId,
-            latitude: location.lat.toString(),
-            longitude: location.lng.toString(),
+            latitude: location.lat,
+            longitude: location.lng,
             radius: radius
           });
       }

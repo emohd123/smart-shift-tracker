@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,6 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
   const [loading, setLoading] = useState(false);
   const [locationVerified, setLocationVerified] = useState(false);
   
-  // Format seconds into HH:MM:SS
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -38,7 +36,6 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
     ].join(':');
   };
   
-  // Calculate earnings based on elapsed time and pay rate
   useEffect(() => {
     if (shift && isTracking) {
       const hourlyRate = shift.payRate;
@@ -47,7 +44,6 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
     }
   }, [elapsedTime, shift, isTracking]);
   
-  // Timer logic
   useEffect(() => {
     let interval: NodeJS.Timeout;
     
@@ -61,10 +57,9 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
   }, [isTracking]);
   
   const verifyLocation = async (): Promise<boolean> => {
-    if (!shift) return true; // If no shift, no verification needed
+    if (!shift) return true;
     
     try {
-      // Check if location is required for this shift
       const { data: shiftLocation, error } = await supabase
         .from('shift_locations')
         .select('*')
@@ -76,20 +71,17 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
         return false;
       }
       
-      // If no location requirement, allow check in
       if (!shiftLocation) {
         return true;
       }
       
-      // Get user's location
       const coords = await getCurrentLocation();
       
-      // Check if within radius
       const within = isWithinRadius(
         coords.latitude,
         coords.longitude,
-        parseFloat(shiftLocation.latitude),
-        parseFloat(shiftLocation.longitude),
+        Number(shiftLocation.latitude),
+        Number(shiftLocation.longitude),
         shiftLocation.radius
       );
       
@@ -118,7 +110,6 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
     setLoading(true);
     
     try {
-      // Verify location before starting
       const locationValid = await verifyLocation();
       if (!locationValid) {
         setLoading(false);
@@ -160,7 +151,6 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
     
     if (onCheckOut) onCheckOut();
     
-    // Reset the timer after a delay to show the final time
     setTimeout(() => {
       setElapsedTime(0);
       setEarnings(0);
@@ -168,7 +158,6 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
     }, 5000);
   };
   
-  // Get current time in HH:MM format for display
   const getCurrentTime = () => {
     const now = new Date();
     return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -197,7 +186,6 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* Timer display */}
         <div className="bg-muted/50 rounded-lg p-6 flex flex-col items-center justify-center">
           <div className="text-4xl font-mono font-semibold mb-2">
             {formatTime(elapsedTime)}
@@ -209,7 +197,6 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
           )}
         </div>
         
-        {/* Location verification badge */}
         {locationVerified && (
           <div className="flex items-center justify-center">
             <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 flex items-center gap-1">
@@ -219,7 +206,6 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
           </div>
         )}
         
-        {/* Shift details if provided */}
         {shift && (
           <div className="space-y-3 text-sm">
             <div className="flex items-center text-muted-foreground">
@@ -244,7 +230,6 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
           </div>
         )}
         
-        {/* Controls */}
         <div className="pt-2">
           {!isTracking ? (
             <Button 

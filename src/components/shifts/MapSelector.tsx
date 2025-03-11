@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -20,7 +19,6 @@ export default function MapSelector({ shiftId, onSave }: MapSelectorProps) {
   const [location, setLocation] = useState<{lat: number; lng: number} | null>(null);
   const [radius, setRadius] = useState(100);
 
-  // Check if location already exists for this shift
   useEffect(() => {
     const checkExistingLocation = async () => {
       try {
@@ -37,8 +35,8 @@ export default function MapSelector({ shiftId, onSave }: MapSelectorProps) {
         
         if (data) {
           setLocation({ 
-            lat: parseFloat(data.latitude), 
-            lng: parseFloat(data.longitude) 
+            lat: Number(data.latitude), 
+            lng: Number(data.longitude) 
           });
           setRadius(data.radius);
         }

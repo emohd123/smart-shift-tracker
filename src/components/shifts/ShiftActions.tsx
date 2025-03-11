@@ -62,8 +62,8 @@ export function ShiftActions({
       const withinRadius = isWithinRadius(
         currentCoords.latitude,
         currentCoords.longitude,
-        parseFloat(shiftLocation.latitude),
-        parseFloat(shiftLocation.longitude),
+        Number(shiftLocation.latitude),
+        Number(shiftLocation.longitude),
         shiftLocation.radius
       );
       
