@@ -29,10 +29,8 @@ export const useAuthMethods = () => {
     setLoading(true);
     setAuthError(null);
     try {
-      // Convert username to email if needed
       let email = emailOrUsername;
       
-      // If no @ symbol is present, assume it's a username and add the domain
       if (!email.includes('@')) {
         email = `${email}@gmail.com`;
       }
@@ -98,7 +96,6 @@ export const useAuthMethods = () => {
         
       if (error) throw error;
       
-      // Ensure verification_status is the expected type
       if (data && data.verification_status) {
         data.verification_status = data.verification_status as "pending" | "approved" | "rejected";
       }
@@ -107,6 +104,48 @@ export const useAuthMethods = () => {
     } catch (error: any) {
       console.error("Error fetching user profile:", error);
       throw error;
+    }
+  };
+
+  const deactivateAccount = async () => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: { deactivated: true }
+      });
+      
+      if (error) {
+        throw error;
+      }
+      
+      await supabase.auth.signOut();
+    } catch (error: any) {
+      console.error("Account deactivation error:", error);
+      setAuthError(error.message || "Failed to deactivate account");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const deleteAccount = async () => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.rpc('delete_user');
+      
+      if (error) {
+        throw error;
+      }
+      
+      await supabase.auth.signOut();
+    } catch (error: any) {
+      console.error("Account deletion error:", error);
+      setAuthError(error.message || "Failed to delete account");
+      throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -182,6 +221,8 @@ export const useAuthMethods = () => {
         setAuthError(error.message || "Error signing out");
       }
     },
+    deactivateAccount,
+    deleteAccount,
     loading,
     authError,
   };

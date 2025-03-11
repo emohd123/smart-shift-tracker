@@ -47,6 +47,8 @@ interface AuthContextType {
   updatePassword: (password: string) => Promise<void>;
   updateProfile: (profile: ProfileUpdate) => Promise<void>;
   getUserProfile: (userId: string) => Promise<UserProfile>;
+  deactivateAccount: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
   authError: string | null;
 }
 
@@ -61,6 +63,8 @@ const AuthContext = createContext<AuthContextType>({
   updatePassword: async () => {},
   updateProfile: async () => {},
   getUserProfile: async () => ({} as UserProfile),
+  deactivateAccount: async () => {},
+  deleteAccount: async () => {},
   authError: null,
 });
 
@@ -74,6 +78,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     updatePassword, 
     updateProfile,
     getUserProfile: getUserProfileMethod,
+    deactivateAccount: deactivateAccountMethod,
+    deleteAccount: deleteAccountMethod,
     loading: methodsLoading, 
     authError 
   } = useAuthMethods();
@@ -92,6 +98,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ...profile,
       verification_status: profile.verification_status as "pending" | "approved" | "rejected"
     } as UserProfile;
+  };
+
+  // Wrap account removal methods
+  const deactivateAccount = async (): Promise<void> => {
+    await deactivateAccountMethod();
+  };
+
+  const deleteAccount = async (): Promise<void> => {
+    await deleteAccountMethod();
   };
   
   // Sync authError from hook with the context state
@@ -119,6 +134,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         updatePassword,
         updateProfile,
         getUserProfile,
+        deactivateAccount,
+        deleteAccount,
         authError: authErrorState,
       }}
     >
