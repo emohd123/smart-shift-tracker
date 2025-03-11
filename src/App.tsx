@@ -7,6 +7,7 @@ import Signup from "@/pages/Signup";
 import Dashboard from "@/pages/Dashboard";
 import Shifts from "@/pages/Shifts";
 import ShiftDetails from "@/pages/ShiftDetails";
+import AccountSettings from "@/pages/AccountSettings";
 import NotFound from "@/pages/NotFound";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -26,6 +27,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/shifts" element={<Shifts />} />
           <Route path="/shifts/:id" element={<ShiftDetails />} />
+          <Route path="/account-settings" element={<AccountSettings />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

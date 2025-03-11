@@ -18,6 +18,10 @@ export const formatUser = (supabaseUser: SupabaseUser | null): User | null => {
   };
 };
 
+interface ProfileUpdate {
+  name?: string;
+}
+
 export const useAuthMethods = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -124,6 +128,28 @@ export const useAuthMethods = () => {
     }
   };
 
+  const updateProfile = async (profile: ProfileUpdate) => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          name: profile.name,
+        },
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error("Update profile error:", error);
+      setAuthError(error.message || "Failed to update profile");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
     try {
       await supabase.auth.signOut();
@@ -139,6 +165,7 @@ export const useAuthMethods = () => {
     signup,
     resetPassword,
     updatePassword,
+    updateProfile,
     logout,
     loading,
     authError,

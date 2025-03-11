@@ -12,6 +12,10 @@ export interface User {
   role: UserRole;
 }
 
+interface ProfileUpdate {
+  name?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
@@ -21,6 +25,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
+  updateProfile: (profile: ProfileUpdate) => Promise<void>;
   authError: string | null;
 }
 
@@ -33,6 +38,7 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   resetPassword: async () => {},
   updatePassword: async () => {},
+  updateProfile: async () => {},
   authError: null,
 });
 
@@ -44,6 +50,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     logout, 
     resetPassword, 
     updatePassword, 
+    updateProfile,
     loading: methodsLoading, 
     authError 
   } = useAuthMethods();
@@ -73,6 +80,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         logout,
         resetPassword,
         updatePassword,
+        updateProfile,
         authError: authErrorState,
       }}
     >

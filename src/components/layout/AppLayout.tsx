@@ -119,13 +119,22 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
               <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex w-full items-center justify-center h-9 px-3 py-2 text-sm rounded-md bg-secondary hover:bg-secondary/80 transition-colors"
-          >
-            <LogOut size={16} className="mr-2" />
-            Logout
-          </button>
+          <div className="flex space-x-2">
+            <Link
+              to="/account-settings"
+              className="flex-1 flex items-center justify-center h-9 px-3 py-2 text-sm rounded-md bg-secondary hover:bg-secondary/80 transition-colors"
+            >
+              <Settings size={16} className="mr-2" />
+              Account
+            </Link>
+            <button
+              onClick={handleLogout}
+              className="flex-1 flex items-center justify-center h-9 px-3 py-2 text-sm rounded-md bg-secondary hover:bg-secondary/80 transition-colors"
+            >
+              <LogOut size={16} className="mr-2" />
+              Logout
+            </button>
+          </div>
         </div>
       </div>
 
