@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useAuthMethods } from "@/hooks/useAuthHooks";
@@ -10,6 +9,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
+  metadata: Record<string, any>;
 }
 
 export interface UserProfile {
