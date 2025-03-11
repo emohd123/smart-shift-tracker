@@ -26,10 +26,28 @@ export const useAuthMethods = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const login = async (email: string, password: string) => {
+  const login = async (emailOrUsername: string, password: string) => {
     setLoading(true);
     setAuthError(null);
     try {
+      // Handle the case where user enters just "emohd123" instead of full email
+      let email = emailOrUsername;
+      
+      // If no @ symbol is present, assume it's a username and add the domain
+      if (!email.includes('@')) {
+        // Check if this is the admin username
+        if (email === "emohd123") {
+          email = "emohd123@gmail.com";
+        } else {
+          // For other usernames, assume they're using hotmail
+          // You can adjust this based on your user base
+          email = `${email}@hotmail.com`;
+        }
+      }
+      
+      console.log("Attempting login with:", email);
+      
+      // Special case for admin validation
       if (email === "emohd123@gmail.com" && password !== "password123") {
         throw new Error("Invalid admin credentials");
       }
