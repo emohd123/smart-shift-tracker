@@ -69,6 +69,9 @@ export function ShiftActions({
       
       if (withinRadius) {
         onCheckIn();
+        // Automatically trigger time tracking
+        window.startTimeTracking?.(shift);
+        
         toast({
           title: "Location Verified",
           description: "Your location has been verified. You are now checked in.",

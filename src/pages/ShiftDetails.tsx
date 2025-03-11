@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import TimeTracker from "@/components/time/TimeTracker";
 
 // Import mock shifts data
 import { mockShifts } from "./Shifts";
@@ -15,6 +16,7 @@ import { mockShifts } from "./Shifts";
 declare global {
   interface Window {
     deleteShift: (id: string) => void;
+    startTimeTracking?: (shift: Shift) => void;
   }
 }
 
@@ -25,6 +27,9 @@ const ShiftDetails = () => {
   const navigate = useNavigate();
   const [shift, setShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
+  const [timeTrackerRef, setTimeTrackerRef] = useState<{
+    handleStartTracking: () => void;
+  } | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -46,6 +51,19 @@ const ShiftDetails = () => {
     
     return () => clearTimeout(timer);
   }, [id]);
+
+  // Register global function to start time tracking
+  useEffect(() => {
+    window.startTimeTracking = (shiftData: Shift) => {
+      if (timeTrackerRef) {
+        timeTrackerRef.handleStartTracking();
+      }
+    };
+
+    return () => {
+      window.startTimeTracking = undefined;
+    };
+  }, [timeTrackerRef]);
 
   if (!isAuthenticated) {
     return null; // Don't render anything while redirecting
@@ -127,12 +145,21 @@ const ShiftDetails = () => {
           <Skeleton className="h-64 w-full" />
         </div>
       ) : shift ? (
-        <ShiftDetail 
-          shift={shift} 
-          onCheckIn={handleCheckIn} 
-          onCheckOut={handleCheckOut} 
-          onDelete={handleDelete}
-        />
+        <div className="space-y-6">
+          <ShiftDetail 
+            shift={shift} 
+            onCheckIn={handleCheckIn} 
+            onCheckOut={handleCheckOut} 
+            onDelete={handleDelete}
+          />
+          
+          <TimeTracker 
+            shift={shift}
+            onCheckIn={handleCheckIn}
+            onCheckOut={handleCheckOut}
+            ref={setTimeTrackerRef}
+          />
+        </div>
       ) : (
         <div className="max-w-3xl mx-auto text-center py-12">
           <h2 className="text-2xl font-bold mb-2">Shift Not Found</h2>

@@ -9,6 +9,7 @@ import LocationVerification from "./components/LocationVerification";
 import ShiftDetails from "./components/ShiftDetails";
 import LocationError from "./components/LocationError";
 import TrackingControls from "./components/TrackingControls";
+import { forwardRef, useImperativeHandle } from "react";
 
 type TimeTrackerProps = {
   shift?: Shift;
@@ -16,7 +17,7 @@ type TimeTrackerProps = {
   onCheckOut?: () => void;
 };
 
-export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTrackerProps) {
+const TimeTracker = forwardRef(({ shift, onCheckIn, onCheckOut }: TimeTrackerProps, ref) => {
   const {
     isTracking,
     elapsedTime,
@@ -29,6 +30,11 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
     handleStartTracking,
     handleStopTracking
   } = useTimeTracking(shift, onCheckIn, onCheckOut);
+  
+  // Expose the handleStartTracking method to parent components
+  useImperativeHandle(ref, () => ({
+    handleStartTracking
+  }));
   
   return (
     <Card className={cn(
@@ -79,4 +85,8 @@ export default function TimeTracker({ shift, onCheckIn, onCheckOut }: TimeTracke
       </CardContent>
     </Card>
   );
-}
+});
+
+TimeTracker.displayName = "TimeTracker";
+
+export default TimeTracker;
