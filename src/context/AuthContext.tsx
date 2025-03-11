@@ -67,18 +67,32 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const { user, isAuthenticated, loading: stateLoading } = useAuthState();
   const { 
-    login, 
+    login: loginMethod, 
     signup, 
     logout, 
     resetPassword, 
     updatePassword, 
     updateProfile,
-    getUserProfile,
+    getUserProfile: getUserProfileMethod,
     loading: methodsLoading, 
     authError 
   } = useAuthMethods();
   
   const [authErrorState, setAuthErrorState] = useState<string | null>(null);
+  
+  // Wrap login method to match the expected void return type
+  const login = async (email: string, password: string): Promise<void> => {
+    await loginMethod(email, password);
+  };
+  
+  // Wrap getUserProfile to match the expected UserProfile return type
+  const getUserProfile = async (userId: string): Promise<UserProfile> => {
+    const profile = await getUserProfileMethod(userId);
+    return {
+      ...profile,
+      verification_status: profile.verification_status as "pending" | "approved" | "rejected"
+    } as UserProfile;
+  };
   
   // Sync authError from hook with the context state
   useEffect(() => {

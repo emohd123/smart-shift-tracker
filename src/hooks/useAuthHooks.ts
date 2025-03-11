@@ -98,6 +98,12 @@ export const useAuthMethods = () => {
         .single();
         
       if (error) throw error;
+      
+      // Ensure verification_status is the expected type
+      if (data && data.verification_status) {
+        data.verification_status = data.verification_status as "pending" | "approved" | "rejected";
+      }
+      
       return data;
     } catch (error: any) {
       console.error("Error fetching user profile:", error);

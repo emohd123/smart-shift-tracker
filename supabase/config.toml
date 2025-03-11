@@ -27,7 +27,6 @@ file_size_limit = "50MiB"
 enabled = true
 site_url = "http://localhost:3000"
 additional_redirect_urls = ["https://localhost:3000"]
-email_confirmation_required = false
 
 [realtime]
 enabled = true
@@ -35,4 +34,3 @@ enabled = true
 [functions]
 [functions.create-admin]
 verify_jwt = false
-

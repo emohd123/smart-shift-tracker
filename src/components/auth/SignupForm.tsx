@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Upload, ArrowLeft } from "lucide-react";
+import { Clock, Upload, ArrowLeft, Home } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { 
@@ -351,9 +351,14 @@ export default function SignupForm() {
               Your account is now pending verification. You will be notified once your account is verified.
             </p>
           </div>
-          <Link to="/login" className="text-primary hover:underline">
-            Go to login
-          </Link>
+          <div className="flex justify-center space-x-4">
+            <Link to="/login" className="text-primary hover:underline">
+              Go to login
+            </Link>
+            <Link to="/" className="text-primary hover:underline">
+              Back to Home
+            </Link>
+          </div>
         </div>
       ) : (
         <div className="bg-white rounded-lg shadow-sm border p-6">
@@ -717,15 +722,26 @@ export default function SignupForm() {
                   Back
                 </Button>
               ) : (
-                <Link to="/login">
-                  <Button
-                    type="button"
-                    variant="outline"
-                  >
-                    <ArrowLeft size={16} className="mr-2" />
-                    Back to Login
-                  </Button>
-                </Link>
+                <div className="flex space-x-2">
+                  <Link to="/login">
+                    <Button
+                      type="button"
+                      variant="outline"
+                    >
+                      <ArrowLeft size={16} className="mr-2" />
+                      Back to Login
+                    </Button>
+                  </Link>
+                  <Link to="/">
+                    <Button
+                      type="button"
+                      variant="outline"
+                    >
+                      <Home size={16} className="mr-2" />
+                      Home
+                    </Button>
+                  </Link>
+                </div>
               )}
 
               {step < 3 ? (
