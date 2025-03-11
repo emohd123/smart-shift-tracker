@@ -20,6 +20,9 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  updatePassword: (password: string) => Promise<void>;
+  authError: string | null;
 }
 
 // Create a default context
@@ -30,12 +33,16 @@ const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   signup: async () => {},
   logout: async () => {},
+  resetPassword: async () => {},
+  updatePassword: async () => {},
+  authError: null,
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   // Function to format user data
   const formatUser = (supabaseUser: SupabaseUser | null): User | null => {
@@ -79,6 +86,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSupabaseUser(session?.user || null);
         setUser(formatUser(session?.user || null));
         setLoading(false);
+        
+        // Reset auth error when auth state changes
+        if (event !== "SIGNED_OUT") {
+          setAuthError(null);
+        }
       }
     );
 
@@ -90,6 +102,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     setLoading(true);
+    setAuthError(null);
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -97,12 +110,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       if (error) {
+        // Check for email not confirmed error
+        if (error.message === "Email not confirmed") {
+          // Attempt to resend confirmation email
+          await supabase.auth.resend({
+            type: 'signup',
+            email: email
+          });
+          throw new Error("Your email is not confirmed. A new confirmation email has been sent. Please check your inbox and spam folder.");
+        }
         throw error;
       }
       
       console.log("Login successful:", data.user);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login error:", error);
+      setAuthError(error.message || "Invalid login credentials");
       throw error;
     } finally {
       setLoading(false);
@@ -111,6 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signup = async (name: string, email: string, password: string) => {
     setLoading(true);
+    setAuthError(null);
     try {
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -127,8 +151,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       console.log("Signup successful:", data.user);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Signup error:", error);
+      setAuthError(error.message || "Could not create account");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (email: string) => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset-password`,
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      setAuthError(error.message || "Failed to send password reset email");
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePassword = async (password: string) => {
+    setLoading(true);
+    setAuthError(null);
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password,
+      });
+      
+      if (error) {
+        throw error;
+      }
+    } catch (error: any) {
+      console.error("Update password error:", error);
+      setAuthError(error.message || "Failed to update password");
       throw error;
     } finally {
       setLoading(false);
@@ -138,8 +203,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       await supabase.auth.signOut();
-    } catch (error) {
+      setAuthError(null);
+    } catch (error: any) {
       console.error("Error signing out:", error);
+      setAuthError(error.message || "Error signing out");
     }
   };
 
@@ -152,6 +219,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         signup,
         logout,
+        resetPassword,
+        updatePassword,
+        authError,
       }}
     >
       {children}

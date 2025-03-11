@@ -6,35 +6,39 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Clock } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export default function LoginForm() {
-  const { login, loading, authError } = useAuth();
+export default function ResetPasswordForm() {
+  const { updatePassword, loading, authError } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError(null);
     
+    if (password !== confirmPassword) {
+      setFormError("Passwords do not match");
+      return;
+    }
+    
     try {
-      console.log("Attempting login with:", email);
-      await login(email, password);
+      await updatePassword(password);
       toast({
-        title: "Logged in successfully",
-        description: "Welcome to SmartShift",
+        title: "Password reset successful",
+        description: "Your password has been updated successfully",
       });
-      navigate("/dashboard");
+      navigate("/login");
     } catch (error) {
-      console.error("Login error:", error);
-      setFormError((error as Error).message || "Invalid email or password");
+      console.error("Password update error:", error);
+      setFormError((error as Error).message || "Failed to update password");
       toast({
-        title: "Login failed",
-        description: (error as Error).message || "Invalid email or password",
+        title: "Password reset failed",
+        description: (error as Error).message || "Failed to update password",
         variant: "destructive",
       });
     }
@@ -46,9 +50,9 @@ export default function LoginForm() {
         <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
           <Clock className="text-white" size={20} />
         </div>
-        <h2 className="text-2xl font-bold tracking-tight">Welcome to SmartShift</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Set new password</h2>
         <p className="text-sm text-muted-foreground mt-2">
-          Sign in to manage your shifts and track time
+          Create a new password for your account
         </p>
       </div>
 
@@ -60,29 +64,7 @@ export default function LoginForm() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="yourname@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            className="h-11"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <Label htmlFor="password">Password</Label>
-            <Link 
-              to="/forgot-password" 
-              className="text-xs text-primary hover:text-primary/90"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <Label htmlFor="password">New Password</Label>
           <Input
             id="password"
             type="password"
@@ -94,22 +76,26 @@ export default function LoginForm() {
           />
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor="confirmPassword">Confirm New Password</Label>
+          <Input
+            id="confirmPassword"
+            type="password"
+            placeholder="••••••••"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            required
+            className="h-11"
+          />
+        </div>
+
         <Button 
           type="submit" 
           className="w-full h-11 font-medium"
           disabled={loading}
         >
-          {loading ? "Signing in..." : "Sign in"}
+          {loading ? "Updating..." : "Reset Password"}
         </Button>
-
-        <div className="text-center">
-          <div className="text-sm">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </div>
-        </div>
       </form>
     </div>
   );
