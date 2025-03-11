@@ -1,78 +1,71 @@
 
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
+import { uploadFileToBucket } from "@/integrations/supabase/storageUtils";
 
 export function useFileUpload() {
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
-  // Create bucket if it doesn't exist
-  const createBucketIfNotExists = async (bucketName: string) => {
-    try {
-      // Check if bucket exists
-      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-      
-      if (bucketsError) {
-        console.error(`Error checking buckets: ${bucketsError.message}`);
-        return false;
-      }
-      
-      const bucketExists = buckets?.some(b => b.name === bucketName);
-      
-      if (!bucketExists) {
-        console.log(`Creating bucket: ${bucketName}`);
-        const { error } = await supabase.storage.createBucket(bucketName, {
-          public: true,
-        });
-        
-        if (error) {
-          console.error(`Error creating bucket ${bucketName}: ${error.message}`);
-          return false;
-        }
-      }
-      
-      return true;
-    } catch (error) {
-      console.error(`Error in createBucketIfNotExists for ${bucketName}:`, error);
-      return false;
-    }
+  /**
+   * Creates a unique file path for the upload
+   */
+  const createFilePath = (userId: string, file: File): string => {
+    const fileExt = file.name.split('.').pop();
+    return `${userId}/${Date.now()}.${fileExt}`;
   };
 
-  const handleFileUpload = async (file: File, bucket: string, userId: string) => {
+  /**
+   * Handles file upload for a specific file type
+   */
+  const handleFileUpload = async (file: File | null, bucket: string, userId: string): Promise<string | null> => {
     if (!file) return null;
     
     try {
-      // Ensure bucket exists
-      const bucketCreated = await createBucketIfNotExists(bucket);
-      if (!bucketCreated) {
-        throw new Error(`Failed to ensure bucket ${bucket} exists`);
-      }
+      setIsUploading(true);
+      const fileName = createFilePath(userId, file);
       
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${userId}/${Date.now()}.${fileExt}`;
-      
-      console.log(`Uploading to ${bucket}/${fileName}`);
-      
-      const { error: uploadError } = await supabase.storage
-        .from(bucket)
-        .upload(fileName, file, {
-          upsert: true,
-        });
+      const { url, error } = await uploadFileToBucket(file, bucket, fileName);
 
-      if (uploadError) {
-        console.error("Upload error:", uploadError);
-        throw uploadError;
+      if (error) {
+        console.error(`Upload error: ${error.code}`, error.message);
+        toast.error(`Failed to upload: ${error.message}`);
+        return null;
       }
 
-      const { data: { publicUrl } } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(fileName);
-
-      return publicUrl;
+      return url;
     } catch (error) {
-      console.error(`Error uploading to ${bucket}:`, error);
-      throw error;
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error during upload';
+      console.error('Unexpected upload error:', errorMessage);
+      toast.error(`Upload failed: ${errorMessage}`);
+      return null;
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  /**
+   * Upload both ID card and profile photo if they exist
+   */
+  const uploadFiles = async (userId: string): Promise<{
+    idCardUrl: string | null;
+    profilePhotoUrl: string | null;
+  }> => {
+    const results = {
+      idCardUrl: null as string | null,
+      profilePhotoUrl: null as string | null
+    };
+
+    if (idCardFile) {
+      results.idCardUrl = await handleFileUpload(idCardFile, 'id_cards', userId);
+    }
+
+    if (profilePhotoFile) {
+      results.profilePhotoUrl = await handleFileUpload(profilePhotoFile, 'profile_photos', userId);
+    }
+
+    return results;
   };
 
   return {
@@ -80,6 +73,8 @@ export function useFileUpload() {
     setIdCardFile,
     profilePhotoFile,
     setProfilePhotoFile,
-    handleFileUpload
+    handleFileUpload,
+    uploadFiles,
+    isUploading
   };
 }

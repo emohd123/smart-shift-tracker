@@ -1,4 +1,3 @@
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -42,11 +41,12 @@ export default function ProfileUpdateForm() {
   } = useProfileData(user);
   
   const {
-    handleFileUpload,
+    uploadFiles,
     idCardFile, 
     setIdCardFile,
     profilePhotoFile, 
-    setProfilePhotoFile
+    setProfilePhotoFile,
+    isUploading
   } = useFileUpload();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -92,37 +92,22 @@ export default function ProfileUpdateForm() {
         id: user.id,
       };
 
-      // Handle ID card upload
-      if (idCardFile) {
-        try {
-          const idCardUrl = await handleFileUpload(idCardFile, 'id_cards', user.id);
-          if (idCardUrl) {
-            updates.id_card_url = idCardUrl;
-          }
-        } catch (error) {
-          console.error("Error uploading ID card:", error);
-          toast.error("Failed to upload ID card");
-          // Continue with the rest of the profile update
+      // Handle file uploads
+      if (idCardFile || profilePhotoFile) {
+        const { idCardUrl, profilePhotoUrl } = await uploadFiles(user.id);
+        
+        if (idCardUrl) {
+          updates.id_card_url = idCardUrl;
         }
-      }
-
-      // Handle profile photo upload
-      if (profilePhotoFile) {
-        try {
-          const photoUrl = await handleFileUpload(profilePhotoFile, 'profile_photos', user.id);
-          if (photoUrl) {
-            updates.profile_photo_url = photoUrl;
-          }
-        } catch (error) {
-          console.error("Error uploading profile photo:", error);
-          toast.error("Failed to upload profile photo");
-          // Continue with the rest of the profile update
+        
+        if (profilePhotoUrl) {
+          updates.profile_photo_url = profilePhotoUrl;
         }
       }
 
       console.log("Updating profile with:", updates);
       
-      // Direct Supabase query instead of using an intermediary function
+      // Update the profile in Supabase
       const { error } = await supabase
         .from('profiles')
         .update(updates)
@@ -141,11 +126,11 @@ export default function ProfileUpdateForm() {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single();
+        .maybeSingle();
         
       if (fetchError) {
         console.error("Error fetching updated profile:", fetchError);
-      } else {
+      } else if (updatedProfile) {
         const typedProfile = {
           ...updatedProfile,
           verification_status: updatedProfile.verification_status as "pending" | "approved" | "rejected"
@@ -157,8 +142,9 @@ export default function ProfileUpdateForm() {
       }
       
     } catch (error) {
-      console.error("Error updating profile:", error);
-      toast.error("Error updating profile");
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error("Error updating profile:", errorMessage);
+      toast.error(`Error updating profile: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -182,8 +168,8 @@ export default function ProfileUpdateForm() {
             currentProfilePhotoUrl={currentProfilePhotoUrl}
           />
 
-          <Button type="submit" disabled={loading}>
-            {loading ? "Updating..." : "Update Profile"}
+          <Button type="submit" disabled={loading || isUploading}>
+            {loading || isUploading ? "Updating..." : "Update Profile"}
           </Button>
         </form>
       </Card>
