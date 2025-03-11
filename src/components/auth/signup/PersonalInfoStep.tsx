@@ -20,12 +20,15 @@ export function PersonalInfoStep({ formData, handleChange, setFormData }: Person
         <Label htmlFor="nationality">Nationality</Label>
         <Select
           value={formData.nationality}
-          onValueChange={(value) => setFormData({...formData, nationality: value})}
+          onValueChange={(value) => {
+            console.log("Selected nationality:", value);
+            setFormData(prev => ({ ...prev, nationality: value }));
+          }}
         >
-          <SelectTrigger className="h-11">
+          <SelectTrigger id="nationality" className="h-11">
             <SelectValue placeholder="Select your country" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="max-h-[300px]">
             {countries.map((country) => (
               <SelectItem key={country.code} value={country.name}>
                 {country.name}

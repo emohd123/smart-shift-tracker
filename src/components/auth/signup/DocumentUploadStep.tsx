@@ -24,7 +24,20 @@ export function DocumentUploadStep({
 }: DocumentUploadStepProps) {
   const { idCardPreview, profilePhotoPreview, idCard } = fileData;
   
-  const isPDF = idCard && idCard.type === 'application/pdf';
+  const isPDF = idCard?.type === 'application/pdf';
+  const maxFileSize = 5 * 1024 * 1024; // 5MB
+
+  const handleIdCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > maxFileSize) {
+      alert('File size should not exceed 5MB');
+      return;
+    }
+
+    handleFileChange(e, 'idCard');
+  };
 
   return (
     <div className="space-y-6">
@@ -37,7 +50,7 @@ export function DocumentUploadStep({
             <div className="space-y-4">
               <div className="relative mx-auto max-w-xs overflow-hidden rounded-lg">
                 {isPDF ? (
-                  <div className="flex flex-col items-center justify-center h-40">
+                  <div className="flex flex-col items-center justify-center h-40 bg-gray-50">
                     <FileIcon className="h-16 w-16 text-primary mb-2" />
                     <p className="text-sm font-medium">{idCard.name}</p>
                     <p className="text-xs text-muted-foreground mt-1">PDF document uploaded</p>
@@ -75,7 +88,7 @@ export function DocumentUploadStep({
                 id="idCard"
                 type="file"
                 accept=".jpg,.jpeg,.png,.pdf,application/pdf,image/jpeg,image/png"
-                onChange={(e) => handleFileChange(e, 'idCard')}
+                onChange={handleIdCardChange}
                 className="hidden"
               />
               <Button

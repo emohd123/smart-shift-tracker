@@ -1,4 +1,3 @@
-
 import { useState, ChangeEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -53,6 +52,7 @@ export const useSignupForm = () => {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, fileType: 'idCard' | 'profilePhoto') => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      const maxSize = 5 * 1024 * 1024; // 5MB
       const allowedTypes = fileType === 'idCard' 
         ? ['image/jpeg', 'image/png', 'application/pdf'] 
         : ['image/jpeg', 'image/png'];
@@ -68,7 +68,7 @@ export const useSignupForm = () => {
         return;
       }
       
-      if (file.size > 5 * 1024 * 1024) {
+      if (file.size > maxSize) {
         toast({
           title: "File too large",
           description: "Please upload a file smaller than 5MB",
@@ -78,35 +78,19 @@ export const useSignupForm = () => {
       }
       
       if (fileType === 'idCard') {
-        setFileData(prev => ({ ...prev, idCard: file }));
-        
-        if (file.type === 'application/pdf') {
-          setFileData(prev => ({ 
-            ...prev, 
-            idCard: file, 
-            idCardPreview: '/placeholder.svg' 
-          }));
-        } else {
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            setFileData(prev => ({ 
-              ...prev, 
-              idCard: file, 
-              idCardPreview: e.target?.result as string 
-            }));
-          };
-          reader.readAsDataURL(file);
-        }
+        setFileData(prev => ({ 
+          ...prev, 
+          idCard: file,
+          idCardPreview: file.type === 'application/pdf' 
+            ? '/placeholder.svg' 
+            : URL.createObjectURL(file)
+        }));
       } else {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          setFileData(prev => ({ 
-            ...prev, 
-            profilePhoto: file, 
-            profilePhotoPreview: e.target?.result as string 
-          }));
-        };
-        reader.readAsDataURL(file);
+        setFileData(prev => ({ 
+          ...prev,
+          profilePhoto: file,
+          profilePhotoPreview: URL.createObjectURL(file)
+        }));
       }
     }
   };
@@ -318,7 +302,6 @@ export const useSignupForm = () => {
     handleNextStep,
     handlePrevStep,
     formError,
-    setFormError,
     handleSubmit,
     isSuccess,
     loading,
