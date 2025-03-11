@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Clock, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ForgotPasswordHeader } from "./ForgotPasswordHeader";
+import { ForgotPasswordSuccess } from "./ForgotPasswordSuccess";
 
 export default function ForgotPasswordForm() {
   const { resetPassword, loading, authError } = useAuth();
@@ -40,15 +42,7 @@ export default function ForgotPasswordForm() {
 
   return (
     <div className="w-full max-w-md space-y-6 animate-fade-in">
-      <div className="text-center">
-        <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
-          <Clock className="text-white" size={20} />
-        </div>
-        <h2 className="text-2xl font-bold tracking-tight">Reset your password</h2>
-        <p className="text-sm text-muted-foreground mt-2">
-          Enter your email and we'll send you instructions
-        </p>
-      </div>
+      <ForgotPasswordHeader />
 
       {formError && (
         <Alert variant="destructive" className="text-sm">
@@ -57,21 +51,7 @@ export default function ForgotPasswordForm() {
       )}
 
       {submitted ? (
-        <div className="text-center space-y-6">
-          <div className="bg-primary/10 rounded-lg p-4 text-center">
-            <p className="text-sm text-center">
-              We've sent password reset instructions to <strong>{email}</strong>.
-              <br/>Please check your email inbox and spam folder.
-            </p>
-          </div>
-          <Link 
-            to="/login" 
-            className="inline-flex items-center text-primary hover:text-primary/90"
-          >
-            <ArrowLeft size={16} className="mr-1" />
-            Back to login
-          </Link>
-        </div>
+        <ForgotPasswordSuccess email={email} />
       ) : (
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="space-y-2">

@@ -8,7 +8,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Clock, Home } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { supabase } from "@/integrations/supabase/client";
+import { LoginFormAlert } from "./LoginFormAlert";
+import { LoginCredentials } from "./LoginCredentials";
+import { LoginActions } from "./LoginActions";
 
 export default function LoginForm() {
   const { login, loading, authError } = useAuth();
@@ -86,76 +88,23 @@ export default function LoginForm() {
         </p>
       </div>
 
-      {formError && (
-        <Alert variant="destructive" className="text-sm">
-          <AlertDescription>{formError}</AlertDescription>
-        </Alert>
-      )}
-
-      {isCreatingAdmin && (
-        <Alert className="text-sm bg-yellow-50 border-yellow-200">
-          <AlertDescription>Setting up admin account...</AlertDescription>
-        </Alert>
-      )}
+      <LoginFormAlert 
+        formError={formError} 
+        isCreatingAdmin={isCreatingAdmin} 
+      />
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="email">Email or Username</Label>
-          <Input
-            id="email"
-            type="text"
-            placeholder="yourname@example.com or username"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete="email"
-            className="h-11"
-          />
-        </div>
+        <LoginCredentials 
+          email={email}
+          setEmail={setEmail}
+          password={password}
+          setPassword={setPassword}
+        />
 
-        <div className="space-y-2">
-          <div className="flex justify-between items-center">
-            <Label htmlFor="password">Password</Label>
-            <Link 
-              to="/forgot-password" 
-              className="text-xs text-primary hover:text-primary/90"
-            >
-              Forgot password?
-            </Link>
-          </div>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="h-11"
-          />
-        </div>
-
-        <Button 
-          type="submit" 
-          className="w-full h-11 font-medium"
-          disabled={loading || isCreatingAdmin}
-        >
-          {loading ? "Signing in..." : "Sign in"}
-        </Button>
-        
-        <div className="flex justify-between items-center">
-          <Link to="/">
-            <Button variant="outline" size="sm" className="h-9">
-              <Home size={16} className="mr-2" />
-              Home
-            </Button>
-          </Link>
-          <div className="text-sm">
-            Don't have an account?{" "}
-            <Link to="/signup" className="text-primary hover:underline">
-              Sign up
-            </Link>
-          </div>
-        </div>
+        <LoginActions 
+          loading={loading} 
+          isCreatingAdmin={isCreatingAdmin} 
+        />
       </form>
     </div>
   );

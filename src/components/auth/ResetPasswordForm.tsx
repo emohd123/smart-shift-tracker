@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Clock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ResetPasswordHeader } from "./ResetPasswordHeader";
+import { PasswordFields } from "./PasswordFields";
 
 interface ResetPasswordFormProps {
   token: string | null;
@@ -55,15 +57,7 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
 
   return (
     <div className="w-full max-w-md space-y-6 animate-fade-in">
-      <div className="text-center">
-        <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
-          <Clock className="text-white" size={20} />
-        </div>
-        <h2 className="text-2xl font-bold tracking-tight">Set new password</h2>
-        <p className="text-sm text-muted-foreground mt-2">
-          Create a new password for your account
-        </p>
-      </div>
+      <ResetPasswordHeader />
 
       {formError && (
         <Alert variant="destructive" className="text-sm">
@@ -72,31 +66,12 @@ export default function ResetPasswordForm({ token }: ResetPasswordFormProps) {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="space-y-2">
-          <Label htmlFor="password">New Password</Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            className="h-11"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="confirmPassword">Confirm New Password</Label>
-          <Input
-            id="confirmPassword"
-            type="password"
-            placeholder="••••••••"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            required
-            className="h-11"
-          />
-        </div>
+        <PasswordFields 
+          password={password}
+          setPassword={setPassword}
+          confirmPassword={confirmPassword}
+          setConfirmPassword={setConfirmPassword}
+        />
 
         <Button 
           type="submit" 
