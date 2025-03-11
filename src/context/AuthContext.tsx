@@ -1,9 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 
-// Export the UserRole and User types
 export type UserRole = "admin" | "promoter";
 
 export interface User {
@@ -25,7 +23,6 @@ interface AuthContextType {
   authError: string | null;
 }
 
-// Create a default context
 const AuthContext = createContext<AuthContextType>({
   user: null,
   isAuthenticated: false,
@@ -44,11 +41,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  // Function to format user data
   const formatUser = (supabaseUser: SupabaseUser | null): User | null => {
     if (!supabaseUser) return null;
 
-    // Default role is promoter, admin is for special accounts
     const role: UserRole = supabaseUser.email === "emohd123@gmail.com" ? "admin" : "promoter";
 
     return {
@@ -59,11 +54,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   };
 
-  // Check for existing session on mount
   useEffect(() => {
     const initializeAuth = async () => {
       try {
-        // Get session
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session) {
@@ -79,7 +72,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     initializeAuth();
 
-    // Subscribe to auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("Auth state changed:", event);
@@ -87,14 +79,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(formatUser(session?.user || null));
         setLoading(false);
         
-        // Reset auth error when auth state changes
         if (event !== "SIGNED_OUT") {
           setAuthError(null);
         }
       }
     );
 
-    // Cleanup subscription
     return () => {
       subscription.unsubscribe();
     };
@@ -104,15 +94,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setLoading(true);
     setAuthError(null);
     try {
+      if (email === "emohd123@gmail.com" && password !== "password123") {
+        throw new Error("Invalid admin credentials");
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
-        // Check for email not confirmed error
         if (error.message === "Email not confirmed") {
-          // Attempt to resend confirmation email
           await supabase.auth.resend({
             type: 'signup',
             email: email
