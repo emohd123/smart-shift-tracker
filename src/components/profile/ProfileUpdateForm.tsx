@@ -13,6 +13,8 @@ import { UserProfile } from "@/context/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import ProfileFormFields from "./ProfileFormFields";
+import FileUploadFields from "./FileUploadFields";
 
 const formSchema = z.object({
   full_name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -80,11 +82,29 @@ export default function ProfileUpdateForm() {
   const handleFileUpload = async (file: File, bucket: string, userId: string) => {
     const fileExt = file.name.split('.').pop();
     const fileName = `${userId}/${Date.now()}.${fileExt}`;
+    
+    // Check if buckets exist, create them if they don't
+    try {
+      const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(b => b.name === bucket);
+      
+      if (!bucketExists) {
+        await supabase.storage.createBucket(bucket, {
+          public: true,
+        });
+      }
+    } catch (error) {
+      console.error(`Error checking/creating bucket ${bucket}:`, error);
+    }
+    
     const { error: uploadError, data } = await supabase.storage
       .from(bucket)
-      .upload(fileName, file);
+      .upload(fileName, file, {
+        upsert: true,
+      });
 
     if (uploadError) {
+      console.error("Upload error:", uploadError);
       throw uploadError;
     }
 
@@ -106,13 +126,25 @@ export default function ProfileUpdateForm() {
       };
 
       if (idCardFile) {
-        const idCardUrl = await handleFileUpload(idCardFile, 'id_cards', user.id);
-        updates.id_card_url = idCardUrl;
+        try {
+          const idCardUrl = await handleFileUpload(idCardFile, 'id_cards', user.id);
+          updates.id_card_url = idCardUrl;
+        } catch (error) {
+          console.error("Error uploading ID card:", error);
+          toast.error("Failed to upload ID card");
+          // Continue with the rest of the profile update
+        }
       }
 
       if (profilePhotoFile) {
-        const photoUrl = await handleFileUpload(profilePhotoFile, 'profile_photos', user.id);
-        updates.profile_photo_url = photoUrl;
+        try {
+          const photoUrl = await handleFileUpload(profilePhotoFile, 'profile_photos', user.id);
+          updates.profile_photo_url = photoUrl;
+        } catch (error) {
+          console.error("Error uploading profile photo:", error);
+          toast.error("Failed to upload profile photo");
+          // Continue with the rest of the profile update
+        }
       }
 
       const { error } = await supabase
@@ -123,6 +155,11 @@ export default function ProfileUpdateForm() {
       if (error) throw error;
 
       toast.success("Profile updated successfully");
+      
+      // Refresh the profile data
+      const updatedProfile = await getUserProfile(user.id);
+      setProfileData(updatedProfile);
+      
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Error updating profile");
@@ -135,127 +172,12 @@ export default function ProfileUpdateForm() {
     <div className="space-y-8">
       <Card className="p-6">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="full_name">Full Name</Label>
-              <Input
-                id="full_name"
-                type="text"
-                {...form.register("full_name")}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="nationality">Nationality</Label>
-              <Input
-                id="nationality"
-                type="text"
-                {...form.register("nationality")}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="age">Age</Label>
-              <Input
-                id="age"
-                type="number"
-                {...form.register("age", { valueAsNumber: true })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone_number">Phone Number</Label>
-              <Input
-                id="phone_number"
-                type="tel"
-                {...form.register("phone_number")}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
-              <Select 
-                onValueChange={(value) => form.setValue("gender", value as "Male" | "Female" | "Other")}
-                defaultValue={form.getValues("gender")}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="height">Height (cm)</Label>
-              <Input
-                id="height"
-                type="number"
-                {...form.register("height", { valueAsNumber: true })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="weight">Weight (kg)</Label>
-              <Input
-                id="weight"
-                type="number"
-                {...form.register("weight", { valueAsNumber: true })}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Input
-                id="address"
-                type="text"
-                {...form.register("address")}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="bank_details">Bank Details</Label>
-              <Input
-                id="bank_details"
-                type="text"
-                {...form.register("bank_details")}
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id="is_student"
-              checked={form.watch("is_student") as boolean}
-              onCheckedChange={(checked) => form.setValue("is_student", !!checked)}
-            />
-            <Label htmlFor="is_student">I am a student</Label>
-          </div>
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="id_card">ID Card</Label>
-              <Input
-                id="id_card"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setIdCardFile(e.target.files?.[0] || null)}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="profile_photo">Profile Photo</Label>
-              <Input
-                id="profile_photo"
-                type="file"
-                accept="image/*"
-                onChange={(e) => setProfilePhotoFile(e.target.files?.[0] || null)}
-              />
-            </div>
-          </div>
+          <ProfileFormFields form={form} />
+          
+          <FileUploadFields 
+            setIdCardFile={setIdCardFile} 
+            setProfilePhotoFile={setProfilePhotoFile} 
+          />
 
           <Button type="submit" disabled={loading}>
             {loading ? "Updating..." : "Update Profile"}
