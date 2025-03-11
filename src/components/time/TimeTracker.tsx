@@ -42,14 +42,14 @@ const TimeTracker = forwardRef(({ shift, onCheckIn, onCheckOut }: TimeTrackerPro
       isTracking && "border-primary/20 shadow-md"
     )}>
       <CardHeader className="pb-3">
-        <CardTitle className="flex items-center justify-between">
-          <span>Time Tracker</span>
+        <div className="flex items-center justify-between">
+          <CardTitle>Time Tracker</CardTitle>
           {isTracking && (
             <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
               Active
             </Badge>
           )}
-        </CardTitle>
+        </div>
         <CardDescription>
           {isTracking 
             ? `Started at ${startTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`

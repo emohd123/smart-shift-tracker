@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import ShiftDetail from "@/components/shifts/ShiftDetail";
@@ -27,9 +27,7 @@ const ShiftDetails = () => {
   const navigate = useNavigate();
   const [shift, setShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timeTrackerRef, setTimeTrackerRef] = useState<{
-    handleStartTracking: () => void;
-  } | null>(null);
+  const timeTrackerRef = useRef<{ handleStartTracking: () => void } | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -55,15 +53,15 @@ const ShiftDetails = () => {
   // Register global function to start time tracking
   useEffect(() => {
     window.startTimeTracking = (shiftData: Shift) => {
-      if (timeTrackerRef) {
-        timeTrackerRef.handleStartTracking();
+      if (timeTrackerRef.current) {
+        timeTrackerRef.current.handleStartTracking();
       }
     };
 
     return () => {
       window.startTimeTracking = undefined;
     };
-  }, [timeTrackerRef]);
+  }, []);
 
   if (!isAuthenticated) {
     return null; // Don't render anything while redirecting
@@ -157,7 +155,7 @@ const ShiftDetails = () => {
             shift={shift}
             onCheckIn={handleCheckIn}
             onCheckOut={handleCheckOut}
-            ref={setTimeTrackerRef}
+            ref={timeTrackerRef}
           />
         </div>
       ) : (
