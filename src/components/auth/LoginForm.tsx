@@ -96,10 +96,6 @@ export default function LoginForm() {
               Sign up
             </Link>
           </div>
-          <div className="text-xs text-muted-foreground mt-4">
-            <p>Admin credentials:</p>
-            <p>Email: emohd123@gmail.com / Password: password123</p>
-          </div>
         </div>
       </form>
     </div>
