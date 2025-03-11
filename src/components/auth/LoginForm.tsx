@@ -11,6 +11,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { LoginFormAlert } from "./LoginFormAlert";
 import { LoginCredentials } from "./LoginCredentials";
 import { LoginActions } from "./LoginActions";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function LoginForm() {
   const { login, loading, authError } = useAuth();
