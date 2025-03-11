@@ -5,8 +5,10 @@ import ProfileUpdateForm from "@/components/profile/ProfileUpdateForm";
 import PasswordChangeForm from "@/components/profile/PasswordChangeForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { User, Lock } from "lucide-react"; 
+import { useAuth } from "@/context/AuthContext";
 
 export default function AccountSettings() {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("profile");
 
   return (

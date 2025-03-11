@@ -56,22 +56,34 @@ export default function ProfileUpdateForm() {
     const loadProfile = async () => {
       if (user) {
         try {
-          const profile = await getUserProfile(user.id);
-          setProfileData(profile);
-          setCurrentProfilePhotoUrl(profile.profile_photo_url || null);
-          setCurrentIdCardUrl(profile.id_card_url || null);
+          // Direct Supabase query instead of using getUserProfile
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) {
+            console.error("Error loading profile:", error);
+            toast.error("Failed to load profile");
+            return;
+          }
+          
+          setProfileData(data);
+          setCurrentProfilePhotoUrl(data.profile_photo_url || null);
+          setCurrentIdCardUrl(data.id_card_url || null);
           
           form.reset({
-            full_name: profile.full_name || "",
-            nationality: profile.nationality || "",
-            age: profile.age || 18,
-            phone_number: profile.phone_number || "",
-            gender: profile.gender || "Male",
-            height: profile.height || 170,
-            weight: profile.weight || 70,
-            is_student: profile.is_student || false,
-            address: profile.address || "",
-            bank_details: profile.bank_details || "",
+            full_name: data.full_name || "",
+            nationality: data.nationality || "",
+            age: data.age || 18,
+            phone_number: data.phone_number || "",
+            gender: data.gender || "Male",
+            height: data.height || 170,
+            weight: data.weight || 70,
+            is_student: data.is_student || false,
+            address: data.address || "",
+            bank_details: data.bank_details || "",
           });
         } catch (error) {
           console.error("Error loading profile:", error);
@@ -80,51 +92,75 @@ export default function ProfileUpdateForm() {
       }
     };
     loadProfile();
-  }, [user, getUserProfile, form]);
+  }, [user, form]);
 
-  // Helper function to ensure bucket exists
-  const ensureBucketExists = async (bucketName: string) => {
+  // Create bucket if it doesn't exist
+  const createBucketIfNotExists = async (bucketName: string) => {
     try {
-      const { data: buckets } = await supabase.storage.listBuckets();
+      // Check if bucket exists
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        console.error(`Error checking buckets: ${bucketsError.message}`);
+        return false;
+      }
+      
       const bucketExists = buckets?.some(b => b.name === bucketName);
       
       if (!bucketExists) {
         console.log(`Creating bucket: ${bucketName}`);
-        await supabase.storage.createBucket(bucketName, {
+        const { error } = await supabase.storage.createBucket(bucketName, {
           public: true,
         });
+        
+        if (error) {
+          console.error(`Error creating bucket ${bucketName}: ${error.message}`);
+          return false;
+        }
       }
+      
+      return true;
     } catch (error) {
-      console.error(`Error checking/creating bucket ${bucketName}:`, error);
-      // Continue execution - the SQL migrations should have created the buckets
+      console.error(`Error in createBucketIfNotExists for ${bucketName}:`, error);
+      return false;
     }
   };
 
   const handleFileUpload = async (file: File, bucket: string, userId: string) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+    if (!file) return null;
     
-    // Ensure bucket exists before uploading
-    await ensureBucketExists(bucket);
-    
-    console.log(`Uploading to ${bucket}/${fileName}`);
-    
-    const { error: uploadError, data } = await supabase.storage
-      .from(bucket)
-      .upload(fileName, file, {
-        upsert: true,
-      });
+    try {
+      // Ensure bucket exists
+      const bucketCreated = await createBucketIfNotExists(bucket);
+      if (!bucketCreated) {
+        throw new Error(`Failed to ensure bucket ${bucket} exists`);
+      }
+      
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${userId}/${Date.now()}.${fileExt}`;
+      
+      console.log(`Uploading to ${bucket}/${fileName}`);
+      
+      const { error: uploadError } = await supabase.storage
+        .from(bucket)
+        .upload(fileName, file, {
+          upsert: true,
+        });
 
-    if (uploadError) {
-      console.error("Upload error:", uploadError);
-      throw uploadError;
+      if (uploadError) {
+        console.error("Upload error:", uploadError);
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from(bucket)
+        .getPublicUrl(fileName);
+
+      return publicUrl;
+    } catch (error) {
+      console.error(`Error uploading to ${bucket}:`, error);
+      throw error;
     }
-
-    const { data: { publicUrl } } = supabase.storage
-      .from(bucket)
-      .getPublicUrl(fileName);
-
-    return publicUrl;
   };
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -141,7 +177,9 @@ export default function ProfileUpdateForm() {
       if (idCardFile) {
         try {
           const idCardUrl = await handleFileUpload(idCardFile, 'id_cards', user.id);
-          updates.id_card_url = idCardUrl;
+          if (idCardUrl) {
+            updates.id_card_url = idCardUrl;
+          }
         } catch (error) {
           console.error("Error uploading ID card:", error);
           toast.error("Failed to upload ID card");
@@ -153,7 +191,9 @@ export default function ProfileUpdateForm() {
       if (profilePhotoFile) {
         try {
           const photoUrl = await handleFileUpload(profilePhotoFile, 'profile_photos', user.id);
-          updates.profile_photo_url = photoUrl;
+          if (photoUrl) {
+            updates.profile_photo_url = photoUrl;
+          }
         } catch (error) {
           console.error("Error uploading profile photo:", error);
           toast.error("Failed to upload profile photo");
@@ -163,20 +203,34 @@ export default function ProfileUpdateForm() {
 
       console.log("Updating profile with:", updates);
       
+      // Direct Supabase query instead of using an intermediary function
       const { error } = await supabase
         .from('profiles')
         .update(updates)
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Profile update error:", error);
+        toast.error(`Error updating profile: ${error.message}`);
+        throw error;
+      }
 
       toast.success("Profile updated successfully");
       
       // Refresh the profile data
-      const updatedProfile = await getUserProfile(user.id);
-      setProfileData(updatedProfile);
-      setCurrentProfilePhotoUrl(updatedProfile.profile_photo_url || null);
-      setCurrentIdCardUrl(updatedProfile.id_card_url || null);
+      const { data: updatedProfile, error: fetchError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+        
+      if (fetchError) {
+        console.error("Error fetching updated profile:", fetchError);
+      } else {
+        setProfileData(updatedProfile);
+        setCurrentProfilePhotoUrl(updatedProfile.profile_photo_url || null);
+        setCurrentIdCardUrl(updatedProfile.id_card_url || null);
+      }
       
     } catch (error) {
       console.error("Error updating profile:", error);

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User, UserRole } from "@/context/AuthContext";
@@ -95,7 +94,7 @@ export const useAuthMethods = () => {
         .from('profiles')
         .select('*')
         .eq('id', userId)
-        .single();
+        .maybeSingle();
         
       if (error) throw error;
       
