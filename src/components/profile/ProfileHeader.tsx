@@ -1,5 +1,6 @@
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/context/AuthContext";
 
 interface ProfileHeaderProps {
   profilePhotoUrl: string | null;
@@ -7,6 +8,8 @@ interface ProfileHeaderProps {
 }
 
 export default function ProfileHeader({ profilePhotoUrl, userName }: ProfileHeaderProps) {
+  const { user } = useAuth();
+  
   // Extract first letter of the name for the avatar fallback
   const initials = userName
     .split(' ')
@@ -21,7 +24,10 @@ export default function ProfileHeader({ profilePhotoUrl, userName }: ProfileHead
         <AvatarImage src={profilePhotoUrl || ''} alt={userName} />
         <AvatarFallback className="text-xl font-semibold">{initials}</AvatarFallback>
       </Avatar>
-      <h2 className="text-2xl font-bold">{userName}</h2>
+      <div className="text-center">
+        <h2 className="text-2xl font-bold">{userName}</h2>
+        {user?.email && <p className="text-sm text-muted-foreground">{user.email}</p>}
+      </div>
     </div>
   );
 }
