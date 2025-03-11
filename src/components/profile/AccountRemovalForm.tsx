@@ -48,8 +48,7 @@ export default function AccountRemovalForm() {
         await deactivateAccount();
         // No need to show toast or redirect as it's handled in the hook
       } else if (removalType === "delete") {
-        // Show a clear confirmation message to the user
-        toast.info("Deleting account and all associated data...");
+        // Toast is now displayed in the useAccount hook
         await deleteAccount();
         // No need to show toast or redirect as it's handled in the hook
       }
@@ -119,7 +118,10 @@ export default function AccountRemovalForm() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleRemoveAccount} className="bg-destructive">
+                <AlertDialogAction 
+                  onClick={handleRemoveAccount} 
+                  className="bg-destructive"
+                >
                   {removalType === "deactivate" ? "Deactivate" : "Delete Permanently"}
                 </AlertDialogAction>
               </AlertDialogFooter>
