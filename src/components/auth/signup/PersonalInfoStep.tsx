@@ -1,7 +1,7 @@
 
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { FormData } from "./types";
 
 interface PersonalInfoStepProps {
@@ -66,20 +66,21 @@ export function PersonalInfoStep({ formData, handleChange, setFormData }: Person
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="gender">Gender</Label>
-        <Select
-          value={formData.gender}
+        <Label>Gender</Label>
+        <RadioGroup 
+          value={formData.gender} 
           onValueChange={handleGenderChange}
+          className="flex space-x-8"
         >
-          <SelectTrigger id="gender" className="h-11">
-            <SelectValue placeholder="Select your gender" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Male">Male</SelectItem>
-            <SelectItem value="Female">Female</SelectItem>
-            <SelectItem value="Other">Other</SelectItem>
-          </SelectContent>
-        </Select>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="Male" id="gender-male" />
+            <Label htmlFor="gender-male">Male</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="Female" id="gender-female" />
+            <Label htmlFor="gender-female">Female</Label>
+          </div>
+        </RadioGroup>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
