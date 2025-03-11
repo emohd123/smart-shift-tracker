@@ -23,6 +23,9 @@ type UseTimeTrackingActionsProps = {
   resetTimeAndEarnings: () => void;
   elapsedTime: number;
   earnings: number;
+  timeLogId: string | null;    // Added this prop
+  isTracking: boolean;         // Added this prop
+  startTime: Date | null;      // Added this prop
   onCheckIn?: () => void;
   onCheckOut?: () => void;
 };
@@ -44,6 +47,9 @@ export function useTimeTrackingActions({
   resetTimeAndEarnings,
   elapsedTime,
   earnings,
+  timeLogId,           // Added these parameters
+  isTracking,          // to the destructuring
+  startTime,           // to fix the errors
   onCheckIn,
   onCheckOut
 }: UseTimeTrackingActionsProps) {

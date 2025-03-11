@@ -83,6 +83,9 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     resetTimeAndEarnings,
     elapsedTime,
     earnings,
+    timeLogId,     // Pass timeLogId
+    isTracking,    // Pass isTracking
+    startTime,     // Pass startTime
     onCheckIn,
     onCheckOut
   });
