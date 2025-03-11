@@ -3,18 +3,16 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useEffect, useState } from "react";
 import { UserProfile } from "@/context/AuthContext";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import ProfileFormFields from "./ProfileFormFields";
 import FileUploadFields from "./FileUploadFields";
+import ProfileHeader from "./ProfileHeader";
 
 const formSchema = z.object({
   full_name: z.string().min(2, { message: "Name must be at least 2 characters." }),
@@ -35,6 +33,8 @@ export default function ProfileUpdateForm() {
   const [profileData, setProfileData] = useState<UserProfile | null>(null);
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const [currentProfilePhotoUrl, setCurrentProfilePhotoUrl] = useState<string | null>(null);
+  const [currentIdCardUrl, setCurrentIdCardUrl] = useState<string | null>(null);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -58,16 +58,19 @@ export default function ProfileUpdateForm() {
         try {
           const profile = await getUserProfile(user.id);
           setProfileData(profile);
+          setCurrentProfilePhotoUrl(profile.profile_photo_url || null);
+          setCurrentIdCardUrl(profile.id_card_url || null);
+          
           form.reset({
-            full_name: profile.full_name,
-            nationality: profile.nationality,
-            age: profile.age,
-            phone_number: profile.phone_number,
-            gender: profile.gender,
-            height: profile.height,
-            weight: profile.weight,
-            is_student: profile.is_student,
-            address: profile.address,
+            full_name: profile.full_name || "",
+            nationality: profile.nationality || "",
+            age: profile.age || 18,
+            phone_number: profile.phone_number || "",
+            gender: profile.gender || "Male",
+            height: profile.height || 170,
+            weight: profile.weight || 70,
+            is_student: profile.is_student || false,
+            address: profile.address || "",
             bank_details: profile.bank_details || "",
           });
         } catch (error) {
@@ -79,23 +82,32 @@ export default function ProfileUpdateForm() {
     loadProfile();
   }, [user, getUserProfile, form]);
 
-  const handleFileUpload = async (file: File, bucket: string, userId: string) => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${userId}/${Date.now()}.${fileExt}`;
-    
-    // Check if buckets exist, create them if they don't
+  // Helper function to ensure bucket exists
+  const ensureBucketExists = async (bucketName: string) => {
     try {
       const { data: buckets } = await supabase.storage.listBuckets();
-      const bucketExists = buckets?.some(b => b.name === bucket);
+      const bucketExists = buckets?.some(b => b.name === bucketName);
       
       if (!bucketExists) {
-        await supabase.storage.createBucket(bucket, {
+        console.log(`Creating bucket: ${bucketName}`);
+        await supabase.storage.createBucket(bucketName, {
           public: true,
         });
       }
     } catch (error) {
-      console.error(`Error checking/creating bucket ${bucket}:`, error);
+      console.error(`Error checking/creating bucket ${bucketName}:`, error);
+      // Continue execution - the SQL migrations should have created the buckets
     }
+  };
+
+  const handleFileUpload = async (file: File, bucket: string, userId: string) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${userId}/${Date.now()}.${fileExt}`;
+    
+    // Ensure bucket exists before uploading
+    await ensureBucketExists(bucket);
+    
+    console.log(`Uploading to ${bucket}/${fileName}`);
     
     const { error: uploadError, data } = await supabase.storage
       .from(bucket)
@@ -125,6 +137,7 @@ export default function ProfileUpdateForm() {
         id: user.id,
       };
 
+      // Handle ID card upload
       if (idCardFile) {
         try {
           const idCardUrl = await handleFileUpload(idCardFile, 'id_cards', user.id);
@@ -136,6 +149,7 @@ export default function ProfileUpdateForm() {
         }
       }
 
+      // Handle profile photo upload
       if (profilePhotoFile) {
         try {
           const photoUrl = await handleFileUpload(profilePhotoFile, 'profile_photos', user.id);
@@ -147,6 +161,8 @@ export default function ProfileUpdateForm() {
         }
       }
 
+      console.log("Updating profile with:", updates);
+      
       const { error } = await supabase
         .from('profiles')
         .update(updates)
@@ -159,6 +175,8 @@ export default function ProfileUpdateForm() {
       // Refresh the profile data
       const updatedProfile = await getUserProfile(user.id);
       setProfileData(updatedProfile);
+      setCurrentProfilePhotoUrl(updatedProfile.profile_photo_url || null);
+      setCurrentIdCardUrl(updatedProfile.id_card_url || null);
       
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -170,13 +188,20 @@ export default function ProfileUpdateForm() {
 
   return (
     <div className="space-y-8">
+      <ProfileHeader 
+        profilePhotoUrl={currentProfilePhotoUrl} 
+        userName={profileData?.full_name || user?.name || "User"} 
+      />
+      
       <Card className="p-6">
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
           <ProfileFormFields form={form} />
           
           <FileUploadFields 
             setIdCardFile={setIdCardFile} 
-            setProfilePhotoFile={setProfilePhotoFile} 
+            setProfilePhotoFile={setProfilePhotoFile}
+            currentIdCardUrl={currentIdCardUrl}
+            currentProfilePhotoUrl={currentProfilePhotoUrl}
           />
 
           <Button type="submit" disabled={loading}>
