@@ -2,7 +2,7 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, FileIcon } from "lucide-react";
 import { FileData } from "./types";
 
 interface DocumentUploadStepProps {
@@ -22,7 +22,9 @@ export function DocumentUploadStep({
   setProfilePhoto,
   setProfilePhotoPreview,
 }: DocumentUploadStepProps) {
-  const { idCardPreview, profilePhotoPreview } = fileData;
+  const { idCardPreview, profilePhotoPreview, idCard } = fileData;
+  
+  const isPDF = idCard && idCard.type === 'application/pdf';
 
   return (
     <div className="space-y-6">
@@ -34,11 +36,19 @@ export function DocumentUploadStep({
           {idCardPreview ? (
             <div className="space-y-4">
               <div className="relative mx-auto max-w-xs overflow-hidden rounded-lg">
-                <img
-                  src={idCardPreview}
-                  alt="ID Card Preview"
-                  className="h-40 mx-auto object-contain"
-                />
+                {isPDF ? (
+                  <div className="flex flex-col items-center justify-center h-40">
+                    <FileIcon className="h-16 w-16 text-primary mb-2" />
+                    <p className="text-sm font-medium">{idCard.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">PDF document uploaded</p>
+                  </div>
+                ) : (
+                  <img
+                    src={idCardPreview}
+                    alt="ID Card Preview"
+                    className="h-40 mx-auto object-contain"
+                  />
+                )}
               </div>
               <Button
                 type="button"
@@ -64,7 +74,7 @@ export function DocumentUploadStep({
               <Input
                 id="idCard"
                 type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
+                accept=".jpg,.jpeg,.png,.pdf,application/pdf,image/jpeg,image/png"
                 onChange={(e) => handleFileChange(e, 'idCard')}
                 className="hidden"
               />
@@ -117,7 +127,7 @@ export function DocumentUploadStep({
               <Input
                 id="profilePhoto"
                 type="file"
-                accept=".jpg,.jpeg,.png"
+                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
                 onChange={(e) => handleFileChange(e, 'profilePhoto')}
                 className="hidden"
               />

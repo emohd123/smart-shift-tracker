@@ -16,7 +16,6 @@ export default function SignupForm() {
   const { toast } = useToast();
   const navigate = useNavigate();
   
-  // Form state
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
@@ -33,7 +32,6 @@ export default function SignupForm() {
     bankDetails: "",
   });
   
-  // File upload states
   const [fileData, setFileData] = useState<FileData>({
     idCard: null,
     profilePhoto: null,
@@ -46,7 +44,6 @@ export default function SignupForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
 
-  // Handle input change
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     
@@ -58,16 +55,19 @@ export default function SignupForm() {
     }
   };
 
-  // Handle file selection
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>, fileType: 'idCard' | 'profilePhoto') => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+      const allowedTypes = fileType === 'idCard' 
+        ? ['image/jpeg', 'image/png', 'application/pdf'] 
+        : ['image/jpeg', 'image/png'];
       
       if (!allowedTypes.includes(file.type)) {
         toast({
           title: "Invalid file type",
-          description: "Please upload a JPEG, PNG, or PDF file",
+          description: fileType === 'idCard' 
+            ? "Please upload a JPEG, PNG, or PDF file" 
+            : "Please upload a JPEG or PNG file",
           variant: "destructive",
         });
         return;
@@ -83,34 +83,43 @@ export default function SignupForm() {
       }
       
       if (fileType === 'idCard') {
-        setFileData({ ...fileData, idCard: file });
-        if (file.type !== 'application/pdf') {
+        setFileData(prev => ({ ...prev, idCard: file }));
+        
+        if (file.type === 'application/pdf') {
+          setFileData(prev => ({ 
+            ...prev, 
+            idCard: file, 
+            idCardPreview: '/placeholder.svg' 
+          }));
+        } else {
           const reader = new FileReader();
           reader.onload = (e) => {
-            setFileData({ ...fileData, idCardPreview: e.target?.result as string });
+            setFileData(prev => ({ 
+              ...prev, 
+              idCard: file, 
+              idCardPreview: e.target?.result as string 
+            }));
           };
           reader.readAsDataURL(file);
-        } else {
-          setFileData({ ...fileData, idCardPreview: '/placeholder.svg' });
         }
       } else {
-        setFileData({ ...fileData, profilePhoto: file });
         const reader = new FileReader();
         reader.onload = (e) => {
-          setFileData({ ...fileData, profilePhotoPreview: e.target?.result as string });
+          setFileData(prev => ({ 
+            ...prev, 
+            profilePhoto: file, 
+            profilePhotoPreview: e.target?.result as string 
+          }));
         };
         reader.readAsDataURL(file);
       }
     }
   };
 
-  // Validate form fields
   const validateForm = () => {
-    // Reset error
     setFormError(null);
     
     if (step === 1) {
-      // Validate basic information
       if (!formData.fullName || !formData.email || !formData.password || !formData.confirmPassword) {
         setFormError("All fields are required");
         return false;
@@ -133,7 +142,6 @@ export default function SignupForm() {
       
       return true;
     } else if (step === 2) {
-      // Validate personal details
       if (
         !formData.nationality ||
         !formData.age ||
@@ -160,7 +168,6 @@ export default function SignupForm() {
       
       return true;
     } else if (step === 3) {
-      // Validate file uploads
       if (!fileData.idCard) {
         setFormError("Please upload your ID card");
         return false;
@@ -177,24 +184,35 @@ export default function SignupForm() {
     return false;
   };
 
-  // Handle next step
   const handleNextStep = () => {
     if (validateForm()) {
       setStep(prevStep => prevStep + 1);
     }
   };
 
-  // Handle previous step
   const handlePrevStep = () => {
     setStep(prevStep => prevStep - 1);
   };
 
-  // Upload files to Supabase storage
   const uploadFiles = async (userId: string) => {
     try {
       setUploadingFiles(true);
       let idCardUrl = null;
       let profilePhotoUrl = null;
+      
+      const { data: buckets } = await supabase.storage.listBuckets();
+      
+      if (!buckets?.find(b => b.name === 'id_cards')) {
+        await supabase.storage.createBucket('id_cards', {
+          public: true
+        });
+      }
+      
+      if (!buckets?.find(b => b.name === 'profile_photos')) {
+        await supabase.storage.createBucket('profile_photos', {
+          public: true
+        });
+      }
       
       if (fileData.idCard) {
         const fileExt = fileData.idCard.name.split('.').pop();
@@ -229,7 +247,6 @@ export default function SignupForm() {
     }
   };
 
-  // Update user profile
   const updateUserProfile = async (userId: string, idCardUrl: string, profilePhotoUrl: string) => {
     try {
       const { error } = await supabase
@@ -258,7 +275,6 @@ export default function SignupForm() {
     }
   };
 
-  // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -267,7 +283,6 @@ export default function SignupForm() {
     try {
       setFormError(null);
       
-      // Register the user
       const { fullName, email, password } = formData;
       const userData = await signup(fullName, email, password);
       
@@ -275,10 +290,8 @@ export default function SignupForm() {
         throw new Error("Failed to create user account");
       }
       
-      // Upload files
       const { idCardUrl, profilePhotoUrl } = await uploadFiles(userData.id);
       
-      // Update user profile
       await updateUserProfile(userData.id, idCardUrl || '', profilePhotoUrl || '');
       
       setIsSuccess(true);
@@ -287,7 +300,6 @@ export default function SignupForm() {
         description: "Your account is now pending verification.",
       });
       
-      // Redirect to login page after 2 seconds
       setTimeout(() => {
         navigate("/login");
       }, 2000);
