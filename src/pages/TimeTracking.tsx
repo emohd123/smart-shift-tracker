@@ -73,7 +73,7 @@ const TimeTracking = () => {
                   startTime: shiftData.start_time,
                   endTime: shiftData.end_time,
                   location: shiftData.location,
-                  status: shiftData.status,
+                  status: shiftData.status as "upcoming" | "ongoing" | "completed" | "cancelled",
                   payRate: shiftData.pay_rate,
                   isPaid: shiftData.is_paid || false
                 };
