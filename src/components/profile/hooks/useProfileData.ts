@@ -86,7 +86,7 @@ export function useProfileData(user: User | null) {
         }
       }
       
-      // Get public URL - Fix here: getPublicUrl doesn't return error property
+      // Get public URL - getPublicUrl doesn't return error property
       const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
       
       return data.publicUrl;
