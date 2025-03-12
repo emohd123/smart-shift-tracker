@@ -40,6 +40,7 @@ export default function PayRateField({
             onChange={onInputChange}
             required={required}
             placeholder="Enter pay rate"
+            className="focus:border-primary"
           />
         </div>
         <div>
@@ -58,6 +59,11 @@ export default function PayRateField({
           </Select>
         </div>
       </div>
+      {!required && (
+        <p className="text-xs text-muted-foreground">
+          Leave blank if pay rate is not yet determined
+        </p>
+      )}
     </div>
   );
 }

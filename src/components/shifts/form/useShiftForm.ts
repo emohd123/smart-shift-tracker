@@ -23,7 +23,8 @@ export default function useShiftForm() {
     endTime: "17:00",
     payRate: "15",
     payRateType: "hour",
-    selectedPromoterId: ""
+    selectedPromoterId: "",
+    paymentStatus: "pending" // Default payment status
   });
 
   // Fetch promoters for assignment
@@ -92,6 +93,13 @@ export default function useShiftForm() {
     });
   };
 
+  const handlePaymentStatusChange = (value: string) => {
+    setFormData({
+      ...formData,
+      paymentStatus: value
+    });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -112,20 +120,30 @@ export default function useShiftForm() {
       // Format end date (if exists) to ISO string yyyy-mm-dd
       const formattedEndDate = formData.dateRange.to ? format(formData.dateRange.to, 'yyyy-MM-dd') : formattedStartDate;
       
+      // Prepare shift data - handle pay_rate properly
+      const shiftData = {
+        title: formData.title,
+        location: formData.location,
+        date: formattedStartDate,
+        end_date: formattedEndDate,
+        start_time: formData.startTime,
+        end_time: formData.endTime,
+        status: ShiftStatus.Upcoming,
+        payment_status: formData.paymentStatus,
+        pay_rate_type: formData.payRateType
+      };
+      
+      // Only add pay_rate if a value is provided
+      if (formData.payRate && formData.payRate.trim() !== '') {
+        Object.assign(shiftData, { 
+          pay_rate: parseFloat(formData.payRate) 
+        });
+      }
+
       // Insert the shift
-      const { data: shiftData, error: shiftError } = await supabase
+      const { data: createdShift, error: shiftError } = await supabase
         .from('shifts')
-        .insert({
-          title: formData.title,
-          location: formData.location,
-          date: formattedStartDate,
-          end_date: formattedEndDate,
-          start_time: formData.startTime,
-          end_time: formData.endTime,
-          pay_rate: formData.payRate ? parseFloat(formData.payRate) : null,
-          pay_rate_type: formData.payRateType,
-          status: ShiftStatus.Upcoming
-        })
+        .insert(shiftData)
         .select('id')
         .single();
 
@@ -135,26 +153,34 @@ export default function useShiftForm() {
       }
       
       // If a promoter was selected, assign them to the shift
-      if (formData.selectedPromoterId && shiftData) {
+      if (formData.selectedPromoterId && createdShift) {
         const { error: assignmentError } = await supabase
           .from('shift_assignments')
           .insert({
-            shift_id: shiftData.id,
+            shift_id: createdShift.id,
             promoter_id: formData.selectedPromoterId
           });
 
-        if (assignmentError) throw assignmentError;
+        if (assignmentError) {
+          console.error("Assignment error:", assignmentError);
+          throw new Error(assignmentError.message || "Failed to assign promoter");
+        }
         
         // Create notification for the promoter
-        await supabase
+        const { error: notificationError } = await supabase
           .from('notifications')
           .insert({
             user_id: formData.selectedPromoterId,
             title: "New Shift Assignment",
             message: `You have been assigned to a new shift: ${formData.title}`,
             type: "shift_assignment",
-            related_id: shiftData.id
+            related_id: createdShift.id
           });
+          
+        if (notificationError) {
+          console.error("Notification error:", notificationError);
+          // Don't throw here, notification is not critical
+        }
       }
 
       toast({
@@ -184,6 +210,7 @@ export default function useShiftForm() {
     handleDateRangeChange,
     handlePayRateTypeChange,
     handlePromoterSelect,
+    handlePaymentStatusChange,
     handleSubmit
   };
 }

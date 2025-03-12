@@ -8,6 +8,14 @@ import PromoterSelector from "./form/PromoterSelector";
 import LocationMapToggle from "./form/LocationMapToggle";
 import SubmitButton from "./form/SubmitButton";
 import useShiftForm from "./form/useShiftForm";
+import { 
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 export interface PromoterOption {
   id: string;
@@ -25,6 +33,7 @@ export function ShiftForm() {
     handleDateRangeChange,
     handlePayRateTypeChange,
     handlePromoterSelect,
+    handlePaymentStatusChange,
     handleSubmit
   } = useShiftForm();
 
@@ -55,6 +64,24 @@ export function ShiftForm() {
             onPayRateTypeChange={handlePayRateTypeChange}
             required={false}
           />
+          
+          <div className="space-y-2">
+            <Label htmlFor="paymentStatus">Payment Status</Label>
+            <Select 
+              value={formData.paymentStatus} 
+              onValueChange={handlePaymentStatusChange}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select payment status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="partial">Partial</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="cancelled">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           
           <PromoterSelector
             promoters={promoters}
