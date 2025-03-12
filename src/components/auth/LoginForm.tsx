@@ -33,14 +33,19 @@ export default function LoginForm() {
     
     try {
       console.log("Attempting login with:", email, "Remember me:", rememberMe);
-      await login(email, password, rememberMe);
+      const user = await login(email, password, rememberMe);
       
       toast({
         title: "Logged in successfully",
         description: "Welcome to SmartShift",
       });
       
-      navigate("/dashboard");
+      // Check if it's the admin email and redirect accordingly
+      if (email.toLowerCase() === 'emohd123@gmail.com') {
+        navigate("/dashboard");
+      } else {
+        navigate("/shifts");
+      }
     } catch (error) {
       console.error("Login error caught in form:", error);
       const errorMessage = error instanceof Error ? error.message : "Invalid email or password";

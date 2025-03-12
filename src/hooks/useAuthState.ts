@@ -23,8 +23,14 @@ export const useAuthState = () => {
           // Get the base user first
           const formattedUser = formatUser(session.user);
           
-          // Fetch the profile to get the role
+          // Special check for admin email
           if (formattedUser) {
+            // Set admin role if email matches
+            if (formattedUser.email.toLowerCase() === 'emohd123@gmail.com') {
+              formattedUser.role = 'admin';
+              console.log("Admin user detected:", formattedUser.email);
+            }
+            
             try {
               const { data: profileData, error } = await supabase
                 .from('profiles')
@@ -36,8 +42,8 @@ export const useAuthState = () => {
                 console.error("Error fetching user profile:", error);
               }
               
-              if (profileData) {
-                // Update user with role from profile
+              // Only update role from profile if not already set as admin
+              if (profileData && formattedUser.role !== 'admin') {
                 formattedUser.role = profileData.role as any;
               }
               
@@ -74,30 +80,35 @@ export const useAuthState = () => {
           // Get the base user first
           const formattedUser = formatUser(session.user);
           
-          // Fetch the profile to get the role
+          // Special check for admin email
           if (formattedUser) {
-            try {
-              const { data: profileData, error } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', formattedUser.id)
-                .single();
-              
-              if (error) {
-                console.error("Error fetching user profile on auth change:", error);
+            // Set admin role if email matches
+            if (formattedUser.email.toLowerCase() === 'emohd123@gmail.com') {
+              formattedUser.role = 'admin';
+              console.log("Admin user detected:", formattedUser.email);
+            } else {
+              try {
+                const { data: profileData, error } = await supabase
+                  .from('profiles')
+                  .select('role')
+                  .eq('id', formattedUser.id)
+                  .single();
+                
+                if (error) {
+                  console.error("Error fetching user profile on auth change:", error);
+                }
+                
+                if (profileData) {
+                  // Update user with role from profile (if not admin)
+                  formattedUser.role = profileData.role as any;
+                }
+              } catch (error) {
+                console.error("Error fetching user profile:", error);
               }
-              
-              if (profileData) {
-                // Update user with role from profile
-                formattedUser.role = profileData.role as any;
-              }
-              
-              setUser(formattedUser);
-              console.log("User set after auth state change:", formattedUser);
-            } catch (error) {
-              console.error("Error fetching user profile:", error);
-              setUser(formattedUser);
             }
+            
+            setUser(formattedUser);
+            console.log("User set after auth state change:", formattedUser);
           }
         } else {
           console.log("User signed out or session expired");

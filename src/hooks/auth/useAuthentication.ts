@@ -37,6 +37,9 @@ export const useAuthentication = () => {
       
       console.log("Login successful:", data.user);
       
+      // Check if it's the admin email specifically
+      const isAdmin = email.toLowerCase() === 'emohd123@gmail.com';
+      
       // Save auth state to localStorage if remember me is checked
       if (remember) {
         localStorage.setItem('rememberMe', 'true');
