@@ -22,28 +22,37 @@ export default function MapDisplay({
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapInitialized, setMapInitialized] = useState(false);
 
-  // Initialize the map when the component mounts
+  // Cleanup function to handle map resources properly
+  const cleanupMapResources = () => {
+    if (markerRef.current) {
+      markerRef.current.setMap(null);
+      markerRef.current = null;
+    }
+    
+    if (circleRef.current) {
+      circleRef.current.setMap(null);
+      circleRef.current = null;
+    }
+  };
+
+  // Initialize the Google Maps script when component mounts
   useEffect(() => {
-    // Define cleanup function to handle map resources
-    const cleanupMapResources = () => {
-      if (markerRef.current) {
-        markerRef.current.setMap(null);
-        markerRef.current = null;
-      }
-      
-      if (circleRef.current) {
-        circleRef.current.setMap(null);
-        circleRef.current = null;
-      }
-    };
+    // Prevent multiple initializations
+    if (window.google?.maps && !mapInitialized && mapRef.current) {
+      initializeMap();
+      return;
+    }
 
     // Define initMap function for global callback
-    window.initMap = function() {
+    const initMapCallback = () => {
       if (mapRef.current && !mapInitialized && window.google?.maps) {
         setMapLoaded(true);
         initializeMap();
       }
     };
+
+    // Set global callback
+    window.initMap = initMapCallback;
     
     // Check if Maps API is already loaded
     if (window.google?.maps) {
@@ -51,9 +60,10 @@ export default function MapDisplay({
     }
 
     return () => {
+      // Cleanup
       cleanupMapResources();
       
-      // Reset the global initMap function to avoid conflicts
+      // Reset the global initMap function
       window.initMap = function() {};
     };
   }, []);
@@ -108,46 +118,40 @@ export default function MapDisplay({
     if (!mapInstanceRef.current || !location || !window.google?.maps) return;
     
     try {
-      // Update or create marker
-      if (markerRef.current) {
-        markerRef.current.setPosition(location);
-      } else {
-        markerRef.current = new google.maps.Marker({
-          position: location,
-          map: mapInstanceRef.current,
-          draggable: true,
-          animation: google.maps.Animation.DROP,
-          title: "Shift Location"
-        });
-        
-        // Add drag end listener to marker
-        markerRef.current.addListener('dragend', () => {
-          const position = markerRef.current?.getPosition();
-          if (position) {
-            onLocationChange({ 
-              lat: position.lat(), 
-              lng: position.lng() 
-            });
-          }
-        });
-      }
+      // Clean up existing marker and circle first
+      cleanupMapResources();
+
+      // Create new marker
+      markerRef.current = new google.maps.Marker({
+        position: location,
+        map: mapInstanceRef.current,
+        draggable: true,
+        animation: google.maps.Animation.DROP,
+        title: "Shift Location"
+      });
       
-      // Update or create circle
-      if (circleRef.current) {
-        circleRef.current.setCenter(location);
-        circleRef.current.setRadius(radius);
-      } else {
-        circleRef.current = new google.maps.Circle({
-          strokeColor: "#FF0000",
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: "#FF0000",
-          fillOpacity: 0.35,
-          map: mapInstanceRef.current,
-          center: location,
-          radius: radius
-        });
-      }
+      // Add drag end listener to marker
+      markerRef.current.addListener('dragend', () => {
+        const position = markerRef.current?.getPosition();
+        if (position) {
+          onLocationChange({ 
+            lat: position.lat(), 
+            lng: position.lng() 
+          });
+        }
+      });
+      
+      // Create new circle
+      circleRef.current = new google.maps.Circle({
+        strokeColor: "#FF0000",
+        strokeOpacity: 0.8,
+        strokeWeight: 2,
+        fillColor: "#FF0000",
+        fillOpacity: 0.35,
+        map: mapInstanceRef.current,
+        center: location,
+        radius: radius
+      });
       
       // Center map on location
       mapInstanceRef.current.panTo(location);
