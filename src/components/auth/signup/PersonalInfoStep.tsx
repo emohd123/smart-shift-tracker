@@ -2,6 +2,8 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FormData } from "./types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { GenderType } from "@/types/database";
 
 interface PersonalInfoStepProps {
   formData: FormData;
@@ -10,6 +12,10 @@ interface PersonalInfoStepProps {
 }
 
 export function PersonalInfoStep({ formData, handleChange, setFormData }: PersonalInfoStepProps) {
+  const handleGenderChange = (value: string) => {
+    setFormData({ ...formData, gender: value });
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">Personal Details</h3>
@@ -61,16 +67,19 @@ export function PersonalInfoStep({ formData, handleChange, setFormData }: Person
 
       <div className="space-y-2">
         <Label htmlFor="gender">Gender</Label>
-        <Input
-          id="gender"
-          name="gender"
-          type="text"
-          placeholder="Enter your gender"
-          value={formData.gender}
-          onChange={handleChange}
-          required
-          className="h-11"
-        />
+        <Select 
+          defaultValue={formData.gender || GenderType.Male}
+          onValueChange={handleGenderChange}
+        >
+          <SelectTrigger id="gender" className="h-11">
+            <SelectValue placeholder="Select gender" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={GenderType.Male}>Male</SelectItem>
+            <SelectItem value={GenderType.Female}>Female</SelectItem>
+            <SelectItem value={GenderType.Other}>Other</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

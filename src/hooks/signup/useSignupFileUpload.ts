@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { GenderType } from "@/types/database";
 
 export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetStateAction<boolean>>) => {
   const uploadFiles = async (userId: string, fileData: any) => {
@@ -75,15 +76,16 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         throw fetchError;
       }
 
+      // Ensure all form data is properly formatted for database storage
       const profileData = {
         full_name: formData.fullName || 'New User',
         nationality: formData.nationality || '',
         age: parseInt(formData.age) || 18,
         phone_number: formData.phoneNumber || '',
-        gender: formData.gender || 'Other',
-        height: parseInt(formData.height) || 0,
-        weight: parseInt(formData.weight) || 0,
-        is_student: Boolean(formData.isStudent),
+        gender: formData.gender as GenderType || GenderType.Male,
+        height: parseInt(formData.height) || 170,
+        weight: parseInt(formData.weight) || 70,
+        is_student: formData.isStudent === true,
         address: formData.address || '',
         bank_details: formData.bankDetails || null,
         id_card_url: idCardUrl || null,
@@ -131,7 +133,14 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         data: {
           full_name: formData.fullName,
           nationality: formData.nationality,
-          gender: formData.gender
+          gender: formData.gender,
+          age: parseInt(formData.age) || 18,
+          phone_number: formData.phoneNumber,
+          height: parseInt(formData.height) || 170,
+          weight: parseInt(formData.weight) || 70,
+          is_student: formData.isStudent === true,
+          address: formData.address,
+          role: 'promoter'
         }
       });
 

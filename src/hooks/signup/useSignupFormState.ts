@@ -1,6 +1,7 @@
 
 import { useState, ChangeEvent } from "react";
 import { FormData, FileData } from "@/components/auth/signup/types";
+import { GenderType } from "@/types/database";
 
 export const useSignupFormState = () => {
   const [formData, setFormData] = useState<FormData>({
@@ -11,7 +12,7 @@ export const useSignupFormState = () => {
     nationality: "",
     age: "",
     phoneNumber: "",
-    gender: "",  // This will be set to "Male" or "Female" via radio buttons
+    gender: GenderType.Male,  // Set default gender using the enum
     height: "",
     weight: "",
     isStudent: false,

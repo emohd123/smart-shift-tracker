@@ -28,17 +28,25 @@ export function useProfileData(user: User | null) {
             
             // Set photo URLs if they exist
             if (data.profile_photo_url) {
-              const profilePhotoUrl = await getPublicUrl('profile_photos', data.profile_photo_url);
-              setCurrentProfilePhotoUrl(profilePhotoUrl);
+              try {
+                const profilePhotoUrl = await getPublicUrl('profile_photos', data.profile_photo_url);
+                setCurrentProfilePhotoUrl(profilePhotoUrl);
+              } catch (err) {
+                console.error("Error getting profile photo URL:", err);
+              }
             }
             
             if (data.id_card_url) {
-              const idCardUrl = await getPublicUrl('id_cards', data.id_card_url);
-              setCurrentIdCardUrl(idCardUrl);
+              try {
+                const idCardUrl = await getPublicUrl('id_cards', data.id_card_url);
+                setCurrentIdCardUrl(idCardUrl);
+              } catch (err) {
+                console.error("Error getting ID card URL:", err);
+              }
             }
           } else {
             console.log("No profile data found for user");
-            toast.error("No profile data found. Please contact support.");
+            setError("No profile data found. Please contact support.");
           }
         } catch (error: any) {
           console.error("Error loading profile:", error);
@@ -55,6 +63,15 @@ export function useProfileData(user: User | null) {
   // Helper function to get public URL for storage items
   const getPublicUrl = async (bucketName: string, filePath: string) => {
     try {
+      // Check if bucket exists, create if it doesn't
+      const { data: buckets } = await supabase.storage.listBuckets();
+      
+      if (!buckets?.find(b => b.name === bucketName)) {
+        await supabase.storage.createBucket(bucketName, {
+          public: true
+        });
+      }
+      
       const { data } = await supabase.storage.from(bucketName).getPublicUrl(filePath);
       return data.publicUrl;
     } catch (error) {

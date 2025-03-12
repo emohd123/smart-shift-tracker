@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserProfile } from "@/context/AuthContext";
 import { ProfileUpdate } from "@/hooks/useAuthHooks";
+import { ErrorSeverity, useError } from "@/context/ErrorContext";
 
 export const useProfile = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -24,26 +25,22 @@ export const useProfile = () => {
       if (error) {
         console.error("Error fetching profile:", error);
         setError(error.message);
-        toast.error("Failed to load profile data");
+        toast.error("Failed to load profile data: " + error.message);
         throw error;
       }
       
       if (data) {
-        const typedProfile = {
-          ...data,
-          verification_status: data.verification_status as "pending" | "approved" | "rejected"
-        } as UserProfile;
-        
-        console.log("Profile data retrieved:", typedProfile);
-        return typedProfile;
+        console.log("Profile data retrieved:", data);
+        return data as UserProfile;
       }
       
       console.log("No profile data found for user");
+      toast.error("No profile data found. Please contact support.");
       return null;
     } catch (error: any) {
       console.error("Error fetching user profile:", error);
       setError(error.message);
-      toast.error("Failed to load profile data");
+      toast.error("Failed to load profile data: " + error.message);
       throw error;
     } finally {
       setLoading(false);

@@ -1,4 +1,6 @@
 
+import { GenderType } from "@/types/database";
+
 export interface FormData {
   fullName: string;
   email: string;
@@ -7,7 +9,7 @@ export interface FormData {
   nationality: string;
   age: string;
   phoneNumber: string;
-  gender: string;
+  gender: GenderType;
   height: string;
   weight: string;
   isStudent: boolean;
