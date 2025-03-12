@@ -31,6 +31,7 @@ export function ShiftActions({
   const [loading, setLoading] = useState(false);
   const [showLocationError, setShowLocationError] = useState(false);
   
+  // Use the enumerated types for shift status
   const isNotActiveShift = shift.status === "completed" || shift.status === "cancelled";
   
   if (!isPromoter && !isAdmin) {
@@ -42,6 +43,7 @@ export function ShiftActions({
       setLoading(true);
       setShowLocationError(false);
       
+      // RLS will automatically handle permissions
       const { data: shiftLocation, error } = await supabase
         .from('shift_locations')
         .select('*')
@@ -100,6 +102,7 @@ export function ShiftActions({
     onCheckOut();
   };
   
+  // Admin-specific view leveraging RLS policies
   if (isAdmin) {
     return (
       <CardFooter className="flex justify-end gap-3">

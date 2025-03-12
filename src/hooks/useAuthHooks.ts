@@ -7,9 +7,10 @@ import { UserProfile } from "@/context/AuthContext";
 
 export { formatUser } from "./auth/userFormat";
 
-// Update ProfileUpdate to match properties in UserProfile
+// Update ProfileUpdate to match properties in UserProfile with the new enum types
 export interface ProfileUpdate extends Partial<UserProfile> {
   // This now extends Partial<UserProfile> so it has all the same properties
+  // Any additional fields specific to profile updates can be added here
 }
 
 export const useAuthMethods = () => {

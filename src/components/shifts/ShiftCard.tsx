@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { MapPin, Clock, Calendar, BanknoteIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +12,10 @@ export type Shift = {
   startTime: string;
   endTime: string;
   location: string;
+  // Updated to use the enum types we defined in the database
   status: "upcoming" | "ongoing" | "completed" | "cancelled";
   payRate: number;
-  isPaid?: boolean; // Added this optional property
+  isPaid?: boolean;
 };
 
 type ShiftCardProps = {

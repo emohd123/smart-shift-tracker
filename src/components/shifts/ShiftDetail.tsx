@@ -39,6 +39,7 @@ export default function ShiftDetail({
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   
+  // Leverage the role stored in user object which is protected by RLS
   const isAdmin = user?.role === "admin";
   const isPromoter = user?.role === "promoter";
   

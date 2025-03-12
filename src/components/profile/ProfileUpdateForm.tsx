@@ -1,3 +1,4 @@
+
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -20,7 +21,7 @@ const formSchema = z.object({
   nationality: z.string().min(2, { message: "Nationality is required." }),
   age: z.number().min(18, { message: "Must be at least 18 years old." }),
   phone_number: z.string().min(8, { message: "Valid phone number is required." }),
-  gender: z.enum(["Male", "Female", "Other"]),
+  gender: z.enum(["Male", "Female", "Other"]), // Using our enumerated gender type
   height: z.number().min(100, { message: "Enter height in cm" }),
   weight: z.number().min(30, { message: "Enter weight in kg" }),
   is_student: z.boolean(),
@@ -59,7 +60,7 @@ export default function ProfileUpdateForm() {
       nationality: "",
       age: 18,
       phone_number: "",
-      gender: "Male",
+      gender: "Male", // Default using our enum type
       height: 170,
       weight: 70,
       is_student: false,
@@ -108,8 +109,10 @@ export default function ProfileUpdateForm() {
 
       console.log("Updating profile with:", updates);
       
+      // RLS will automatically restrict this operation to the user's own profile
       await updateProfile(user.id, updates);
       
+      // Using RLS, this API call will only return the user's own profile
       const updatedProfile = await fetch(`/api/profiles/${user.id}`).then(res => res.json());
       
       if (updatedProfile) {

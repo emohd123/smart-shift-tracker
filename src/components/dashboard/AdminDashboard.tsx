@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   CheckCircle, 
@@ -28,7 +29,7 @@ export default function AdminDashboard({ shifts }: AdminDashboardProps) {
     return shift.date === today;
   });
   
-  // Get ongoing shifts
+  // Get ongoing shifts - using our enumerated status type
   const ongoingShifts = shifts.filter(shift => shift.status === "ongoing");
   
   // Calculate earnings (this would come from API in real app)
