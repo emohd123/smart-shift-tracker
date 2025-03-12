@@ -23,8 +23,7 @@ export default function useShiftForm() {
     endTime: "17:00",
     payRate: "15",
     payRateType: "hour",
-    selectedPromoterId: "",
-    paymentStatus: "pending" // Default payment status
+    selectedPromoterId: ""
   });
 
   // Fetch promoters for assignment
@@ -93,13 +92,6 @@ export default function useShiftForm() {
     });
   };
 
-  const handlePaymentStatusChange = (value: string) => {
-    setFormData({
-      ...formData,
-      paymentStatus: value
-    });
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -129,7 +121,6 @@ export default function useShiftForm() {
         start_time: formData.startTime,
         end_time: formData.endTime,
         status: ShiftStatus.Upcoming,
-        payment_status: formData.paymentStatus,
         pay_rate_type: formData.payRateType
       };
       
@@ -210,7 +201,6 @@ export default function useShiftForm() {
     handleDateRangeChange,
     handlePayRateTypeChange,
     handlePromoterSelect,
-    handlePaymentStatusChange,
     handleSubmit
   };
 }
