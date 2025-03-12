@@ -20,7 +20,7 @@ export default function LocationMapToggle() {
     toast({
       title: "Location Saved",
       description: "Precise location has been saved for this shift",
-      variant: "success"
+      variant: "default"
     });
   };
   

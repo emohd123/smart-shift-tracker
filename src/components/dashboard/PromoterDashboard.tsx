@@ -9,7 +9,7 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { Button } from "../ui/button";
-import { Award, Certificate } from "lucide-react";
+import { Award } from "lucide-react";
 
 type PromoterDashboardProps = {
   shifts: Shift[];
@@ -55,7 +55,7 @@ export default function PromoterDashboard({ shifts }: PromoterDashboardProps) {
         <Card className="transition-all duration-500 delay-50 shadow-sm border-border/50 hover:shadow-md bg-gradient-to-r from-secondary/20 to-background">
           <CardHeader className="pb-2">
             <CardTitle className="text-lg font-semibold flex items-center gap-2">
-              <Certificate className="h-5 w-5 text-primary" />
+              <Award className="h-5 w-5 text-primary" />
               Work Certificates
             </CardTitle>
             <CardDescription>Generate professional work certificates for your job applications</CardDescription>

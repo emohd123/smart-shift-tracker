@@ -33,12 +33,7 @@ serve(async (req) => {
     // Fetch certificate data
     const { data, error } = await supabase
       .from('certificates')
-      .select(`
-        *,
-        profiles:user_id (
-          full_name
-        )
-      `)
+      .select('*')
       .eq('reference_number', referenceNumber)
       .single()
 
@@ -50,10 +45,17 @@ serve(async (req) => {
       )
     }
 
+    // Fetch promoter name separately to avoid join issues
+    const { data: promoterData, error: promoterError } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', data.user_id)
+      .single()
+
     // Format the response data
     const formattedData = {
       reference_number: data.reference_number,
-      promoter_name: data.profiles?.full_name || 'Promoter',
+      promoter_name: promoterError ? 'Promoter' : promoterData.full_name,
       issue_date: data.issue_date,
       time_period: data.time_period,
       total_hours: data.total_hours,
