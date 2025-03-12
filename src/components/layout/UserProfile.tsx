@@ -36,7 +36,7 @@ export default function UserProfile() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Avatar className="h-8 w-8 cursor-pointer">
-            <AvatarImage src={user.profilePhotoUrl || ""} alt={user.email} />
+            <AvatarImage src={user.metadata?.profile_photo_url || ""} alt={user.email} />
             <AvatarFallback className="bg-primary text-primary-foreground text-xs">
               {initials}
             </AvatarFallback>

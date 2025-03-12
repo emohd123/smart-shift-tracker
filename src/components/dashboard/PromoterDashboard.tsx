@@ -9,11 +9,11 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 
-type PrometerDashboardProps = {
+type PromoterDashboardProps = {
   shifts: Shift[];
 };
 
-export default function PrometerDashboard({ shifts }: PrometerDashboardProps) {
+export default function PromoterDashboard({ shifts }: PromoterDashboardProps) {
   const navigate = useNavigate();
   const { isMobile } = useResponsive();
   const { upcomingShifts, nextShift, completedShifts, totalEarned, unpaidAmount } = useDashboardData(shifts);

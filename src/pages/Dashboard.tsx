@@ -1,8 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
-import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
-import { PromoterDashboard } from "@/components/dashboard/PromoterDashboard";
+import AdminDashboard from "@/components/dashboard/AdminDashboard";
+import PromoterDashboard from "@/components/dashboard/PromoterDashboard";
 import { useAuth } from "@/context/AuthContext";
 import { ShiftStatus } from "@/types/database";
 import { useDashboardData } from "@/hooks/useDashboardData";
@@ -129,13 +129,8 @@ const mockUpcomingShifts: Shift[] = [
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { 
-    completedShifts, 
-    currentShift, 
-    upcomingShifts, 
-    loading, 
-    error 
-  } = useDashboardData();
+  
+  const dashboardData = useDashboardData(mockUpcomingShifts.concat(mockCompletedShifts, [mockCurrentShift]));
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -151,11 +146,7 @@ const Dashboard = () => {
     return (
       <AppLayout title="Admin Dashboard">
         <AdminDashboard
-          completedShifts={completedShifts}
-          currentShift={currentShift}
-          upcomingShifts={upcomingShifts}
-          loading={loading}
-          error={error}
+          shifts={mockUpcomingShifts.concat(mockCompletedShifts, [mockCurrentShift])}
         />
       </AppLayout>
     );
@@ -164,11 +155,7 @@ const Dashboard = () => {
   return (
     <AppLayout title="Promoter Dashboard">
       <PromoterDashboard
-        completedShifts={completedShifts}
-        currentShift={currentShift}
-        upcomingShifts={upcomingShifts}
-        loading={loading}
-        error={error}
+        shifts={mockUpcomingShifts.concat(mockCompletedShifts, [mockCurrentShift])}
       />
     </AppLayout>
   );

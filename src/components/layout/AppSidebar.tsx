@@ -4,7 +4,7 @@ import { ChevronLeft, Clock, Settings, LogOut, User, Home, Calendar, BarChart, U
 import { cn } from "@/lib/utils";
 import { NavigationLinks } from "./NavigationLinks";
 import { User as UserType } from "@/context/AuthContext";
-import { UserProfile } from "./UserProfile";
+import UserProfile from "./UserProfile";
 import { useAuth } from "@/context/AuthContext";
 
 interface AppSidebarProps {

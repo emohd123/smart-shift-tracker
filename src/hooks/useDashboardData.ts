@@ -11,6 +11,9 @@ export function useDashboardData(shifts: Shift[]) {
   // Get next shift
   const nextShift = upcomingShifts[0];
   
+  // Get current shift
+  const currentShift = shifts.find(shift => shift.status === "ongoing") || null;
+  
   // Calculate earnings
   const totalEarned = shifts
     .filter(shift => shift.status === "completed")
@@ -32,11 +35,18 @@ export function useDashboardData(shifts: Shift[]) {
   // Count of completed shifts (not the actual shifts array)
   const completedShifts = shifts.filter(shift => shift.status === "completed").length;
 
+  // Adding mock loading and error states
+  const loading = false;
+  const error = null;
+
   return {
     upcomingShifts,
     nextShift,
+    currentShift,
     totalEarned,
     unpaidAmount,
-    completedShifts
+    completedShifts,
+    loading,
+    error
   };
 }
