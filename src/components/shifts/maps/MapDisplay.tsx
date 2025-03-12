@@ -166,10 +166,9 @@ export default function MapDisplay({
   );
 }
 
-// Add the global initMap function to the window object
+// Correctly define the window interface extension
 declare global {
   interface Window {
-    google: typeof google;
     initMap: () => void;
   }
 }
