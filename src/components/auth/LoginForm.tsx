@@ -19,6 +19,9 @@ export default function LoginForm() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(
+    localStorage.getItem('rememberMe') === 'true'
+  );
   const [formError, setFormError] = useState<string | null>(null);
   const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   const [adminCreated, setAdminCreated] = useState(false);
@@ -59,8 +62,8 @@ export default function LoginForm() {
     setFormError(null);
     
     try {
-      console.log("Attempting login with:", email);
-      await login(email, password);
+      console.log("Attempting login with:", email, "Remember me:", rememberMe);
+      await login(email, password, rememberMe);
       toast({
         title: "Logged in successfully",
         description: "Welcome to SmartShift",
@@ -100,6 +103,8 @@ export default function LoginForm() {
           setEmail={setEmail}
           password={password}
           setPassword={setPassword}
+          rememberMe={rememberMe}
+          setRememberMe={setRememberMe}
         />
 
         <LoginActions 

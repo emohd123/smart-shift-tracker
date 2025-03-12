@@ -1,8 +1,8 @@
+
 import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useAuthMethods, ProfileUpdate } from "@/hooks/useAuthHooks";
-
-export type UserRole = "admin" | "promoter";
+import { GenderType, VerificationStatus, UserRole } from "@/types/database";
 
 export interface User {
   id: string;
@@ -18,7 +18,7 @@ export interface UserProfile {
   nationality: string;
   age: number;
   phone_number: string;
-  gender: "Male" | "Female" | "Other";
+  gender: GenderType;
   height: number;
   weight: number;
   is_student: boolean;
@@ -26,7 +26,7 @@ export interface UserProfile {
   bank_details?: string;
   id_card_url?: string;
   profile_photo_url?: string;
-  verification_status: "pending" | "approved" | "rejected";
+  verification_status: VerificationStatus;
   role: string;
   created_at: string;
   updated_at: string;
@@ -36,7 +36,7 @@ interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, remember?: boolean) => Promise<void>;
   signup: (name: string, email: string, password: string) => Promise<any>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -82,15 +82,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   
   const [authErrorState, setAuthErrorState] = useState<string | null>(null);
   
-  const login = async (email: string, password: string): Promise<void> => {
-    await loginMethod(email, password);
+  const login = async (email: string, password: string, remember: boolean = false): Promise<void> => {
+    await loginMethod(email, password, remember);
   };
   
   const getUserProfile = async (userId: string): Promise<UserProfile> => {
     const profile = await getUserProfileMethod(userId);
     return {
       ...profile,
-      verification_status: profile.verification_status as "pending" | "approved" | "rejected"
+      gender: profile.gender as GenderType,
+      verification_status: profile.verification_status as VerificationStatus
     } as UserProfile;
   };
 

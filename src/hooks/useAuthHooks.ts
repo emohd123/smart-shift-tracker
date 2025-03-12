@@ -4,12 +4,11 @@ import { useAuthentication } from "./auth/useAuthentication";
 import { useAccount } from "./auth/useAccount";
 import { useProfile } from "./auth/useProfile";
 import { UserProfile } from "@/context/AuthContext";
+import { GenderType, VerificationStatus } from "@/types/database";
 
 export { formatUser } from "./auth/userFormat";
 
-// Update ProfileUpdate to match properties in UserProfile with the new enum types
 export interface ProfileUpdate extends Partial<UserProfile> {
-  // This now extends Partial<UserProfile> so it has all the same properties
   // Any additional fields specific to profile updates can be added here
 }
 

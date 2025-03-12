@@ -4,6 +4,7 @@ import { MapPin, Clock, Calendar, BanknoteIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { formatBHD } from "./utils/currencyUtils";
+import { ShiftStatus } from "@/types/database";
 
 export type Shift = {
   id: string;
@@ -12,8 +13,7 @@ export type Shift = {
   startTime: string;
   endTime: string;
   location: string;
-  // Updated to use the enum types we defined in the database
-  status: "upcoming" | "ongoing" | "completed" | "cancelled";
+  status: ShiftStatus;
   payRate: number;
   isPaid?: boolean;
 };
@@ -35,15 +35,15 @@ export default function ShiftCard({ shift, onClick }: ShiftCardProps) {
   };
 
   // Get status color based on shift status
-  const getStatusColor = (status: Shift["status"]) => {
+  const getStatusColor = (status: ShiftStatus) => {
     switch (status) {
-      case "upcoming":
+      case ShiftStatus.Upcoming:
         return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
-      case "ongoing":
+      case ShiftStatus.Ongoing:
         return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
-      case "completed":
+      case ShiftStatus.Completed:
         return "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400";
-      case "cancelled":
+      case ShiftStatus.Cancelled:
         return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
       default:
         return "bg-gray-100 text-gray-700";
@@ -58,6 +58,15 @@ export default function ShiftCard({ shift, onClick }: ShiftCardProps) {
         "transition-all duration-300 ease-in-out"
       )}
       onClick={onClick}
+      aria-label={`Shift: ${shift.title} on ${formatDate(shift.date)}`}
+      tabIndex={0}
+      role="button"
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
     >
       {/* Status indicator */}
       <div className="flex justify-between items-start mb-3">
@@ -70,24 +79,24 @@ export default function ShiftCard({ shift, onClick }: ShiftCardProps) {
       {/* Shift details */}
       <div className="space-y-2 text-sm">
         <div className="flex items-center text-muted-foreground">
-          <Calendar size={14} className="mr-2 flex-shrink-0" />
+          <Calendar size={14} className="mr-2 flex-shrink-0" aria-hidden="true" />
           <span>{formatDate(shift.date)}</span>
         </div>
         
         <div className="flex items-center text-muted-foreground">
-          <Clock size={14} className="mr-2 flex-shrink-0" />
+          <Clock size={14} className="mr-2 flex-shrink-0" aria-hidden="true" />
           <span>
             {shift.startTime} - {shift.endTime}
           </span>
         </div>
         
         <div className="flex items-center text-muted-foreground">
-          <MapPin size={14} className="mr-2 flex-shrink-0" />
+          <MapPin size={14} className="mr-2 flex-shrink-0" aria-hidden="true" />
           <span className="truncate">{shift.location}</span>
         </div>
         
         <div className="flex items-center text-muted-foreground">
-          <BanknoteIcon size={14} className="mr-2 flex-shrink-0" />
+          <BanknoteIcon size={14} className="mr-2 flex-shrink-0" aria-hidden="true" />
           <span>{formatBHD(shift.payRate)}/hr</span>
         </div>
       </div>

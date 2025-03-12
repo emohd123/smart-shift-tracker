@@ -7,7 +7,7 @@ export const useAuthentication = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const login = async (emailOrUsername: string, password: string) => {
+  const login = async (emailOrUsername: string, password: string, remember: boolean = false) => {
     setLoading(true);
     setAuthError(null);
     try {
@@ -22,6 +22,10 @@ export const useAuthentication = () => {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          // Set session expiry based on remember me preference
+          expiresIn: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days or 1 day
+        }
       });
 
       if (error) {
@@ -29,6 +33,14 @@ export const useAuthentication = () => {
       }
       
       console.log("Login successful:", data.user);
+      
+      // Save auth state to localStorage if remember me is checked
+      if (remember) {
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        localStorage.removeItem('rememberMe');
+      }
+      
       return data.user;
     } catch (error: any) {
       console.error("Login error:", error);
@@ -89,6 +101,9 @@ export const useAuthentication = () => {
       console.log("Logout successful");
       toast.success("Logged out successfully");
       setAuthError(null);
+      
+      // Clear remember me state
+      localStorage.removeItem('rememberMe');
     } catch (error: any) {
       console.error("Error signing out:", error);
       setAuthError(error.message || "Error signing out");
