@@ -18,15 +18,11 @@ export const useAuthentication = () => {
       
       console.log("Attempting login with:", email);
 
-      // Use the correct session duration format
-      // The expiresIn property should be directly in the options object
+      // For session duration, we don't use expiresIn directly in options
+      // The signInWithPassword method doesn't accept expiresIn in the options object
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          // Set session expiry based on remember me preference
-          expiresIn: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days or 1 day
-        }
       });
 
       if (error) {
