@@ -86,13 +86,8 @@ export function useProfileData(user: User | null) {
         }
       }
       
-      // Get public URL
-      const { data, error: urlError } = await supabase.storage.from(bucketName).getPublicUrl(filePath);
-      
-      if (urlError) {
-        console.error(`Error getting public URL: ${urlError.message}`);
-        return null;
-      }
+      // Get public URL - Fix here: getPublicUrl doesn't return error property
+      const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
       
       return data.publicUrl;
     } catch (error: any) {
