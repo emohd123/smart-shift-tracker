@@ -13,7 +13,8 @@ interface PersonalInfoStepProps {
 
 export function PersonalInfoStep({ formData, handleChange, setFormData }: PersonalInfoStepProps) {
   const handleGenderChange = (value: string) => {
-    setFormData({ ...formData, gender: value });
+    // Convert the string value to a GenderType enum
+    setFormData({ ...formData, gender: value as GenderType });
   };
 
   return (
