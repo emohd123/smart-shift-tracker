@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserProfile } from "@/context/AuthContext";
+import { ProfileUpdate } from "@/hooks/useAuthHooks";
 
 export const useProfile = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -48,7 +49,7 @@ export const useProfile = () => {
     }
   };
 
-  const updateProfile = async (userId: string, profileData: Partial<UserProfile>): Promise<void> => {
+  const updateProfile = async (userId: string, profileData: ProfileUpdate): Promise<void> => {
     setLoading(true);
     setError(null);
     try {
