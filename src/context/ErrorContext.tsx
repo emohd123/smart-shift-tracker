@@ -110,6 +110,8 @@ export class ErrorBoundary extends React.Component<
   { children: ReactNode; fallback?: ReactNode },
   { hasError: boolean }
 > {
+  static contextType = ErrorContext;
+  
   constructor(props: { children: ReactNode; fallback?: ReactNode }) {
     super(props);
     this.state = { hasError: false };
@@ -150,5 +152,3 @@ export class ErrorBoundary extends React.Component<
     return this.props.children;
   }
 }
-
-ErrorBoundary.contextType = ErrorContext;
