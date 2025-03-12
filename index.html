@@ -8,8 +8,24 @@
     <meta name="description" content="Lovable Generated Project" />
     <meta name="author" content="Lovable" />
     <meta property="og:image" content="/og-image.png" />
-    <!-- Google Maps API with a working API key -->
-    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places&callback=initMap"></script>
+    <!-- Google Maps API with a working API key and error handling -->
+    <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB41DRUbKWJHPxaFjMAwdrzWzbVKartNGg&libraries=places&callback=initMap" onerror="handleGoogleMapsError()"></script>
+    <script>
+      // Error handler for Google Maps API loading issues
+      function handleGoogleMapsError() {
+        console.error('Google Maps API failed to load.');
+        // If gm_authFailure hasn't been defined yet, we'll create a fallback
+        if (typeof window.gm_authFailure !== 'function') {
+          window.gm_authFailure = function() {
+            console.error('Google Maps authentication failed.');
+          };
+        }
+        // Trigger the auth failure manually since the script didn't load
+        if (window.gm_authFailure) {
+          window.gm_authFailure();
+        }
+      }
+    </script>
   </head>
 
   <body>

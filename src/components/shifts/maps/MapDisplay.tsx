@@ -1,6 +1,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
+import { AlertCircle } from "lucide-react";
 
 type MapDisplayProps = {
   location: { lat: number; lng: number } | null;
@@ -21,6 +22,7 @@ export default function MapDisplay({
   const circleRef = useRef<google.maps.Circle | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [mapInitialized, setMapInitialized] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
 
   // Cleanup function to handle map resources properly
   const cleanupMapResources = () => {
@@ -54,6 +56,12 @@ export default function MapDisplay({
     // Set global callback
     window.initMap = initMapCallback;
     
+    // Error handler for the Google Maps script
+    window.gm_authFailure = () => {
+      setMapError("Google Maps couldn't load due to an authentication error. The API key may not be configured for this domain.");
+      setMapLoaded(false);
+    };
+    
     // Check if Maps API is already loaded
     if (window.google?.maps) {
       window.initMap();
@@ -63,17 +71,18 @@ export default function MapDisplay({
       // Cleanup
       cleanupMapResources();
       
-      // Reset the global initMap function
+      // Reset the global functions
       window.initMap = function() {};
+      window.gm_authFailure = function() {};
     };
   }, []);
 
   // Update marker and circle when location or radius changes
   useEffect(() => {
-    if (mapInstanceRef.current && location && mapLoaded) {
+    if (mapInstanceRef.current && location && mapLoaded && !mapError) {
       updateMarkerAndCircle();
     }
-  }, [location, radius, mapLoaded]);
+  }, [location, radius, mapLoaded, mapError]);
 
   const initializeMap = () => {
     if (!mapRef.current || !window.google?.maps) return;
@@ -111,6 +120,7 @@ export default function MapDisplay({
     } catch (error) {
       console.error("Error initializing map:", error);
       setMapInitialized(false);
+      setMapError("Failed to initialize Google Maps. Please try again later.");
     }
   };
 
@@ -157,8 +167,27 @@ export default function MapDisplay({
       mapInstanceRef.current.panTo(location);
     } catch (error) {
       console.error("Error updating marker/circle:", error);
+      setMapError("Error updating map markers. Please try refreshing the page.");
     }
   };
+
+  // Display error message if map failed to load
+  if (mapError) {
+    return (
+      <Card className="shadow-sm border-border/50">
+        <CardContent className="p-4">
+          <div className="flex flex-col items-center justify-center h-60 text-center space-y-2 text-muted-foreground">
+            <AlertCircle className="h-10 w-10 text-destructive" />
+            <h3 className="font-medium">Map Loading Error</h3>
+            <p className="text-sm">{mapError}</p>
+            <p className="text-xs mt-2">
+              If you're a developer, check the JavaScript console for more details.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="shadow-sm border-border/50">
@@ -186,6 +215,7 @@ export default function MapDisplay({
 declare global {
   interface Window {
     initMap: () => void;
+    gm_authFailure: () => void;
     google?: {
       maps: any;
     };
