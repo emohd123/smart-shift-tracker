@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -20,15 +19,13 @@ export const useAuthentication = () => {
       console.log("Attempting login with:", email);
 
       // Use the correct session duration format
-      // The expiresIn property needs to be inside a session object
+      // The expiresIn property should be directly in the options object
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
         options: {
           // Set session expiry based on remember me preference
-          session: {
-            expiresIn: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days or 1 day
-          }
+          expiresIn: remember ? 60 * 60 * 24 * 30 : 60 * 60 * 24, // 30 days or 1 day
         }
       });
 
