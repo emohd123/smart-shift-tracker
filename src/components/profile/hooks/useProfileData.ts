@@ -63,22 +63,39 @@ export function useProfileData(user: User | null) {
   // Helper function to get public URL for storage items
   const getPublicUrl = async (bucketName: string, filePath: string) => {
     try {
-      // First check if bucket exists
-      const { data: buckets } = await supabase.storage.listBuckets();
+      // Check if bucket exists
+      const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
+      
+      if (bucketsError) {
+        console.error(`Error listing buckets: ${bucketsError.message}`);
+        return null;
+      }
+      
       const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
       
       // Create bucket if it doesn't exist
       if (!bucketExists) {
         console.log(`Creating bucket: ${bucketName}`);
-        await supabase.storage.createBucket(bucketName, {
+        const { error: createBucketError } = await supabase.storage.createBucket(bucketName, {
           public: true
         });
+        
+        if (createBucketError) {
+          console.error(`Error creating bucket: ${createBucketError.message}`);
+          return null;
+        }
       }
       
       // Get public URL
-      const { data } = await supabase.storage.from(bucketName).getPublicUrl(filePath);
+      const { data, error: urlError } = await supabase.storage.from(bucketName).getPublicUrl(filePath);
+      
+      if (urlError) {
+        console.error(`Error getting public URL: ${urlError.message}`);
+        return null;
+      }
+      
       return data.publicUrl;
-    } catch (error) {
+    } catch (error: any) {
       console.error(`Error getting public URL for ${bucketName}/${filePath}:`, error);
       return null;
     }

@@ -15,7 +15,7 @@ export const useProfile = () => {
       console.log("Fetching profile for user ID:", userId);
       setLoading(true);
       
-      // Query the profiles table instead of auth.users
+      // Query the profiles table
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
