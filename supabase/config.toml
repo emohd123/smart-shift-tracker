@@ -15,3 +15,6 @@ port = 54323
 
 [functions.verify-certificate]
 verify_jwt = false
+
+[functions.create-admin]
+verify_jwt = false

@@ -11,7 +11,7 @@ export const useAuthentication = () => {
     setLoading(true);
     setAuthError(null);
     try {
-      let email = emailOrUsername;
+      let email = emailOrUsername.trim();
       
       // Simple email validation to check if it contains @ symbol
       if (!email.includes('@')) {
@@ -27,7 +27,7 @@ export const useAuthentication = () => {
 
       if (error) {
         console.error("Login error from Supabase:", error);
-        throw error;
+        throw new Error(error.message || "Login failed. Please check your credentials.");
       }
       
       if (!data.user) {

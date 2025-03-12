@@ -33,7 +33,11 @@ export default function LoginForm() {
     
     try {
       console.log("Attempting login with:", email, "Remember me:", rememberMe);
-      const user = await login(email, password, rememberMe);
+      
+      // Normalize email input (trim whitespace)
+      const normalizedEmail = email.trim();
+      
+      await login(normalizedEmail, password, rememberMe);
       
       toast({
         title: "Logged in successfully",
@@ -41,7 +45,7 @@ export default function LoginForm() {
       });
       
       // Check if it's the admin email and redirect accordingly
-      if (email.toLowerCase() === 'emohd123@gmail.com') {
+      if (normalizedEmail.toLowerCase() === 'emohd123@gmail.com') {
         navigate("/dashboard");
       } else {
         navigate("/shifts");
