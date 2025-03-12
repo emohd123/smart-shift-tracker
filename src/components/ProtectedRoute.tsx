@@ -1,10 +1,17 @@
 
-import { Navigate, Outlet } from "react-router-dom";
+import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
 
 const ProtectedRoute = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, loading, user } = useAuth();
+  const location = useLocation();
+  
+  // Check if the route is admin-only
+  const isAdminRoute = location.pathname.startsWith('/admin') || 
+                       location.pathname === '/dashboard' ||
+                       location.pathname === '/promoters' ||
+                       location.pathname === '/reports';
 
   // Show a loading indicator while authentication state is being determined
   if (loading) {
@@ -19,6 +26,11 @@ const ProtectedRoute = () => {
   // If not authenticated, redirect to login page
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+  
+  // If it's an admin route but user is not an admin, redirect to user dashboard
+  if (isAdminRoute && user?.role !== 'admin') {
+    return <Navigate to="/shifts" replace />;
   }
 
   // If authenticated, render the child routes

@@ -17,7 +17,30 @@ export const useAuthState = () => {
         
         if (session) {
           setSupabaseUser(session.user);
-          setUser(formatUser(session.user));
+          
+          // Get the base user first
+          const formattedUser = formatUser(session.user);
+          
+          // Fetch the profile to get the role
+          if (formattedUser) {
+            try {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', formattedUser.id)
+                .single();
+              
+              if (profileData) {
+                // Update user with role from profile
+                formattedUser.role = profileData.role as any;
+              }
+              
+              setUser(formattedUser);
+            } catch (error) {
+              console.error("Error fetching user profile:", error);
+              setUser(formattedUser);
+            }
+          }
         }
       } catch (error) {
         console.error("Error checking auth session:", error);
@@ -29,10 +52,38 @@ export const useAuthState = () => {
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         console.log("Auth state changed:", event);
         setSupabaseUser(session?.user || null);
-        setUser(formatUser(session?.user || null));
+        
+        if (session?.user) {
+          // Get the base user first
+          const formattedUser = formatUser(session.user);
+          
+          // Fetch the profile to get the role
+          if (formattedUser) {
+            try {
+              const { data: profileData } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', formattedUser.id)
+                .single();
+              
+              if (profileData) {
+                // Update user with role from profile
+                formattedUser.role = profileData.role as any;
+              }
+              
+              setUser(formattedUser);
+            } catch (error) {
+              console.error("Error fetching user profile:", error);
+              setUser(formattedUser);
+            }
+          }
+        } else {
+          setUser(null);
+        }
+        
         setLoading(false);
       }
     );

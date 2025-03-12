@@ -13,6 +13,9 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Admin email constant
+const ADMIN_EMAIL = "emohd123@gmail.com";
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -32,7 +35,7 @@ serve(async (req: Request) => {
       throw searchError;
     }
     
-    const adminExists = existingUsers.users.some(user => user.email === "emohd123@gmail.com");
+    const adminExists = existingUsers.users.some(user => user.email === ADMIN_EMAIL);
     
     if (adminExists) {
       console.log("Admin user already exists");
@@ -42,9 +45,9 @@ serve(async (req: Request) => {
       );
     }
 
-    // Create the admin user
+    // Create the admin user with the hardcoded email
     const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: "emohd123@gmail.com",
+      email: ADMIN_EMAIL,
       password: "password123",
       email_confirm: true,
       user_metadata: { name: "Admin User" },

@@ -1,19 +1,14 @@
-
-import { User as SupabaseUser } from "@supabase/supabase-js";
 import { User } from "@/context/AuthContext";
-import { UserRole } from "@/types/database";
 
-export const formatUser = (user: SupabaseUser | null): User | null => {
-  if (!user) return null;
+export const formatUser = (supabaseUser: any): User | null => {
+  if (!supabaseUser) return null;
 
-  // Extract role from user metadata, defaulting to 'promoter' if not set
-  const userRole = (user.user_metadata?.role || 'promoter') as UserRole;
-  
+  // Default role is 'user', will be overridden if profile data has a different role
   return {
-    id: user.id,
-    name: user.user_metadata?.full_name || 'User',
-    email: user.email || '',
-    role: userRole,
-    metadata: user.user_metadata || {}
+    id: supabaseUser.id,
+    email: supabaseUser.email || '',
+    name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'User',
+    role: 'user', // Default role, will be updated when profile is loaded
+    metadata: supabaseUser.user_metadata || {},
   };
 };
