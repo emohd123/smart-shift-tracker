@@ -24,15 +24,15 @@ export default function VerifyCertificate() {
       }
       
       try {
-        // In a real implementation, check the database
-        const { data, error } = await supabase
+        // First, fetch the certificate data
+        const { data: certData, error: certError } = await supabase
           .from('certificates')
-          .select('*, profiles(full_name)')
+          .select('*')
           .eq('reference_number', referenceNumber)
           .single();
           
-        if (error) {
-          console.error("Error verifying certificate:", error);
+        if (certError) {
+          console.error("Error verifying certificate:", certError);
           // For demo, simulate success for certain reference numbers
           if (referenceNumber === "CERT-ABC123" || referenceNumber.startsWith("CERT-")) {
             setTimeout(() => {
@@ -53,10 +53,17 @@ export default function VerifyCertificate() {
           return;
         }
         
-        if (data) {
+        if (certData) {
+          // Then, fetch the promoter profile data separately
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', certData.user_id)
+            .single();
+            
           setCertificateData({
-            ...data,
-            promoter_name: data.profiles?.full_name || "Promoter"
+            ...certData,
+            promoter_name: profileError ? "Promoter" : profileData.full_name
           });
           setStatus("verified");
         } else {
