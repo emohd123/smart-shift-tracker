@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { ChevronLeft, Clock, Settings, LogOut, User, Home, Calendar, BarChart, Users } from "lucide-react";
+import { ChevronLeft, Clock, Settings, LogOut, User, Home, Calendar, BarChart, Users, Award } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NavigationLinks } from "./NavigationLinks";
 import { User as UserType } from "@/context/AuthContext";
@@ -40,12 +40,14 @@ export function AppSidebar({
         { label: "Time Tracking", icon: <Clock size={20} />, href: "/time-tracking" },
         { label: "Promoters", icon: <Users size={20} />, href: "/promoters" },
         { label: "Reports", icon: <BarChart size={20} />, href: "/reports" },
+        { label: "Certificates", icon: <Award size={20} />, href: "/certificates" },
         { label: "Settings", icon: <Settings size={20} />, href: "/settings" },
       ]
     : [
         { label: "Dashboard", icon: <Home size={20} />, href: "/dashboard" },
         { label: "My Shifts", icon: <Calendar size={20} />, href: "/shifts" },
         { label: "Time Tracker", icon: <Clock size={20} />, href: "/time-tracking" },
+        { label: "Certificates", icon: <Award size={20} />, href: "/certificates" },
       ];
 
   return (

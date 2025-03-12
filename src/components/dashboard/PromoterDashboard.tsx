@@ -8,6 +8,8 @@ import UpcomingShiftsList from "./components/UpcomingShiftsList";
 import { useDashboardData } from "@/hooks/useDashboardData";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
+import { Button } from "../ui/button";
+import { Award, Certificate } from "lucide-react";
 
 type PromoterDashboardProps = {
   shifts: Shift[];
@@ -48,6 +50,30 @@ export default function PromoterDashboard({ shifts }: PromoterDashboardProps) {
           totalEarned={totalEarned}
           unpaidAmount={unpaidAmount}
         />
+        
+        {/* Certificate generation card */}
+        <Card className="transition-all duration-500 delay-50 shadow-sm border-border/50 hover:shadow-md bg-gradient-to-r from-secondary/20 to-background">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg font-semibold flex items-center gap-2">
+              <Certificate className="h-5 w-5 text-primary" />
+              Work Certificates
+            </CardTitle>
+            <CardDescription>Generate professional work certificates for your job applications</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm mb-4">
+              Create official certificates showing your completed work hours, skills gained, and performance records.
+              Perfect for including with job applications!
+            </p>
+            <Button 
+              onClick={() => navigate("/certificates")}
+              className="w-full md:w-auto"
+            >
+              <Award className="mr-2 h-4 w-4" />
+              Generate Certificate
+            </Button>
+          </CardContent>
+        </Card>
         
         {/* Next shift with subtle animation */}
         <div className="transition-all duration-500 delay-100 transform hover:scale-[1.01]">

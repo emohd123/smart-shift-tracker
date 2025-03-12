@@ -1,0 +1,77 @@
+
+import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+serve(async (req) => {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders })
+  }
+
+  try {
+    // Get certificate reference from URL
+    const url = new URL(req.url)
+    const referenceNumber = url.searchParams.get('reference')
+
+    if (!referenceNumber) {
+      return new Response(
+        JSON.stringify({ error: 'Certificate reference number is required' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      )
+    }
+
+    // Create a Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
+    const supabase = createClient(supabaseUrl, supabaseKey)
+
+    // Fetch certificate data
+    const { data, error } = await supabase
+      .from('certificates')
+      .select(`
+        *,
+        profiles:user_id (
+          full_name
+        )
+      `)
+      .eq('reference_number', referenceNumber)
+      .single()
+
+    if (error) {
+      console.error('Error fetching certificate:', error)
+      return new Response(
+        JSON.stringify({ error: 'Certificate not found', details: error.message }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      )
+    }
+
+    // Format the response data
+    const formattedData = {
+      reference_number: data.reference_number,
+      promoter_name: data.profiles?.full_name || 'Promoter',
+      issue_date: data.issue_date,
+      time_period: data.time_period,
+      total_hours: data.total_hours,
+      verified: true,
+      position_title: data.position_title || 'Brand Promoter',
+      skills_gained: data.skills_gained || ['Communication', 'Customer Service', 'Sales'],
+      performance_rating: data.performance_rating || 5
+    }
+
+    return new Response(
+      JSON.stringify({ certificate: formattedData }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+    )
+  } catch (error) {
+    console.error('Unexpected error:', error)
+    return new Response(
+      JSON.stringify({ error: 'Internal server error', details: error.message }),
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+    )
+  }
+})

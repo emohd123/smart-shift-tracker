@@ -9,6 +9,54 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      certificates: {
+        Row: {
+          id: string
+          issue_date: string | null
+          manager_contact: string
+          pdf_url: string | null
+          performance_rating: number | null
+          position_title: string
+          promotion_names: string[]
+          reference_number: string
+          skills_gained: string[]
+          time_period: string
+          total_hours: number
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          id?: string
+          issue_date?: string | null
+          manager_contact?: string
+          pdf_url?: string | null
+          performance_rating?: number | null
+          position_title?: string
+          promotion_names: string[]
+          reference_number: string
+          skills_gained?: string[]
+          time_period: string
+          total_hours: number
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          id?: string
+          issue_date?: string | null
+          manager_contact?: string
+          pdf_url?: string | null
+          performance_rating?: number | null
+          position_title?: string
+          promotion_names?: string[]
+          reference_number?: string
+          skills_gained?: string[]
+          time_period?: string
+          total_hours?: number
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           created_at: string
