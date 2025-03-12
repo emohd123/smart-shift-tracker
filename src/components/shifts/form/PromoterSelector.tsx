@@ -20,7 +20,7 @@ export default function PromoterSelector({
     <div className="space-y-2">
       <Label htmlFor="promoter">Assign Promoter (Optional)</Label>
       <Select 
-        value={selectedPromoterId} 
+        value={selectedPromoterId || "none"} 
         onValueChange={onSelect}
       >
         <SelectTrigger className="w-full">
@@ -33,7 +33,7 @@ export default function PromoterSelector({
             <SelectItem value="none" disabled>No promoters available</SelectItem>
           ) : (
             <>
-              <SelectItem value="">-- None --</SelectItem>
+              <SelectItem value="none">-- None --</SelectItem>
               {promoters.map((promoter) => (
                 <SelectItem key={promoter.id} value={promoter.id}>
                   {promoter.full_name}

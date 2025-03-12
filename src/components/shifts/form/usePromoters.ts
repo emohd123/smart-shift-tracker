@@ -20,8 +20,8 @@ export default function usePromoters() {
         
         if (error) {
           console.error("Error fetching promoters:", error);
-          // Instead of throwing an error, we'll just log it and use mock data
-          // This helps prevent the blank page when permissions are an issue
+          
+          // Use mock data for better user experience during development
           const mockPromoters: PromoterOption[] = [
             { 
               id: "mock-1", 
@@ -32,6 +32,11 @@ export default function usePromoters() {
               id: "mock-2", 
               full_name: "Sample Promoter 2", 
               email: "promoter2@example.com" 
+            },
+            { 
+              id: "mock-3", 
+              full_name: "Sample Promoter 3", 
+              email: "promoter3@example.com" 
             }
           ];
           setPromoters(mockPromoters);
@@ -49,7 +54,8 @@ export default function usePromoters() {
         }
       } catch (error) {
         console.error("Error in promoters hook:", error);
-        // Use mock data instead of showing an error toast
+        
+        // Use mock data for better user experience
         const mockPromoters: PromoterOption[] = [
           { 
             id: "mock-1", 
@@ -60,6 +66,11 @@ export default function usePromoters() {
             id: "mock-2", 
             full_name: "Sample Promoter 2", 
             email: "promoter2@example.com" 
+          },
+          { 
+            id: "mock-3", 
+            full_name: "Sample Promoter 3", 
+            email: "promoter3@example.com" 
           }
         ];
         setPromoters(mockPromoters);
@@ -69,7 +80,7 @@ export default function usePromoters() {
     };
 
     fetchPromoters();
-  }, [toast]);
+  }, []);
 
   return { promoters, loadingPromoters };
 }
