@@ -2,6 +2,7 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
+import { UserRole } from "@/types/database";
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading, user } = useAuth();
@@ -11,7 +12,8 @@ const ProtectedRoute = () => {
   const isAdminRoute = location.pathname.startsWith('/admin') || 
                        location.pathname === '/dashboard' ||
                        location.pathname === '/promoters' ||
-                       location.pathname === '/reports';
+                       location.pathname === '/reports' ||
+                       location.pathname === '/create-shift';
 
   // Show a loading indicator while authentication state is being determined
   if (loading) {
@@ -28,11 +30,8 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
   
-  // Special check for the admin email
-  const isAdminEmail = user?.email?.toLowerCase() === 'emohd123@gmail.com';
-  
-  // If it's an admin route but user is not an admin email, redirect to user dashboard
-  if (isAdminRoute && !isAdminEmail) {
+  // If it's an admin route but user is not an admin, redirect to user dashboard
+  if (isAdminRoute && user?.role !== UserRole.Admin) {
     return <Navigate to="/shifts" replace />;
   }
 

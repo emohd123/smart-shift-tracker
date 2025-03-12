@@ -1,41 +1,72 @@
 
-import { Link } from "react-router-dom";
-import { User as UserIcon, Settings, LogOut } from "lucide-react";
-import { User } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { UserCircle, LogOut, Settings } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import NotificationBadge from "../notifications/NotificationBadge";
 
-interface UserProfileProps {
-  user: User | null;
-  onLogout: () => void;
-}
-
-export function UserProfile({ user, onLogout }: UserProfileProps) {
+export default function UserProfile() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
+  };
+  
+  if (!user) return null;
+  
+  const initials = user.email
+    .split('@')[0]
+    .substring(0, 2)
+    .toUpperCase();
+    
   return (
-    <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-border">
-      <div className="flex items-center mb-3">
-        <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-muted-foreground">
-          <UserIcon size={18} />
-        </div>
-        <div className="ml-3">
-          <p className="text-sm font-medium">{user?.name}</p>
-          <p className="text-xs text-muted-foreground capitalize">{user?.role}</p>
-        </div>
-      </div>
-      <div className="flex space-x-2">
-        <Link
-          to="/account-settings"
-          className="flex-1 flex items-center justify-center h-9 px-3 py-2 text-sm rounded-md bg-secondary hover:bg-secondary/80 transition-colors"
-        >
-          <Settings size={16} className="mr-2" />
-          Account
-        </Link>
-        <button
-          onClick={onLogout}
-          className="flex-1 flex items-center justify-center h-9 px-3 py-2 text-sm rounded-md bg-secondary hover:bg-secondary/80 transition-colors"
-        >
-          <LogOut size={16} className="mr-2" />
-          Logout
-        </button>
-      </div>
+    <div className="flex items-center gap-2">
+      <NotificationBadge />
+      
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Avatar className="h-8 w-8 cursor-pointer">
+            <AvatarImage src={user.profilePhotoUrl || ""} alt={user.email} />
+            <AvatarFallback className="bg-primary text-primary-foreground text-xs">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel className="font-normal">
+            <div className="flex flex-col space-y-1">
+              <p className="text-sm font-medium leading-none">{user.email}</p>
+              <p className="text-xs leading-none text-muted-foreground capitalize">
+                {user.role}
+              </p>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => navigate("/profile")}>
+            <UserCircle className="mr-2 h-4 w-4" />
+            Profile
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate("/account-settings")}>
+            <Settings className="mr-2 h-4 w-4" />
+            Settings
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" />
+            Logout
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

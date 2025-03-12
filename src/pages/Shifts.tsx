@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
@@ -7,6 +6,128 @@ import { Shift } from "@/components/shifts/ShiftCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
 import { ShiftStatus } from "@/types/database";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+
+const Shifts = () => {
+  const { user, isAuthenticated } = useAuth();
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate("/login");
+    }
+  }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    // Fetch shifts from Supabase
+    const fetchShifts = async () => {
+      setLoading(true);
+      try {
+        let query = supabase
+          .from('shifts')
+          .select(`
+            id,
+            title,
+            date,
+            start_time,
+            end_time,
+            location,
+            status,
+            pay_rate,
+            is_paid
+          `);
+        
+        // If user is a promoter, only fetch shifts assigned to them
+        if (user?.role === "promoter") {
+          query = query.eq('id', supabase
+            .from('shift_assignments')
+            .select('shift_id')
+            .eq('promoter_id', user.id)
+          );
+        }
+        
+        const { data, error } = await query;
+        
+        if (error) throw error;
+        
+        if (data) {
+          // Format the data to match our Shift interface
+          const formattedShifts: Shift[] = data.map(item => ({
+            id: item.id,
+            title: item.title,
+            date: item.date,
+            startTime: item.start_time,
+            endTime: item.end_time,
+            location: item.location,
+            status: item.status as ShiftStatus,
+            payRate: Number(item.pay_rate),
+            isPaid: Boolean(item.is_paid)
+          }));
+          
+          setShifts(formattedShifts);
+        }
+      } catch (error) {
+        console.error("Error fetching shifts:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load shifts",
+          variant: "destructive"
+        });
+        
+        // Fallback to mock data if there's an error
+        setShifts(mockShifts);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (isAuthenticated) {
+      fetchShifts();
+    }
+  }, [user, isAuthenticated, toast]);
+
+  // This function could be called from other components via a context
+  // For now we're just exposing it so ShiftDetails can update the master list
+  window.deleteShift = (id: string) => {
+    setShifts(prev => prev.filter(shift => shift.id !== id));
+  };
+
+  if (!isAuthenticated) {
+    return null; // Don't render anything while redirecting
+  }
+
+  return (
+    <AppLayout title={user?.role === "promoter" ? "My Shifts" : "All Shifts"}>
+      {loading ? (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-10 w-24" />
+          </div>
+          <div className="flex gap-4 mb-6">
+            <Skeleton className="h-10 flex-1" />
+            <Skeleton className="h-10 w-[180px]" />
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {[...Array(8)].map((_, i) => (
+              <Skeleton key={i} className="h-48 w-full" />
+            ))}
+          </div>
+        </div>
+      ) : (
+        <ShiftList 
+          shifts={shifts} 
+          title={user?.role === "promoter" ? "My Shifts" : "All Shifts"} 
+        />
+      )}
+    </AppLayout>
+  );
+};
 
 // Mock data for shifts (exported for use in other components)
 export const mockShifts: Shift[] = [
@@ -121,75 +242,5 @@ export const mockShifts: Shift[] = [
     isPaid: false
   },
 ];
-
-// Create a copy of mockShifts that can be modified
-let activeShifts = [...mockShifts];
-
-const Shifts = () => {
-  const { user, isAuthenticated } = useAuth();
-  const [shifts, setShifts] = useState<Shift[]>([]);
-  const [loading, setLoading] = useState(true);
-  const navigate = useNavigate();
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isAuthenticated) {
-      navigate("/login");
-    }
-  }, [isAuthenticated, navigate]);
-
-  useEffect(() => {
-    // Simulate API request
-    const timer = setTimeout(() => {
-      // If user is a promoter, filter shifts (in a real app, the API would do this)
-      const filteredShifts = user?.role === "promoter" 
-        ? activeShifts.filter(shift => true) // In real app, filter by assigned promoter
-        : activeShifts;
-      
-      setShifts(filteredShifts);
-      setLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [user]);
-
-  // This function could be called from other components via a context
-  // For now we're just exposing it so ShiftDetails can update the master list
-  window.deleteShift = (id: string) => {
-    activeShifts = activeShifts.filter(shift => shift.id !== id);
-    setShifts(prev => prev.filter(shift => shift.id !== id));
-  };
-
-  if (!isAuthenticated) {
-    return null; // Don't render anything while redirecting
-  }
-
-  return (
-    <AppLayout title={user?.role === "promoter" ? "My Shifts" : "All Shifts"}>
-      {loading ? (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <Skeleton className="h-8 w-32" />
-            <Skeleton className="h-10 w-24" />
-          </div>
-          <div className="flex gap-4 mb-6">
-            <Skeleton className="h-10 flex-1" />
-            <Skeleton className="h-10 w-[180px]" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {[...Array(8)].map((_, i) => (
-              <Skeleton key={i} className="h-48 w-full" />
-            ))}
-          </div>
-        </div>
-      ) : (
-        <ShiftList 
-          shifts={shifts} 
-          title={user?.role === "promoter" ? "My Shifts" : "All Shifts"} 
-        />
-      )}
-    </AppLayout>
-  );
-};
 
 export default Shifts;

@@ -1,9 +1,11 @@
 
-import { ShiftStatus } from "@/types/database";
-import { getStatusBadge } from "./utils/shiftUtils";
-import { cn } from "@/lib/utils";
-import { CalendarDays, MapPin, Clock, DollarSign } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, MapPin, DollarSign } from "lucide-react";
+import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+import { ShiftStatus } from "@/types/database";
+import { getStatusBadge, formatDate } from "./utils/shiftUtils";
 
 export interface Shift {
   id: string;
@@ -14,61 +16,66 @@ export interface Shift {
   location: string;
   status: ShiftStatus;
   payRate: number;
-  isPaid?: boolean;
+  isPaid: boolean;
 }
 
 interface ShiftCardProps {
   shift: Shift;
-  onClick?: () => void;
+  selected?: boolean;
 }
 
-export default function ShiftCard({ shift, onClick }: ShiftCardProps) {
-  const { color, icon } = getStatusBadge(shift.status);
+const ShiftCard = ({ shift, selected = false }: ShiftCardProps) => {
+  const statusBadge = getStatusBadge(shift.status);
   
   return (
-    <Card 
-      className={cn(
-        "overflow-hidden transition-all border-border/50 hover:border-primary/50 hover:shadow-md cursor-pointer",
-        {
-          "opacity-75": shift.status === ShiftStatus.Completed || shift.status === ShiftStatus.Cancelled
-        }
-      )}
-      onClick={onClick}
-    >
-      <CardHeader className="p-4 pb-2">
-        <div className="flex justify-between items-start">
-          <h3 className="font-medium line-clamp-2 flex-1">{shift.title}</h3>
-        </div>
-      </CardHeader>
-      <CardContent className="p-4 pt-2 space-y-2">
-        <div className="flex items-center text-sm text-muted-foreground">
-          <CalendarDays className="h-3.5 w-3.5 mr-1.5 text-muted-foreground/70" />
-          <span>{new Date(shift.date).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}</span>
-        </div>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <Clock className="h-3.5 w-3.5 mr-1.5 text-muted-foreground/70" />
-          <span>{shift.startTime} - {shift.endTime}</span>
-        </div>
-        <div className="flex items-center text-sm text-muted-foreground">
-          <MapPin className="h-3.5 w-3.5 mr-1.5 text-muted-foreground/70" />
-          <span className="line-clamp-1">{shift.location}</span>
-        </div>
-        <div className="flex items-center text-sm font-medium">
-          <DollarSign className="h-3.5 w-3.5 mr-1.5 text-muted-foreground/70" />
-          <span>BHD {shift.payRate.toFixed(2)}/hr</span>
-        </div>
-      </CardContent>
-      <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <div className={cn("rounded-full px-2.5 py-0.5 text-xs flex items-center", color)}>
-          {icon}
-          <span>{shift.status.charAt(0).toUpperCase() + shift.status.slice(1)}</span>
-        </div>
-        {shift.isPaid && (
-          <div className="text-xs bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 rounded-full px-2 py-0.5">
-            Paid
+    <Link to={`/shifts/${shift.id}`} className="block h-full">
+      <Card className={cn(
+        "h-full transition-all hover:shadow-md",
+        selected && "ring-2 ring-primary/50 shadow-md"
+      )}>
+        <CardHeader className="p-4 pb-2">
+          <div className="flex justify-between items-start">
+            <h3 className="font-medium line-clamp-2">{shift.title}</h3>
+            <Badge className={cn("ml-2 shrink-0", statusBadge.color)}>
+              <span className="flex items-center">
+                {statusBadge.icon}
+                {shift.status}
+              </span>
+            </Badge>
           </div>
-        )}
-      </CardFooter>
-    </Card>
+        </CardHeader>
+        <CardContent className="p-4 pt-2 pb-2">
+          <div className="space-y-2 text-sm">
+            <div className="flex items-start">
+              <Calendar className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
+              <span>{formatDate(shift.date)}</span>
+            </div>
+            <div className="flex items-start">
+              <Clock className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
+              <span>{shift.startTime} - {shift.endTime}</span>
+            </div>
+            <div className="flex items-start">
+              <MapPin className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
+              <span className="line-clamp-2">{shift.location}</span>
+            </div>
+          </div>
+        </CardContent>
+        <CardFooter className="p-4 pt-2 border-t">
+          <div className="flex items-center w-full justify-between">
+            <div className="flex items-center text-sm">
+              <DollarSign className="h-4 w-4 mr-1 text-muted-foreground" />
+              <span className="font-medium">${shift.payRate}/hr</span>
+            </div>
+            {shift.isPaid && (
+              <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                Paid
+              </Badge>
+            )}
+          </div>
+        </CardFooter>
+      </Card>
+    </Link>
   );
-}
+};
+
+export default ShiftCard;

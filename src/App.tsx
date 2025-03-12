@@ -1,4 +1,3 @@
-
 import { lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
@@ -22,6 +21,7 @@ const TimeHistory = lazy(() => import("@/pages/TimeHistory"));
 const AccountSettings = lazy(() => import("@/pages/AccountSettings"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
+const CreateShift = lazy(() => import("@/pages/CreateShift"));
 
 // Loading fallback for lazy-loaded components
 const PageLoader = () => (
@@ -81,6 +81,7 @@ function App() {
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/create-shift" element={<CreateShift />} />
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/shifts" element={<Shifts />} />
