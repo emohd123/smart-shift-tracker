@@ -22,7 +22,6 @@ export default function usePromoters() {
         
         if (data) {
           // Need to add email to match our PromoterOption interface
-          // Since email is not available in profiles table, we'll use email placeholder
           const promotersWithEmail = data.map(promoter => ({
             ...promoter,
             email: `promoter-${promoter.id.substring(0, 6)}@example.com`
