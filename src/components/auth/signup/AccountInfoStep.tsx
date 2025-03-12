@@ -2,6 +2,7 @@
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { FormData } from "./types";
+import { PasswordField } from "../PasswordField";
 
 interface AccountInfoStepProps {
   formData: FormData;
@@ -44,15 +45,13 @@ export function AccountInfoStep({ formData, handleChange }: AccountInfoStepProps
 
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
-        <Input
+        <PasswordField
           id="password"
           name="password"
-          type="password"
-          placeholder="••••••••"
           value={formData.password}
           onChange={handleChange}
           required
-          className="h-11"
+          autoComplete="new-password"
         />
         <p className="text-xs text-muted-foreground">
           Password must be at least 8 characters
@@ -61,15 +60,13 @@ export function AccountInfoStep({ formData, handleChange }: AccountInfoStepProps
 
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">Confirm Password</Label>
-        <Input
+        <PasswordField
           id="confirmPassword"
           name="confirmPassword"
-          type="password"
-          placeholder="••••••••"
           value={formData.confirmPassword}
           onChange={handleChange}
           required
-          className="h-11"
+          autoComplete="new-password"
         />
       </div>
     </div>

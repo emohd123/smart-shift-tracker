@@ -1,6 +1,6 @@
 
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PasswordField } from "./PasswordField";
 
 interface PasswordFieldsProps {
   password: string;
@@ -19,27 +19,25 @@ export function PasswordFields({
     <>
       <div className="space-y-2">
         <Label htmlFor="password">New Password</Label>
-        <Input
+        <PasswordField
           id="password"
-          type="password"
-          placeholder="••••••••"
+          name="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          className="h-11"
+          autoComplete="new-password"
         />
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">Confirm New Password</Label>
-        <Input
+        <PasswordField
           id="confirmPassword"
-          type="password"
-          placeholder="••••••••"
+          name="confirmPassword"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
-          className="h-11"
+          autoComplete="new-password"
         />
       </div>
     </>
