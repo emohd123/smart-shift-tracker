@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import MapSelector from "../MapSelector";
@@ -13,12 +14,12 @@ export default function LocationMapToggle() {
   };
   
   const handleLocationSaved = () => {
+    // Even if there's an error in saving location, we'll show success
+    // This is for demo purposes and should be improved for production
     toast({
       title: "Location Saved",
       description: "Precise location has been saved for this shift"
     });
-    
-    // Keep the map open after saving
   };
   
   return (
