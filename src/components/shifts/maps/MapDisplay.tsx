@@ -19,43 +19,32 @@ export default function MapDisplay({
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
   const circleRef = useRef<google.maps.Circle | null>(null);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-
-  // Initialize the Google Maps script once
-  useEffect(() => {
-    // Check if the script is already loaded or in the process of loading
-    if (window.google?.maps || document.querySelector('script[src*="maps.googleapis.com/maps/api"]')) {
-      setScriptLoaded(true);
-      return;
-    }
-
-    const script = document.createElement('script');
-    // Use a placeholder for the API key - you should replace this with a valid key
-    // This will be a more secure approach in the future
-    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyD5bFUxo4JzYGOKL-dlzZgzlZZfNnJ3L08&libraries=places&callback=initMap`;
-    script.async = true;
-    script.defer = true;
-    
-    // Define a global callback function
-    window.initMap = () => {
-      setScriptLoaded(true);
-    };
-
-    document.head.appendChild(script);
-    
-    return () => {
-      // Clean up the global callback when the component unmounts
-      delete window.initMap;
-      // We don't remove the script because other components might be using it
-    };
-  }, []);
+  const [mapLoaded, setMapLoaded] = useState(false);
 
   // Initialize the map when script is loaded and ref is available
   useEffect(() => {
-    if (scriptLoaded && mapRef.current && !mapInstanceRef.current) {
+    // Check if Google Maps API is already available
+    if (window.google?.maps && mapRef.current && !mapInstanceRef.current) {
       initializeMap();
+      setMapLoaded(true);
     }
-  }, [scriptLoaded]);
+
+    // Function to run when Google Maps loads
+    window.initMap = () => {
+      if (mapRef.current && !mapInstanceRef.current) {
+        initializeMap();
+        setMapLoaded(true);
+      }
+    };
+
+    return () => {
+      // Clean up the global callback when the component unmounts
+      if (window.initMap === initializeMap) {
+        // Only delete if it's our function to avoid conflicts
+        delete window.initMap;
+      }
+    };
+  }, []);
 
   // Update marker and circle when location or radius changes
   useEffect(() => {
@@ -155,7 +144,7 @@ export default function MapDisplay({
           className="w-full h-64 rounded-md border border-border"
           style={{ opacity: loading ? 0.6 : 1 }}
         >
-          {(loading || !scriptLoaded) && (
+          {(loading || !mapLoaded) && (
             <div className="flex items-center justify-center h-full">
               Loading map...
             </div>
