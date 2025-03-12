@@ -129,7 +129,10 @@ export default function useShiftForm() {
         .select('id')
         .single();
 
-      if (shiftError) throw shiftError;
+      if (shiftError) {
+        console.error("Shift creation error:", shiftError);
+        throw new Error(shiftError.message || "Failed to create shift");
+      }
       
       // If a promoter was selected, assign them to the shift
       if (formData.selectedPromoterId && shiftData) {

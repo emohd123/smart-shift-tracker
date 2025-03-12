@@ -159,7 +159,7 @@ export type Database = {
           id: string
           is_paid: boolean | null
           location: string
-          pay_rate: number
+          pay_rate: number | null
           pay_rate_type: string | null
           start_time: string
           status: string
@@ -174,7 +174,7 @@ export type Database = {
           id?: string
           is_paid?: boolean | null
           location: string
-          pay_rate: number
+          pay_rate?: number | null
           pay_rate_type?: string | null
           start_time: string
           status: string
@@ -189,7 +189,7 @@ export type Database = {
           id?: string
           is_paid?: boolean | null
           location?: string
-          pay_rate?: number
+          pay_rate?: number | null
           pay_rate_type?: string | null
           start_time?: string
           status?: string
