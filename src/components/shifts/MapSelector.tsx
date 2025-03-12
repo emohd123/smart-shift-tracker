@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -22,6 +23,12 @@ export default function MapSelector({ shiftId, onSave }: MapSelectorProps) {
   useEffect(() => {
     const checkExistingLocation = async () => {
       try {
+        // Don't try to fetch location for a new shift
+        if (shiftId === "new") {
+          setLoading(false);
+          return;
+        }
+        
         const { data, error } = await supabase
           .from('shift_locations')
           .select('*')
@@ -29,6 +36,11 @@ export default function MapSelector({ shiftId, onSave }: MapSelectorProps) {
           .single();
           
         if (error) {
+          // Don't show error for missing location, just continue
+          if (error.code === 'PGRST116') {
+            setLoading(false);
+            return;
+          }
           console.error("Error fetching shift location:", error);
           return;
         }

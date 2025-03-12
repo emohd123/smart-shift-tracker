@@ -2,9 +2,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Navigation } from "lucide-react";
-import { getCurrentLocation } from "../utils/locationUtils";
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 
 type LocationControlsProps = {
   radius: number;
@@ -19,22 +17,14 @@ export default function LocationControls({
   onUseCurrentLocation,
   loading
 }: LocationControlsProps) {
-  const { toast } = useToast();
   const [fetchingLocation, setFetchingLocation] = useState(false);
 
   const handleUseCurrentLocation = async () => {
     try {
       setFetchingLocation(true);
-      const coords = await getCurrentLocation();
-      const newLocation = { lat: coords.latitude, lng: coords.longitude };
       onUseCurrentLocation();
     } catch (error) {
       console.error("Error getting current location:", error);
-      toast({
-        title: "Location Error",
-        description: "Could not access your current location. Please check your browser permissions.",
-        variant: "destructive"
-      });
     } finally {
       setFetchingLocation(false);
     }

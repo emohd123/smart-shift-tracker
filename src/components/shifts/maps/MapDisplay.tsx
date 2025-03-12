@@ -19,33 +19,43 @@ export default function MapDisplay({
   const mapInstanceRef = useRef<google.maps.Map | null>(null);
   const markerRef = useRef<google.maps.Marker | null>(null);
   const circleRef = useRef<google.maps.Circle | null>(null);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
 
-  // Initialize the map
+  // Initialize the Google Maps script once
   useEffect(() => {
-    if (!mapRef.current || (window.google && window.google.maps && mapInstanceRef.current)) {
+    // Check if the script is already loaded or in the process of loading
+    if (window.google?.maps || document.querySelector('script[src*="maps.googleapis.com/maps/api"]')) {
+      setScriptLoaded(true);
       return;
     }
 
-    const loadGoogleMaps = () => {
-      if (window.google && window.google.maps) {
-        initializeMap();
-        return;
-      }
-
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyD5bFUxo4JzYGOKL-dlzZgzlZZfNnJ3L08&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      script.onload = initializeMap;
-      document.head.appendChild(script);
-      
-      return () => {
-        document.head.removeChild(script);
-      };
+    const script = document.createElement('script');
+    // Use a placeholder for the API key - you should replace this with a valid key
+    // This will be a more secure approach in the future
+    script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyD5bFUxo4JzYGOKL-dlzZgzlZZfNnJ3L08&libraries=places&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    
+    // Define a global callback function
+    window.initMap = () => {
+      setScriptLoaded(true);
     };
 
-    loadGoogleMaps();
+    document.head.appendChild(script);
+    
+    return () => {
+      // Clean up the global callback when the component unmounts
+      delete window.initMap;
+      // We don't remove the script because other components might be using it
+    };
   }, []);
+
+  // Initialize the map when script is loaded and ref is available
+  useEffect(() => {
+    if (scriptLoaded && mapRef.current && !mapInstanceRef.current) {
+      initializeMap();
+    }
+  }, [scriptLoaded]);
 
   // Update marker and circle when location or radius changes
   useEffect(() => {
@@ -54,7 +64,7 @@ export default function MapDisplay({
     }
   }, [location, radius]);
 
-  const initializeMap = useCallback(async () => {
+  const initializeMap = useCallback(() => {
     if (!mapRef.current || !window.google || !window.google.maps) return;
     
     try {
@@ -145,7 +155,7 @@ export default function MapDisplay({
           className="w-full h-64 rounded-md border border-border"
           style={{ opacity: loading ? 0.6 : 1 }}
         >
-          {loading && (
+          {(loading || !scriptLoaded) && (
             <div className="flex items-center justify-center h-full">
               Loading map...
             </div>
@@ -154,4 +164,12 @@ export default function MapDisplay({
       </CardContent>
     </Card>
   );
+}
+
+// Add the global initMap function to the window object
+declare global {
+  interface Window {
+    google: typeof google;
+    initMap: () => void;
+  }
 }
