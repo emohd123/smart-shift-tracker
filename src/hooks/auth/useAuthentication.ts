@@ -15,7 +15,10 @@ export const useAuthentication = () => {
       
       // Simple email validation to check if it contains @ symbol
       if (!email.includes('@')) {
-        email = `${email}@gmail.com`;
+        // Check if it ends with @gmail.com already to avoid double appending
+        if (!email.endsWith('@gmail.com')) {
+          email = `${email}@gmail.com`;
+        }
       }
       
       console.log("Attempting login with:", email);
@@ -27,7 +30,15 @@ export const useAuthentication = () => {
 
       if (error) {
         console.error("Login error from Supabase:", error);
-        throw new Error(error.message || "Login failed. Please check your credentials.");
+        
+        // Provide more user-friendly error messages
+        if (error.message.includes("Invalid login credentials")) {
+          throw new Error("Invalid email or password. Please try again.");
+        } else if (error.message.includes("Email not confirmed")) {
+          throw new Error("Please confirm your email before signing in.");
+        } else {
+          throw new Error(error.message || "Login failed. Please check your credentials.");
+        }
       }
       
       if (!data.user) {

@@ -27,10 +27,10 @@ export function LoginCredentials({
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+        <Label htmlFor="email">Email or Username</Label>
         <Input
           id="email"
-          placeholder="your.email@example.com"
+          placeholder="your.email@example.com or username"
           type="text" 
           value={email}
           onChange={(e) => setEmail(e.target.value)}
