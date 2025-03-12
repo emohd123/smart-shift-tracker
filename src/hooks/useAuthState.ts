@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { User as SupabaseUser } from "@supabase/supabase-js";
 import { User } from "@/context/AuthContext";
 import { formatUser } from "./auth/userFormat";
+import { UserRole } from "@/types/database";
 
 export const useAuthState = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -27,7 +28,7 @@ export const useAuthState = () => {
           if (formattedUser) {
             // Set admin role if email matches
             if (formattedUser.email.toLowerCase() === 'emohd123@gmail.com') {
-              formattedUser.role = 'admin';
+              formattedUser.role = UserRole.Admin;
               console.log("Admin user detected:", formattedUser.email);
             }
             
@@ -43,8 +44,8 @@ export const useAuthState = () => {
               }
               
               // Only update role from profile if not already set as admin
-              if (profileData && formattedUser.role !== 'admin') {
-                formattedUser.role = profileData.role as any;
+              if (profileData && formattedUser.role !== UserRole.Admin) {
+                formattedUser.role = profileData.role as UserRole;
               }
               
               setUser(formattedUser);
@@ -84,7 +85,7 @@ export const useAuthState = () => {
           if (formattedUser) {
             // Set admin role if email matches
             if (formattedUser.email.toLowerCase() === 'emohd123@gmail.com') {
-              formattedUser.role = 'admin';
+              formattedUser.role = UserRole.Admin;
               console.log("Admin user detected:", formattedUser.email);
             } else {
               try {
@@ -100,7 +101,7 @@ export const useAuthState = () => {
                 
                 if (profileData) {
                   // Update user with role from profile (if not admin)
-                  formattedUser.role = profileData.role as any;
+                  formattedUser.role = profileData.role as UserRole;
                 }
               } catch (error) {
                 console.error("Error fetching user profile:", error);
