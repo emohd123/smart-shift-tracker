@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { Shift } from "../../shifts/ShiftCard";
 import { useToast } from "@/hooks/use-toast";
@@ -23,9 +22,9 @@ type UseTimeTrackingActionsProps = {
   resetTimeAndEarnings: () => void;
   elapsedTime: number;
   earnings: number;
-  timeLogId: string | null;    // Added this prop
-  isTracking: boolean;         // Added this prop
-  startTime: Date | null;      // Added this prop
+  timeLogId: string | null;
+  isTracking: boolean;
+  startTime: Date | null;
   onCheckIn?: () => void;
   onCheckOut?: () => void;
 };
@@ -47,15 +46,14 @@ export function useTimeTrackingActions({
   resetTimeAndEarnings,
   elapsedTime,
   earnings,
-  timeLogId,           // Added these parameters
-  isTracking,          // to the destructuring
-  startTime,           // to fix the errors
+  timeLogId,
+  isTracking,
+  startTime,
   onCheckIn,
   onCheckOut
 }: UseTimeTrackingActionsProps) {
   const { toast } = useToast();
   
-  // Start time tracking
   const handleStartTracking = useCallback(async () => {
     if (!user || !shift) return;
     
@@ -63,7 +61,6 @@ export function useTimeTrackingActions({
     setPermissionDenied(false);
     
     try {
-      // Request permission for notifications if not already granted
       if (Notification && Notification.permission !== "granted" && Notification.permission !== "denied") {
         await Notification.requestPermission();
       }
@@ -93,7 +90,6 @@ export function useTimeTrackingActions({
       setIsTracking(true);
       setElapsedTime(0);
       
-      // Create time log entry when starting
       const data = await createTimeLog(now);
       if (data) {
         setTimeLogId(data.id);
@@ -106,7 +102,6 @@ export function useTimeTrackingActions({
       
       if (onCheckIn) onCheckIn();
       
-      // Send a notification if permission was granted
       if (Notification && Notification.permission === "granted") {
         new Notification("Time Tracking Started", {
           body: `Now tracking time for ${shift.title}`,
@@ -129,7 +124,6 @@ export function useTimeTrackingActions({
     setElapsedTime, createTimeLog, setTimeLogId, onCheckIn
   ]);
   
-  // Stop time tracking
   const handleStopTracking = useCallback(() => {
     if (!shift) return;
     
@@ -149,7 +143,6 @@ export function useTimeTrackingActions({
     
     if (onCheckOut) onCheckOut();
     
-    // Send a notification if permission was granted
     if (Notification && Notification.permission === "granted") {
       new Notification("Time Tracking Completed", {
         body: `You worked for ${duration} and earned ${formatBHD(earnings)}`,

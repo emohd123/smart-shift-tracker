@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShiftStatus } from "@/types/database";
+import { formatBHD } from "@/components/shifts/utils/currencyUtils";
 
 const mockShifts = [
   {
@@ -264,7 +265,7 @@ const TimeTracking = () => {
                         </div>
                         <div className="text-right">
                           <div className="font-medium">
-                            {log.earnings ? `BHD ${log.earnings.toFixed(2)}` : 'N/A'}
+                            {log.earnings ? formatBHD(log.earnings) : 'N/A'}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             {log.total_hours ? formatDuration(log.total_hours) : 'N/A'}

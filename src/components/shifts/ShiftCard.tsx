@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ShiftStatus } from "@/types/database";
 import { getStatusBadge, formatDate } from "./utils/shiftUtils";
+import { formatBHD } from "./utils/currencyUtils";
 
 export interface Shift {
   id: string;
@@ -64,7 +65,7 @@ const ShiftCard = ({ shift, selected = false }: ShiftCardProps) => {
           <div className="flex items-center w-full justify-between">
             <div className="flex items-center text-sm">
               <DollarSign className="h-4 w-4 mr-1 text-muted-foreground" />
-              <span className="font-medium">${shift.payRate}/hr</span>
+              <span className="font-medium">{formatBHD(shift.payRate)}/hr</span>
             </div>
             {shift.isPaid && (
               <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">

@@ -12,7 +12,7 @@ export default function PayRateField({ payRate, onInputChange }: PayRateFieldPro
     <div className="space-y-2">
       <Label htmlFor="payRate">Pay Rate (Per Hour)</Label>
       <div className="flex items-center">
-        <span className="mr-2">$</span>
+        <span className="mr-2">BHD</span>
         <Input
           id="payRate"
           name="payRate"

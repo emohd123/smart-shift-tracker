@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
@@ -57,11 +56,9 @@ const TimeHistory = () => {
           return;
         }
         
-        // Calculate total earnings
         const total = data?.reduce((sum, log) => sum + (log.earnings || 0), 0) || 0;
         setTotalEarnings(total);
         
-        // Try to fetch shift details for each log
         const logsWithShiftDetails = await Promise.all((data || []).map(async (log) => {
           try {
             const { data: shiftData } = await supabase
