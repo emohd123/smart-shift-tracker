@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import ShiftCard, { Shift } from "./ShiftCard";
 import { Input } from "@/components/ui/input";
@@ -8,6 +7,7 @@ import { Search, Plus, Filter } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { ShiftStatus } from "@/types/database";
 
 type ShiftListProps = {
   shifts: Shift[];
@@ -43,7 +43,6 @@ export default function ShiftList({ shifts, title = "Shifts" }: ShiftListProps) 
         )}
       </div>
       
-      {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
@@ -65,16 +64,15 @@ export default function ShiftList({ shifts, title = "Shifts" }: ShiftListProps) 
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Status</SelectItem>
-              <SelectItem value="upcoming">Upcoming</SelectItem>
-              <SelectItem value="ongoing">Ongoing</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value={ShiftStatus.Upcoming}>Upcoming</SelectItem>
+              <SelectItem value={ShiftStatus.Ongoing}>Ongoing</SelectItem>
+              <SelectItem value={ShiftStatus.Completed}>Completed</SelectItem>
+              <SelectItem value={ShiftStatus.Cancelled}>Cancelled</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
       
-      {/* Shifts grid */}
       {filteredShifts.length > 0 ? (
         <div className={cn(
           "grid gap-4",

@@ -15,13 +15,14 @@ import { useProfileData } from "./hooks/useProfileData";
 import { useFileUpload } from "./hooks/useFileUpload";
 import { useProfile } from "@/hooks/auth/useProfile";
 import { ProfileUpdate } from "@/hooks/useAuthHooks";
+import { GenderType } from "@/types/database";
 
 const formSchema = z.object({
   full_name: z.string().min(2, { message: "Name must be at least 2 characters." }),
   nationality: z.string().min(2, { message: "Nationality is required." }),
   age: z.number().min(18, { message: "Must be at least 18 years old." }),
   phone_number: z.string().min(8, { message: "Valid phone number is required." }),
-  gender: z.enum(["Male", "Female", "Other"]), // Using our enumerated gender type
+  gender: z.nativeEnum(GenderType), // Using our enumerated gender type
   height: z.number().min(100, { message: "Enter height in cm" }),
   weight: z.number().min(30, { message: "Enter weight in kg" }),
   is_student: z.boolean(),
@@ -60,7 +61,7 @@ export default function ProfileUpdateForm() {
       nationality: "",
       age: 18,
       phone_number: "",
-      gender: "Male", // Default using our enum type
+      gender: GenderType.Male, // Default using our enum type
       height: 170,
       weight: 70,
       is_student: false,
@@ -76,7 +77,7 @@ export default function ProfileUpdateForm() {
         nationality: profileData.nationality || "",
         age: profileData.age || 18,
         phone_number: profileData.phone_number || "",
-        gender: profileData.gender || "Male",
+        gender: profileData.gender || GenderType.Male,
         height: profileData.height || 170,
         weight: profileData.weight || 70,
         is_student: profileData.is_student || false,

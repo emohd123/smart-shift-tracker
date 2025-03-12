@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
@@ -5,6 +6,7 @@ import ShiftList from "@/components/shifts/ShiftList";
 import { Shift } from "@/components/shifts/ShiftCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/context/AuthContext";
+import { ShiftStatus } from "@/types/database";
 
 // Mock data for shifts (exported for use in other components)
 export const mockShifts: Shift[] = [
@@ -15,7 +17,7 @@ export const mockShifts: Shift[] = [
     startTime: "09:00",
     endTime: "17:00",
     location: "Central Mall, 123 Main St",
-    status: "completed",
+    status: ShiftStatus.Completed,
     payRate: 15,
     isPaid: true
   },
@@ -26,7 +28,7 @@ export const mockShifts: Shift[] = [
     startTime: "10:00",
     endTime: "18:00",
     location: "Convention Center, 456 Tech Blvd",
-    status: "completed",
+    status: ShiftStatus.Completed,
     payRate: 18,
     isPaid: false
   },
@@ -37,7 +39,7 @@ export const mockShifts: Shift[] = [
     startTime: "08:00",
     endTime: "16:00",
     location: "SuperMart, 789 Food Ave",
-    status: "ongoing",
+    status: ShiftStatus.Ongoing,
     payRate: 14,
     isPaid: true
   },
@@ -48,7 +50,7 @@ export const mockShifts: Shift[] = [
     startTime: "11:00",
     endTime: "19:00",
     location: "Fashion Mall, 321 Style St",
-    status: "upcoming",
+    status: ShiftStatus.Upcoming,
     payRate: 16,
     isPaid: false
   },
@@ -59,7 +61,7 @@ export const mockShifts: Shift[] = [
     startTime: "12:00",
     endTime: "20:00",
     location: "Downtown Plaza, 654 App Rd",
-    status: "upcoming",
+    status: ShiftStatus.Upcoming,
     payRate: 20,
     isPaid: true
   },
@@ -70,7 +72,7 @@ export const mockShifts: Shift[] = [
     startTime: "09:00",
     endTime: "17:00",
     location: "Wellness Center, 987 Health Pkwy",
-    status: "upcoming",
+    status: ShiftStatus.Upcoming,
     payRate: 15,
     isPaid: false
   },
@@ -81,7 +83,7 @@ export const mockShifts: Shift[] = [
     startTime: "10:00",
     endTime: "18:00",
     location: "Kids Mall, 135 Toy Lane",
-    status: "upcoming",
+    status: ShiftStatus.Upcoming,
     payRate: 14,
     isPaid: true
   },
@@ -92,7 +94,7 @@ export const mockShifts: Shift[] = [
     startTime: "08:00",
     endTime: "16:00",
     location: "City Market, 246 Market Square",
-    status: "upcoming",
+    status: ShiftStatus.Upcoming,
     payRate: 15,
     isPaid: false
   },
@@ -103,7 +105,7 @@ export const mockShifts: Shift[] = [
     startTime: "12:00",
     endTime: "20:00",
     location: "Sports Arena, 357 Athletic Dr",
-    status: "upcoming",
+    status: ShiftStatus.Upcoming,
     payRate: 17,
     isPaid: true
   },
@@ -114,7 +116,7 @@ export const mockShifts: Shift[] = [
     startTime: "09:00",
     endTime: "17:00",
     location: "Auto Dealership, 468 Car St",
-    status: "upcoming",
+    status: ShiftStatus.Upcoming,
     payRate: 20,
     isPaid: false
   },

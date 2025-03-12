@@ -10,6 +10,8 @@ export { formatUser } from "./auth/userFormat";
 
 export interface ProfileUpdate extends Partial<UserProfile> {
   // Any additional fields specific to profile updates can be added here
+  gender?: GenderType;
+  verification_status?: VerificationStatus;
 }
 
 export const useAuthMethods = () => {

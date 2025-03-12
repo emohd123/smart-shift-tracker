@@ -5,6 +5,7 @@ import { Shift } from "@/components/shifts/ShiftCard";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { mockShifts } from "@/pages/Shifts";
+import { ShiftStatus } from "@/types/database";
 
 type TimeTrackerRef = {
   handleStartTracking: () => void;
@@ -30,7 +31,7 @@ export function useShiftDetail(shiftId: string | undefined) {
       if (foundShift) {
         setShift(foundShift);
         // If the shift is already ongoing, mark as checked in
-        setIsCheckedIn(foundShift.status === "ongoing");
+        setIsCheckedIn(foundShift.status === ShiftStatus.Ongoing);
       }
       setLoading(false);
     }, 500);
@@ -53,8 +54,12 @@ export function useShiftDetail(shiftId: string | undefined) {
 
   const handleCheckIn = async () => {
     if (shift) {
-      // Simulate API update
-      const updatedShift = { ...shift, status: "ongoing" as const };
+      // Simulate API update - using proper ShiftStatus enum
+      const updatedShift: Shift = { 
+        ...shift, 
+        status: ShiftStatus.Ongoing 
+      };
+      
       setShift(updatedShift);
       setIsCheckedIn(true);
       
@@ -88,8 +93,12 @@ export function useShiftDetail(shiftId: string | undefined) {
         timeTrackerRef.current.handleStopTracking();
       }
       
-      // Simulate API update
-      const updatedShift = { ...shift, status: "completed" as const };
+      // Simulate API update - using proper ShiftStatus enum
+      const updatedShift: Shift = { 
+        ...shift, 
+        status: ShiftStatus.Completed 
+      };
+      
       setShift(updatedShift);
       setIsCheckedIn(false);
       

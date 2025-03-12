@@ -32,6 +32,9 @@ export interface UserProfile {
   updated_at: string;
 }
 
+// Re-export UserRole from database types to make it accessible
+export { UserRole, GenderType, VerificationStatus } from "@/types/database";
+
 interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;

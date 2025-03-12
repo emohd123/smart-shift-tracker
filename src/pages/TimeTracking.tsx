@@ -11,6 +11,7 @@ import { Shift } from "@/components/shifts/ShiftCard";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ShiftStatus } from "@/types/database";
 
 const TimeTracking = () => {
   const { user } = useAuth();
@@ -73,7 +74,7 @@ const TimeTracking = () => {
                   startTime: shiftData.start_time,
                   endTime: shiftData.end_time,
                   location: shiftData.location,
-                  status: shiftData.status as "upcoming" | "ongoing" | "completed" | "cancelled",
+                  status: shiftData.status as ShiftStatus,
                   payRate: shiftData.pay_rate,
                   isPaid: shiftData.is_paid || false
                 };
@@ -88,7 +89,7 @@ const TimeTracking = () => {
                   startTime: new Date(timeLogData.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                   endTime: "End Time TBD",
                   location: "Current Location",
-                  status: "ongoing",
+                  status: ShiftStatus.Ongoing,
                   payRate: 10.00,
                 };
                 
@@ -104,7 +105,7 @@ const TimeTracking = () => {
                 startTime: new Date(timeLogData.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                 endTime: "End Time TBD",
                 location: "Current Location",
-                status: "ongoing",
+                status: ShiftStatus.Ongoing,
                 payRate: 10.00,
               };
               

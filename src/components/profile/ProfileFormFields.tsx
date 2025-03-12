@@ -1,9 +1,10 @@
 
-import { Control, UseFormReturn } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { GenderType } from "@/types/database";
 
 interface ProfileFormFieldsProps {
   form: UseFormReturn<any>;
@@ -64,16 +65,16 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
         <div className="space-y-2">
           <Label htmlFor="gender">Gender</Label>
           <Select 
-            onValueChange={(value) => form.setValue("gender", value as "Male" | "Female" | "Other")}
+            onValueChange={(value) => form.setValue("gender", value as GenderType)}
             defaultValue={form.getValues("gender")}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select gender" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Male">Male</SelectItem>
-              <SelectItem value="Female">Female</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
+              <SelectItem value={GenderType.Male}>Male</SelectItem>
+              <SelectItem value={GenderType.Female}>Female</SelectItem>
+              <SelectItem value={GenderType.Other}>Other</SelectItem>
             </SelectContent>
           </Select>
           {form.formState.errors.gender && (
