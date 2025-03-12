@@ -12,10 +12,20 @@ import {
 import { UserCircle, LogOut, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import NotificationBadge from "../notifications/NotificationBadge";
+import { User } from "@/context/AuthContext";
 
-export default function UserProfile() {
-  const { user, logout } = useAuth();
+interface UserProfileProps {
+  user?: User | null;
+  onLogout?: () => Promise<void>;
+}
+
+export default function UserProfile({ user: propUser, onLogout: propLogout }: UserProfileProps = {}) {
+  const { user: contextUser, logout: contextLogout } = useAuth();
   const navigate = useNavigate();
+  
+  // Use props if provided, otherwise fall back to context
+  const user = propUser || contextUser;
+  const logout = propLogout || contextLogout;
   
   const handleLogout = async () => {
     await logout();

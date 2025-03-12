@@ -77,11 +77,13 @@ export function AppSidebar({
       {/* Nav Links */}
       <NavigationLinks navItems={navItems} />
 
-      {/* User profile at bottom */}
-      <UserProfile 
-        user={user} 
-        onLogout={handleLogout} 
-      />
+      {/* User profile at bottom - now pass the user and onLogout props correctly */}
+      <div className="absolute bottom-0 left-0 w-full p-4 border-t border-border">
+        <UserProfile 
+          user={user} 
+          onLogout={handleLogout} 
+        />
+      </div>
     </div>
   );
 }
