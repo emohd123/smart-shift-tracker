@@ -1,44 +1,42 @@
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
+import { formatDistanceToNow } from "date-fns";
 
-export interface Notification {
+// Define the notification type
+interface Notification {
   id: string;
   title: string;
   message: string;
   read: boolean;
-  created_at: string;
   type: string;
-  related_id: string | null;
+  related_id?: string;
+  created_at: string;
 }
 
 export default function NotificationBadge() {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   
+  // Count unread notifications
   const unreadCount = notifications.filter(n => !n.read).length;
   
+  // Fetch notifications when component mounts or user changes
   useEffect(() => {
     if (!user) return;
     
     const fetchNotifications = async () => {
-      setLoading(true);
       try {
         const { data, error } = await supabase
           .from('notifications')
@@ -48,131 +46,129 @@ export default function NotificationBadge() {
           .limit(10);
         
         if (error) throw error;
-        setNotifications(data || []);
+        
+        if (data) {
+          setNotifications(data as Notification[]);
+        }
       } catch (error) {
         console.error("Error fetching notifications:", error);
-      } finally {
-        setLoading(false);
       }
     };
     
     fetchNotifications();
     
     // Subscribe to new notifications
-    const channel = supabase
-      .channel('notifications_changes')
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${user.id}`
-      }, (payload) => {
-        // Add the new notification to the list
-        setNotifications(prev => [payload.new as Notification, ...prev]);
-      })
+    const subscription = supabase
+      .channel('notifications-changes')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'notifications',
+          filter: `user_id=eq.${user.id}`
+        }, 
+        (payload) => {
+          setNotifications(prev => [payload.new as Notification, ...prev].slice(0, 10));
+        }
+      )
       .subscribe();
     
     return () => {
-      supabase.removeChannel(channel);
+      subscription.unsubscribe();
     };
   }, [user]);
   
+  // Mark notification as read
   const markAsRead = async (notificationId: string) => {
     try {
-      await supabase
+      const { error } = await supabase
         .from('notifications')
         .update({ read: true })
         .eq('id', notificationId);
       
-      // Update local state
+      if (error) throw error;
+      
       setNotifications(prev => 
-        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+        prev.map(notification => 
+          notification.id === notificationId 
+            ? { ...notification, read: true } 
+            : notification
+        )
       );
     } catch (error) {
       console.error("Error marking notification as read:", error);
     }
   };
   
+  // Mark all notifications as read
   const markAllAsRead = async () => {
-    if (!user) return;
-    
     try {
-      await supabase
+      const { error } = await supabase
         .from('notifications')
         .update({ read: true })
-        .eq('user_id', user.id)
-        .eq('read', false);
+        .eq('user_id', user?.id)
+        .in('id', notifications.filter(n => !n.read).map(n => n.id));
       
-      // Update local state
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      if (error) throw error;
+      
+      setNotifications(prev => 
+        prev.map(notification => ({ ...notification, read: true }))
+      );
     } catch (error) {
       console.error("Error marking all notifications as read:", error);
     }
   };
   
-  const handleNotificationClick = (notification: Notification) => {
-    markAsRead(notification.id);
-    
-    // Navigate based on notification type
-    if (notification.type === 'shift_assignment' && notification.related_id) {
-      navigate(`/shifts/${notification.related_id}`);
-    }
-  };
+  if (!user) return null;
   
   return (
-    <DropdownMenu>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
-          <Bell size={20} />
+          <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center">
+            <Badge className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center px-1 text-xs">
               {unreadCount}
             </Badge>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuLabel className="flex justify-between items-center">
-          <span>Notifications</span>
+      <DropdownMenuContent align="end" className="w-80 max-h-[70vh] overflow-y-auto">
+        <div className="flex justify-between items-center p-2 border-b">
+          <span className="font-semibold">Notifications</span>
           {unreadCount > 0 && (
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={markAllAsRead}
-              className="text-xs h-7"
-            >
+            <Button variant="ghost" size="sm" onClick={markAllAsRead}>
               Mark all as read
             </Button>
           )}
-        </DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {loading ? (
-          <DropdownMenuItem disabled>Loading notifications...</DropdownMenuItem>
-        ) : notifications.length === 0 ? (
-          <DropdownMenuItem disabled>No notifications</DropdownMenuItem>
+        </div>
+        {notifications.length === 0 ? (
+          <div className="p-4 text-center text-muted-foreground">
+            No notifications
+          </div>
         ) : (
-          <DropdownMenuGroup className="max-h-80 overflow-y-auto">
-            {notifications.map((notification) => (
-              <DropdownMenuItem 
-                key={notification.id}
-                className={`cursor-pointer ${!notification.read ? 'bg-muted/50' : ''}`}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <div className="flex flex-col gap-1 py-1 w-full">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{notification.title}</span>
-                    {!notification.read && (
-                      <Badge variant="outline" className="bg-primary/10 text-primary text-xs">New</Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-muted-foreground">{notification.message}</p>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(notification.created_at).toLocaleDateString()} at {new Date(notification.created_at).toLocaleTimeString()}
-                  </span>
-                </div>
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
+          notifications.map((notification) => (
+            <DropdownMenuItem
+              key={notification.id}
+              className={`p-3 cursor-pointer flex flex-col items-start gap-1 border-b ${
+                !notification.read ? "bg-muted/50" : ""
+              }`}
+              onClick={() => {
+                if (!notification.read) {
+                  markAsRead(notification.id);
+                }
+                setIsOpen(false);
+              }}
+            >
+              <div className="flex w-full justify-between">
+                <span className="font-medium">{notification.title}</span>
+                <span className="text-xs text-muted-foreground">
+                  {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true })}
+                </span>
+              </div>
+              <p className="text-sm text-muted-foreground">{notification.message}</p>
+            </DropdownMenuItem>
+          ))
         )}
       </DropdownMenuContent>
     </DropdownMenu>

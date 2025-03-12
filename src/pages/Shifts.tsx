@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
@@ -44,11 +45,24 @@ const Shifts = () => {
         
         // If user is a promoter, only fetch shifts assigned to them
         if (user?.role === "promoter") {
-          query = query.eq('id', supabase
+          // First get the shift IDs assigned to this promoter
+          const { data: assignmentData, error: assignmentError } = await supabase
             .from('shift_assignments')
             .select('shift_id')
-            .eq('promoter_id', user.id)
-          );
+            .eq('promoter_id', user.id);
+          
+          if (assignmentError) throw assignmentError;
+          
+          // If there are assignments, filter shifts by these IDs
+          if (assignmentData && assignmentData.length > 0) {
+            const shiftIds = assignmentData.map(assignment => assignment.shift_id);
+            query = query.in('id', shiftIds);
+          } else {
+            // If no assignments, return early with empty array
+            setShifts([]);
+            setLoading(false);
+            return;
+          }
         }
         
         const { data, error } = await query;

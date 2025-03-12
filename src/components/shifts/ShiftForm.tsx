@@ -4,9 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Calendar as CalendarIcon, Clock, MapPin, User } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -48,13 +47,20 @@ export function ShiftForm() {
       try {
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, full_name, email')
+          .select('id, full_name')
           .eq('role', 'promoter');
         
         if (error) throw error;
         
         if (data) {
-          setPromoters(data as PromoterOption[]);
+          // Need to add email to match our PromoterOption interface
+          // Since email is not available in profiles table, we'll use email placeholder
+          const promotersWithEmail = data.map(promoter => ({
+            ...promoter,
+            email: `promoter-${promoter.id.substring(0, 6)}@example.com`
+          }));
+          
+          setPromoters(promotersWithEmail as PromoterOption[]);
         }
       } catch (error) {
         console.error("Error fetching promoters:", error);
@@ -142,7 +148,6 @@ export function ShiftForm() {
             title: "New Shift Assignment",
             message: `You have been assigned to a new shift: ${formData.title}`,
             type: "shift_assignment",
-            read: false,
             related_id: shiftData.id
           });
       }
@@ -290,7 +295,7 @@ export function ShiftForm() {
                     <SelectItem value="">-- None --</SelectItem>
                     {promoters.map((promoter) => (
                       <SelectItem key={promoter.id} value={promoter.id}>
-                        {promoter.full_name} ({promoter.email})
+                        {promoter.full_name}
                       </SelectItem>
                     ))}
                   </>

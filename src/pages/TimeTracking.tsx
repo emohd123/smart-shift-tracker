@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -13,6 +12,31 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShiftStatus } from "@/types/database";
 
+const mockShifts = [
+  {
+    id: "current-1",
+    title: "Product Sampling at Grocery Store",
+    date: new Date().toISOString().split('T')[0],
+    startTime: "09:00",
+    endTime: "17:00",
+    location: "GroceryMart, 123 Food St",
+    status: ShiftStatus.Ongoing as ShiftStatus,
+    payRate: 15,
+    isPaid: false
+  },
+  {
+    id: "current-2",
+    title: "Tech Expo Product Demo",
+    date: new Date().toISOString().split('T')[0],
+    startTime: "10:00",
+    endTime: "18:00",
+    location: "Convention Center, 456 Tech Blvd",
+    status: ShiftStatus.Ongoing as ShiftStatus,
+    payRate: 18,
+    isPaid: false
+  }
+];
+
 const TimeTracking = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -21,7 +45,6 @@ const TimeTracking = () => {
   const [timeLogHistory, setTimeLogHistory] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
-  // Check for any active time tracking session on component mount
   useEffect(() => {
     const checkActiveTimeTracking = async () => {
       if (!user) return;
@@ -29,13 +52,11 @@ const TimeTracking = () => {
       setLoading(true);
       
       try {
-        // Check localStorage for any active tracking info
         const activeTrackingInfo = localStorage.getItem('activeTracking');
         
         if (activeTrackingInfo) {
           const { shiftId } = JSON.parse(activeTrackingInfo);
           
-          // Fetch the shift details from time_logs
           const { data: timeLogData, error: timeLogError } = await supabase
             .from('time_logs')
             .select(`
@@ -58,7 +79,6 @@ const TimeTracking = () => {
           
           if (timeLogData) {
             try {
-              // Try to get the actual shift data if available
               const { data: shiftData, error: shiftError } = await supabase
                 .from('shifts')
                 .select('*')
@@ -66,7 +86,6 @@ const TimeTracking = () => {
                 .maybeSingle();
                 
               if (shiftData && !shiftError) {
-                // Convert from database schema to Shift type
                 const shift: Shift = {
                   id: shiftData.id,
                   title: shiftData.title,
@@ -81,7 +100,6 @@ const TimeTracking = () => {
                 
                 setActiveShift(shift);
               } else {
-                // Fallback to mock shift if we can't get the real data
                 const mockShift: Shift = {
                   id: timeLogData.shift_id,
                   title: "Active Shift",
@@ -91,13 +109,13 @@ const TimeTracking = () => {
                   location: "Current Location",
                   status: ShiftStatus.Ongoing,
                   payRate: 10.00,
+                  isPaid: false
                 };
                 
                 setActiveShift(mockShift);
               }
             } catch (error) {
               console.error("Error retrieving shift data:", error);
-              // Still create a mock shift so the UI works
               const mockShift: Shift = {
                 id: timeLogData.shift_id,
                 title: "Active Shift",
@@ -107,6 +125,7 @@ const TimeTracking = () => {
                 location: "Current Location",
                 status: ShiftStatus.Ongoing,
                 payRate: 10.00,
+                isPaid: false
               };
               
               setActiveShift(mockShift);
@@ -121,7 +140,6 @@ const TimeTracking = () => {
       }
     };
     
-    // Fetch time log history
     const fetchTimeLogHistory = async () => {
       if (!user) return;
       
@@ -182,7 +200,6 @@ const TimeTracking = () => {
     <AppLayout title="Time Tracking">
       <div className="max-w-4xl mx-auto">
         <div className="space-y-8">
-          {/* Active Time Tracking */}
           <Card>
             <CardHeader>
               <CardTitle>Time Tracking</CardTitle>
@@ -217,7 +234,6 @@ const TimeTracking = () => {
             </CardContent>
           </Card>
 
-          {/* Time Log History */}
           <Card>
             <CardHeader>
               <CardTitle>Time Tracking History</CardTitle>

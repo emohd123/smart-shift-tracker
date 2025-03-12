@@ -1,17 +1,15 @@
-
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
-import AdminDashboard from "@/components/dashboard/AdminDashboard";
-import PrometerDashboard from "@/components/dashboard/PromoterDashboard";
-import { Shift } from "@/components/shifts/ShiftCard";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useResponsive } from "@/hooks/useResponsive";
+import { AdminDashboard } from "@/components/dashboard/AdminDashboard";
+import { PromoterDashboard } from "@/components/dashboard/PromoterDashboard";
+import { useAuth } from "@/context/AuthContext";
 import { ShiftStatus } from "@/types/database";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { Shift } from "@/components/shifts/ShiftCard";
 
-// Mock data for shifts
-const mockShifts: Shift[] = [
+// Mock dashboard data for testing
+const mockCompletedShifts: Shift[] = [
   {
     id: "1",
     title: "Product Demo at Central Mall",
@@ -21,6 +19,7 @@ const mockShifts: Shift[] = [
     location: "Central Mall, 123 Main St",
     status: ShiftStatus.Completed,
     payRate: 15,
+    isPaid: true
   },
   {
     id: "2",
@@ -31,17 +30,23 @@ const mockShifts: Shift[] = [
     location: "Convention Center, 456 Tech Blvd",
     status: ShiftStatus.Completed,
     payRate: 18,
-  },
-  {
-    id: "3",
-    title: "Food Sampling at Grocery Store",
-    date: new Date().toISOString().split('T')[0], // Today
-    startTime: "08:00",
-    endTime: "16:00",
-    location: "SuperMart, 789 Food Ave",
-    status: ShiftStatus.Ongoing,
-    payRate: 14,
-  },
+    isPaid: false
+  }
+];
+
+const mockCurrentShift: Shift = {
+  id: "3",
+  title: "Food Sampling at Grocery Store",
+  date: new Date().toISOString().split('T')[0], // Today
+  startTime: "08:00",
+  endTime: "16:00",
+  location: "SuperMart, 789 Food Ave",
+  status: ShiftStatus.Ongoing,
+  payRate: 14,
+  isPaid: false
+};
+
+const mockUpcomingShifts: Shift[] = [
   {
     id: "4",
     title: "Fashion Brand Showcase",
@@ -51,6 +56,7 @@ const mockShifts: Shift[] = [
     location: "Fashion Mall, 321 Style St",
     status: ShiftStatus.Upcoming,
     payRate: 16,
+    isPaid: false
   },
   {
     id: "5",
@@ -61,6 +67,7 @@ const mockShifts: Shift[] = [
     location: "Downtown Plaza, 654 App Rd",
     status: ShiftStatus.Upcoming,
     payRate: 20,
+    isPaid: false
   },
   {
     id: "6",
@@ -71,6 +78,7 @@ const mockShifts: Shift[] = [
     location: "Wellness Center, 987 Health Pkwy",
     status: ShiftStatus.Upcoming,
     payRate: 15,
+    isPaid: false
   },
   {
     id: "7",
@@ -81,6 +89,7 @@ const mockShifts: Shift[] = [
     location: "Kids Mall, 135 Toy Lane",
     status: ShiftStatus.Upcoming,
     payRate: 14,
+    isPaid: false
   },
   {
     id: "8",
@@ -91,6 +100,7 @@ const mockShifts: Shift[] = [
     location: "City Market, 246 Market Square",
     status: ShiftStatus.Upcoming,
     payRate: 15,
+    isPaid: false
   },
   {
     id: "9",
@@ -101,6 +111,7 @@ const mockShifts: Shift[] = [
     location: "Sports Arena, 357 Athletic Dr",
     status: ShiftStatus.Upcoming,
     payRate: 17,
+    isPaid: false
   },
   {
     id: "10",
@@ -111,68 +122,54 @@ const mockShifts: Shift[] = [
     location: "Auto Dealership, 468 Car St",
     status: ShiftStatus.Upcoming,
     payRate: 20,
+    isPaid: false
   },
 ];
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
-  const [shifts, setShifts] = useState<Shift[]>([]);
-  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-  const { isMobile } = useResponsive();
+  const { 
+    completedShifts, 
+    currentShift, 
+    upcomingShifts, 
+    loading, 
+    error 
+  } = useDashboardData();
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
     }
   }, [isAuthenticated, navigate]);
 
-  // Load mock shifts with staggered timing to feel more realistic
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    
-    const timer = setTimeout(() => {
-      // Simulate a network request with gradual data loading
-      setShifts(mockShifts.slice(0, 3));
-      
-      setTimeout(() => {
-        setShifts(mockShifts);
-        setLoading(false);
-      }, 300);
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [isAuthenticated]);
-
   if (!isAuthenticated) {
     return null; // Don't render anything while redirecting
   }
 
+  if (user?.role === "admin") {
+    return (
+      <AppLayout title="Admin Dashboard">
+        <AdminDashboard
+          completedShifts={completedShifts}
+          currentShift={currentShift}
+          upcomingShifts={upcomingShifts}
+          loading={loading}
+          error={error}
+        />
+      </AppLayout>
+    );
+  }
+
   return (
-    <AppLayout title="Dashboard">
-      {loading ? (
-        <div className="space-y-6">
-          <div className="animate-pulse space-y-2">
-            <Skeleton className="h-8 w-64 bg-primary/5" />
-            <Skeleton className="h-4 w-48 bg-primary/5" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => (
-              <Skeleton 
-                key={i} 
-                className="h-32 w-full rounded-lg bg-primary/5 animate-pulse"
-                style={{ animationDelay: `${i * 100}ms` }}
-              />
-            ))}
-          </div>
-          <Skeleton className="h-64 w-full rounded-lg bg-primary/5 animate-pulse" />
-        </div>
-      ) : user?.role === "admin" ? (
-        <AdminDashboard shifts={shifts} />
-      ) : (
-        <PrometerDashboard shifts={shifts} />
-      )}
+    <AppLayout title="Promoter Dashboard">
+      <PromoterDashboard
+        completedShifts={completedShifts}
+        currentShift={currentShift}
+        upcomingShifts={upcomingShifts}
+        loading={loading}
+        error={error}
+      />
     </AppLayout>
   );
 };
