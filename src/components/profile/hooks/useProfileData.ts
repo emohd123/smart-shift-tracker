@@ -63,15 +63,19 @@ export function useProfileData(user: User | null) {
   // Helper function to get public URL for storage items
   const getPublicUrl = async (bucketName: string, filePath: string) => {
     try {
-      // Check if bucket exists, create if it doesn't
+      // First check if bucket exists
       const { data: buckets } = await supabase.storage.listBuckets();
+      const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
       
-      if (!buckets?.find(b => b.name === bucketName)) {
+      // Create bucket if it doesn't exist
+      if (!bucketExists) {
+        console.log(`Creating bucket: ${bucketName}`);
         await supabase.storage.createBucket(bucketName, {
           public: true
         });
       }
       
+      // Get public URL
       const { data } = await supabase.storage.from(bucketName).getPublicUrl(filePath);
       return data.publicUrl;
     } catch (error) {

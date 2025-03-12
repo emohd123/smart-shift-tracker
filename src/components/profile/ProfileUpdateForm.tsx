@@ -42,7 +42,8 @@ export default function ProfileUpdateForm() {
     setCurrentProfilePhotoUrl,
     currentIdCardUrl, 
     setCurrentIdCardUrl,
-    loading: profileLoading
+    loading: profileLoading,
+    error: profileLoadError
   } = useProfileData(user);
   
   const {
@@ -72,6 +73,7 @@ export default function ProfileUpdateForm() {
 
   useEffect(() => {
     if (profileData) {
+      console.log("Setting form values from profile data:", profileData);
       form.reset({
         full_name: profileData.full_name || "",
         nationality: profileData.nationality || "",
@@ -88,10 +90,16 @@ export default function ProfileUpdateForm() {
   }, [profileData, form]);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user) return;
+    if (!user) {
+      toast.error("You must be logged in to update your profile");
+      return;
+    }
+    
     setLoading(true);
 
     try {
+      console.log("Submitting form values:", values);
+      
       let updates: ProfileUpdate = {
         ...values,
       };
@@ -110,21 +118,34 @@ export default function ProfileUpdateForm() {
 
       console.log("Updating profile with:", updates);
       
-      // RLS will automatically restrict this operation to the user's own profile
+      // Update the profile in the database
       await updateProfile(user.id, updates);
       
-      // Using RLS, this API call will only return the user's own profile
-      const updatedProfile = await fetch(`/api/profiles/${user.id}`).then(res => res.json());
+      // Refresh the profile data
+      const updatedProfile = await fetch(`/api/profiles/${user.id}`).then(res => res.json())
+        .catch(() => {
+          console.log("Using direct profile fetch instead of API");
+          return null;
+        });
       
       if (updatedProfile) {
         setProfileData(updatedProfile);
         setCurrentProfilePhotoUrl(updatedProfile.profile_photo_url || null);
         setCurrentIdCardUrl(updatedProfile.id_card_url || null);
+      } else {
+        // If the API call fails, refresh the profile data using the hook
+        const refreshedProfile = await form.getValues();
+        setProfileData(prevProfile => ({
+          ...prevProfile!,
+          ...refreshedProfile,
+        }) as UserProfile);
       }
       
+      toast.success("Profile updated successfully");
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       console.error("Error updating profile:", errorMessage);
+      toast.error("Failed to update profile: " + errorMessage);
     } finally {
       setLoading(false);
     }
@@ -135,6 +156,16 @@ export default function ProfileUpdateForm() {
       {profileLoading ? (
         <div className="flex justify-center items-center h-24">
           <div className="animate-pulse text-primary">Loading profile data...</div>
+        </div>
+      ) : profileLoadError ? (
+        <div className="text-center py-4">
+          <div className="text-red-500 mb-2">Error loading profile: {profileLoadError}</div>
+          <Button 
+            variant="outline" 
+            onClick={() => window.location.reload()}
+          >
+            Retry
+          </Button>
         </div>
       ) : (
         <>

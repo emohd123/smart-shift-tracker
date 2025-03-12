@@ -15,7 +15,7 @@ export const useProfile = () => {
       console.log("Fetching profile for user ID:", userId);
       setLoading(true);
       
-      // RLS will automatically restrict this query to authorized data
+      // Query the profiles table instead of auth.users
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -53,7 +53,7 @@ export const useProfile = () => {
     try {
       console.log("Updating profile for user ID:", userId, profileData);
       
-      // RLS will ensure users can only update their own profile
+      // Update the profiles table
       const { error } = await supabase
         .from('profiles')
         .update(profileData)
