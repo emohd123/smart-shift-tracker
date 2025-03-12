@@ -154,11 +154,13 @@ export type Database = {
         Row: {
           created_at: string
           date: string
+          end_date: string | null
           end_time: string
           id: string
           is_paid: boolean | null
           location: string
           pay_rate: number
+          pay_rate_type: string | null
           start_time: string
           status: string
           title: string
@@ -167,11 +169,13 @@ export type Database = {
         Insert: {
           created_at?: string
           date: string
+          end_date?: string | null
           end_time: string
           id?: string
           is_paid?: boolean | null
           location: string
           pay_rate: number
+          pay_rate_type?: string | null
           start_time: string
           status: string
           title: string
@@ -180,11 +184,13 @@ export type Database = {
         Update: {
           created_at?: string
           date?: string
+          end_date?: string | null
           end_time?: string
           id?: string
           is_paid?: boolean | null
           location?: string
           pay_rate?: number
+          pay_rate_type?: string | null
           start_time?: string
           status?: string
           title?: string

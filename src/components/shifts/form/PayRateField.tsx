@@ -26,7 +26,7 @@ export default function PayRateField({
 }: PayRateFieldProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="payRate">Pay Rate</Label>
+      <Label htmlFor="payRate">Pay Rate {required ? "" : "(Optional)"}</Label>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="flex items-center col-span-2">
           <span className="mr-2">BHD</span>
@@ -39,6 +39,7 @@ export default function PayRateField({
             value={payRate}
             onChange={onInputChange}
             required={required}
+            placeholder="Enter pay rate"
           />
         </div>
         <div>

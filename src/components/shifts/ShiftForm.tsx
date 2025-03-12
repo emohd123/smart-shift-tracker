@@ -53,6 +53,7 @@ export function ShiftForm() {
             payRateType={formData.payRateType}
             onInputChange={handleInputChange}
             onPayRateTypeChange={handlePayRateTypeChange}
+            required={false}
           />
           
           <PromoterSelector

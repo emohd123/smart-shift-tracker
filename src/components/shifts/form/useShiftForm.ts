@@ -122,7 +122,7 @@ export default function useShiftForm() {
           end_date: formattedEndDate,
           start_time: formData.startTime,
           end_time: formData.endTime,
-          pay_rate: parseFloat(formData.payRate),
+          pay_rate: formData.payRate ? parseFloat(formData.payRate) : null,
           pay_rate_type: formData.payRateType,
           status: ShiftStatus.Upcoming
         })
