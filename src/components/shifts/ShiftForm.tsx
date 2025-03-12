@@ -22,7 +22,8 @@ export function ShiftForm() {
     loadingPromoters,
     promoters,
     handleInputChange,
-    handleDateChange,
+    handleDateRangeChange,
+    handlePayRateTypeChange,
     handlePromoterSelect,
     handleSubmit
   } = useShiftForm();
@@ -40,16 +41,18 @@ export function ShiftForm() {
           />
           
           <DateTimeFields
-            date={formData.date}
+            dateRange={formData.dateRange}
             startTime={formData.startTime}
             endTime={formData.endTime}
-            onDateChange={handleDateChange}
+            onDateRangeChange={handleDateRangeChange}
             onInputChange={handleInputChange}
           />
           
           <PayRateField
             payRate={formData.payRate}
+            payRateType={formData.payRateType}
             onInputChange={handleInputChange}
+            onPayRateTypeChange={handlePayRateTypeChange}
           />
           
           <PromoterSelector

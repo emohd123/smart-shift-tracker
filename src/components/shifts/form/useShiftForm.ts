@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { PromoterOption } from "../ShiftForm";
 import { ShiftStatus } from "@/types/database";
+import { DateRange } from "react-day-picker";
 
 export default function useShiftForm() {
   const { toast } = useToast();
@@ -17,10 +18,11 @@ export default function useShiftForm() {
   const [formData, setFormData] = useState({
     title: "",
     location: "",
-    date: new Date(),
+    dateRange: undefined as DateRange | undefined,
     startTime: "09:00",
     endTime: "17:00",
     payRate: "15",
+    payRateType: "hour",
     selectedPromoterId: ""
   });
 
@@ -69,13 +71,18 @@ export default function useShiftForm() {
     });
   };
 
-  const handleDateChange = (date: Date | undefined) => {
-    if (date) {
-      setFormData({
-        ...formData,
-        date
-      });
-    }
+  const handleDateRangeChange = (range: DateRange | undefined) => {
+    setFormData({
+      ...formData,
+      dateRange: range
+    });
+  };
+
+  const handlePayRateTypeChange = (value: string) => {
+    setFormData({
+      ...formData,
+      payRateType: value
+    });
   };
 
   const handlePromoterSelect = (value: string) => {
@@ -88,7 +95,7 @@ export default function useShiftForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formData.title || !formData.location || !formData.date || !formData.startTime || !formData.endTime || !formData.payRate) {
+    if (!formData.title || !formData.location || !formData.dateRange?.from || !formData.startTime || !formData.endTime) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields",
@@ -100,8 +107,10 @@ export default function useShiftForm() {
     setLoading(true);
     
     try {
-      // Format date to ISO string yyyy-mm-dd
-      const formattedDate = format(formData.date, 'yyyy-MM-dd');
+      // Format start date to ISO string yyyy-mm-dd
+      const formattedStartDate = format(formData.dateRange.from, 'yyyy-MM-dd');
+      // Format end date (if exists) to ISO string yyyy-mm-dd
+      const formattedEndDate = formData.dateRange.to ? format(formData.dateRange.to, 'yyyy-MM-dd') : formattedStartDate;
       
       // Insert the shift
       const { data: shiftData, error: shiftError } = await supabase
@@ -109,10 +118,12 @@ export default function useShiftForm() {
         .insert({
           title: formData.title,
           location: formData.location,
-          date: formattedDate,
+          date: formattedStartDate,
+          end_date: formattedEndDate,
           start_time: formData.startTime,
           end_time: formData.endTime,
           pay_rate: parseFloat(formData.payRate),
+          pay_rate_type: formData.payRateType,
           status: ShiftStatus.Upcoming
         })
         .select('id')
@@ -167,7 +178,8 @@ export default function useShiftForm() {
     loadingPromoters,
     promoters,
     handleInputChange,
-    handleDateChange,
+    handleDateRangeChange,
+    handlePayRateTypeChange,
     handlePromoterSelect,
     handleSubmit
   };

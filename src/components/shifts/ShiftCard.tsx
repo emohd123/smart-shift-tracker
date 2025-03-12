@@ -12,11 +12,13 @@ export interface Shift {
   id: string;
   title: string;
   date: string;
+  endDate?: string;
   startTime: string;
   endTime: string;
   location: string;
   status: ShiftStatus;
   payRate: number;
+  payRateType?: string;
   isPaid: boolean;
 }
 
@@ -27,6 +29,26 @@ interface ShiftCardProps {
 
 const ShiftCard = ({ shift, selected = false }: ShiftCardProps) => {
   const statusBadge = getStatusBadge(shift.status);
+  
+  // Create a formatted rate display
+  const getRateDisplayText = () => {
+    switch (shift.payRateType) {
+      case "day":
+        return `${formatBHD(shift.payRate)}/day`;
+      case "month":
+        return `${formatBHD(shift.payRate)}/month`;
+      default:
+        return `${formatBHD(shift.payRate)}/hr`;
+    }
+  };
+  
+  // Display date range if end date exists
+  const getDateDisplay = () => {
+    if (shift.endDate && shift.endDate !== shift.date) {
+      return `${formatDate(shift.date)} - ${formatDate(shift.endDate)}`;
+    }
+    return formatDate(shift.date);
+  };
   
   return (
     <Link to={`/shifts/${shift.id}`} className="block h-full">
@@ -49,7 +71,7 @@ const ShiftCard = ({ shift, selected = false }: ShiftCardProps) => {
           <div className="space-y-2 text-sm">
             <div className="flex items-start">
               <Calendar className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
-              <span>{formatDate(shift.date)}</span>
+              <span>{getDateDisplay()}</span>
             </div>
             <div className="flex items-start">
               <Clock className="h-4 w-4 mr-2 mt-0.5 text-muted-foreground" />
@@ -65,7 +87,7 @@ const ShiftCard = ({ shift, selected = false }: ShiftCardProps) => {
           <div className="flex items-center w-full justify-between">
             <div className="flex items-center text-sm">
               <DollarSign className="h-4 w-4 mr-1 text-muted-foreground" />
-              <span className="font-medium">{formatBHD(shift.payRate)}/hr</span>
+              <span className="font-medium">{getRateDisplayText()}</span>
             </div>
             {shift.isPaid && (
               <Badge variant="outline" className="bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">

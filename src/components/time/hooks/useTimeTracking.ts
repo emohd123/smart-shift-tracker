@@ -32,8 +32,17 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
     setPermissionDenied
   } = useTimeTrackingState();
   
+  // Handle automatic checkout when shift end time is reached
+  const handleAutoCheckout = useCallback(() => {
+    if (isTracking && shift) {
+      console.log("Auto checkout triggered as shift end time reached");
+      handleStopTracking();
+    }
+  }, [isTracking, shift]);
+  
   // Time and earnings calculations
-  const { elapsedTime, setElapsedTime, earnings, resetTimeAndEarnings } = useTimeCalculation(isTracking, shift);
+  const { elapsedTime, setElapsedTime, earnings, resetTimeAndEarnings } = 
+    useTimeCalculation(isTracking, shift, handleAutoCheckout);
   
   // Location verification
   const { verifyLocation } = useLocationVerification();
