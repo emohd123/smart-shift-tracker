@@ -6,18 +6,12 @@ interface LoginFormAlertProps {
   isCreatingAdmin: boolean;
 }
 
-export function LoginFormAlert({ formError, isCreatingAdmin }: LoginFormAlertProps) {
+export function LoginFormAlert({ formError }: LoginFormAlertProps) {
   return (
     <>
       {formError && (
         <Alert variant="destructive" className="text-sm">
           <AlertDescription>{formError}</AlertDescription>
-        </Alert>
-      )}
-
-      {isCreatingAdmin && (
-        <Alert className="text-sm bg-yellow-50 border-yellow-200">
-          <AlertDescription>Setting up admin account...</AlertDescription>
         </Alert>
       )}
     </>

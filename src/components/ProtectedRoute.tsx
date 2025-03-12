@@ -28,8 +28,8 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" replace />;
   }
   
-  // If it's an admin route but user is not an admin, redirect to user dashboard
-  if (isAdminRoute && user?.role !== 'admin') {
+  // If it's an admin route but user is not an admin or doesn't have the specific admin email, redirect to user dashboard
+  if (isAdminRoute && (user?.role !== 'admin' || user?.email !== 'emohd123@gmail.com')) {
     return <Navigate to="/shifts" replace />;
   }
 

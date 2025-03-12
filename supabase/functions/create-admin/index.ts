@@ -13,7 +13,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Admin email constant
+// Admin email constant - THIS EMAIL ONLY
 const ADMIN_EMAIL = "emohd123@gmail.com";
 
 serve(async (req: Request) => {
