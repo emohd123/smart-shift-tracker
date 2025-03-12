@@ -16,13 +16,14 @@ type MapSelectorProps = {
 
 export default function MapSelector({ shiftId, onSave }: MapSelectorProps) {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [location, setLocation] = useState<{lat: number; lng: number} | null>(null);
   const [radius, setRadius] = useState(100);
 
   useEffect(() => {
     const checkExistingLocation = async () => {
       try {
+        setLoading(true);
         // Don't try to fetch location for a new shift
         if (shiftId === "new") {
           setLoading(false);
@@ -52,10 +53,9 @@ export default function MapSelector({ shiftId, onSave }: MapSelectorProps) {
           });
           setRadius(data.radius);
         }
-        
-        setLoading(false);
       } catch (error) {
         console.error("Error checking existing location:", error);
+      } finally {
         setLoading(false);
       }
     };

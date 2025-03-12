@@ -9,13 +9,24 @@ export default function LocationMapToggle() {
   const { toast } = useToast();
   const [showMap, setShowMap] = useState(false);
   
+  const handleToggleMap = () => {
+    setShowMap(prev => !prev);
+  };
+  
+  const handleLocationSaved = () => {
+    toast({
+      title: "Location Saved",
+      description: "Precise location has been saved for this shift"
+    });
+  };
+  
   return (
     <div className="pt-2">
       <Button 
         type="button" 
         variant="outline" 
         className="w-full flex items-center"
-        onClick={() => setShowMap(!showMap)}
+        onClick={handleToggleMap}
       >
         <MapPin className="mr-2 h-4 w-4" />
         {showMap ? "Hide Location Map" : "Set Precise Location"}
@@ -25,12 +36,7 @@ export default function LocationMapToggle() {
         <div className="mt-4">
           <MapSelector 
             shiftId="new"
-            onSave={() => {
-              toast({
-                title: "Location Saved",
-                description: "Precise location has been saved for this shift"
-              });
-            }}
+            onSave={handleLocationSaved}
           />
         </div>
       )}
