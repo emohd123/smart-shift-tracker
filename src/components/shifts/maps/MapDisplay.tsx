@@ -178,7 +178,7 @@ export default function MapDisplay({
   );
 }
 
-// Correctly define the window interface extension
+// Use this single declaration for the window interface extension
 declare global {
   interface Window {
     initMap: () => void;

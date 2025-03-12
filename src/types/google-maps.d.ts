@@ -1,4 +1,5 @@
 
+// Google Maps type definitions
 declare namespace google {
   namespace maps {
     class Map {
@@ -80,5 +81,9 @@ declare namespace google {
     interface MapMouseEvent {
       latLng?: LatLng;
     }
+    
+    const Animation: {
+      DROP: number;
+    };
   }
 }
