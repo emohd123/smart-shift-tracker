@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,21 +13,26 @@ export const useAuthentication = () => {
     try {
       let email = emailOrUsername;
       
+      // Simple email validation to check if it contains @ symbol
       if (!email.includes('@')) {
         email = `${email}@gmail.com`;
       }
       
       console.log("Attempting login with:", email);
 
-      // For session duration, we don't use expiresIn directly in options
-      // The signInWithPassword method doesn't accept expiresIn in the options object
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        console.error("Login error from Supabase:", error);
         throw error;
+      }
+      
+      if (!data.user) {
+        console.error("No user returned from login");
+        throw new Error("Login failed. Please try again.");
       }
       
       console.log("Login successful:", data.user);

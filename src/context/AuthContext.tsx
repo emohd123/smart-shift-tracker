@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useAuthMethods, ProfileUpdate } from "@/hooks/useAuthHooks";
@@ -32,7 +31,6 @@ export interface UserProfile {
   updated_at: string;
 }
 
-// Re-export UserRole from database types to make it accessible
 export { UserRole, GenderType, VerificationStatus } from "@/types/database";
 
 interface AuthContextType {
@@ -86,7 +84,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [authErrorState, setAuthErrorState] = useState<string | null>(null);
   
   const login = async (email: string, password: string, remember: boolean = false): Promise<void> => {
-    await loginMethod(email, password, remember);
+    try {
+      await loginMethod(email, password, remember);
+      setAuthErrorState(null);
+    } catch (error) {
+      if (error instanceof Error) {
+        setAuthErrorState(error.message);
+      } else {
+        setAuthErrorState("Failed to sign in");
+      }
+      throw error;
+    }
   };
   
   const getUserProfile = async (userId: string): Promise<UserProfile> => {

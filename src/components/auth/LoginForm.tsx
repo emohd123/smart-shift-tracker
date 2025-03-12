@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,20 +26,29 @@ export default function LoginForm() {
     e.preventDefault();
     setFormError(null);
     
+    if (!email || !password) {
+      setFormError("Please enter both email and password");
+      return;
+    }
+    
     try {
       console.log("Attempting login with:", email, "Remember me:", rememberMe);
       await login(email, password, rememberMe);
+      
       toast({
         title: "Logged in successfully",
         description: "Welcome to SmartShift",
       });
+      
       navigate("/dashboard");
     } catch (error) {
-      console.error("Login error:", error);
-      setFormError((error as Error).message || "Invalid email or password");
+      console.error("Login error caught in form:", error);
+      const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
+      
+      setFormError(errorMessage);
       toast({
         title: "Login failed",
-        description: (error as Error).message || "Invalid email or password",
+        description: errorMessage,
         variant: "destructive",
       });
     }
@@ -58,7 +67,7 @@ export default function LoginForm() {
       </div>
 
       <LoginFormAlert 
-        formError={formError} 
+        formError={formError || authError} 
         isCreatingAdmin={false} 
       />
 
