@@ -21,27 +21,39 @@ export default function MapDisplay({
   const circleRef = useRef<google.maps.Circle | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  // Initialize the map when script is loaded and ref is available
+  // Initialize the map when the component mounts
   useEffect(() => {
-    // Check if Google Maps API is already available
-    if (window.google?.maps && mapRef.current && !mapInstanceRef.current) {
-      initializeMap();
-      setMapLoaded(true);
-    }
-
-    // Function to run when Google Maps loads
-    window.initMap = () => {
+    // Define initMap function for global callback
+    function initMap() {
       if (mapRef.current && !mapInstanceRef.current) {
         initializeMap();
         setMapLoaded(true);
       }
-    };
+    }
+
+    // Assign to window for callback
+    window.initMap = initMap;
+    
+    // Check if Maps API is already loaded
+    if (window.google?.maps) {
+      initMap();
+    }
 
     return () => {
-      // Clean up the global callback when the component unmounts
-      if (window.initMap === initializeMap) {
-        // Only delete if it's our function to avoid conflicts
-        delete window.initMap;
+      // Clean up marker and circle to prevent memory leaks
+      if (markerRef.current) {
+        markerRef.current.setMap(null);
+        markerRef.current = null;
+      }
+      
+      if (circleRef.current) {
+        circleRef.current.setMap(null);
+        circleRef.current = null;
+      }
+      
+      // Only remove our initMap if it's still ours
+      if (window.initMap === initMap) {
+        window.initMap = function() {};
       }
     };
   }, []);
@@ -145,7 +157,7 @@ export default function MapDisplay({
           style={{ opacity: loading ? 0.6 : 1 }}
         >
           {(loading || !mapLoaded) && (
-            <div className="flex items-center justify-center h-full">
+            <div className="flex items-center justify-center h-full bg-background/80 absolute inset-0 z-10">
               Loading map...
             </div>
           )}
