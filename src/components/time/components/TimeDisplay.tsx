@@ -1,5 +1,7 @@
 
 import { formatBHD } from "../../shifts/utils/currencyUtils";
+import { motion } from "framer-motion";
+import { cn } from "@/lib/utils";
 
 type TimeDisplayProps = {
   elapsedTime: number;
@@ -21,15 +23,61 @@ export const formatTime = (seconds: number) => {
 };
 
 export default function TimeDisplay({ elapsedTime, earnings, isTracking }: TimeDisplayProps) {
+  // Split the time for individual animations
+  const formattedTime = formatTime(elapsedTime);
+  const [hours, minutes, seconds] = formattedTime.split(':');
+  
   return (
-    <div className="bg-muted/50 rounded-lg p-6 flex flex-col items-center justify-center">
-      <div className="text-4xl font-mono font-semibold mb-2">
-        {formatTime(elapsedTime)}
+    <div className={cn(
+      "bg-muted/50 rounded-lg p-6 flex flex-col items-center justify-center",
+      "transition-all duration-300",
+      isTracking && "bg-primary/10"
+    )}>
+      <div className="flex items-center justify-center text-4xl font-mono font-semibold mb-2">
+        <TimeUnit value={hours} isTracking={isTracking} />
+        <span className={isTracking ? "text-primary" : "text-muted-foreground"}>:</span>
+        <TimeUnit value={minutes} isTracking={isTracking} />
+        <span className={isTracking ? "text-primary" : "text-muted-foreground"}>:</span>
+        <TimeUnit value={seconds} isTracking={isTracking} flipActive={isTracking} />
       </div>
-      {isTracking && earnings > 0 && (
-        <div className="text-muted-foreground text-sm mt-1">
-          Current earnings: {formatBHD(earnings)}
-        </div>
+      
+      {earnings > 0 && (
+        <motion.div 
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-muted-foreground text-sm mt-2"
+        >
+          <span>Current earnings: </span>
+          <span className={isTracking ? "text-primary font-medium" : ""}>
+            {formatBHD(earnings)}
+          </span>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+// Individual time unit component for animation
+function TimeUnit({ value, isTracking, flipActive = false }: { 
+  value: string, 
+  isTracking: boolean,
+  flipActive?: boolean
+}) {
+  return (
+    <div className="relative w-[2ch] text-center">
+      {flipActive && isTracking ? (
+        <motion.div
+          key={value}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-primary"
+        >
+          {value}
+        </motion.div>
+      ) : (
+        <span className={isTracking ? "text-primary" : "text-foreground"}>
+          {value}
+        </span>
       )}
     </div>
   );

@@ -3,6 +3,10 @@ import { useEffect } from "react";
 import { Shift } from "@/components/shifts/ShiftCard";
 import ShiftList from "@/components/shifts/ShiftList";
 import { ShiftsLoading } from "@/components/shifts/ShiftsLoading";
+import { motion } from "framer-motion";
+import { Calendar, AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 // Define global functions for TypeScript
 declare global {
@@ -20,6 +24,8 @@ interface ShiftsContentProps {
 }
 
 export const ShiftsContent = ({ shifts, loading, title, deleteShift }: ShiftsContentProps) => {
+  const navigate = useNavigate();
+  
   // Register the deleteShift function globally, but clean up on unmount
   useEffect(() => {
     window.deleteShift = deleteShift;
@@ -35,17 +41,40 @@ export const ShiftsContent = ({ shifts, loading, title, deleteShift }: ShiftsCon
   
   if (shifts.length === 0) {
     return (
-      <div className="p-8 text-center">
-        <h2 className="text-xl font-medium text-muted-foreground">No shifts found</h2>
-        <p className="mt-2 text-muted-foreground">When shifts are created, they will appear here.</p>
-      </div>
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex flex-col items-center justify-center py-16 text-center"
+      >
+        <div className="bg-secondary/50 p-6 rounded-full mb-6">
+          <Calendar className="h-12 w-12 text-muted-foreground" />
+        </div>
+        <h2 className="text-2xl font-semibold mb-2">No shifts found</h2>
+        <p className="text-muted-foreground mb-8 max-w-md">
+          When shifts are created, they will appear here. Check back later or create a new shift.
+        </p>
+        <Button 
+          onClick={() => navigate("/create-shift")}
+          className="gap-2"
+        >
+          <Calendar className="h-4 w-4" />
+          Create New Shift
+        </Button>
+      </motion.div>
     );
   }
   
   return (
-    <ShiftList 
-      shifts={shifts} 
-      title={title} 
-    />
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.4 }}
+    >
+      <ShiftList 
+        shifts={shifts} 
+        title={title} 
+      />
+    </motion.div>
   );
 };

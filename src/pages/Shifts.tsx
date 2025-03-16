@@ -5,17 +5,27 @@ import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useShiftsData } from "@/hooks/shifts/useShiftsData";
 import { ShiftsContent } from "@/components/shifts/ShiftsContent";
+import { toast } from "sonner";
 
 const Shifts = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
   // Fetch shifts data based on user role and authentication status
-  const { shifts, loading, deleteShift } = useShiftsData({
+  const { shifts, loading, error, deleteShift } = useShiftsData({
     userId: user?.id,
     userRole: user?.role,
     isAuthenticated
   });
+
+  // Handle errors
+  useEffect(() => {
+    if (error) {
+      toast.error("Failed to load shifts data", {
+        description: "Please try again later or contact support if the problem persists."
+      });
+    }
+  }, [error]);
 
   // Redirect to login if not authenticated
   useEffect(() => {

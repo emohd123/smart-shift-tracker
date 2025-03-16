@@ -2,13 +2,15 @@
 import { ReactNode, useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronRight, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AppSidebar } from "./AppSidebar";
 import { AppHeader } from "./AppHeader";
 import { useResponsive } from "@/hooks/useResponsive";
 import { motion, AnimatePresence } from "framer-motion";
 import { useError, ErrorSeverity } from "@/context/ErrorContext";
+import { toast } from "sonner";
+import { Button } from "../ui/button";
 
 type AppLayoutProps = {
   children: ReactNode;
@@ -37,18 +39,27 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
       if (e.ctrlKey && e.key === 'h') {
         e.preventDefault();
         navigate('/dashboard');
+        toast.success("Navigated to Dashboard", {
+          description: "Keyboard shortcut: Ctrl+H"
+        });
       }
       
       // Navigate to shifts with Ctrl+S
       if (e.ctrlKey && e.key === 's') {
         e.preventDefault();
         navigate('/shifts');
+        toast.success("Navigated to Shifts", {
+          description: "Keyboard shortcut: Ctrl+S"
+        });
       }
       
       // Navigate to time tracking with Ctrl+T
       if (e.ctrlKey && e.key === 't') {
         e.preventDefault();
         navigate('/time-tracking');
+        toast.success("Navigated to Time Tracking", {
+          description: "Keyboard shortcut: Ctrl+T"
+        });
       }
     };
 
@@ -79,15 +90,6 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
       mainRef.current.focus();
     }
   }, [sidebarOpen]);
-
-  // Test error system - remove in production
-  const testErrorSystem = () => {
-    try {
-      throw new Error("This is a test error");
-    } catch (error) {
-      addError("Error system test", ErrorSeverity.WARNING, error);
-    }
-  };
 
   return (
     <div className="min-h-screen w-full flex flex-col md:flex-row bg-background overflow-hidden">
@@ -146,6 +148,23 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
           setSidebarOpen={setSidebarOpen}
           isMobile={isMobile}
         />
+
+        {/* Sidebar toggle for non-mobile */}
+        {!isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="absolute left-4 top-20 z-10 h-8 w-8 rounded-full bg-card/80 shadow-md border border-border/50"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            aria-label={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          >
+            {sidebarOpen ? (
+              <ChevronLeft className="h-4 w-4" />
+            ) : (
+              <ChevronRight className="h-4 w-4" />
+            )}
+          </Button>
+        )}
 
         {/* Page content */}
         <main className={cn(

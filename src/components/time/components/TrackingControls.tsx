@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
-import { PlayCircle, StopCircle } from "lucide-react";
+import { PlayCircle, StopCircle, Loader2 } from "lucide-react";
+import { motion } from "framer-motion";
 
 type TrackingControlsProps = {
   isTracking: boolean;
@@ -20,30 +21,52 @@ export default function TrackingControls({
   return (
     <div className="pt-2">
       {!isTracking ? (
-        <Button 
-          onClick={onStartTracking} 
-          className="w-full"
-          variant="default"
-          disabled={loading || !isShiftActive}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
         >
-          {loading ? (
-            <>Verifying Location...</>
-          ) : (
-            <>
-              <PlayCircle size={18} className="mr-2" />
-              Start Tracking
-            </>
+          <Button 
+            onClick={onStartTracking} 
+            className="w-full group transition-all duration-300"
+            variant="default"
+            disabled={loading || !isShiftActive}
+            size="lg"
+          >
+            {loading ? (
+              <>
+                <Loader2 size={18} className="mr-2 animate-spin" />
+                Verifying Location...
+              </>
+            ) : (
+              <>
+                <PlayCircle size={18} className="mr-2 group-hover:scale-110 transition-transform" />
+                Start Tracking
+              </>
+            )}
+          </Button>
+          {!isShiftActive && (
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              This shift is not active or has already been completed
+            </p>
           )}
-        </Button>
+        </motion.div>
       ) : (
-        <Button 
-          onClick={onStopTracking} 
-          className="w-full"
-          variant="outline"
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
         >
-          <StopCircle size={18} className="mr-2" />
-          Stop Tracking
-        </Button>
+          <Button 
+            onClick={onStopTracking} 
+            className="w-full group"
+            variant="outline"
+            size="lg"
+          >
+            <StopCircle size={18} className="mr-2 text-destructive group-hover:scale-110 transition-transform" />
+            Stop Tracking
+          </Button>
+        </motion.div>
       )}
     </div>
   );
