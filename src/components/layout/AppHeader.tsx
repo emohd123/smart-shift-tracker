@@ -56,7 +56,7 @@ export function AppHeader({
           />
         </div>
         
-        <NotificationBadge count={3} />
+        <NotificationBadge />
         
         <Button 
           variant="ghost" 
