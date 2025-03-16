@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Shift } from "@/components/shifts/ShiftCard";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { mockShifts } from "@/pages/Shifts";
+import { mockShifts } from "@/utils/mockData";
 import { ShiftStatus } from "@/types/database";
 
 type TimeTrackerRef = {
