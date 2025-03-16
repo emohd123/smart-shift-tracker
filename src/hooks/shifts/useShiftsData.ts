@@ -13,6 +13,7 @@ interface UseShiftsDataProps {
 export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDataProps) => {
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const { toast } = useToast();
 
   // Load shifts based on user role
@@ -34,8 +35,10 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
             );
             
         setShifts(filteredShifts);
-      } catch (error) {
-        console.error('Error fetching shifts:', error);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching shifts:', err);
+        setError(err instanceof Error ? err : new Error('Unknown error occurred'));
         toast({
           title: "Error",
           description: "Failed to load shifts. Please try again.",
@@ -72,8 +75,9 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
       
       // In a real app, you'd make an API request to delete the shift from the database
       console.log("Deleting shift:", id);
-    } catch (error) {
-      console.error('Error deleting shift:', error);
+    } catch (err) {
+      console.error('Error deleting shift:', err);
+      setError(err instanceof Error ? err : new Error('Failed to delete shift'));
       toast({
         title: "Error",
         description: "Failed to delete shift. Please try again.",
@@ -85,6 +89,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
   return {
     shifts,
     loading,
+    error,
     deleteShift
   };
 };

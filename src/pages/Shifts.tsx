@@ -22,7 +22,7 @@ const Shifts = () => {
   useEffect(() => {
     if (error) {
       toast.error("Failed to load shifts data", {
-        description: "Please try again later or contact support if the problem persists."
+        description: error.message || "Please try again later or contact support if the problem persists."
       });
     }
   }, [error]);

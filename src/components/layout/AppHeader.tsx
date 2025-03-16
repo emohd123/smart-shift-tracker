@@ -2,7 +2,7 @@
 import { Menu, Bell, User, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { NotificationBadge } from "@/components/notifications/NotificationBadge";
+import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
