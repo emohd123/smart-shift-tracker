@@ -7,20 +7,13 @@ import { ShiftDetailSkeleton } from "@/components/shifts/ShiftDetailSkeleton";
 import { ShiftNotFound } from "@/components/shifts/ShiftNotFound";
 import { ShiftDetailContent } from "@/components/shifts/ShiftDetailContent";
 
-// Define the global interface for the window object
-declare global {
-  interface Window {
-    deleteShift: (id: string) => void;
-    startTimeTracking?: (shift: any) => void;
-  }
-}
-
 const ShiftDetails = () => {
   const { id } = useParams<{ id: string }>();
   const {
     isAuthenticated,
     shift,
     loading,
+    isCheckedIn,
     isCheckingOut,
     timeTrackerRef,
     handleCheckIn,
@@ -48,6 +41,7 @@ const ShiftDetails = () => {
         <ShiftDetailContent
           shift={shift}
           timeTrackerRef={timeTrackerRef}
+          isCheckedIn={isCheckedIn}
           onCheckIn={handleCheckIn}
           onCheckOut={handleCheckOut}
           onDelete={handleDelete}

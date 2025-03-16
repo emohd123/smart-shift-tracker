@@ -6,17 +6,11 @@ import { useAuth } from "@/context/AuthContext";
 import { useShiftsData } from "@/hooks/shifts/useShiftsData";
 import { ShiftsContent } from "@/components/shifts/ShiftsContent";
 
-// Define the global interface for the window object
-declare global {
-  interface Window {
-    deleteShift: (id: string) => void;
-  }
-}
-
 const Shifts = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   
+  // Fetch shifts data based on user role and authentication status
   const { shifts, loading, deleteShift } = useShiftsData({
     userId: user?.id,
     userRole: user?.role,

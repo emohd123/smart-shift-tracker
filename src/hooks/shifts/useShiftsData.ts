@@ -1,15 +1,13 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Shift } from "@/components/shifts/ShiftCard";
-import { ShiftStatus } from "@/types/database";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { mockShifts } from "@/utils/mockData";
+import { useToast } from "@/hooks/use-toast";
 
 interface UseShiftsDataProps {
-  userId: string | undefined;
-  userRole: string | undefined;
-  isAuthenticated: boolean;
+  userId?: string;
+  userRole?: string;
+  isAuthenticated?: boolean;
 }
 
 export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDataProps) => {
@@ -17,92 +15,76 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
+  // Load shifts based on user role
   useEffect(() => {
-    // Fetch shifts from Supabase
-    const fetchShifts = async () => {
-      setLoading(true);
+    if (!isAuthenticated) return;
+
+    setLoading(true);
+    
+    // Simulate API request
+    const timer = setTimeout(() => {
       try {
-        let query = supabase
-          .from('shifts')
-          .select(`
-            id,
-            title,
-            date,
-            start_time,
-            end_time,
-            location,
-            status,
-            pay_rate,
-            is_paid
-          `);
-        
-        // If user is a promoter, only fetch shifts assigned to them
-        if (userRole === "promoter") {
-          // First get the shift IDs assigned to this promoter
-          const { data: assignmentData, error: assignmentError } = await supabase
-            .from('shift_assignments')
-            .select('shift_id')
-            .eq('promoter_id', userId);
-          
-          if (assignmentError) throw assignmentError;
-          
-          // If there are assignments, filter shifts by these IDs
-          if (assignmentData && assignmentData.length > 0) {
-            const shiftIds = assignmentData.map(assignment => assignment.shift_id);
-            query = query.in('id', shiftIds);
-          } else {
-            // If no assignments, return early with empty array
-            setShifts([]);
-            setLoading(false);
-            return;
-          }
-        }
-        
-        const { data, error } = await query;
-        
-        if (error) throw error;
-        
-        if (data) {
-          // Format the data to match our Shift interface
-          const formattedShifts: Shift[] = data.map(item => ({
-            id: item.id,
-            title: item.title,
-            date: item.date,
-            startTime: item.start_time,
-            endTime: item.end_time,
-            location: item.location,
-            status: item.status as ShiftStatus,
-            payRate: Number(item.pay_rate),
-            isPaid: Boolean(item.is_paid)
-          }));
-          
-          setShifts(formattedShifts);
-        }
+        // If admin, show all shifts, otherwise filter for the specific user
+        const filteredShifts = userRole === 'admin' 
+          ? mockShifts 
+          : mockShifts.filter(shift => 
+              // In a real app, you'd filter by shifts assigned to this promoter
+              // For now, we'll return all shifts for any non-admin
+              true
+            );
+            
+        setShifts(filteredShifts);
       } catch (error) {
-        console.error("Error fetching shifts:", error);
+        console.error('Error fetching shifts:', error);
         toast({
           title: "Error",
-          description: "Failed to load shifts",
+          description: "Failed to load shifts. Please try again.",
           variant: "destructive"
         });
-        
-        // Fallback to mock data if there's an error
-        setShifts(mockShifts);
       } finally {
         setLoading(false);
       }
-    };
+    }, 800);
     
-    if (isAuthenticated) {
-      fetchShifts();
+    return () => clearTimeout(timer);
+  }, [isAuthenticated, userId, userRole, toast]);
+
+  // Handle shift deletion
+  const deleteShift = useCallback((id: string) => {
+    try {
+      // Verify if user is admin before allowing deletion
+      if (userRole !== 'admin') {
+        toast({
+          title: "Permission Denied",
+          description: "Only admin users can delete shifts",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Remove the shift from the list
+      setShifts(prev => prev.filter(shift => shift.id !== id));
+      
+      toast({
+        title: "Shift Deleted",
+        description: "The shift has been successfully deleted",
+      });
+      
+      // In a real app, you'd make an API request to delete the shift from the database
+      console.log("Deleting shift:", id);
+    } catch (error) {
+      console.error('Error deleting shift:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete shift. Please try again.",
+        variant: "destructive"
+      });
     }
-  }, [userId, userRole, isAuthenticated, toast]);
+  }, [userRole, toast]);
 
-  // This function could be called from other components via a context
-  // For now we're just exposing it so ShiftDetails can update the master list
-  const deleteShift = (id: string) => {
-    setShifts(prev => prev.filter(shift => shift.id !== id));
+  return {
+    shifts,
+    loading,
+    deleteShift
   };
-
-  return { shifts, loading, deleteShift };
 };

@@ -1,46 +1,46 @@
 
-import { RefObject } from "react";
-import { Shift } from "@/components/shifts/ShiftCard";
-import ShiftDetail from "@/components/shifts/ShiftDetail";
-import TimeTracker from "@/components/time/TimeTracker";
+import { useRef } from "react";
+import { Shift } from "./ShiftCard";
+import ShiftDetail from "./ShiftDetail";
+import TimeTracker from "../time/TimeTracker";
 
 type ShiftDetailContentProps = {
   shift: Shift;
-  timeTrackerRef: RefObject<{
+  timeTrackerRef: React.MutableRefObject<{
     handleStartTracking: () => void;
     handleStopTracking: () => void;
   } | null>;
+  isCheckedIn?: boolean;
   onCheckIn: () => void;
   onCheckOut: () => void;
   onDelete: (id: string) => void;
   isCheckingOut: boolean;
 };
 
-export function ShiftDetailContent({
+export const ShiftDetailContent = ({
   shift,
   timeTrackerRef,
+  isCheckedIn,
   onCheckIn,
   onCheckOut,
   onDelete,
   isCheckingOut
-}: ShiftDetailContentProps) {
+}: ShiftDetailContentProps) => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <ShiftDetail 
-        shift={shift} 
-        onCheckIn={onCheckIn} 
-        onCheckOut={onCheckOut} 
-        onDelete={onDelete}
-      />
-      
-      {/* Always render TimeTracker but it will conditionally show based on its internal logic */}
-      <TimeTracker 
         shift={shift}
         onCheckIn={onCheckIn}
         onCheckOut={onCheckOut}
+        onDelete={onDelete}
+      />
+      
+      <TimeTracker 
+        shift={shift}
         ref={timeTrackerRef}
+        autoStart={false}
         autoStop={isCheckingOut}
       />
     </div>
   );
-}
+};

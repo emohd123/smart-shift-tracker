@@ -24,6 +24,11 @@ export function useShiftDetail(shiftId: string | undefined) {
 
   // Load shift data
   useEffect(() => {
+    if (!shiftId) {
+      setLoading(false);
+      return;
+    }
+    
     // Simulate API request
     setLoading(true);
     const timer = setTimeout(() => {
@@ -32,12 +37,19 @@ export function useShiftDetail(shiftId: string | undefined) {
         setShift(foundShift);
         // If the shift is already ongoing, mark as checked in
         setIsCheckedIn(foundShift.status === ShiftStatus.Ongoing);
+      } else {
+        // Handle case when shift is not found
+        toast({
+          title: "Shift Not Found",
+          description: "The requested shift could not be found",
+          variant: "destructive"
+        });
       }
       setLoading(false);
     }, 500);
     
     return () => clearTimeout(timer);
-  }, [shiftId]);
+  }, [shiftId, toast]);
 
   // Register global function to start time tracking
   useEffect(() => {
@@ -53,7 +65,9 @@ export function useShiftDetail(shiftId: string | undefined) {
   }, []);
 
   const handleCheckIn = async () => {
-    if (shift) {
+    if (!shift) return;
+    
+    try {
       // Simulate API update - using proper ShiftStatus enum
       const updatedShift: Shift = { 
         ...shift, 
@@ -74,18 +88,21 @@ export function useShiftDetail(shiftId: string | undefined) {
       }
       
       // In a real app, you'd update the database here
-      try {
-        // This is just for demonstration - in a real app, you would update
-        // the check-in status in the database
-        console.log("Updating shift status to ongoing:", shift.id);
-      } catch (error) {
-        console.error("Error updating shift status:", error);
-      }
+      console.log("Updating shift status to ongoing:", shift.id);
+    } catch (error) {
+      console.error("Error updating shift status:", error);
+      toast({
+        title: "Check-in Failed",
+        description: "Could not check in for this shift. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
   const handleCheckOut = async () => {
-    if (shift) {
+    if (!shift) return;
+    
+    try {
       setIsCheckingOut(true);
       
       // Stop time tracking first
@@ -108,21 +125,22 @@ export function useShiftDetail(shiftId: string | undefined) {
       });
       
       // In a real app, you'd update the database here
-      try {
-        // This is just for demonstration - in a real app, you would update
-        // the check-out status in the database
-        console.log("Updating shift status to completed:", shift.id);
-      } catch (error) {
-        console.error("Error updating shift status:", error);
-      } finally {
-        setIsCheckingOut(false);
-      }
+      console.log("Updating shift status to completed:", shift.id);
+    } catch (error) {
+      console.error("Error updating shift status:", error);
+      toast({
+        title: "Check-out Failed",
+        description: "Could not check out from this shift. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsCheckingOut(false);
     }
   };
 
   const handleDelete = (shiftId: string) => {
     // Check if user has permission (admin only)
-    if (user?.role !== "admin") {
+    if (!user || user.role !== "admin") {
       toast({
         title: "Permission Denied",
         description: "Only admin users can delete shifts",
@@ -131,18 +149,28 @@ export function useShiftDetail(shiftId: string | undefined) {
       return;
     }
     
-    // Call the global deleteShift function to remove from the main list
-    if (window.deleteShift) {
-      window.deleteShift(shiftId);
-    }
-    
-    // In a real app, you'd also delete any associated locations
     try {
-      // This is just for demonstration - in a real app, you would delete
-      // the associated location data from the database
-      console.log("Deleting shift location data for:", shiftId);
+      // Call the global deleteShift function to remove from the main list
+      if (window.deleteShift) {
+        window.deleteShift(shiftId);
+        
+        toast({
+          title: "Shift Deleted",
+          description: "The shift has been successfully deleted",
+        });
+        
+        // Navigate back to shifts list
+        navigate("/shifts");
+      } else {
+        throw new Error("Delete function not available");
+      }
     } catch (error) {
-      console.error("Error deleting shift location:", error);
+      console.error("Error deleting shift:", error);
+      toast({
+        title: "Delete Failed",
+        description: "Could not delete the shift. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
