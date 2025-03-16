@@ -3,15 +3,17 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import LoginForm from "@/components/auth/LoginForm";
+import { toast } from "sonner";
 
 const Login = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already authenticated
+  // Check if user is already authenticated and redirect
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/dashboard");
+      toast.info("Already signed in");
+      navigate("/shifts");
     }
   }, [isAuthenticated, navigate]);
 

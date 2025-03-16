@@ -8,10 +8,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { LoginFormAlert } from "./LoginFormAlert";
 import { LoginCredentials } from "./LoginCredentials";
 import { LoginActions } from "./LoginActions";
+import { toast } from "sonner";
 
 export default function LoginForm() {
   const { login, loading, authError } = useAuth();
-  const { toast } = useToast();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -37,26 +37,19 @@ export default function LoginForm() {
       
       await login(normalizedEmail, password, rememberMe);
       
-      toast({
-        title: "Logged in successfully",
+      toast.success("Logged in successfully", {
         description: "Welcome to SmartShift",
       });
       
-      // Check if it's the admin email and redirect accordingly
-      if (normalizedEmail.toLowerCase() === 'emohd123@gmail.com') {
-        navigate("/dashboard");
-      } else {
-        navigate("/shifts");
-      }
+      // Simplified redirect logic - default to shifts page
+      navigate("/shifts");
     } catch (error) {
       console.error("Login error caught in form:", error);
       const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
       
       setFormError(errorMessage);
-      toast({
-        title: "Login failed",
+      toast.error("Login failed", {
         description: errorMessage,
-        variant: "destructive",
       });
     }
   };
