@@ -2,8 +2,6 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { LoginFormAlert } from "./LoginFormAlert";
 import { LoginCredentials } from "./LoginCredentials";
@@ -19,6 +17,7 @@ export default function LoginForm() {
     localStorage.getItem('rememberMe') === 'true'
   );
   const [formError, setFormError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,6 +30,9 @@ export default function LoginForm() {
     
     try {
       console.log("Attempting login with:", email, "Remember me:", rememberMe);
+      
+      // Set local submitting state to true
+      setIsSubmitting(true);
       
       // Normalize email input (trim whitespace)
       const normalizedEmail = email.trim();
@@ -51,6 +53,9 @@ export default function LoginForm() {
       toast.error("Login failed", {
         description: errorMessage,
       });
+    } finally {
+      // Always reset the submitting state
+      setIsSubmitting(false);
     }
   };
 
@@ -82,7 +87,7 @@ export default function LoginForm() {
         />
 
         <LoginActions 
-          loading={loading} 
+          loading={isSubmitting} 
           isCreatingAdmin={false} 
         />
       </form>
