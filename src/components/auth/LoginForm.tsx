@@ -7,11 +7,15 @@ import { LoginFormAlert } from "./LoginFormAlert";
 import { LoginCredentials } from "./LoginCredentials";
 import { LoginActions } from "./LoginActions";
 import { toast } from "sonner";
-import { Clock as ClockIcon } from "lucide-react";
+import { Clock } from "lucide-react";
 import { useError, ErrorSeverity } from "@/context/ErrorContext";
 
-export default function LoginForm() {
-  const { login, loading, authError } = useAuth();
+interface LoginFormProps {
+  onError?: (message: string) => void;
+}
+
+export default function LoginForm({ onError }: LoginFormProps) {
+  const { login, loading, authError, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { addError } = useError();
   const [email, setEmail] = useState("");
@@ -22,12 +26,26 @@ export default function LoginForm() {
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/shifts");
+    }
+  }, [isAuthenticated, navigate]);
+
   // Clear form error when inputs change
   useEffect(() => {
     if (formError) {
       setFormError(null);
     }
   }, [email, password]);
+
+  // Update parent component if there's an error
+  useEffect(() => {
+    if (formError && onError) {
+      onError(formError);
+    }
+  }, [formError, onError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,8 +71,7 @@ export default function LoginForm() {
         description: "Welcome to SmartShift",
       });
       
-      // Simplified redirect logic - default to shifts page
-      navigate("/shifts");
+      // Navigation now happens in the useEffect that watches isAuthenticated
     } catch (error) {
       console.error("Login error caught in form:", error);
       const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
@@ -77,7 +94,7 @@ export default function LoginForm() {
     <div className="w-full max-w-md space-y-6 animate-fade-in">
       <div className="text-center">
         <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
-          <ClockIcon className="text-white" size={20} />
+          <Clock className="text-white" size={20} />
         </div>
         <h2 className="text-2xl font-bold tracking-tight">Welcome to SmartShift</h2>
         <p className="text-sm text-muted-foreground mt-2">
@@ -101,7 +118,7 @@ export default function LoginForm() {
         />
 
         <LoginActions 
-          loading={isSubmitting} 
+          loading={isSubmitting || loading} 
           isCreatingAdmin={false} 
         />
       </form>
