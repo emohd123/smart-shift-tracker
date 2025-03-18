@@ -13,14 +13,10 @@ const Login = () => {
 
   // Check if user is already authenticated and redirect
   useEffect(() => {
-    try {
-      if (isAuthenticated) {
-        toast.info("Already signed in");
-        navigate("/shifts");
-      }
-    } catch (err) {
-      console.error("Error in auth redirect:", err);
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+    // Removed the try/catch as this is a simple condition check that shouldn't throw
+    if (isAuthenticated) {
+      toast.info("Already signed in");
+      navigate("/shifts");
     }
   }, [isAuthenticated, navigate]);
 
@@ -43,13 +39,11 @@ const Login = () => {
   }
 
   return (
-    <ErrorBoundary>
-      <div className="min-h-screen flex items-center justify-center bg-background px-4">
-        <div className="w-full max-w-md">
-          <LoginForm />
-        </div>
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <div className="w-full max-w-md">
+        <LoginForm />
       </div>
-    </ErrorBoundary>
+    </div>
   );
 };
 
