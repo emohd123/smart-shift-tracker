@@ -7,6 +7,7 @@ import { LoginFormAlert } from "./LoginFormAlert";
 import { LoginCredentials } from "./LoginCredentials";
 import { LoginActions } from "./LoginActions";
 import { toast } from "sonner";
+import { Clock as ClockIcon } from "lucide-react";
 
 export default function LoginForm() {
   const { login, loading, authError } = useAuth();
@@ -63,7 +64,7 @@ export default function LoginForm() {
     <div className="w-full max-w-md space-y-6 animate-fade-in">
       <div className="text-center">
         <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
-          <Clock className="text-white" size={20} />
+          <ClockIcon className="text-white" size={20} />
         </div>
         <h2 className="text-2xl font-bold tracking-tight">Welcome to SmartShift</h2>
         <p className="text-sm text-muted-foreground mt-2">
