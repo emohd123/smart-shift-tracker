@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
@@ -8,10 +8,12 @@ import { LoginCredentials } from "./LoginCredentials";
 import { LoginActions } from "./LoginActions";
 import { toast } from "sonner";
 import { Clock as ClockIcon } from "lucide-react";
+import { useError, ErrorSeverity } from "@/context/ErrorContext";
 
 export default function LoginForm() {
   const { login, loading, authError } = useAuth();
   const navigate = useNavigate();
+  const { addError } = useError();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(
@@ -19,6 +21,13 @@ export default function LoginForm() {
   );
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Clear form error when inputs change
+  useEffect(() => {
+    if (formError) {
+      setFormError(null);
+    }
+  }, [email, password]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +60,10 @@ export default function LoginForm() {
       const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
       
       setFormError(errorMessage);
+      
+      // Log to error context for tracking
+      addError(errorMessage, ErrorSeverity.ERROR, error);
+      
       toast.error("Login failed", {
         description: errorMessage,
       });
