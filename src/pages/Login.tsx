@@ -10,9 +10,6 @@ const Login = () => {
   const navigate = useNavigate();
   const [pageError, setPageError] = useState<string | null>(null);
 
-  // No need for useEffect here - we'll handle redirect in the LoginForm component
-  // This reduces potential error sources in the Login page
-
   // Show a simpler error message if there's a page-level error
   if (pageError) {
     return (

@@ -49,10 +49,18 @@ export default function LoginForm({ onError }: LoginFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Reset form error
     setFormError(null);
     
-    if (!email || !password) {
-      setFormError("Please enter both email and password");
+    // Validate fields - email and password are required
+    if (!email.trim()) {
+      setFormError("Email or username is required");
+      return;
+    }
+    
+    if (!password) {
+      setFormError("Password is required");
       return;
     }
     
@@ -71,12 +79,13 @@ export default function LoginForm({ onError }: LoginFormProps) {
         description: "Welcome to SmartShift",
       });
       
-      // Navigation now happens in the useEffect that watches isAuthenticated
+      // Navigation happens in the useEffect that watches isAuthenticated
     } catch (error) {
       console.error("Login error caught in form:", error);
       const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
       
       setFormError(errorMessage);
+      setIsSubmitting(false); // Reset submitting state on error
       
       // Log to error context for tracking
       addError(errorMessage, ErrorSeverity.ERROR, error);
@@ -84,9 +93,6 @@ export default function LoginForm({ onError }: LoginFormProps) {
       toast.error("Login failed", {
         description: errorMessage,
       });
-    } finally {
-      // Always reset the submitting state
-      setIsSubmitting(false);
     }
   };
 
@@ -118,7 +124,7 @@ export default function LoginForm({ onError }: LoginFormProps) {
         />
 
         <LoginActions 
-          loading={isSubmitting || loading} 
+          loading={isSubmitting} 
           isCreatingAdmin={false} 
         />
       </form>

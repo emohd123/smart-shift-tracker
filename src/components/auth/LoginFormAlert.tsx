@@ -1,4 +1,3 @@
-
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle } from "lucide-react";
 
@@ -20,6 +19,9 @@ export function LoginFormAlert({ formError, isCreatingAdmin }: LoginFormAlertPro
     displayMessage = "Please confirm your email before signing in.";
   } else if (formError.includes("network") || formError.includes("connection")) {
     displayMessage = "Network error. Please check your internet connection and try again.";
+  } else if (formError.includes("required")) {
+    // Keep the original message for required field errors
+    displayMessage = formError;
   }
   
   return (

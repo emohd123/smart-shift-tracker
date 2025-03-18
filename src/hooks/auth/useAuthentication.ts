@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,6 +8,11 @@ export const useAuthentication = () => {
   const [authError, setAuthError] = useState<string | null>(null);
 
   const login = async (emailOrUsername: string, password: string, remember: boolean = false) => {
+    // Prevent login attempt with empty fields
+    if (!emailOrUsername || !password) {
+      throw new Error("Email and password are required");
+    }
+    
     setLoading(true);
     setAuthError(null);
     try {
