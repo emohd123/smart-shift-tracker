@@ -207,7 +207,7 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
       const { shifts, timePeriodLabel } = await fetchCompletedShifts(userId);
       
       // Calculate total hours
-      const totalHours = shifts.reduce((shift, acc) => {
+      const totalHours = shifts.reduce((acc, shift) => {
         return acc + (shift.hours || 0);
       }, 0);
       
