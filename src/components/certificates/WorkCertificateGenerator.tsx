@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,8 +10,7 @@ import { Loader2, Download, Share2, MailIcon, QrCode, Clock, Users } from "lucid
 import { useCertificateGeneration } from "./hooks/useCertificateGeneration";
 import CertificatePreview from "./CertificatePreview";
 import { Collapse } from "@/components/ui/collapse";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Combobox } from "@/components/ui/combobox";
+import AdminCertificateSelector from "./AdminCertificateSelector";
 
 export type TimePeriod = "3months" | "6months" | "1year" | "all";
 
@@ -35,8 +34,15 @@ export default function WorkCertificateGenerator() {
     fetchPromoters
   } = useCertificateGeneration(selectedUserId || user?.id || "", timePeriod);
   
+  // Set initial user ID
+  useEffect(() => {
+    if (user) {
+      setSelectedUserId(user.id);
+    }
+  }, [user]);
+  
   // Fetch promoters if user is admin
-  useState(() => {
+  useEffect(() => {
     if (user?.role === 'admin') {
       const loadPromoters = async () => {
         setLoadingPromoters(true);
@@ -53,7 +59,7 @@ export default function WorkCertificateGenerator() {
       
       loadPromoters();
     }
-  });
+  }, [user, fetchPromoters]);
   
   const handleGenerate = async () => {
     setShowPreview(false);
@@ -80,57 +86,12 @@ export default function WorkCertificateGenerator() {
       <CardContent className="space-y-6">
         {/* Admin can select a user */}
         {user?.role === 'admin' && (
-          <div className="space-y-2">
-            <Label htmlFor="userId">Generate Certificate For</Label>
-            <RadioGroup 
-              defaultValue="self" 
-              onValueChange={(value) => {
-                if (value === "self") {
-                  setSelectedUserId(user.id);
-                } else {
-                  setSelectedUserId("");
-                }
-              }}
-              className="flex space-x-4"
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="self" id="self" />
-                <Label htmlFor="self">Yourself</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="promoter" id="promoter" />
-                <Label htmlFor="promoter">Promoter</Label>
-              </div>
-            </RadioGroup>
-            
-            {selectedUserId === "" && (
-              <div className="pt-2">
-                <Label htmlFor="promoterSelect">Select Promoter</Label>
-                <Select 
-                  disabled={loadingPromoters}
-                  onValueChange={setSelectedUserId}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select a promoter" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {loadingPromoters ? (
-                      <div className="flex items-center justify-center py-2">
-                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                        Loading...
-                      </div>
-                    ) : (
-                      promoters.map(promoter => (
-                        <SelectItem key={promoter.id} value={promoter.id}>
-                          {promoter.full_name}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-          </div>
+          <AdminCertificateSelector
+            selectedUserId={selectedUserId}
+            setSelectedUserId={setSelectedUserId}
+            promoters={promoters}
+            loadingPromoters={loadingPromoters}
+          />
         )}
         
         <div className="space-y-2">

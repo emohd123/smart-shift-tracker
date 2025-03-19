@@ -112,7 +112,13 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
       // Attempt to fetch real time logs for the user
       const { data: timeLogs, error } = await supabase
         .from('time_logs')
-        .select('*, shifts:shift_id(*)')
+        .select(`
+          id,
+          check_in_time,
+          check_out_time,
+          total_hours,
+          shift_id
+        `)
         .eq('user_id', targetUserId);
         
       if (error || !timeLogs || timeLogs.length === 0) {
@@ -140,11 +146,20 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
       }
       
       // Process actual time logs
-      const processedShifts = timeLogs.map(log => ({
-        date: format(new Date(log.check_in_time), "yyyy-MM-dd"),
-        title: log.shifts?.title || "Shift Work",
-        hours: log.total_hours || 4,
-        location: log.shifts?.location || "Unknown Location"
+      const processedShifts = await Promise.all(timeLogs.map(async (log) => {
+        // Get shift details
+        const { data: shiftData } = await supabase
+          .from('shifts')
+          .select('title, location')
+          .eq('id', log.shift_id)
+          .single();
+          
+        return {
+          date: format(new Date(log.check_in_time), "yyyy-MM-dd"),
+          title: shiftData?.title || "Shift Work",
+          hours: log.total_hours || 4,
+          location: shiftData?.location || "Unknown Location"
+        };
       }));
       
       return {
@@ -192,7 +207,9 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
       const { shifts, timePeriodLabel } = await fetchCompletedShifts(userId);
       
       // Calculate total hours
-      const totalHours = shifts.reduce((sum, shift) => sum + shift.hours, 0);
+      const totalHours = shifts.reduce((shift, acc) => {
+        return acc + (shift.hours || 0);
+      }, 0);
       
       // Generate a unique reference number
       const referenceNumber = `CERT-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`.toUpperCase();
