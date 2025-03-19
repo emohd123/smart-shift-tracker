@@ -25,6 +25,8 @@ export default function TrackingControls({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
           <Button 
             onClick={onStartTracking} 
@@ -41,7 +43,7 @@ export default function TrackingControls({
             ) : (
               <>
                 <PlayCircle size={18} className="mr-2 group-hover:scale-110 transition-transform" />
-                Start Tracking
+                Start Tracking Time
               </>
             )}
           </Button>
@@ -56,6 +58,8 @@ export default function TrackingControls({
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
         >
           <Button 
             onClick={onStopTracking} 

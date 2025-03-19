@@ -6,10 +6,10 @@ import TimeDisplay from "./TimeDisplay";
 import LocationVerification from "./LocationVerification";
 import LocationError from "./LocationError";
 import TrackingControls from "./TrackingControls";
-import { AlertCircle, X, Clock } from "lucide-react";
+import { AlertCircle, X, Clock, MapPin } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 type TimeTrackerCardProps = {
   isTracking: boolean;
@@ -49,15 +49,16 @@ const TimeTrackerCard = ({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
+      className="h-full"
     >
       <Card className={cn(
-        "border transition-all duration-500",
+        "border transition-all duration-500 h-full",
         isTracking 
           ? "border-primary/30 shadow-lg bg-gradient-to-br from-card to-primary/5" 
-          : "border-border/50 shadow-sm"
+          : "border-border/50 shadow-sm hover:border-primary/20 hover:shadow-md"
       )}>
         <CardHeader className={cn(
-          "pb-3",
+          "pb-3 relative",
           isTracking && "bg-primary/5"
         )}>
           <div className="flex items-center justify-between">
@@ -81,20 +82,40 @@ const TimeTrackerCard = ({
               </motion.div>
             )}
           </div>
-          <CardDescription>
-            {isTracking 
-              ? `Started at ${startTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-              : "Track your work hours and earnings"
-            }
+          <CardDescription className="flex items-center">
+            {isTracking ? (
+              <>
+                <MapPin className="h-3 w-3 mr-1 text-muted-foreground" />
+                <span>Started at {startTime?.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              </>
+            ) : (
+              "Track your work hours and earnings in real-time"
+            )}
           </CardDescription>
+          
+          {isTracking && (
+            <div className="absolute right-0 top-0 h-12 w-12 overflow-hidden">
+              <div className="bg-primary/10 rotate-45 transform origin-bottom-right h-24 w-24"></div>
+            </div>
+          )}
         </CardHeader>
         
         <CardContent className="space-y-6">
-          <TimeDisplay
-            elapsedTime={elapsedTime}
-            earnings={earnings}
-            isTracking={isTracking}
-          />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={isTracking ? "tracking" : "not-tracking"}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
+            >
+              <TimeDisplay
+                elapsedTime={elapsedTime}
+                earnings={earnings}
+                isTracking={isTracking}
+              />
+            </motion.div>
+          </AnimatePresence>
           
           <LocationVerification
             locationVerified={locationVerified}

@@ -121,6 +121,28 @@
   .skeleton-pulse {
     @apply bg-gradient-to-r from-transparent via-white/20 to-transparent bg-[length:200%_100%] animate-shimmer;
   }
+  
+  .animated-background {
+    background: linear-gradient(
+      -45deg,
+      var(--tw-gradient-from) 0%,
+      var(--tw-gradient-to) 100%
+    );
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+  }
+  
+  .card-hover {
+    @apply transition-all duration-300 hover:shadow-md hover:border-primary/30;
+  }
+  
+  .interactive-icon {
+    @apply transition-all duration-200 hover:scale-110 active:scale-90;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent;
+  }
 }
 
 @keyframes pageTransition {
@@ -131,6 +153,24 @@
   100% {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes gradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
   }
 }
 
@@ -164,4 +204,24 @@
 /* Smooth transitions for theme changes */
 body {
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Improve form controls */
+input, select, textarea {
+  @apply focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200;
+}
+
+/* Better button feedback */
+button {
+  @apply transition-all duration-200;
+}
+
+/* Add depth to cards */
+.card {
+  @apply transition-shadow duration-300 hover:shadow-md;
+}
+
+/* Better focus styles for accessibility */
+*:focus-visible {
+  @apply outline-none ring-2 ring-primary/70 ring-offset-1;
 }

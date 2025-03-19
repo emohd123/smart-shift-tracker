@@ -28,10 +28,13 @@ const VerifyCertificatePage = lazy(() => import("@/pages/VerifyCertificatePage")
 
 // Loading fallback for lazy-loaded components
 const PageLoader = () => (
-  <div className="h-screen flex items-center justify-center">
+  <div className="h-screen flex items-center justify-center bg-background">
     <div className="flex flex-col items-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      <span className="mt-4 text-muted-foreground">Loading...</span>
+      <div className="relative">
+        <div className="h-16 w-16 rounded-full border-t-2 border-b-2 border-primary animate-spin"></div>
+        <Loader2 className="h-8 w-8 text-primary absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+      </div>
+      <span className="mt-6 text-muted-foreground">Loading your experience...</span>
     </div>
   </div>
 );
@@ -106,6 +109,20 @@ function App() {
           </Suspense>
         </motion.div>
       </AnimatePresence>
+      
+      <Toaster 
+        position="top-right"
+        toastOptions={{
+          duration: 5000,
+          className: "toast-enhanced",
+          style: {
+            background: "var(--background)",
+            color: "var(--foreground)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius)",
+          },
+        }}
+      />
     </div>
   );
 }
