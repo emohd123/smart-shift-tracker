@@ -54,8 +54,8 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
   const [sharing, setSharing] = useState(false);
   const [certificateData, setCertificateData] = useState<CertificateData | undefined>();
   
-  const fetchUserData = useCallback(async () => {
-    if (!userId) {
+  const fetchUserData = useCallback(async (targetUserId: string) => {
+    if (!targetUserId) {
       toast.error("User not authenticated");
       return null;
     }
@@ -65,7 +65,7 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('full_name')
-        .eq('id', userId)
+        .eq('id', targetUserId)
         .single();
         
       if (profileError) {
@@ -78,39 +78,109 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
       console.error("Error in fetchUserData:", error);
       return null;
     }
-  }, [userId]);
+  }, []);
   
-  const fetchCompletedShifts = useCallback(async () => {
+  const fetchPromoters = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name')
+        .eq('role', 'promoter');
+        
+      if (error) {
+        console.error("Error fetching promoters:", error);
+        // Return mock data for demo
+        return [
+          { id: "mock-1", full_name: "John Doe" },
+          { id: "mock-2", full_name: "Jane Smith" },
+          { id: "mock-3", full_name: "Robert Johnson" }
+        ];
+      }
+      
+      return data || [];
+    } catch (error) {
+      console.error("Error fetching promoters:", error);
+      return [];
+    }
+  }, []);
+  
+  const fetchCompletedShifts = useCallback(async (targetUserId: string) => {
     // In a real implementation, we would query the time_logs and shifts tables
     // to get the actual completed shifts for the user within the time period
     
-    // For demo purposes, we'll use mock data
-    let timePeriodLabel;
-    switch (timePeriod) {
-      case "3months": timePeriodLabel = "Last 3 Months"; break;
-      case "6months": timePeriodLabel = "Last 6 Months"; break;
-      case "1year": timePeriodLabel = "Last Year"; break;
-      case "all": timePeriodLabel = "All Time"; break;
-    }
-    
-    // Simulate different numbers of shifts based on time period
-    const filteredShifts = timePeriod === "3months" 
-      ? MOCK_SHIFTS.slice(0, 2) 
-      : timePeriod === "6months" 
-        ? MOCK_SHIFTS.slice(0, 3)
-        : MOCK_SHIFTS;
+    try {
+      // Attempt to fetch real time logs for the user
+      const { data: timeLogs, error } = await supabase
+        .from('time_logs')
+        .select('*, shifts:shift_id(*)')
+        .eq('user_id', targetUserId);
         
-    return {
-      shifts: filteredShifts,
-      timePeriodLabel
-    };
+      if (error || !timeLogs || timeLogs.length === 0) {
+        console.log("Using mock data for shifts");
+        // If no data or error, use mock data
+        let timePeriodLabel;
+        switch (timePeriod) {
+          case "3months": timePeriodLabel = "Last 3 Months"; break;
+          case "6months": timePeriodLabel = "Last 6 Months"; break;
+          case "1year": timePeriodLabel = "Last Year"; break;
+          case "all": timePeriodLabel = "All Time"; break;
+        }
+        
+        // Simulate different numbers of shifts based on time period
+        const filteredShifts = timePeriod === "3months" 
+          ? MOCK_SHIFTS.slice(0, 2) 
+          : timePeriod === "6months" 
+            ? MOCK_SHIFTS.slice(0, 3)
+            : MOCK_SHIFTS;
+            
+        return {
+          shifts: filteredShifts,
+          timePeriodLabel
+        };
+      }
+      
+      // Process actual time logs
+      const processedShifts = timeLogs.map(log => ({
+        date: format(new Date(log.check_in_time), "yyyy-MM-dd"),
+        title: log.shifts?.title || "Shift Work",
+        hours: log.total_hours || 4,
+        location: log.shifts?.location || "Unknown Location"
+      }));
+      
+      return {
+        shifts: processedShifts,
+        timePeriodLabel: getTimePeriodLabel(timePeriod)
+      };
+    } catch (error) {
+      console.error("Error fetching shifts:", error);
+      
+      // Fallback to mock data
+      return {
+        shifts: MOCK_SHIFTS,
+        timePeriodLabel: getTimePeriodLabel(timePeriod)
+      };
+    }
   }, [timePeriod]);
   
+  const getTimePeriodLabel = (period: TimePeriod) => {
+    switch (period) {
+      case "3months": return "Last 3 Months";
+      case "6months": return "Last 6 Months";
+      case "1year": return "Last Year";
+      case "all": return "All Time";
+    }
+  };
+  
   const generateCertificate = useCallback(async () => {
+    if (!userId) {
+      toast.error("No user selected");
+      return;
+    }
+    
     setLoading(true);
     try {
       // Fetch user data
-      const userData = await fetchUserData();
+      const userData = await fetchUserData(userId);
       
       if (!userData) {
         toast.error("Could not retrieve user data");
@@ -119,7 +189,7 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
       }
       
       // Fetch completed shifts
-      const { shifts, timePeriodLabel } = await fetchCompletedShifts();
+      const { shifts, timePeriodLabel } = await fetchCompletedShifts(userId);
       
       // Calculate total hours
       const totalHours = shifts.reduce((sum, shift) => sum + shift.hours, 0);
@@ -260,6 +330,7 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
     generateCertificate,
     handleDownload,
     handleShare,
-    handleEmail
+    handleEmail,
+    fetchPromoters
   };
 }

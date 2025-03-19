@@ -1,3 +1,4 @@
+
 import { lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
@@ -22,6 +23,8 @@ const AccountSettings = lazy(() => import("@/pages/AccountSettings"));
 const ForgotPassword = lazy(() => import("@/pages/ForgotPassword"));
 const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const CreateShift = lazy(() => import("@/pages/CreateShift"));
+const Certificates = lazy(() => import("@/pages/Certificates"));
+const VerifyCertificatePage = lazy(() => import("@/pages/VerifyCertificatePage"));
 
 // Loading fallback for lazy-loaded components
 const PageLoader = () => (
@@ -81,7 +84,8 @@ function App() {
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/create-shift" element={<CreateShift />} />
+              
+              {/* Protected routes that require authentication */}
               <Route element={<ProtectedRoute />}>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/shifts" element={<Shifts />} />
@@ -89,7 +93,14 @@ function App() {
                 <Route path="/time-tracking" element={<TimeTracking />} />
                 <Route path="/time-history" element={<TimeHistory />} />
                 <Route path="/account-settings" element={<AccountSettings />} />
+                <Route path="/certificates" element={<Certificates />} />
+                <Route path="/create-shift" element={<CreateShift />} />
               </Route>
+              
+              {/* Public routes for certificate verification */}
+              <Route path="/verify-certificate/:referenceNumber" element={<VerifyCertificatePage />} />
+              
+              {/* Catch-all route for 404 errors */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
