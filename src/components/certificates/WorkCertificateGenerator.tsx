@@ -1,20 +1,19 @@
 
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Download, Share2, MailIcon, QrCode, Clock, Users, Shield, CheckCircle } from "lucide-react";
+import { CheckCircle, Shield } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Collapse } from "@/components/ui/collapse";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCertificateGeneration } from "./hooks/useCertificateGeneration";
 import CertificatePreview from "./CertificatePreview";
-import { Collapse } from "@/components/ui/collapse";
 import AdminCertificateSelector from "./AdminCertificateSelector";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-
-export type TimePeriod = "3months" | "6months" | "1year" | "all";
+import TimePeriodSelector from "./generator/TimePeriodSelector";
+import GenerateButton from "./generator/GenerateButton";
+import CertificateActions from "./generator/CertificateActions";
+import { TimePeriod } from "./types/certificate";
 
 export default function WorkCertificateGenerator() {
   const { user, isAuthenticated } = useAuth();
@@ -86,15 +85,6 @@ export default function WorkCertificateGenerator() {
     }
   };
 
-  const handleDownloadWithAuth = async () => {
-    if (!isAuthenticated) {
-      toast.error("Please login to download certificates");
-      return;
-    }
-    
-    await handleDownload();
-  };
-
   return (
     <Card className="w-full max-w-4xl mx-auto border border-primary/20">
       <CardHeader className="bg-secondary/30">
@@ -135,45 +125,13 @@ export default function WorkCertificateGenerator() {
           />
         )}
         
-        <div className="space-y-2">
-          <Label htmlFor="timePeriod" className="text-sm font-medium">Select Time Period for Certificate</Label>
-          <Select 
-            value={timePeriod} 
-            onValueChange={(value) => setTimePeriod(value as TimePeriod)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select time period" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="3months">Last 3 Months</SelectItem>
-              <SelectItem value="6months">Last 6 Months</SelectItem>
-              <SelectItem value="1year">Last 1 Year</SelectItem>
-              <SelectItem value="all">All Time</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground mt-1">
-            The selected time period will determine which work history is included in your certificate.
-          </p>
-        </div>
+        <TimePeriodSelector timePeriod={timePeriod} setTimePeriod={setTimePeriod} />
         
-        <Button 
-          className="w-full relative overflow-hidden group"
+        <GenerateButton 
           onClick={handleGenerate}
-          disabled={loading || !user || (user.role === 'admin' && selectedUserId === "")}
-        >
-          <span className="absolute inset-0 w-0 bg-white/20 transition-all duration-300 group-hover:w-full"></span>
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating Certificate...
-            </>
-          ) : (
-            <>
-              <Clock className="mr-2 h-4 w-4" />
-              Generate Certificate
-            </>
-          )}
-        </Button>
+          loading={loading}
+          disabled={!user || (user.role === 'admin' && selectedUserId === "")}
+        />
         
         <Collapse open={showPreview && !!certificateData}>
           <div className="pt-4">
@@ -184,46 +142,15 @@ export default function WorkCertificateGenerator() {
       
       {showPreview && certificateData && (
         <CardFooter className="flex flex-wrap gap-2 justify-center bg-secondary/20 p-6 rounded-b-lg">
-          <Button 
-            variant="default" 
-            onClick={handleDownloadWithAuth}
-            disabled={downloading || !isAuthenticated}
-            className="relative overflow-hidden group"
-          >
-            <span className="absolute inset-0 w-0 bg-white/20 transition-all duration-300 group-hover:w-full"></span>
-            {downloading ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="mr-2 h-4 w-4" />
-            )}
-            Download PDF
-          </Button>
-          
-          <Button 
-            variant="secondary" 
-            onClick={handleShare}
-            disabled={sharing || !isAuthenticated}
-          >
-            <Share2 className="mr-2 h-4 w-4" />
-            Share
-          </Button>
-          
-          <Button 
-            variant="outline" 
-            onClick={() => isAuthenticated ? handleEmail() : toast.error("Please login to use email feature")}
-            disabled={!isAuthenticated}
-          >
-            <MailIcon className="mr-2 h-4 w-4" />
-            Email
-          </Button>
-          
-          <Button 
-            variant="ghost"
-            onClick={() => window.open(`/verify-certificate/${certificateData.referenceNumber}`, '_blank')}
-          >
-            <QrCode className="mr-2 h-4 w-4" />
-            View QR Code
-          </Button>
+          <CertificateActions
+            certificateData={certificateData}
+            downloading={downloading}
+            sharing={sharing}
+            isAuthenticated={isAuthenticated}
+            handleDownload={handleDownload}
+            handleShare={handleShare}
+            handleEmail={handleEmail}
+          />
         </CardFooter>
       )}
     </Card>

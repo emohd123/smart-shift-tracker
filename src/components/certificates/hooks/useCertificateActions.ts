@@ -1,14 +1,11 @@
 
 import { useState, useCallback } from "react";
 import { toast } from "sonner";
-import { CertificateData } from "./useCertificateGeneration";
+import { CertificateData } from "../types/certificate";
 import { generateCertificatePDF } from "../utils/pdfGenerator";
 import { useCertificateStorage } from "./useCertificateStorage";
 import { useAuth } from "@/context/AuthContext";
 
-/**
- * Hook for certificate actions like download, share, email
- */
 export const useCertificateActions = (userId: string) => {
   const [downloading, setDownloading] = useState(false);
   const [sharing, setSharing] = useState(false);

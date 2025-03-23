@@ -2,23 +2,10 @@
 import { useState, useCallback } from "react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import { TimePeriod } from "../WorkCertificateGenerator";
+import { TimePeriod, CertificateData } from "../types/certificate";
 import { useUserData, useShiftData } from "./useShiftData";
 import { useCertificateActions } from "./useCertificateActions";
 import { useCertificateStorage } from "./useCertificateStorage";
-
-export interface CertificateData {
-  referenceNumber: string;
-  promoterName: string;
-  totalHours: number;
-  positionTitle: string;
-  promotionNames: string[];
-  skillsGained: string[];
-  shifts: { date: string; title: string; hours: number; location?: string }[];
-  issueDate: string;
-  managerContact: string;
-  performanceRating: number;
-}
 
 export function useCertificateGeneration(userId: string, timePeriod: TimePeriod) {
   const [loading, setLoading] = useState(false);
