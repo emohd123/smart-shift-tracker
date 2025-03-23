@@ -52,13 +52,14 @@ const TimeHistory = () => {
               </div>
             ) : filteredLogs.length > 0 ? (
               <div className="space-y-4">
-                {filteredLogs.map((log) => (
+                {filteredLogs.map((log, index) => (
                   <TimeLogItem 
                     key={log.id} 
                     log={log}
                     formatTime={formatTime}
                     formatDate={formatDate}
                     formatDuration={formatDuration}
+                    index={index}
                   />
                 ))}
               </div>
