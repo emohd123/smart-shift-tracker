@@ -6,21 +6,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
-import { Loader2, Download, Share2, MailIcon, QrCode, Clock, Users } from "lucide-react";
+import { Loader2, Download, Share2, MailIcon, QrCode, Clock, Users, Shield, CheckCircle } from "lucide-react";
 import { useCertificateGeneration } from "./hooks/useCertificateGeneration";
 import CertificatePreview from "./CertificatePreview";
 import { Collapse } from "@/components/ui/collapse";
 import AdminCertificateSelector from "./AdminCertificateSelector";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 
 export type TimePeriod = "3months" | "6months" | "1year" | "all";
 
 export default function WorkCertificateGenerator() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("6months");
   const [showPreview, setShowPreview] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [promoters, setPromoters] = useState<any[]>([]);
   const [loadingPromoters, setLoadingPromoters] = useState(false);
+  const [generateButtonClicked, setGenerateButtonClicked] = useState(false);
   
   const {
     generateCertificate,
@@ -62,6 +65,13 @@ export default function WorkCertificateGenerator() {
   }, [user, fetchPromoters]);
   
   const handleGenerate = async () => {
+    setGenerateButtonClicked(true);
+    
+    if (!isAuthenticated) {
+      toast.error("Please login to generate certificates");
+      return;
+    }
+    
     setShowPreview(false);
     
     try {
@@ -71,19 +81,50 @@ export default function WorkCertificateGenerator() {
     } catch (error) {
       console.error("Failed to generate certificate:", error);
       toast.error("Failed to generate certificate. Please try again.");
+    } finally {
+      setGenerateButtonClicked(false);
     }
   };
 
+  const handleDownloadWithAuth = async () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to download certificates");
+      return;
+    }
+    
+    await handleDownload();
+  };
+
   return (
-    <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">Work Certificate Generator</CardTitle>
-        <CardDescription>
-          Generate a professional certificate summarizing your completed work periods
-        </CardDescription>
+    <Card className="w-full max-w-4xl mx-auto border border-primary/20">
+      <CardHeader className="bg-secondary/30">
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="text-2xl font-bold flex items-center gap-2">
+              <Shield className="h-5 w-5 text-primary" />
+              Work Certificate Generator
+            </CardTitle>
+            <CardDescription className="mt-1">
+              Generate a professional certificate validated with a unique QR code and digital signature
+            </CardDescription>
+          </div>
+          <Badge variant="outline" className="px-3 py-1 border-primary/30 bg-primary/5">
+            <CheckCircle className="h-3.5 w-3.5 mr-1 text-primary" />
+            Official Document
+          </Badge>
+        </div>
       </CardHeader>
       
-      <CardContent className="space-y-6">
+      <CardContent className="space-y-6 pt-6">
+        {!isAuthenticated && generateButtonClicked && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertTitle>Authentication Required</AlertTitle>
+            <AlertDescription>
+              You need to be logged in to generate and download certificates.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         {/* Admin can select a user */}
         {user?.role === 'admin' && (
           <AdminCertificateSelector
@@ -95,7 +136,7 @@ export default function WorkCertificateGenerator() {
         )}
         
         <div className="space-y-2">
-          <Label htmlFor="timePeriod">Select Time Period</Label>
+          <Label htmlFor="timePeriod" className="text-sm font-medium">Select Time Period for Certificate</Label>
           <Select 
             value={timePeriod} 
             onValueChange={(value) => setTimePeriod(value as TimePeriod)}
@@ -110,13 +151,17 @@ export default function WorkCertificateGenerator() {
               <SelectItem value="all">All Time</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-xs text-muted-foreground mt-1">
+            The selected time period will determine which work history is included in your certificate.
+          </p>
         </div>
         
         <Button 
-          className="w-full" 
+          className="w-full relative overflow-hidden group"
           onClick={handleGenerate}
           disabled={loading || !user || (user.role === 'admin' && selectedUserId === "")}
         >
+          <span className="absolute inset-0 w-0 bg-white/20 transition-all duration-300 group-hover:w-full"></span>
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -138,12 +183,14 @@ export default function WorkCertificateGenerator() {
       </CardContent>
       
       {showPreview && certificateData && (
-        <CardFooter className="flex flex-wrap gap-2 justify-center">
+        <CardFooter className="flex flex-wrap gap-2 justify-center bg-secondary/20 p-6 rounded-b-lg">
           <Button 
             variant="default" 
-            onClick={handleDownload}
-            disabled={downloading}
+            onClick={handleDownloadWithAuth}
+            disabled={downloading || !isAuthenticated}
+            className="relative overflow-hidden group"
           >
+            <span className="absolute inset-0 w-0 bg-white/20 transition-all duration-300 group-hover:w-full"></span>
             {downloading ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
@@ -155,7 +202,7 @@ export default function WorkCertificateGenerator() {
           <Button 
             variant="secondary" 
             onClick={handleShare}
-            disabled={sharing}
+            disabled={sharing || !isAuthenticated}
           >
             <Share2 className="mr-2 h-4 w-4" />
             Share
@@ -163,7 +210,8 @@ export default function WorkCertificateGenerator() {
           
           <Button 
             variant="outline" 
-            onClick={handleEmail}
+            onClick={() => isAuthenticated ? handleEmail() : toast.error("Please login to use email feature")}
+            disabled={!isAuthenticated}
           >
             <MailIcon className="mr-2 h-4 w-4" />
             Email
