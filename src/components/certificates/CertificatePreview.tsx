@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { CertificateData } from "./hooks/useCertificateGeneration";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Award, Calendar, Briefcase, Trophy, User } from "lucide-react";
+import { Award, Calendar, Briefcase, Trophy, User, CheckCircle, MapPin, Clock } from "lucide-react";
 
 interface CertificatePreviewProps {
   certificateData?: CertificateData;
@@ -29,9 +29,15 @@ export default function CertificatePreview({ certificateData }: CertificatePrevi
             </div>
             
             <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Certificate of Work Completion
+              Official Certificate of Work Completion
             </h1>
-            <p className="text-muted-foreground">Reference: {certificateData.referenceNumber}</p>
+            <div className="flex items-center justify-center gap-2 text-sm">
+              <span className="text-muted-foreground">Reference: {certificateData.referenceNumber}</span>
+              <Badge variant="outline" className="flex items-center gap-1">
+                <CheckCircle className="h-3 w-3 text-green-500" />
+                Verified
+              </Badge>
+            </div>
           </div>
           
           <div className="border-t border-b py-6 my-6">
@@ -42,7 +48,7 @@ export default function CertificatePreview({ certificateData }: CertificatePrevi
             </h2>
             <p className="text-center text-muted-foreground">has successfully completed</p>
             <p className="text-4xl font-bold text-center my-3 text-primary flex items-center justify-center gap-2">
-              <Calendar className="h-6 w-6" />
+              <Clock className="h-6 w-6" />
               {certificateData.totalHours} Hours
             </p>
             <p className="text-center text-muted-foreground">of work as a</p>
@@ -51,11 +57,11 @@ export default function CertificatePreview({ certificateData }: CertificatePrevi
               {certificateData.positionTitle}
             </p>
           </div>
-          
+
           <div className="space-y-3">
             <h3 className="font-semibold flex items-center gap-2">
               <Trophy className="h-4 w-4 text-primary" />
-              Promotion Activities:
+              Professional Experience:
             </h3>
             <div className="flex flex-wrap gap-2">
               {certificateData.promotionNames.map((name, index) => (
@@ -69,7 +75,7 @@ export default function CertificatePreview({ certificateData }: CertificatePrevi
           <div className="space-y-3">
             <h3 className="font-semibold flex items-center gap-2">
               <Award className="h-4 w-4 text-primary" />
-              Skills Gained:
+              Professional Skills Demonstrated:
             </h3>
             <div className="flex flex-wrap gap-2">
               {certificateData.skillsGained.map((skill, index) => (
@@ -90,14 +96,15 @@ export default function CertificatePreview({ certificateData }: CertificatePrevi
           <div className="space-y-3">
             <h3 className="font-semibold flex items-center gap-2">
               <Calendar className="h-4 w-4 text-primary" />
-              Shift Summary:
+              Work Record Summary:
             </h3>
             <div className="text-sm border rounded-lg overflow-hidden">
               <table className="min-w-full divide-y">
                 <thead className="bg-secondary">
                   <tr>
                     <th className="px-4 py-2 text-left">Date</th>
-                    <th className="px-4 py-2 text-left">Title</th>
+                    <th className="px-4 py-2 text-left">Assignment</th>
+                    <th className="px-4 py-2 text-left">Location</th>
                     <th className="px-4 py-2 text-left">Hours</th>
                   </tr>
                 </thead>
@@ -106,6 +113,7 @@ export default function CertificatePreview({ certificateData }: CertificatePrevi
                     <tr key={index} className={index % 2 === 0 ? 'bg-secondary/30' : ''}>
                       <td className="px-4 py-2">{shift.date}</td>
                       <td className="px-4 py-2">{shift.title}</td>
+                      <td className="px-4 py-2">{shift.location || "Various Locations"}</td>
                       <td className="px-4 py-2">{shift.hours}</td>
                     </tr>
                   ))}
@@ -125,21 +133,44 @@ export default function CertificatePreview({ certificateData }: CertificatePrevi
             </div>
           </div>
           
-          <div className="mt-8 border-t pt-6">
-            <p className="text-center text-sm text-muted-foreground">
-              This certificate is issued by SmartShift and certifies that the promoter has completed the work as stated.
-            </p>
-            <div className="flex justify-center mt-2">
-              <div className="flex items-center text-primary">
-                <span className="mr-2">Performance Rating:</span>
-                {Array(certificateData.performanceRating).fill('★').map((star, i) => (
-                  <span key={i} className="text-primary text-lg">★</span>
-                ))}
-                {Array(5 - certificateData.performanceRating).fill('★').map((star, i) => (
-                  <span key={i} className="text-muted text-lg">★</span>
-                ))}
+          <div className="mt-6 p-4 bg-secondary/20 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Certificate Verification</p>
+                <p className="text-sm text-muted-foreground">
+                  This certificate can be verified online at:
+                </p>
+                <p className="text-sm font-medium">
+                  verify-certificate.smartshift.com/{certificateData.referenceNumber}
+                </p>
+              </div>
+              <div className="border border-primary/30 rounded p-2 w-24 h-24 flex items-center justify-center bg-white">
+                <span className="text-xs text-center text-muted-foreground">QR Verification Code</span>
               </div>
             </div>
+          </div>
+          
+          <div className="mt-8 border-t pt-6">
+            <div className="flex justify-between">
+              <div>
+                <div className="flex items-center text-primary">
+                  <span className="mr-2">Performance Rating:</span>
+                  {Array(certificateData.performanceRating).fill('★').map((star, i) => (
+                    <span key={i} className="text-primary text-lg">★</span>
+                  ))}
+                  {Array(5 - certificateData.performanceRating).fill('★').map((star, i) => (
+                    <span key={i} className="text-muted text-lg">★</span>
+                  ))}
+                </div>
+              </div>
+              <div className="w-32 border-b border-black mt-6">
+                <p className="text-center text-xs mt-2">Authorized Signature</p>
+              </div>
+            </div>
+            <p className="text-center text-sm text-muted-foreground mt-4">
+              This official certificate is issued by SmartShift and validates that the individual has completed the work assignments 
+              as stated. This document serves as proof of professional experience and can be presented to potential employers.
+            </p>
           </div>
         </CardContent>
       </Card>

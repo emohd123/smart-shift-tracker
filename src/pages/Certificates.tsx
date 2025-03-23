@@ -5,19 +5,19 @@ import AppLayout from "@/components/layout/AppLayout";
 import WorkCertificateGenerator from "@/components/certificates/WorkCertificateGenerator";
 import MyCertificates from "@/components/certificates/MyCertificates";
 import { useAuth } from "@/context/AuthContext";
-import { Award, FileText } from "lucide-react";
+import { Award, FileText, Briefcase } from "lucide-react";
 
 export default function Certificates() {
   const [activeTab, setActiveTab] = useState("generator");
   const { user } = useAuth();
   
   return (
-    <AppLayout title="Certificates">
+    <AppLayout title="Professional Certificates">
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Work Certificates</h1>
+          <h1 className="text-3xl font-bold mb-2">Professional Work Certificates</h1>
           <p className="text-muted-foreground">
-            Generate and manage your work performance certificates
+            Generate official certificates that validate your work experience and skills for potential employers
           </p>
         </div>
         

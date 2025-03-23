@@ -2,6 +2,7 @@
 import { CertificateData } from "../hooks/useCertificateGeneration";
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
+import QRCode from 'qrcode';
 
 // We need to add this to make TypeScript recognize the autotable plugin
 declare module 'jspdf' {
@@ -24,75 +25,88 @@ export const generateCertificatePDF = async (data: CertificateData): Promise<Blo
   doc.setFontSize(16);
   doc.text("SmartShift", 15, 20);
   doc.setFontSize(12);
-  doc.text("Work Certificate", 170, 20);
+  doc.text("Official Work Certificate", 170, 20);
   
   // Add title
   doc.setTextColor(0, 0, 0);
   doc.setFontSize(22);
-  doc.text("Certificate of Work Completion", 105, 40, { align: "center" });
+  doc.text("Official Certificate of Work Completion", 105, 40, { align: "center" });
   
-  // Add reference number
+  // Add reference and verification
   doc.setFontSize(10);
   doc.text(`Reference: ${data.referenceNumber}`, 105, 48, { align: "center" });
+  doc.setFontSize(8);
+  doc.text(`Verify at: verify-certificate.smartshift.com/${data.referenceNumber}`, 105, 53, { align: "center" });
   
   // Add main certificate content
   doc.setFontSize(12);
-  doc.text("This certifies that", 105, 60, { align: "center" });
+  doc.text("This certifies that", 105, 65, { align: "center" });
   
   // Promoter name
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text(data.promoterName, 105, 70, { align: "center" });
+  doc.text(data.promoterName, 105, 75, { align: "center" });
   
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
-  doc.text("has successfully completed", 105, 80, { align: "center" });
+  doc.text("has successfully completed", 105, 85, { align: "center" });
   
   // Total hours
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text(`${data.totalHours} Hours`, 105, 90, { align: "center" });
+  doc.text(`${data.totalHours} Hours`, 105, 95, { align: "center" });
   
   doc.setFont("helvetica", "normal");
   doc.setFontSize(12);
-  doc.text("of work as a", 105, 100, { align: "center" });
+  doc.text("of work as a", 105, 105, { align: "center" });
   
   // Position title
   doc.setFontSize(16);
   doc.setFont("helvetica", "bold");
-  doc.text(data.positionTitle, 105, 110, { align: "center" });
+  doc.text(data.positionTitle, 105, 115, { align: "center" });
   doc.setFont("helvetica", "normal");
   
   // Horizontal line
   doc.setDrawColor(200, 200, 200);
-  doc.line(30, 120, 180, 120);
+  doc.line(30, 125, 180, 125);
+  
+  // Professional Experience section
+  doc.setFontSize(12);
+  doc.setFont("helvetica", "bold");
+  doc.text("Professional Experience:", 20, 135);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  
+  const experienceText = data.promotionNames.join(", ");
+  doc.text(experienceText, 20, 143);
   
   // Skills section
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("Skills Gained:", 20, 130);
+  doc.text("Professional Skills Demonstrated:", 20, 153);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(10);
   
   const skillsText = data.skillsGained.join(", ");
-  doc.text(skillsText, 20, 138);
+  doc.text(skillsText, 20, 161);
   
   // Shifts table
   doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
-  doc.text("Shift Summary:", 20, 150);
+  doc.text("Work Record Summary:", 20, 171);
   
   // Create table data
-  const tableColumn = ["Date", "Title", "Hours"];
+  const tableColumn = ["Date", "Assignment", "Location", "Hours"];
   const tableRows = data.shifts.map(shift => [
     shift.date,
     shift.title,
+    shift.location || "Various Locations",
     shift.hours.toString()
   ]);
   
   // Add table
   doc.autoTable({
-    startY: 155,
+    startY: 176,
     head: [tableColumn],
     body: tableRows,
     headStyles: {
@@ -113,32 +127,41 @@ export const generateCertificatePDF = async (data: CertificateData): Promise<Blo
   // Performance rating
   doc.text(`Performance Rating: ${'★'.repeat(data.performanceRating)}`, 20, finalY + 14);
   
-  // Signature line
-  doc.line(120, finalY + 20, 180, finalY + 20);
-  doc.setFontSize(10);
-  doc.text("Authorized Signature", 150, finalY + 25, { align: "center" });
+  // Generate QR Code
+  const verificationUrl = `https://verify-certificate.smartshift.com/${data.referenceNumber}`;
+  try {
+    const qrCodeDataUrl = await QRCode.toDataURL(verificationUrl, { width: 100 });
+    doc.addImage(qrCodeDataUrl, 'PNG', 150, finalY, 40, 40);
+  } catch (err) {
+    console.error("QR code generation failed:", err);
+    // Fall back to a placeholder
+    doc.rect(150, finalY, 40, 40);
+    doc.setFontSize(8);
+    doc.text("QR Code", 170, finalY + 20, { align: "center" });
+  }
   
   // Company attestation
   doc.setFontSize(9);
   doc.setTextColor(100, 100, 100);
   doc.text(
-    "This certificate verifies that the individual named above has completed the specified work hours and demonstrated proficiency in the skills listed.",
+    "This official certificate is issued by SmartShift and validates that the individual has completed the work assignments as stated.",
     105, 
-    finalY + 35, 
+    finalY + 50, 
     { align: "center", maxWidth: 150 }
   );
   
   // Add verification instructions
   doc.text(
-    "To verify this certificate, please contact the manager at the provided contact number or scan the QR code.",
+    "This document serves as proof of professional experience and can be presented to potential employers.",
     105, 
-    finalY + 45, 
+    finalY + 60, 
     { align: "center", maxWidth: 150 }
   );
   
-  // QR code placeholder (in a real implementation, generate and add a QR code)
-  doc.rect(85, finalY + 50, 40, 40);
-  doc.text("QR Code", 105, finalY + 75, { align: "center" });
+  // Signature line
+  doc.line(120, finalY + 35, 180, finalY + 35);
+  doc.setFontSize(10);
+  doc.text("Authorized Signature", 150, finalY + 40, { align: "center" });
   
   // Return as blob
   return doc.output('blob');
