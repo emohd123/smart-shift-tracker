@@ -2,7 +2,7 @@
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CertificateData } from "./useCertificateGeneration";
+import { CertificateData } from "../types/certificate";
 import { uploadFileToBucket } from "@/integrations/supabase/storageUtils";
 
 /**

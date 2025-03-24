@@ -2,7 +2,7 @@
 import { useCallback } from "react";
 import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { TimePeriod } from "../WorkCertificateGenerator";
+import { TimePeriod } from "../types/certificate";
 
 // Mock data for demo purposes
 const MOCK_SHIFTS = [

@@ -1,7 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CertificateData } from "./hooks/useCertificateGeneration";
+import { CertificateData } from "./types/certificate";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Award, Calendar, Briefcase, Trophy, User, CheckCircle, MapPin, Clock, Shield } from "lucide-react";
