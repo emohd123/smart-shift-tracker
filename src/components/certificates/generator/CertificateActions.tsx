@@ -34,7 +34,7 @@ export default function CertificateActions({
   };
 
   return (
-    <div className="flex flex-wrap gap-2 justify-center bg-secondary/20 p-6 rounded-b-lg">
+    <div className="flex flex-wrap gap-2 justify-center">
       <Button 
         variant="default" 
         onClick={handleDownloadWithAuth}

@@ -64,14 +64,19 @@ export default function WorkCertificateGenerator() {
   }, [user, fetchPromoters]);
   
   const handleGenerate = async () => {
-    setGenerateButtonClicked(true);
-    
     if (!isAuthenticated) {
       toast.error("Please login to generate certificates");
+      setGenerateButtonClicked(true);
+      return;
+    }
+    
+    if (!selectedUserId && user?.role === 'admin') {
+      toast.error("Please select a promoter");
       return;
     }
     
     setShowPreview(false);
+    setGenerateButtonClicked(true);
     
     try {
       await generateCertificate();
@@ -148,7 +153,7 @@ export default function WorkCertificateGenerator() {
             sharing={sharing}
             isAuthenticated={isAuthenticated}
             handleDownload={handleDownload}
-            handleShare={handleShare}
+            handleShare={handleEmail}
             handleEmail={handleEmail}
           />
         </CardFooter>

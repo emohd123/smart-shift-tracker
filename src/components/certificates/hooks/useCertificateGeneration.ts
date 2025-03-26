@@ -42,10 +42,22 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
       // Fetch completed shifts
       const { shifts, timePeriodLabel } = await fetchCompletedShifts(userId, timePeriod);
       
+      if (!shifts || shifts.length === 0) {
+        toast.error("No shifts found for the selected time period");
+        setLoading(false);
+        return;
+      }
+      
       // Calculate total hours
       const totalHours = shifts.reduce((acc, shift) => {
         return acc + (shift.hours || 0);
       }, 0);
+      
+      if (totalHours <= 0) {
+        toast.error("No hours recorded for the selected time period");
+        setLoading(false);
+        return;
+      }
       
       // Generate a unique reference number
       const referenceNumber = `CERT-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 7)}`.toUpperCase();
@@ -68,12 +80,19 @@ export function useCertificateGeneration(userId: string, timePeriod: TimePeriod)
       };
       
       // Save certificate in database
-      await saveCertificateRecord(userId, newCertificateData);
+      const saved = await saveCertificateRecord(userId, newCertificateData);
+      
+      if (!saved) {
+        toast.error("Failed to save certificate record");
+        setLoading(false);
+        return;
+      }
       
       setCertificateData(newCertificateData);
       return newCertificateData;
     } catch (error) {
       console.error("Error generating certificate:", error);
+      toast.error("An error occurred while generating the certificate");
       throw error;
     } finally {
       setLoading(false);

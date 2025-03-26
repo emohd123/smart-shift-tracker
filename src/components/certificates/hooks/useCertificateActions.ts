@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 export const useCertificateActions = (userId: string) => {
   const [downloading, setDownloading] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   
   const { uploadCertificatePDF } = useCertificateStorage();
   
@@ -48,7 +48,10 @@ export const useCertificateActions = (userId: string) => {
       // Upload to Supabase Storage if user is authenticated and has ID
       if (isAuthenticated && userId) {
         try {
-          await uploadCertificatePDF(userId, certificateData.referenceNumber, pdfBlob);
+          const fileUrl = await uploadCertificatePDF(userId, certificateData.referenceNumber, pdfBlob);
+          if (fileUrl) {
+            console.log("Certificate uploaded to storage:", fileUrl);
+          }
         } catch (uploadError) {
           console.error("Error uploading certificate to storage:", uploadError);
           // Continue with local download even if cloud storage fails

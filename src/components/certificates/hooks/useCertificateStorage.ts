@@ -14,6 +14,41 @@ export const useCertificateStorage = () => {
     certificateData: CertificateData
   ) => {
     try {
+      // First check if a record with this reference number already exists
+      const { data: existingCert, error: checkError } = await supabase
+        .from('certificates')
+        .select('id')
+        .eq('reference_number', certificateData.referenceNumber)
+        .single();
+        
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error("Error checking for existing certificate:", checkError);
+      }
+      
+      if (existingCert) {
+        console.log("Certificate already exists, updating record");
+        
+        // Update existing record
+        const { error: updateError } = await supabase
+          .from('certificates')
+          .update({
+            total_hours: certificateData.totalHours,
+            promotion_names: certificateData.promotionNames,
+            skills_gained: certificateData.skillsGained,
+            issue_date: new Date().toISOString(),
+            position_title: certificateData.positionTitle
+          })
+          .eq('reference_number', certificateData.referenceNumber);
+          
+        if (updateError) {
+          console.error("Error updating certificate:", updateError);
+          return false;
+        }
+        
+        return true;
+      }
+      
+      // Insert new record
       const { error } = await supabase
         .from('certificates')
         .insert({
@@ -21,13 +56,18 @@ export const useCertificateStorage = () => {
           reference_number: certificateData.referenceNumber,
           time_period: certificateData.issueDate,
           total_hours: certificateData.totalHours,
-          promotion_names: certificateData.promotionNames
+          promotion_names: certificateData.promotionNames,
+          skills_gained: certificateData.skillsGained,
+          position_title: certificateData.positionTitle,
+          performance_rating: certificateData.performanceRating,
+          manager_contact: certificateData.managerContact
         });
         
       if (error) {
         console.error("Error saving certificate:", error);
         return false;
       }
+      
       return true;
     } catch (error) {
       console.error("Error in saveCertificateRecord:", error);
