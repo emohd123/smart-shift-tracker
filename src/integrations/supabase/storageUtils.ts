@@ -15,6 +15,7 @@ export const createBucketIfNotExists = async (bucketName: string): Promise<{ suc
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
     
     if (bucketsError) {
+      console.error("Error checking buckets:", bucketsError);
       return {
         success: false,
         error: {
@@ -27,11 +28,13 @@ export const createBucketIfNotExists = async (bucketName: string): Promise<{ suc
     const bucketExists = buckets?.some(b => b.name === bucketName);
     
     if (!bucketExists) {
+      console.log(`Bucket ${bucketName} doesn't exist, creating...`);
       const { error } = await supabase.storage.createBucket(bucketName, {
         public: true,
       });
       
       if (error) {
+        console.error(`Error creating bucket ${bucketName}:`, error);
         return {
           success: false,
           error: {
@@ -40,11 +43,15 @@ export const createBucketIfNotExists = async (bucketName: string): Promise<{ suc
           }
         };
       }
+      console.log(`Bucket ${bucketName} created successfully`);
+    } else {
+      console.log(`Bucket ${bucketName} already exists`);
     }
     
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Unexpected error in createBucketIfNotExists for ${bucketName}:`, error);
     return {
       success: false,
       error: {
@@ -68,6 +75,7 @@ export const uploadFileToBucket = async (
     const { success, error: bucketError } = await createBucketIfNotExists(bucket);
     
     if (!success) {
+      console.error("Failed to ensure bucket exists:", bucketError);
       return { 
         url: null, 
         error: bucketError 
@@ -75,13 +83,16 @@ export const uploadFileToBucket = async (
     }
     
     // Upload the file
+    console.log(`Uploading file to ${bucket}/${path}...`);
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
         upsert: true,
+        cacheControl: '3600',
       });
 
     if (uploadError) {
+      console.error(`Error uploading file to ${bucket}/${path}:`, uploadError);
       return {
         url: null,
         error: {
@@ -96,9 +107,11 @@ export const uploadFileToBucket = async (
       .from(bucket)
       .getPublicUrl(path);
 
+    console.log(`File uploaded successfully, public URL:`, publicUrl);
     return { url: publicUrl };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Unexpected error uploading file to ${bucket}:`, error);
     return {
       url: null,
       error: {

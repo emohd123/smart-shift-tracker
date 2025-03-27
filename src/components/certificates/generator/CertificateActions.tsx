@@ -33,6 +33,22 @@ export default function CertificateActions({
     handleDownload();
   };
 
+  const handleShareWithAuth = () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to share certificates");
+      return;
+    }
+    handleShare();
+  };
+
+  const handleEmailWithAuth = () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to use email feature");
+      return;
+    }
+    handleEmail();
+  };
+
   return (
     <div className="flex flex-wrap gap-2 justify-center">
       <Button 
@@ -52,7 +68,7 @@ export default function CertificateActions({
       
       <Button 
         variant="secondary" 
-        onClick={handleShare}
+        onClick={handleShareWithAuth}
         disabled={sharing || !isAuthenticated}
       >
         <Share2 className="mr-2 h-4 w-4" />
@@ -61,7 +77,7 @@ export default function CertificateActions({
       
       <Button 
         variant="outline" 
-        onClick={() => isAuthenticated ? handleEmail() : toast.error("Please login to use email feature")}
+        onClick={handleEmailWithAuth}
         disabled={!isAuthenticated}
       >
         <MailIcon className="mr-2 h-4 w-4" />

@@ -19,10 +19,12 @@ export const useCertificateStorage = () => {
         .from('certificates')
         .select('id')
         .eq('reference_number', certificateData.referenceNumber)
-        .single();
+        .maybeSingle();
         
       if (checkError && checkError.code !== 'PGRST116') {
         console.error("Error checking for existing certificate:", checkError);
+        toast.error("Failed to check existing certificates");
+        return false;
       }
       
       if (existingCert) {
@@ -42,6 +44,7 @@ export const useCertificateStorage = () => {
           
         if (updateError) {
           console.error("Error updating certificate:", updateError);
+          toast.error("Failed to update certificate record");
           return false;
         }
         
@@ -65,12 +68,14 @@ export const useCertificateStorage = () => {
         
       if (error) {
         console.error("Error saving certificate:", error);
+        toast.error(`Failed to save certificate: ${error.message}`);
         return false;
       }
       
       return true;
     } catch (error) {
       console.error("Error in saveCertificateRecord:", error);
+      toast.error("An unexpected error occurred while saving certificate");
       return false;
     }
   }, []);
@@ -88,6 +93,7 @@ export const useCertificateStorage = () => {
       
       if (error) {
         console.error("Error uploading PDF to storage:", error);
+        toast.error("Failed to upload certificate PDF");
         return null;
       }
       
@@ -100,12 +106,14 @@ export const useCertificateStorage = () => {
           
         if (updateError) {
           console.error("Error updating certificate record:", updateError);
+          toast.error("Failed to update certificate with PDF URL");
         }
       }
       
       return fileUrl;
     } catch (error) {
       console.error("Error in uploadCertificatePDF:", error);
+      toast.error("An unexpected error occurred while uploading PDF");
       return null;
     }
   }, []);

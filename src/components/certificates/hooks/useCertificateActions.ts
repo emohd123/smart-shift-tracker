@@ -26,8 +26,13 @@ export const useCertificateActions = (userId: string) => {
     
     setDownloading(true);
     try {
+      console.log("Generating PDF for certificate:", certificateData.referenceNumber);
+      
       // Generate PDF blob
       const pdfBlob = await generateCertificatePDF(certificateData);
+      if (!pdfBlob) {
+        throw new Error("Failed to generate PDF");
+      }
       
       // Create a URL for the Blob
       const url = URL.createObjectURL(pdfBlob);
@@ -47,10 +52,13 @@ export const useCertificateActions = (userId: string) => {
       
       // Upload to Supabase Storage if user is authenticated and has ID
       if (isAuthenticated && userId) {
+        console.log("Uploading certificate to Supabase storage");
         try {
           const fileUrl = await uploadCertificatePDF(userId, certificateData.referenceNumber, pdfBlob);
           if (fileUrl) {
             console.log("Certificate uploaded to storage:", fileUrl);
+          } else {
+            console.warn("Failed to upload certificate to storage");
           }
         } catch (uploadError) {
           console.error("Error uploading certificate to storage:", uploadError);
