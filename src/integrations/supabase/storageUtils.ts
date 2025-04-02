@@ -200,3 +200,85 @@ export const deleteFileFromBucket = async (
     };
   }
 };
+
+/**
+ * Check if file exists in a bucket
+ */
+export const fileExistsInBucket = async (
+  bucket: string,
+  path: string
+): Promise<{ exists: boolean; error?: StorageError }> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list(path.split('/').slice(0, -1).join('/'), {
+        limit: 1,
+        offset: 0,
+        search: path.split('/').pop()
+      });
+    
+    if (error) {
+      console.error(`Error checking if file exists in ${bucket}/${path}:`, error);
+      return {
+        exists: false,
+        error: {
+          message: `Error checking if file exists: ${error.message}`,
+          code: 'FILE_CHECK_ERROR'
+        }
+      };
+    }
+    
+    return { 
+      exists: data && data.length > 0 && data.some(item => 
+        item.name === path.split('/').pop()
+      )
+    };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Unexpected error checking if file exists in ${bucket}:`, error);
+    return {
+      exists: false,
+      error: {
+        message: `Unexpected error checking if file exists: ${errorMessage}`,
+        code: 'FILE_EXISTS_UNEXPECTED_ERROR'
+      }
+    };
+  }
+};
+
+/**
+ * List all files in a bucket or folder
+ */
+export const listFilesInBucket = async (
+  bucket: string,
+  folder: string = ''
+): Promise<{ files: any[] | null; error?: StorageError }> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list(folder);
+      
+    if (error) {
+      console.error(`Error listing files in ${bucket}/${folder}:`, error);
+      return {
+        files: null,
+        error: {
+          message: `Error listing files: ${error.message}`,
+          code: 'FILE_LIST_ERROR'
+        }
+      };
+    }
+    
+    return { files: data };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Unexpected error listing files in ${bucket}:`, error);
+    return {
+      files: null,
+      error: {
+        message: `Unexpected error listing files: ${errorMessage}`,
+        code: 'FILE_LIST_UNEXPECTED_ERROR'
+      }
+    };
+  }
+};

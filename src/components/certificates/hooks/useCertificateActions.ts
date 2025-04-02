@@ -11,7 +11,7 @@ export const useCertificateActions = (userId: string) => {
   const [sharing, setSharing] = useState(false);
   const { isAuthenticated } = useAuth();
   
-  const { uploadCertificatePDF, downloadCertificatePDF } = useCertificateStorage();
+  const { uploadCertificatePDF, downloadCertificatePDF, checkCertificateExists } = useCertificateStorage();
   
   const handleDownload = useCallback(async (certificateData: CertificateData | undefined) => {
     if (!certificateData) {
@@ -24,41 +24,56 @@ export const useCertificateActions = (userId: string) => {
       return;
     }
     
+    if (!userId) {
+      toast.error("User ID is required to download certificates");
+      return;
+    }
+    
     setDownloading(true);
     try {
       console.log("Attempting to download certificate:", certificateData.referenceNumber);
       
-      // First try to download existing PDF from storage
-      const existingPdf = await downloadCertificatePDF(userId, certificateData.referenceNumber);
+      // First check if certificate exists in storage
+      const { exists, error: existsError } = await checkCertificateExists(userId, certificateData.referenceNumber);
       
-      if (existingPdf) {
-        console.log("Found existing PDF, using that");
-        // Create a URL for the Blob
-        const url = URL.createObjectURL(existingPdf);
-        
-        // Create a link element
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `Certificate-${certificateData.referenceNumber}.pdf`;
-        
-        // Click the link to trigger the download
-        document.body.appendChild(link);
-        link.click();
-        
-        // Clean up
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        toast.success("Certificate downloaded successfully");
-        setDownloading(false);
-        return;
+      if (existsError) {
+        console.warn("Warning when checking certificate existence:", existsError);
+        // Continue with generation even if check fails
       }
       
-      // If no existing PDF, generate one
-      console.log("No existing PDF found, generating new one");
-      const pdfBlob = await generateCertificatePDF(certificateData);
+      // Try to download existing PDF from storage if it exists
+      let pdfBlob = null;
+      if (exists) {
+        console.log("Certificate PDF exists in storage, downloading");
+        pdfBlob = await downloadCertificatePDF(userId, certificateData.referenceNumber);
+        
+        if (!pdfBlob) {
+          console.warn("Failed to download existing PDF, will generate new one");
+        }
+      }
+      
+      // Generate new PDF if one wasn't found or couldn't be downloaded
       if (!pdfBlob) {
-        throw new Error("Failed to generate PDF");
+        console.log("Generating new certificate PDF");
+        pdfBlob = await generateCertificatePDF(certificateData);
+        
+        if (!pdfBlob) {
+          throw new Error("Failed to generate PDF");
+        }
+        
+        // Upload newly generated PDF to storage
+        console.log("Uploading newly generated certificate to storage");
+        try {
+          const fileUrl = await uploadCertificatePDF(userId, certificateData.referenceNumber, pdfBlob);
+          if (fileUrl) {
+            console.log("Certificate uploaded to storage:", fileUrl);
+          } else {
+            console.warn("Failed to upload certificate to storage");
+          }
+        } catch (uploadError) {
+          console.error("Error uploading certificate to storage:", uploadError);
+          // Continue with local download even if cloud storage fails
+        }
       }
       
       // Create a URL for the Blob
@@ -77,22 +92,6 @@ export const useCertificateActions = (userId: string) => {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
-      // Upload to Supabase Storage if user is authenticated and has ID
-      if (isAuthenticated && userId) {
-        console.log("Uploading certificate to Supabase storage");
-        try {
-          const fileUrl = await uploadCertificatePDF(userId, certificateData.referenceNumber, pdfBlob);
-          if (fileUrl) {
-            console.log("Certificate uploaded to storage:", fileUrl);
-          } else {
-            console.warn("Failed to upload certificate to storage");
-          }
-        } catch (uploadError) {
-          console.error("Error uploading certificate to storage:", uploadError);
-          // Continue with local download even if cloud storage fails
-        }
-      }
-      
       toast.success("Certificate downloaded successfully");
     } catch (error) {
       console.error("Error downloading certificate:", error);
@@ -100,9 +99,14 @@ export const useCertificateActions = (userId: string) => {
     } finally {
       setDownloading(false);
     }
-  }, [userId, uploadCertificatePDF, downloadCertificatePDF, isAuthenticated]);
+  }, [userId, uploadCertificatePDF, downloadCertificatePDF, checkCertificateExists, isAuthenticated]);
   
-  const handleShare = useCallback(async () => {
+  const handleShare = useCallback(async (certificateData: CertificateData | undefined) => {
+    if (!certificateData) {
+      toast.error("No certificate data available");
+      return;
+    }
+    
     if (!isAuthenticated) {
       toast.error("You must be logged in to share certificates");
       return;
@@ -110,22 +114,25 @@ export const useCertificateActions = (userId: string) => {
     
     setSharing(true);
     try {
+      // Create the URL for the certificate verification page
+      const verifyUrl = `${window.location.origin}/verify-certificate/${certificateData.referenceNumber}`;
+      
       // Use Web Share API if available
       if (navigator.share) {
         await navigator.share({
-          title: 'Professional Work Certificate',
-          text: 'Check out my professional work certificate from SmartShift',
-          url: window.location.href,
+          title: `Work Certificate: ${certificateData.referenceNumber}`,
+          text: `Check out my professional work certificate from SmartShift`,
+          url: verifyUrl,
         });
         toast.success("Shared successfully");
       } else {
         // Fallback for browsers that don't support Web Share API
         // Copy link to clipboard
-        await navigator.clipboard.writeText(window.location.href);
-        toast.success("Link copied to clipboard! You can now share it manually.");
+        await navigator.clipboard.writeText(verifyUrl);
+        toast.success("Verification link copied to clipboard! You can now share it manually.");
       }
     } catch (error) {
-      console.error("Error sharing:", error);
+      console.error("Error sharing certificate:", error);
       toast.error("Failed to share. Try another method.");
     } finally {
       setSharing(false);
@@ -143,12 +150,15 @@ export const useCertificateActions = (userId: string) => {
       return;
     }
     
+    // Create the URL for the certificate verification page
+    const verifyUrl = `${window.location.origin}/verify-certificate/${certificateData.referenceNumber}`;
+    
     // In a real app, this would use an email service
     const subject = encodeURIComponent(`Professional Work Certificate - ${certificateData.referenceNumber}`);
     const body = encodeURIComponent(
       `Please find attached my professional work certificate with reference number ${certificateData.referenceNumber}.\n\n` +
       `This certificate validates that I have completed ${certificateData.totalHours} hours of professional work as a ${certificateData.positionTitle}.\n\n` +
-      `To verify this certificate, please visit: ${window.location.origin}/verify-certificate/${certificateData.referenceNumber}`
+      `To verify this certificate, please visit: ${verifyUrl}`
     );
     
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');

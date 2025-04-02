@@ -55,7 +55,8 @@ export default function CertificateActions({
       return;
     }
     
-    window.open(`/verify-certificate/${certificateData.referenceNumber}`, '_blank');
+    const verifyUrl = `/verify-certificate/${certificateData.referenceNumber}`;
+    window.open(verifyUrl, '_blank');
   };
 
   return (

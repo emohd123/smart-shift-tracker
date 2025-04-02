@@ -3,7 +3,12 @@ import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CertificateData } from "../types/certificate";
-import { uploadFileToBucket, getFileFromBucket } from "@/integrations/supabase/storageUtils";
+import { 
+  uploadFileToBucket, 
+  getFileFromBucket, 
+  fileExistsInBucket,
+  createBucketIfNotExists 
+} from "@/integrations/supabase/storageUtils";
 
 /**
  * Hook for handling certificate storage operations
@@ -80,6 +85,40 @@ export const useCertificateStorage = () => {
     }
   }, []);
 
+  const checkCertificateExists = useCallback(async (
+    userId: string,
+    referenceNumber: string
+  ) => {
+    try {
+      // Ensure certificate bucket exists
+      const { success, error: bucketError } = await createBucketIfNotExists("certificates");
+      if (!success) {
+        console.error("Failed to ensure certificates bucket exists:", bucketError);
+        return { exists: false, error: bucketError };
+      }
+
+      // Check if PDF exists in storage
+      const path = `${userId}/${referenceNumber}.pdf`;
+      const { exists, error } = await fileExistsInBucket("certificates", path);
+      
+      if (error) {
+        console.error("Error checking if certificate exists:", error);
+        return { exists: false, error };
+      }
+      
+      return { exists };
+    } catch (error) {
+      console.error("Error in checkCertificateExists:", error);
+      return { 
+        exists: false, 
+        error: {
+          message: error instanceof Error ? error.message : "Unknown error checking certificate existence",
+          code: "CERTIFICATE_CHECK_ERROR"
+        }
+      };
+    }
+  }, []);
+
   const uploadCertificatePDF = useCallback(async (
     userId: string,
     referenceNumber: string,
@@ -144,6 +183,7 @@ export const useCertificateStorage = () => {
   return {
     saveCertificateRecord,
     uploadCertificatePDF,
-    downloadCertificatePDF
+    downloadCertificatePDF,
+    checkCertificateExists
   };
 };
