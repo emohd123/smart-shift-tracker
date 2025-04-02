@@ -9,9 +9,9 @@ import { useAuth } from "@/context/AuthContext";
 export const useCertificateActions = (userId: string) => {
   const [downloading, setDownloading] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated } = useAuth();
   
-  const { uploadCertificatePDF } = useCertificateStorage();
+  const { uploadCertificatePDF, downloadCertificatePDF } = useCertificateStorage();
   
   const handleDownload = useCallback(async (certificateData: CertificateData | undefined) => {
     if (!certificateData) {
@@ -26,9 +26,36 @@ export const useCertificateActions = (userId: string) => {
     
     setDownloading(true);
     try {
-      console.log("Generating PDF for certificate:", certificateData.referenceNumber);
+      console.log("Attempting to download certificate:", certificateData.referenceNumber);
       
-      // Generate PDF blob
+      // First try to download existing PDF from storage
+      const existingPdf = await downloadCertificatePDF(userId, certificateData.referenceNumber);
+      
+      if (existingPdf) {
+        console.log("Found existing PDF, using that");
+        // Create a URL for the Blob
+        const url = URL.createObjectURL(existingPdf);
+        
+        // Create a link element
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Certificate-${certificateData.referenceNumber}.pdf`;
+        
+        // Click the link to trigger the download
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        toast.success("Certificate downloaded successfully");
+        setDownloading(false);
+        return;
+      }
+      
+      // If no existing PDF, generate one
+      console.log("No existing PDF found, generating new one");
       const pdfBlob = await generateCertificatePDF(certificateData);
       if (!pdfBlob) {
         throw new Error("Failed to generate PDF");
@@ -73,35 +100,35 @@ export const useCertificateActions = (userId: string) => {
     } finally {
       setDownloading(false);
     }
-  }, [userId, uploadCertificatePDF, isAuthenticated]);
+  }, [userId, uploadCertificatePDF, downloadCertificatePDF, isAuthenticated]);
   
-  const handleShare = useCallback(() => {
+  const handleShare = useCallback(async () => {
     if (!isAuthenticated) {
       toast.error("You must be logged in to share certificates");
       return;
     }
     
     setSharing(true);
-    
-    // Use Web Share API if available
-    if (navigator.share) {
-      navigator.share({
-        title: 'Professional Work Certificate',
-        text: 'Check out my professional work certificate from SmartShift',
-        url: window.location.href,
-      })
-      .then(() => toast.success("Shared successfully"))
-      .catch(error => {
-        console.error("Error sharing:", error);
-        toast.error("Failed to share. Try another method.");
-      })
-      .finally(() => setSharing(false));
-    } else {
-      // Fallback for browsers that don't support Web Share API
-      setTimeout(() => {
-        toast.success("Share feature will be implemented in a future update");
-        setSharing(false);
-      }, 1000);
+    try {
+      // Use Web Share API if available
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Professional Work Certificate',
+          text: 'Check out my professional work certificate from SmartShift',
+          url: window.location.href,
+        });
+        toast.success("Shared successfully");
+      } else {
+        // Fallback for browsers that don't support Web Share API
+        // Copy link to clipboard
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success("Link copied to clipboard! You can now share it manually.");
+      }
+    } catch (error) {
+      console.error("Error sharing:", error);
+      toast.error("Failed to share. Try another method.");
+    } finally {
+      setSharing(false);
     }
   }, [isAuthenticated]);
   
@@ -121,7 +148,7 @@ export const useCertificateActions = (userId: string) => {
     const body = encodeURIComponent(
       `Please find attached my professional work certificate with reference number ${certificateData.referenceNumber}.\n\n` +
       `This certificate validates that I have completed ${certificateData.totalHours} hours of professional work as a ${certificateData.positionTitle}.\n\n` +
-      `To verify this certificate, please visit: https://verify-certificate.smartshift.com/${certificateData.referenceNumber}`
+      `To verify this certificate, please visit: ${window.location.origin}/verify-certificate/${certificateData.referenceNumber}`
     );
     
     window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');

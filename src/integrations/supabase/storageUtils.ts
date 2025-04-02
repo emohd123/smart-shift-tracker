@@ -9,7 +9,10 @@ export type StorageError = {
 /**
  * Creates a bucket if it doesn't exist
  */
-export const createBucketIfNotExists = async (bucketName: string): Promise<{ success: boolean; error?: StorageError }> => {
+export const createBucketIfNotExists = async (
+  bucketName: string,
+  options: { public?: boolean; fileSizeLimit?: number } = { public: true }
+): Promise<{ success: boolean; error?: StorageError }> => {
   try {
     // Check if bucket exists
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
@@ -30,7 +33,8 @@ export const createBucketIfNotExists = async (bucketName: string): Promise<{ suc
     if (!bucketExists) {
       console.log(`Bucket ${bucketName} doesn't exist, creating...`);
       const { error } = await supabase.storage.createBucket(bucketName, {
-        public: true,
+        public: options.public ?? true,
+        fileSizeLimit: options.fileSizeLimit,
       });
       
       if (error) {
@@ -68,7 +72,8 @@ export const createBucketIfNotExists = async (bucketName: string): Promise<{ suc
 export const uploadFileToBucket = async (
   file: File,
   bucket: string,
-  path: string
+  path: string,
+  options: { upsert?: boolean; cacheControl?: string } = {}
 ): Promise<{ url: string | null; error?: StorageError }> => {
   try {
     // First ensure bucket exists
@@ -87,8 +92,8 @@ export const uploadFileToBucket = async (
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
-        upsert: true,
-        cacheControl: '3600',
+        upsert: options.upsert ?? true,
+        cacheControl: options.cacheControl ?? '3600',
       });
 
     if (uploadError) {
@@ -117,6 +122,80 @@ export const uploadFileToBucket = async (
       error: {
         message: `Unexpected error uploading file to ${bucket}: ${errorMessage}`,
         code: 'UPLOAD_UNEXPECTED_ERROR'
+      }
+    };
+  }
+};
+
+/**
+ * Get a file from a Supabase storage bucket
+ */
+export const getFileFromBucket = async (
+  bucket: string,
+  path: string
+): Promise<{ data: Blob | null; error?: StorageError }> => {
+  try {
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .download(path);
+      
+    if (error) {
+      console.error(`Error downloading file from ${bucket}/${path}:`, error);
+      return {
+        data: null,
+        error: {
+          message: `Error downloading file from ${bucket}/${path}: ${error.message}`,
+          code: 'FILE_DOWNLOAD_ERROR'
+        }
+      };
+    }
+    
+    return { data };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Unexpected error downloading file from ${bucket}:`, error);
+    return {
+      data: null,
+      error: {
+        message: `Unexpected error downloading file from ${bucket}: ${errorMessage}`,
+        code: 'DOWNLOAD_UNEXPECTED_ERROR'
+      }
+    };
+  }
+};
+
+/**
+ * Delete a file from a Supabase storage bucket
+ */
+export const deleteFileFromBucket = async (
+  bucket: string,
+  path: string
+): Promise<{ success: boolean; error?: StorageError }> => {
+  try {
+    const { error } = await supabase.storage
+      .from(bucket)
+      .remove([path]);
+      
+    if (error) {
+      console.error(`Error deleting file from ${bucket}/${path}:`, error);
+      return {
+        success: false,
+        error: {
+          message: `Error deleting file from ${bucket}/${path}: ${error.message}`,
+          code: 'FILE_DELETE_ERROR'
+        }
+      };
+    }
+    
+    return { success: true };
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    console.error(`Unexpected error deleting file from ${bucket}:`, error);
+    return {
+      success: false,
+      error: {
+        message: `Unexpected error deleting file from ${bucket}: ${errorMessage}`,
+        code: 'DELETE_UNEXPECTED_ERROR'
       }
     };
   }

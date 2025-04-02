@@ -49,6 +49,15 @@ export default function CertificateActions({
     handleEmail();
   };
 
+  const handleViewQR = () => {
+    if (!certificateData) {
+      toast.error("Certificate data not available");
+      return;
+    }
+    
+    window.open(`/verify-certificate/${certificateData.referenceNumber}`, '_blank');
+  };
+
   return (
     <div className="flex flex-wrap gap-2 justify-center">
       <Button 
@@ -72,7 +81,7 @@ export default function CertificateActions({
         disabled={sharing || !isAuthenticated}
       >
         <Share2 className="mr-2 h-4 w-4" />
-        Share
+        {sharing ? "Sharing..." : "Share"}
       </Button>
       
       <Button 
@@ -86,7 +95,7 @@ export default function CertificateActions({
       
       <Button 
         variant="ghost"
-        onClick={() => certificateData && window.open(`/verify-certificate/${certificateData.referenceNumber}`, '_blank')}
+        onClick={handleViewQR}
       >
         <QrCode className="mr-2 h-4 w-4" />
         View QR Code

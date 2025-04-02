@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CertificateData } from "../types/certificate";
-import { uploadFileToBucket } from "@/integrations/supabase/storageUtils";
+import { uploadFileToBucket, getFileFromBucket } from "@/integrations/supabase/storageUtils";
 
 /**
  * Hook for handling certificate storage operations
@@ -118,8 +118,32 @@ export const useCertificateStorage = () => {
     }
   }, []);
 
+  const downloadCertificatePDF = useCallback(async (
+    userId: string,
+    referenceNumber: string
+  ) => {
+    try {
+      const path = `${userId}/${referenceNumber}.pdf`;
+      
+      const { data, error } = await getFileFromBucket("certificates", path);
+      
+      if (error) {
+        console.error("Error downloading certificate PDF:", error);
+        toast.error("Failed to download certificate PDF");
+        return null;
+      }
+      
+      return data;
+    } catch (error) {
+      console.error("Error in downloadCertificatePDF:", error);
+      toast.error("An unexpected error occurred while downloading PDF");
+      return null;
+    }
+  }, []);
+
   return {
     saveCertificateRecord,
-    uploadCertificatePDF
+    uploadCertificatePDF,
+    downloadCertificatePDF
   };
 };
