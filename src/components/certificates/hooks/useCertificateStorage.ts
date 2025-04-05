@@ -8,7 +8,7 @@ import {
   getFileFromBucket, 
   fileExistsInBucket,
   createBucketIfNotExists 
-} from "@/integrations/supabase/storageUtils";
+} from "@/integrations/supabase/storage";
 
 /**
  * Hook for handling certificate storage operations
