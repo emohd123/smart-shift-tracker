@@ -99,14 +99,14 @@ export const useCertificateStorage = () => {
 
       // Check if PDF exists in storage
       const path = `${userId}/${referenceNumber}.pdf`;
-      const { exists, error } = await fileExistsInBucket("certificates", path);
+      const { success, data, error } = await fileExistsInBucket("certificates", path);
       
-      if (error) {
+      if (!success) {
         console.error("Error checking if certificate exists:", error);
         return { exists: false, error };
       }
       
-      return { exists };
+      return { exists: !!data };
     } catch (error) {
       console.error("Error in checkCertificateExists:", error);
       return { 
@@ -128,25 +128,23 @@ export const useCertificateStorage = () => {
       const file = new File([pdfBlob], `${referenceNumber}.pdf`, { type: "application/pdf" });
       const path = `${userId}/${referenceNumber}.pdf`;
       
-      const { url: fileUrl, error } = await uploadFileToBucket(file, "certificates", path);
+      const { success, data: fileUrl, error } = await uploadFileToBucket(file, "certificates", path);
       
-      if (error) {
+      if (!success || !fileUrl) {
         console.error("Error uploading PDF to storage:", error);
         toast.error("Failed to upload certificate PDF");
         return null;
       }
       
-      if (fileUrl) {
-        // Update certificate record with PDF URL
-        const { error: updateError } = await supabase
-          .from('certificates')
-          .update({ pdf_url: fileUrl })
-          .eq('reference_number', referenceNumber);
-          
-        if (updateError) {
-          console.error("Error updating certificate record:", updateError);
-          toast.error("Failed to update certificate with PDF URL");
-        }
+      // Update certificate record with PDF URL
+      const { error: updateError } = await supabase
+        .from('certificates')
+        .update({ pdf_url: fileUrl })
+        .eq('reference_number', referenceNumber);
+        
+      if (updateError) {
+        console.error("Error updating certificate record:", updateError);
+        toast.error("Failed to update certificate with PDF URL");
       }
       
       return fileUrl;
@@ -164,9 +162,9 @@ export const useCertificateStorage = () => {
     try {
       const path = `${userId}/${referenceNumber}.pdf`;
       
-      const { data, error } = await getFileFromBucket("certificates", path);
+      const { success, data, error } = await getFileFromBucket("certificates", path);
       
-      if (error) {
+      if (!success) {
         console.error("Error downloading certificate PDF:", error);
         toast.error("Failed to download certificate PDF");
         return null;

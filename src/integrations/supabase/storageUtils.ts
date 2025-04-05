@@ -10,7 +10,7 @@ import {
   deleteFileFromBucket,
   fileExistsInBucket,
   listFilesInBucket,
-  StorageError
+  type StorageError
 } from './storage';
 
 export {
@@ -20,5 +20,5 @@ export {
   deleteFileFromBucket,
   fileExistsInBucket,
   listFilesInBucket,
-  StorageError
+  type StorageError
 };

@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { uploadFileToBucket } from "@/integrations/supabase/storageUtils";
+import { uploadFileToBucket } from "@/integrations/supabase/storage";
 
 export function useFileUpload() {
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
@@ -28,11 +28,11 @@ export function useFileUpload() {
       const fileName = createFilePath(userId, file);
       
       console.log(`Starting upload to ${bucket}/${fileName}`);
-      const { url, error } = await uploadFileToBucket(file, bucket, fileName);
+      const { success, data: url, error } = await uploadFileToBucket(file, bucket, fileName);
 
-      if (error) {
-        console.error(`Upload error: ${error.code}`, error.message);
-        toast.error(`Failed to upload: ${error.message}`);
+      if (!success || !url) {
+        console.error(`Upload error: ${error?.code}`, error?.message);
+        toast.error(`Failed to upload: ${error?.message}`);
         return null;
       }
 
