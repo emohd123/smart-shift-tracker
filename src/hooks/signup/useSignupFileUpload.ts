@@ -1,6 +1,11 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { GenderType } from "@/types/database";
+import { 
+  createBucketIfNotExists, 
+  uploadFileToBucket,
+  getPublicUrl
+} from "@/integrations/supabase/storage";
 
 export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetStateAction<boolean>>) => {
   const uploadFiles = async (userId: string, fileData: any) => {
@@ -9,32 +14,26 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
       let idCardUrl = null;
       let profilePhotoUrl = null;
       
-      // Create storage buckets if they don't exist
-      const { data: buckets } = await supabase.storage.listBuckets();
-      
-      if (!buckets?.find(b => b.name === 'id_cards')) {
-        await supabase.storage.createBucket('id_cards', {
-          public: true
-        });
-      }
-      
-      if (!buckets?.find(b => b.name === 'profile_photos')) {
-        await supabase.storage.createBucket('profile_photos', {
-          public: true
-        });
-      }
+      // Create storage buckets if they don't exist using our utility function
+      await createBucketIfNotExists('id_cards', { public: true });
+      await createBucketIfNotExists('profile_photos', { public: true });
       
       // Upload ID card if provided
       if (fileData.idCard) {
         const fileExt = fileData.idCard.name.split('.').pop();
         const fileName = `${userId}/id_card.${fileExt}`;
         
-        const { data: idCardData, error: idCardError } = await supabase.storage
-          .from('id_cards')
-          .upload(fileName, fileData.idCard);
+        const uploadResult = await uploadFileToBucket(
+          fileData.idCard,
+          'id_cards',
+          fileName
+        );
           
-        if (idCardError) throw idCardError;
-        idCardUrl = `${fileName}`;
+        if (!uploadResult.success) {
+          throw new Error(`Failed to upload ID card: ${uploadResult.error?.message}`);
+        }
+        
+        idCardUrl = uploadResult.data || fileName;
       }
       
       // Upload profile photo if provided
@@ -42,12 +41,17 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         const fileExt = fileData.profilePhoto.name.split('.').pop();
         const fileName = `${userId}/profile_photo.${fileExt}`;
         
-        const { data: profilePhotoData, error: profilePhotoError } = await supabase.storage
-          .from('profile_photos')
-          .upload(fileName, fileData.profilePhoto);
+        const uploadResult = await uploadFileToBucket(
+          fileData.profilePhoto,
+          'profile_photos',
+          fileName
+        );
           
-        if (profilePhotoError) throw profilePhotoError;
-        profilePhotoUrl = `${fileName}`;
+        if (!uploadResult.success) {
+          throw new Error(`Failed to upload profile photo: ${uploadResult.error?.message}`);
+        }
+        
+        profilePhotoUrl = uploadResult.data || fileName;
       }
       
       return { idCardUrl, profilePhotoUrl };

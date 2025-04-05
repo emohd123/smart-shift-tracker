@@ -7,7 +7,10 @@ import {
   uploadFileToBucket, 
   getFileFromBucket, 
   fileExistsInBucket,
-  createBucketIfNotExists 
+  createBucketIfNotExists,
+  getPublicUrl,
+  normalizePath,
+  joinPaths
 } from "@/integrations/supabase/storage";
 
 /**
@@ -97,8 +100,8 @@ export const useCertificateStorage = () => {
         return { exists: false, error: bucketResult.error };
       }
 
-      // Check if PDF exists in storage
-      const path = `${userId}/${referenceNumber}.pdf`;
+      // Check if PDF exists in storage using properly joined path
+      const path = joinPaths(userId, `${referenceNumber}.pdf`);
       const fileResult = await fileExistsInBucket("certificates", path);
       
       if (!fileResult.success) {
@@ -126,8 +129,9 @@ export const useCertificateStorage = () => {
   ) => {
     try {
       const file = new File([pdfBlob], `${referenceNumber}.pdf`, { type: "application/pdf" });
-      const path = `${userId}/${referenceNumber}.pdf`;
+      const path = joinPaths(userId, `${referenceNumber}.pdf`);
       
+      // Upload the PDF file
       const uploadResult = await uploadFileToBucket(file, "certificates", path);
       
       if (!uploadResult.success || !uploadResult.data) {
@@ -136,10 +140,14 @@ export const useCertificateStorage = () => {
         return null;
       }
       
+      // Get the public URL
+      const urlResult = getPublicUrl("certificates", path);
+      const publicUrl = urlResult.success ? urlResult.data : uploadResult.data;
+      
       // Update certificate record with PDF URL
       const { error: updateError } = await supabase
         .from('certificates')
-        .update({ pdf_url: uploadResult.data })
+        .update({ pdf_url: publicUrl })
         .eq('reference_number', referenceNumber);
         
       if (updateError) {
@@ -147,7 +155,7 @@ export const useCertificateStorage = () => {
         toast.error("Failed to update certificate with PDF URL");
       }
       
-      return uploadResult.data;
+      return publicUrl;
     } catch (error) {
       console.error("Error in uploadCertificatePDF:", error);
       toast.error("An unexpected error occurred while uploading PDF");
@@ -160,7 +168,7 @@ export const useCertificateStorage = () => {
     referenceNumber: string
   ) => {
     try {
-      const path = `${userId}/${referenceNumber}.pdf`;
+      const path = joinPaths(userId, `${referenceNumber}.pdf`);
       
       const downloadResult = await getFileFromBucket("certificates", path);
       

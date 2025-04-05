@@ -10,7 +10,20 @@ import {
   deleteFileFromBucket,
   fileExistsInBucket,
   listFilesInBucket,
-  type StorageError
+  normalizePath,
+  joinPaths,
+  getParentPath,
+  getFileName,
+  getPublicUrl,
+  clearUrlCache,
+  createFolder,
+  folderExistsInBucket,
+  listFolder,
+  deleteFolder,
+  getTransformedImageUrl,
+  isImageFile,
+  type StorageError,
+  type ImageTransformOptions
 } from './storage';
 
 export {
@@ -20,5 +33,18 @@ export {
   deleteFileFromBucket,
   fileExistsInBucket,
   listFilesInBucket,
-  type StorageError
+  normalizePath,
+  joinPaths,
+  getParentPath,
+  getFileName,
+  getPublicUrl,
+  clearUrlCache,
+  createFolder,
+  folderExistsInBucket,
+  listFolder,
+  deleteFolder,
+  getTransformedImageUrl,
+  isImageFile,
+  type StorageError,
+  type ImageTransformOptions
 };
