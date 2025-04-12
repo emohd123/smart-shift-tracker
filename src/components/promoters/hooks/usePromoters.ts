@@ -150,7 +150,8 @@ export const usePromoters = () => {
     return (
       promoter.full_name.toLowerCase().includes(searchLower) ||
       promoter.nationality.toLowerCase().includes(searchLower) ||
-      promoter.verification_status.toLowerCase().includes(searchLower)
+      promoter.verification_status.toLowerCase().includes(searchLower) ||
+      promoter.phone_number.toLowerCase().includes(searchLower)
     );
   });
 

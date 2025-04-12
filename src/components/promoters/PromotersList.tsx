@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { usePromoters } from "./hooks/usePromoters";
 import { PromoterStats } from "./PromoterStats";
-import { Search } from "lucide-react";
+import { Search, Filter, CheckCheck, UserX, User } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -19,6 +19,24 @@ import { Progress } from "@/components/ui/progress";
 import { PromoterDetail } from "./PromoterDetail";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format, parseISO } from "date-fns";
+import { Checkbox } from "@/components/ui/checkbox";
+import { 
+  Pagination, 
+  PaginationContent, 
+  PaginationItem, 
+  PaginationLink, 
+  PaginationNext, 
+  PaginationPrevious 
+} from "@/components/ui/pagination";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 export function PromotersList() {
   const {
@@ -31,6 +49,24 @@ export function PromotersList() {
     toggleSort
   } = usePromoters();
   const [selectedPromoter, setSelectedPromoter] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedPromoters, setSelectedPromoters] = useState<string[]>([]);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  
+  // Filter promoters by verification status if selected
+  const filteredByStatus = selectedStatus 
+    ? promoters.filter(p => p.verification_status === selectedStatus)
+    : promoters;
+    
+  // Calculate pagination
+  const totalPages = Math.ceil(filteredByStatus.length / itemsPerPage);
+  const paginatedPromoters = filteredByStatus.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   // Generate initial letters for avatar fallback
   const getInitials = (name: string) => {
@@ -74,12 +110,56 @@ export function PromotersList() {
   const handleCloseDetail = () => {
     setSelectedPromoter(null);
   };
+  
+  // Handle checkbox selection
+  const handleSelectPromoter = (promoterId: string) => {
+    setSelectedPromoters(prev => {
+      if (prev.includes(promoterId)) {
+        return prev.filter(id => id !== promoterId);
+      } else {
+        return [...prev, promoterId];
+      }
+    });
+  };
+  
+  // Handle select all checkbox
+  const handleSelectAll = () => {
+    if (selectedPromoters.length === paginatedPromoters.length) {
+      setSelectedPromoters([]);
+    } else {
+      setSelectedPromoters(paginatedPromoters.map(p => p.id));
+    }
+  };
+  
+  // Bulk action handlers
+  const handleBulkAction = (action: string) => {
+    if (selectedPromoters.length === 0) {
+      toast.warning("Please select at least one promoter");
+      return;
+    }
+    
+    // In a real app, you would make API calls here
+    if (action === "approve") {
+      toast.success(`Approved ${selectedPromoters.length} promoters`);
+    } else if (action === "reject") {
+      toast.error(`Rejected ${selectedPromoters.length} promoters`);
+    }
+    
+    // Clear selection after action
+    setSelectedPromoters([]);
+  };
+  
+  // Status filter handler
+  const handleStatusFilter = (status: string | null) => {
+    setSelectedStatus(status);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
 
   return (
     <div className="space-y-6">
       <PromoterStats promoters={promoters} loading={loading} />
       
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="relative w-full max-w-sm">
           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
@@ -89,6 +169,55 @@ export function PromotersList() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+        
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" className="flex items-center gap-2">
+                <Filter className="h-4 w-4" />
+                {selectedStatus ? `Filter: ${selectedStatus}` : "Filter"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleStatusFilter(null)}>
+                All
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusFilter("approved")}>
+                Approved
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusFilter("pending")}>
+                Pending
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleStatusFilter("rejected")}>
+                Rejected
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          
+          {selectedPromoters.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" className="flex items-center gap-2">
+                  Actions ({selectedPromoters.length})
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Bulk Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleBulkAction("approve")} className="text-green-600">
+                  <CheckCheck className="h-4 w-4 mr-2" />
+                  Approve Selected
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleBulkAction("reject")} className="text-red-600">
+                  <UserX className="h-4 w-4 mr-2" />
+                  Reject Selected
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -109,6 +238,13 @@ export function PromotersList() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox 
+                    checked={selectedPromoters.length === paginatedPromoters.length && paginatedPromoters.length > 0}
+                    onCheckedChange={handleSelectAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
                 <TableHead className="w-[250px]">
                   <Button 
                     variant="ghost" 
@@ -167,15 +303,22 @@ export function PromotersList() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {promoters.length === 0 ? (
+              {paginatedPromoters.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-24 text-center">
+                  <TableCell colSpan={8} className="h-24 text-center">
                     No promoters found.
                   </TableCell>
                 </TableRow>
               ) : (
-                promoters.map((promoter) => (
+                paginatedPromoters.map((promoter) => (
                   <TableRow key={promoter.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Checkbox 
+                        checked={selectedPromoters.includes(promoter.id)}
+                        onCheckedChange={() => handleSelectPromoter(promoter.id)}
+                        aria-label={`Select ${promoter.full_name}`}
+                      />
+                    </TableCell>
                     <TableCell onClick={() => setSelectedPromoter(promoter.id)}>
                       <div className="flex items-center gap-3">
                         <Avatar>
@@ -221,6 +364,40 @@ export function PromotersList() {
               )}
             </TableBody>
           </Table>
+          
+          {/* Pagination */}
+          {filteredByStatus.length > itemsPerPage && (
+            <div className="py-4 border-t">
+              <Pagination>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious 
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                  
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <PaginationItem key={page}>
+                      <PaginationLink 
+                        isActive={currentPage === page}
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </PaginationLink>
+                    </PaginationItem>
+                  ))}
+                  
+                  <PaginationItem>
+                    <PaginationNext 
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            </div>
+          )}
         </div>
       )}
 
