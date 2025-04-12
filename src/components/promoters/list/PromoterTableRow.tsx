@@ -8,6 +8,7 @@ import { TableCell, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { PromoterData } from "../types";
 import { Eye } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface PromoterTableRowProps {
   promoter: PromoterData;
@@ -68,6 +69,13 @@ export function PromoterTableRow({
     }
   };
 
+  // Get rating color based on score
+  const getRatingColor = (rating: number) => {
+    if (rating >= 4) return "bg-green-500";
+    if (rating >= 3) return "bg-yellow-500";
+    return "bg-red-500";
+  };
+
   return (
     <TableRow 
       className="cursor-pointer transition-colors hover:bg-muted/50"
@@ -103,19 +111,19 @@ export function PromoterTableRow({
           </Badge>
         </div>
       </TableCell>
-      <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)} className="text-right">
+      <TableCell className="py-3 text-right" onClick={() => setSelectedPromoter(promoter.id)}>
         <div className="font-medium">{promoter.total_hours.toFixed(1)}</div>
         <div className="text-xs text-muted-foreground">{promoter.total_shifts} shifts</div>
       </TableCell>
-      <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)} className="text-right">
+      <TableCell className="py-3 text-right" onClick={() => setSelectedPromoter(promoter.id)}>
         <div className="font-medium">{promoter.average_rating.toFixed(1)}/5</div>
         <Progress 
           value={promoter.average_rating * 20} 
           className="h-1 w-16 ml-auto" 
-          indicatorClassName={promoter.average_rating >= 4 ? "bg-green-500" : promoter.average_rating >= 3 ? "bg-yellow-500" : "bg-red-500"}
+          indicatorClassName={getRatingColor(promoter.average_rating)}
         />
       </TableCell>
-      <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)} className="text-right">
+      <TableCell className="py-3 text-right" onClick={() => setSelectedPromoter(promoter.id)}>
         {formatDate(promoter.created_at)}
       </TableCell>
       <TableCell className="py-3">
