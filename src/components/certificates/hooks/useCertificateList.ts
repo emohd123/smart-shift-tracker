@@ -19,7 +19,7 @@ export default function useCertificateList() {
       setLoading(true);
       
       // Demo data (used as fallback if DB fetch fails)
-      const demoCertificates = [
+      const demoCertificates: Certificate[] = [
         {
           id: "1",
           reference_number: "CERT-ABC123",
@@ -71,7 +71,7 @@ export default function useCertificateList() {
           console.error("Error fetching certificates:", error);
           setCertificates(demoCertificates);
         } else if (data && data.length > 0) {
-          setCertificates(data);
+          setCertificates(data as Certificate[]);
         } else {
           // No certificates found, use demo data
           setCertificates(demoCertificates);
@@ -86,7 +86,7 @@ export default function useCertificateList() {
       console.error("Unexpected error in fetchCertificates:", error);
       setLoading(false);
       // Set demo data as fallback
-      setCertificates([
+      const fallbackCerts: Certificate[] = [
         {
           id: "1",
           reference_number: "CERT-ABC123",
@@ -107,7 +107,8 @@ export default function useCertificateList() {
           status: "verified",
           promotion_names: ["Tech Expo"]
         }
-      ]);
+      ];
+      setCertificates(fallbackCerts);
     }
   }, [user]);
   
@@ -127,7 +128,7 @@ export default function useCertificateList() {
       // Create certificate data for PDF generation
       const certificateData = {
         referenceNumber: cert.reference_number,
-        promoterName: user?.user_metadata?.name || "Promoter",
+        promoterName: user?.metadata?.name || "Promoter",
         totalHours: cert.total_hours,
         positionTitle: "Brand Promoter",
         promotionNames: cert.promotion_names || [],

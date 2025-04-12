@@ -3,15 +3,15 @@ import { useAuthState } from "@/hooks/useAuthState";
 import { useAuthMethods, ProfileUpdate } from "@/hooks/useAuthHooks";
 import { GenderType, VerificationStatus, UserRole } from "@/types/database";
 
-export interface User {
+export type User = {
   id: string;
-  name: string;
   email: string;
+  name: string;
   role: UserRole;
   metadata: Record<string, any>;
-}
+};
 
-export interface UserProfile {
+export type UserProfile = {
   id: string;
   full_name: string;
   nationality: string;
@@ -29,7 +29,7 @@ export interface UserProfile {
   role: string;
   created_at: string;
   updated_at: string;
-}
+};
 
 export { UserRole, GenderType, VerificationStatus } from "@/types/database";
 

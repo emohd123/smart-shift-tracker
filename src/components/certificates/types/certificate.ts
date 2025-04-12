@@ -7,7 +7,7 @@ export type Certificate = {
   total_hours: number;
   pdf_url: string | null;
   promotion_names?: string[];
-  status?: 'verified' | 'pending' | 'expired';
+  status?: 'verified' | 'pending' | 'expired' | string; // Allow any string for backward compatibility
   performance_rating?: number;
 };
 
