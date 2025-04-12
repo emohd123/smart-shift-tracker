@@ -1,7 +1,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar } from "lucide-react";
-import { Shift } from "../../shifts/ShiftCard";
+import { Shift } from "../../shifts/types/ShiftTypes";
 import { cn } from "@/lib/utils";
 import { formatBHD } from "../../shifts/utils/currencyUtils";
 

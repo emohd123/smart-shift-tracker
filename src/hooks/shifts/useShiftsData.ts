@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Shift } from "@/components/shifts/ShiftCard";
+import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { mockShifts } from "@/utils/mockData";
 import { useToast } from "@/hooks/use-toast";
 

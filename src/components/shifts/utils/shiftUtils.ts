@@ -1,6 +1,6 @@
 
-import { Shift } from "../ShiftCard";
 import { ShiftStatus } from "@/types/database";
+import { Shift } from "../types/ShiftTypes";
 import { Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import React from "react";
 

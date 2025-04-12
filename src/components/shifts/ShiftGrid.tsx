@@ -1,5 +1,5 @@
 
-import { Shift } from "../types/ShiftTypes";
+import { Shift } from "./types/ShiftTypes";
 import ShiftCard from "./ShiftCard";
 import { Checkbox } from "@/components/ui/checkbox";
 

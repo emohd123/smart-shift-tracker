@@ -1,67 +1,157 @@
-
-import { Shift } from "@/components/shifts/ShiftCard";
 import { ShiftStatus } from "@/types/database";
+import { Shift } from "@/components/shifts/types/ShiftTypes";
+import { v4 as uuidv4 } from 'uuid';
 
-// Mock data for development and testing
+// Create some mock shifts for testing
 export const mockShifts: Shift[] = [
   {
-    id: "1",
-    title: "Product Demo at Central Mall",
-    date: "2023-08-15",
-    startTime: "09:00",
-    endTime: "17:00",
-    location: "Central Mall, 123 Main St",
-    status: ShiftStatus.Completed,
-    payRate: 15,
-    payRateType: "hour",
-    isPaid: true
-  },
-  {
-    id: "2",
-    title: "Brand Promotion at Tech Expo",
-    date: "2023-08-20",
+    id: "shift-1",
+    title: "Product Sampling - Shopping Mall",
+    date: "2025-04-15",
     startTime: "10:00",
     endTime: "18:00",
-    location: "Convention Center, 456 Tech Blvd",
-    status: ShiftStatus.Completed,
-    payRate: 18,
-    payRateType: "hour",
-    isPaid: false
-  },
-  {
-    id: "3",
-    title: "Food Sampling at Grocery Store",
-    date: new Date().toISOString().split('T')[0], // Today
-    startTime: "08:00",
-    endTime: "16:00",
-    location: "SuperMart, 789 Food Ave",
-    status: ShiftStatus.Ongoing,
-    payRate: 14,
-    payRateType: "hour",
-    isPaid: false
-  },
-  {
-    id: "4",
-    title: "Fashion Brand Showcase",
-    date: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Tomorrow
-    startTime: "11:00",
-    endTime: "19:00",
-    location: "Fashion Mall, 321 Style St",
+    location: "City Center Mall, Main Entrance",
     status: ShiftStatus.Upcoming,
-    payRate: 16,
+    payRate: 15,
     payRateType: "hour",
-    isPaid: false
+    isPaid: false,
+    is_assigned: true,
+    assigned_promoters: 1,
+    created_at: "2025-04-01T10:00:00Z"
   },
   {
-    id: "5",
-    title: "Mobile App Launch Event",
-    date: new Date(Date.now() + 172800000).toISOString().split('T')[0], // Day after tomorrow
-    startTime: "12:00",
-    endTime: "20:00",
-    location: "Downtown Plaza, 654 App Rd",
+    id: "shift-2",
+    title: "Brand Ambassador - Tech Expo",
+    date: "2025-04-20",
+    startTime: "09:00",
+    endTime: "17:00",
+    location: "Tech Innovations Expo, Booth #42",
     status: ShiftStatus.Upcoming,
     payRate: 20,
     payRateType: "hour",
-    isPaid: false
+    isPaid: false,
+    is_assigned: true,
+    assigned_promoters: 2,
+    created_at: "2025-04-05T14:30:00Z"
+  },
+  {
+    id: "shift-3",
+    title: "In-Store Demo - Electronics Store",
+    date: "2025-04-25",
+    startTime: "11:00",
+    endTime: "19:00",
+    location: "ElectroWorld, Gadget Section",
+    status: ShiftStatus.Upcoming,
+    payRate: 18,
+    payRateType: "hour",
+    isPaid: false,
+    is_assigned: true,
+    assigned_promoters: 1,
+    created_at: "2025-04-10T09:15:00Z"
+  },
+  {
+    id: "shift-4",
+    title: "Promotional Event - Car Dealership",
+    date: "2025-04-30",
+    startTime: "12:00",
+    endTime: "20:00",
+    location: "AutoMax Motors, New Models Display",
+    status: ShiftStatus.Upcoming,
+    payRate: 22,
+    payRateType: "hour",
+    isPaid: false,
+    is_assigned: true,
+    assigned_promoters: 3,
+    created_at: "2025-04-15T16:45:00Z"
+  },
+  {
+    id: "shift-5",
+    title: "Food Sampling - Supermarket",
+    date: "2025-05-05",
+    startTime: "10:00",
+    endTime: "18:00",
+    location: "SuperGrocer, Aisle 7",
+    status: ShiftStatus.Upcoming,
+    payRate: 16,
+    payRateType: "hour",
+    isPaid: false,
+    is_assigned: true,
+    assigned_promoters: 1,
+    created_at: "2025-04-20T11:00:00Z"
+  },
+  {
+    id: uuidv4(),
+    title: "Clothing Store Promotion",
+    date: "2025-05-10",
+    startTime: "14:00",
+    endTime: "22:00",
+    location: "Fashion Hub, New Collection Launch",
+    status: ShiftStatus.Upcoming,
+    payRate: 17,
+    payRateType: "hour",
+    isPaid: false,
+    is_assigned: true,
+    assigned_promoters: 2,
+    created_at: "2025-04-25T13:30:00Z"
+  },
+  {
+    id: uuidv4(),
+    title: "Bookstore Reading Event",
+    date: "2025-05-15",
+    startTime: "16:00",
+    endTime: "20:00",
+    location: "Literary Lane Books, Author Meet & Greet",
+    status: ShiftStatus.Upcoming,
+    payRate: 14,
+    payRateType: "hour",
+    isPaid: false,
+    is_assigned: true,
+    assigned_promoters: 1,
+    created_at: "2025-04-30T10:15:00Z"
+  },
+  {
+    id: uuidv4(),
+    title: "Outdoor Equipment Demo",
+    date: "2025-05-20",
+    startTime: "09:00",
+    endTime: "17:00",
+    location: "Adventure Gear Outfitters, Product Testing Zone",
+    status: ShiftStatus.Upcoming,
+    payRate: 19,
+    payRateType: "hour",
+    isPaid: false,
+    is_assigned: true,
+    assigned_promoters: 3,
+    created_at: "2025-05-05T17:00:00Z"
+  },
+  {
+    id: uuidv4(),
+    title: "Art Supply Store Workshop",
+    date: "2025-05-25",
+    startTime: "11:00",
+    endTime: "15:00",
+    location: "Creative Canvas Art Supplies, Beginner's Class",
+    status: ShiftStatus.Upcoming,
+    payRate: 15,
+    payRateType: "hour",
+    isPaid: false,
+    is_assigned: true,
+    assigned_promoters: 1,
+    created_at: "2025-05-10T08:45:00Z"
+  },
+  {
+    id: uuidv4(),
+    title: "Pet Store Adoption Day",
+    date: "2025-05-30",
+    startTime: "13:00",
+    endTime: "19:00",
+    location: "Furry Friends Pet Emporium, Adoption Center",
+    status: ShiftStatus.Upcoming,
+    payRate: 16,
+    payRateType: "hour",
+    isPaid: false,
+    is_assigned: true,
+    assigned_promoters: 2,
+    created_at: "2025-05-15T12:00:00Z"
   }
 ];

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Clock, AlertCircle, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CardFooter } from "@/components/ui/card";
-import { Shift } from "./ShiftCard";
+import { Shift } from "./types/ShiftTypes";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentLocation, isWithinRadius } from "./utils/locationUtils";
 import { supabase } from "@/integrations/supabase/client";

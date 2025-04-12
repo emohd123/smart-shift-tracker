@@ -1,6 +1,6 @@
 
 import { useRef } from "react";
-import { Shift } from "./ShiftCard";
+import { Shift } from "./types/ShiftTypes";
 import ShiftDetail from "./ShiftDetail";
 import TimeTracker from "../time/TimeTracker";
 import { cn } from "@/lib/utils";

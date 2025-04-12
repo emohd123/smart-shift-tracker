@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Shift } from "../../shifts/ShiftCard";
+import { Shift } from "../../shifts/types/ShiftTypes";
 import DashboardShiftCard from "./DashboardShiftCard";
 
 type UpcomingShiftsListProps = {
