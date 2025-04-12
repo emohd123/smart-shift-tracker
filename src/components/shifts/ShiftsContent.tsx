@@ -1,8 +1,8 @@
 
 import { useEffect } from "react";
-import { Shift } from "@/components/shifts/ShiftCard";
-import ShiftList from "@/components/shifts/ShiftList";
-import { ShiftsLoading } from "@/components/shifts/ShiftsLoading";
+import { Shift } from "./types/ShiftTypes"; // Update import path
+import ShiftList from "./ShiftList";
+import { ShiftsLoading } from "./ShiftsLoading";
 import { motion } from "framer-motion";
 import { Calendar, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ export const ShiftsContent = ({ shifts, loading, title, deleteShift }: ShiftsCon
   
   // Register the deleteShift function globally, but clean up on unmount
   useEffect(() => {
+    console.log("Setting deleteShift function globally");
     window.deleteShift = deleteShift;
     
     return () => {
@@ -74,7 +75,8 @@ export const ShiftsContent = ({ shifts, loading, title, deleteShift }: ShiftsCon
     >
       <ShiftList 
         shifts={shifts} 
-        title={title} 
+        title={title}
+        deleteShift={deleteShift}
       />
     </motion.div>
   );

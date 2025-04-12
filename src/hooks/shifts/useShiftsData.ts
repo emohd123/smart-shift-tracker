@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Shift } from "@/components/shifts/types/ShiftTypes";
+import { Shift } from "@/components/shifts/types/ShiftTypes"; // Update import path
 import { mockShifts } from "@/utils/mockData";
 import { useToast } from "@/hooks/use-toast";
 
@@ -92,6 +92,8 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
   // Handle shift deletion
   const deleteShift = useCallback((id: string) => {
     try {
+      console.log("Deleting shift with ID:", id);
+      
       // Verify if user is admin before allowing deletion
       if (userRole !== 'admin') {
         toast({
@@ -102,8 +104,13 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
         return;
       }
       
-      // Remove the shift from the list
-      setShifts(prev => prev.filter(shift => shift.id !== id));
+      // Remove the shift from the list - filter out the shift with matching ID
+      setShifts(prev => {
+        console.log("Previous shifts:", prev);
+        const filtered = prev.filter(shift => shift.id !== id);
+        console.log("Filtered shifts:", filtered);
+        return filtered;
+      });
       
       // Remove from localStorage if it exists there
       try {
@@ -123,7 +130,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
       });
       
       // In a real app, you'd make an API request to delete the shift from the database
-      console.log("Deleting shift:", id);
+      console.log("Deleting shift from database:", id);
     } catch (err) {
       console.error('Error deleting shift:', err);
       setError(err instanceof Error ? err : new Error('Failed to delete shift'));

@@ -8,15 +8,16 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import ShiftGrid from "./ShiftGrid";
-import { Shift } from "./ShiftCard";
+import { Shift } from "./types/ShiftTypes"; // Update import path
 import { supabase } from "@/integrations/supabase/client";
 
 interface ShiftListProps {
   shifts: Shift[];
   title?: string;
+  deleteShift?: (id: string) => void; // Make deleteShift optional
 }
 
-const ShiftList = ({ shifts, title = "Shifts" }: ShiftListProps) => {
+const ShiftList = ({ shifts, title = "Shifts", deleteShift }: ShiftListProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -75,7 +76,16 @@ const ShiftList = ({ shifts, title = "Shifts" }: ShiftListProps) => {
       });
       
       // Update local state by removing deleted shifts
-      window.deleteShift?.(selectedShifts[0]); // Trigger the global refresh mechanism
+      // Use the global deleteShift function if available
+      if (deleteShift && window.deleteShift) {
+        selectedShifts.forEach(id => {
+          window.deleteShift?.(id);
+        });
+      } else if (window.deleteShift) {
+        selectedShifts.forEach(id => {
+          window.deleteShift?.(id);
+        });
+      }
       
       // Clear selection
       setSelectedShifts([]);

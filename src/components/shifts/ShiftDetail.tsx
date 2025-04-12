@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Shift } from "./ShiftCard";
+import { Shift } from "./types/ShiftTypes"; // Update import path
 import { 
   Card
 } from "@/components/ui/card";
@@ -71,6 +71,8 @@ export default function ShiftDetail({
   };
 
   const handleDelete = (shiftId: string) => {
+    console.log("ShiftDetail - handleDelete called with ID:", shiftId);
+    
     if (onDelete) {
       onDelete(shiftId);
       toast({
@@ -79,6 +81,21 @@ export default function ShiftDetail({
         variant: "destructive"
       });
       navigate("/shifts");
+    } else if (window.deleteShift) {
+      // Fallback to the global deleteShift function if available
+      window.deleteShift(shiftId);
+      toast({
+        title: "Shift Deleted",
+        description: `The shift "${shift.title}" has been deleted`,
+        variant: "destructive"
+      });
+      navigate("/shifts");
+    } else {
+      toast({
+        title: "Error",
+        description: "Unable to delete shift - delete function not available",
+        variant: "destructive"
+      });
     }
   };
 
@@ -134,4 +151,4 @@ export default function ShiftDetail({
       )}
     </div>
   );
-}
+};

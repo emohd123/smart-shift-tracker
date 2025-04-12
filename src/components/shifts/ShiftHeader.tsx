@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { Shift } from "./ShiftCard";
+import { Shift } from "./types/ShiftTypes"; // Update import path
 import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,11 @@ type ShiftHeaderProps = {
 
 export function ShiftHeader({ shift, isAdmin, onDelete }: ShiftHeaderProps) {
   const statusBadge = getStatusBadge(shift.status);
+  
+  const handleDelete = () => {
+    console.log("ShiftHeader - handleDelete called for shift:", shift.id);
+    onDelete(shift.id);
+  };
   
   return (
     <CardHeader>
@@ -43,7 +48,7 @@ export function ShiftHeader({ shift, isAdmin, onDelete }: ShiftHeaderProps) {
               variant="outline" 
               size="sm" 
               className="text-destructive hover:text-destructive"
-              onClick={() => onDelete(shift.id)}
+              onClick={handleDelete}
             >
               <Trash size={14} className="mr-2" />
               Delete
