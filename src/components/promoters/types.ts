@@ -11,5 +11,6 @@ export interface PromoterData {
   average_rating: number;
   profile_photo_url: string | null;
   created_at: string;
-  [key: string]: string | number | null; // For dynamic sorting
+  // Update the index signature to also allow boolean values
+  [key: string]: string | number | boolean | null;
 }

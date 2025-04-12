@@ -44,7 +44,7 @@ export const usePromoters = () => {
                 total_hours: 0,
                 total_shifts: 0,
                 average_rating: 0
-              };
+              } as PromoterData; // Add type assertion here
             }
             
             // Calculate total hours
@@ -66,20 +66,38 @@ export const usePromoters = () => {
               ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length 
               : 0;
               
-            return {
-              ...profile,
+            // Explicitly convert the profile to PromoterData format
+            const promoterData: PromoterData = {
+              id: profile.id,
+              full_name: profile.full_name,
+              phone_number: profile.phone_number,
+              nationality: profile.nationality,
+              gender: profile.gender,
+              verification_status: profile.verification_status,
+              profile_photo_url: profile.profile_photo_url,
+              created_at: profile.created_at,
               total_hours: totalHours,
               total_shifts: timeLogs?.length || 0,
               average_rating: avgRating
             };
+              
+            return promoterData;
           } catch (error) {
             console.error(`Error processing data for promoter ${profile.id}:`, error);
+            // Return a properly typed object
             return {
-              ...profile,
+              id: profile.id,
+              full_name: profile.full_name,
+              phone_number: profile.phone_number || '',
+              nationality: profile.nationality || '',
+              gender: profile.gender || '',
+              verification_status: profile.verification_status || '',
+              profile_photo_url: profile.profile_photo_url,
+              created_at: profile.created_at,
               total_hours: 0,
               total_shifts: 0,
               average_rating: 0
-            };
+            } as PromoterData;
           }
         }));
         
