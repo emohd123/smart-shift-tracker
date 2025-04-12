@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import LoginForm from "@/components/auth/LoginForm";
@@ -9,6 +9,14 @@ const Login = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [pageError, setPageError] = useState<string | null>(null);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      toast.info("Already signed in");
+      navigate("/shifts", { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   // Show a simpler error message if there's a page-level error
   if (pageError) {
@@ -28,19 +36,13 @@ const Login = () => {
     );
   }
 
-  // If the user is already authenticated, redirect them
+  // If the user is already authenticated, show a loading state while redirecting
+  // This will only appear briefly before the useEffect redirect takes place
   if (isAuthenticated) {
-    // Use a more reliable way to redirect
-    setTimeout(() => {
-      toast.info("Already signed in");
-      navigate("/shifts");
-    }, 0);
-    
-    // Show a loading state while redirecting
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="w-full max-w-md text-center">
-          <p>Already signed in. Redirecting...</p>
+          <p className="text-muted-foreground">Already signed in. Redirecting...</p>
         </div>
       </div>
     );
