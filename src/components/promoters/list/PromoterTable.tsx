@@ -10,6 +10,7 @@ import { PromoterTableRow } from "./PromoterTableRow";
 import { TablePagination } from "./TablePagination";
 import { PromoterData } from "../types";
 import { Card } from "@/components/ui/card";
+import { UsersIcon } from "lucide-react";
 
 interface PromoterTableProps {
   paginatedPromoters: PromoterData[];
@@ -42,6 +43,25 @@ export function PromoterTable({
 }: PromoterTableProps) {
   const totalPages = Math.ceil(filteredByStatus.length / itemsPerPage);
 
+  // Handle the empty state with a more user-friendly message
+  const renderEmptyState = () => {
+    return (
+      <TableRow>
+        <TableCell colSpan={8} className="h-60 text-center">
+          <div className="flex flex-col items-center justify-center p-6">
+            <UsersIcon className="h-12 w-12 text-muted-foreground/40 mb-4" />
+            <h3 className="text-lg font-medium">No promoters found</h3>
+            <p className="text-muted-foreground mt-1 max-w-sm">
+              {filteredByStatus.length === 0 
+                ? "There are no promoters matching your filters. Try changing your search criteria or add new promoters."
+                : "No promoters match your current search criteria. Try adjusting your filters."}
+            </p>
+          </div>
+        </TableCell>
+      </TableRow>
+    );
+  };
+
   return (
     <Card className="overflow-hidden">
       <div className="rounded-md border-0 bg-card">
@@ -55,27 +75,22 @@ export function PromoterTable({
             paginatedPromoters={paginatedPromoters}
           />
           <TableBody>
-            {paginatedPromoters.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={8} className="h-24 text-center">
-                  No promoters found.
-                </TableCell>
-              </TableRow>
-            ) : (
-              paginatedPromoters.map((promoter) => (
-                <PromoterTableRow
-                  key={promoter.id}
-                  promoter={promoter}
-                  setSelectedPromoter={setSelectedPromoter}
-                  handleSelectPromoter={handleSelectPromoter}
-                  selectedPromoters={selectedPromoters}
-                />
-              ))
-            )}
+            {paginatedPromoters.length === 0 
+              ? renderEmptyState()
+              : paginatedPromoters.map((promoter) => (
+                  <PromoterTableRow
+                    key={promoter.id}
+                    promoter={promoter}
+                    setSelectedPromoter={setSelectedPromoter}
+                    handleSelectPromoter={handleSelectPromoter}
+                    selectedPromoters={selectedPromoters}
+                  />
+                ))
+            }
           </TableBody>
         </Table>
 
-        {/* Pagination */}
+        {/* Pagination - only show if we have results */}
         {filteredByStatus.length > 0 && (
           <TablePagination
             currentPage={currentPage}

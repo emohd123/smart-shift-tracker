@@ -67,11 +67,18 @@ export function TablePagination({
       }
       
       // Always show last page
-      pages.push(totalPages);
+      if (totalPages > 1) {
+        pages.push(totalPages);
+      }
     }
     
     return pages;
   };
+
+  // Handle edge case when there are no items
+  if (totalItems === 0 || totalPages === 0) {
+    return null;
+  }
 
   return (
     <div className="py-4 border-t flex flex-col md:flex-row justify-between items-center gap-2">
@@ -92,7 +99,7 @@ export function TablePagination({
             <PaginationPrevious
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
               className={
-                currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"
               }
             />
           </PaginationItem>
@@ -105,6 +112,7 @@ export function TablePagination({
                 <PaginationLink
                   isActive={currentPage === page}
                   onClick={() => setCurrentPage(page as number)}
+                  className="cursor-pointer"
                 >
                   {page}
                 </PaginationLink>
@@ -116,7 +124,7 @@ export function TablePagination({
             <PaginationNext
               onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
               className={
-                currentPage === totalPages ? "pointer-events-none opacity-50" : ""
+                currentPage === totalPages || totalPages === 0 ? "pointer-events-none opacity-50" : "cursor-pointer"
               }
             />
           </PaginationItem>

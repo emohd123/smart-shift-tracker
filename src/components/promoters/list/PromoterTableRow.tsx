@@ -100,7 +100,7 @@ export function PromoterTableRow({
           </Avatar>
           <div>
             <div className="font-medium">{promoter.full_name}</div>
-            <div className="flex gap-2 text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
@@ -127,7 +127,7 @@ export function PromoterTableRow({
       <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)}>
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${getStatusDotColor(promoter.verification_status)}`}></div>
-          <Badge variant="outline" className={cn(getStatusColor(promoter.verification_status), "font-normal")}>
+          <Badge variant="outline" className={getStatusColor(promoter.verification_status)}>
             {promoter.verification_status.charAt(0).toUpperCase() + promoter.verification_status.slice(1)}
           </Badge>
         </div>

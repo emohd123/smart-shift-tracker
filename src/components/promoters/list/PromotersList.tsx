@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { usePromoters } from "../hooks/usePromoters";
 import { PromoterStats } from "../PromoterStats";
 import { PromoterDetail } from "../PromoterDetail";
@@ -7,11 +7,18 @@ import { PromoterTableSkeleton } from "./PromoterTableSkeleton";
 import { PromoterFilters } from "./PromoterFilters";
 import { PromoterTable } from "./PromoterTable";
 import { toast } from "sonner";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
-export function PromotersList() {
+interface PromotersListProps {
+  filterStatus?: string | null;
+}
+
+export function PromotersList({ filterStatus }: PromotersListProps) {
   const {
     promoters,
     loading,
+    error,
     searchTerm,
     setSearchTerm,
     sortBy,
@@ -19,12 +26,22 @@ export function PromotersList() {
     toggleSort
   } = usePromoters();
   const [selectedPromoter, setSelectedPromoter] = useState<string | null>(null);
-  const [selectedStatus, setSelectedStatus] = useState<string | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<string | null>(filterStatus);
   const [selectedPromoters, setSelectedPromoters] = useState<string[]>([]);
+  
+  // Update selected status when filterStatus prop changes
+  useEffect(() => {
+    setSelectedStatus(filterStatus);
+  }, [filterStatus]);
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedStatus, searchTerm]);
   
   // Filter promoters by verification status if selected
   const filteredByStatus = selectedStatus 
@@ -85,6 +102,18 @@ export function PromotersList() {
     setSelectedStatus(status);
     setCurrentPage(1); // Reset to first page when filtering
   };
+
+  // Show error if there's an issue fetching data
+  if (error) {
+    return (
+      <Alert variant="destructive" className="my-4">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          There was an error loading promoter data. Please try again later.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className="space-y-6">

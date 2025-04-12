@@ -3,15 +3,42 @@ import React, { useState } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/context/AuthContext";
 import { PromotersList } from "@/components/promoters/list/PromotersList";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 import { UserRole } from "@/types/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserCheck, UserPlus, UserX, Users } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Promoters = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
+  const navigate = useNavigate();
+
+  // Show loading state while auth is being checked
+  if (isLoading) {
+    return (
+      <AppLayout title="Promoter Management">
+        <div className="space-y-6 animate-fade-in">
+          <Card>
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-8 w-48" />
+              </div>
+              <Skeleton className="h-4 w-full max-w-md mt-2" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-10 w-full max-w-sm mb-6" />
+              <div className="space-y-4">
+                <Skeleton className="h-64 w-full" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </AppLayout>
+    );
+  }
 
   // Only admins should access this page
   if (!isAuthenticated || user?.role !== UserRole.Admin) {
@@ -57,25 +84,15 @@ const Promoters = () => {
               </TabsList>
               
               <TabsContent value="all" className="mt-0 space-y-4">
-                <PromotersList />
+                <PromotersList filterStatus={null} />
               </TabsContent>
               
               <TabsContent value="pending" className="mt-0">
-                <div className="rounded-lg border p-8 text-center">
-                  <h3 className="text-lg font-medium">Pending Approval Section</h3>
-                  <p className="text-muted-foreground mt-2">
-                    This section will show promoters awaiting approval. Coming soon!
-                  </p>
-                </div>
+                <PromotersList filterStatus="pending" />
               </TabsContent>
               
               <TabsContent value="inactive" className="mt-0">
-                <div className="rounded-lg border p-8 text-center">
-                  <h3 className="text-lg font-medium">Inactive Promoters Section</h3>
-                  <p className="text-muted-foreground mt-2">
-                    This section will show inactive or rejected promoters. Coming soon!
-                  </p>
-                </div>
+                <PromotersList filterStatus="rejected" />
               </TabsContent>
             </Tabs>
           </CardContent>
