@@ -25,6 +25,7 @@ const ResetPassword = lazy(() => import("@/pages/ResetPassword"));
 const CreateShift = lazy(() => import("@/pages/CreateShift"));
 const Certificates = lazy(() => import("@/pages/Certificates"));
 const VerifyCertificatePage = lazy(() => import("@/pages/VerifyCertificatePage"));
+const Promoters = lazy(() => import("@/pages/Promoters"));
 
 // Loading fallback for lazy-loaded components
 const PageLoader = () => (
@@ -98,6 +99,7 @@ function App() {
                 <Route path="/account-settings" element={<AccountSettings />} />
                 <Route path="/certificates" element={<Certificates />} />
                 <Route path="/create-shift" element={<CreateShift />} />
+                <Route path="/promoters" element={<Promoters />} />
               </Route>
               
               {/* Public routes for certificate verification */}

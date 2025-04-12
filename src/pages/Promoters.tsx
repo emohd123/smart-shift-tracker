@@ -2,7 +2,7 @@
 import React from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/context/AuthContext";
-import { PromotersList } from "@/components/promoters/PromotersList";
+import { PromotersList } from "@/components/promoters/list/PromotersList";
 import { Navigate } from "react-router-dom";
 import { UserRole } from "@/types/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,7 +40,7 @@ const Promoters = () => {
               <UserX className="h-4 w-4" />
               Inactive Promoters
             </TabsTrigger>
-          </Tabs>
+          </TabsList>
           
           <TabsContent value="all" className="mt-0">
             <PromotersList />
