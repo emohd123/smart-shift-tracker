@@ -11,12 +11,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 
 const Promoters = () => {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [activeTab, setActiveTab] = useState("all");
   const navigate = useNavigate();
 
   // Show loading state while auth is being checked
-  if (isLoading) {
+  if (loading) {
     return (
       <AppLayout title="Promoter Management">
         <div className="space-y-6 animate-fade-in">
