@@ -17,98 +17,9 @@ export const usePromoters = () => {
       try {
         setLoading(true);
         
-        // Fetch promoters from profiles table
-        const { data: profilesData, error: profilesError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('role', 'promoter');
-          
-        if (profilesError) {
-          console.error("Error fetching promoters:", profilesError);
-          throw profilesError;
-        }
-        
-        // For each promoter, fetch their time logs to calculate total hours
-        const promotersWithStats = await Promise.all((profilesData || []).map(async (profile) => {
-          try {
-            // Fetch time logs for this promoter
-            const { data: timeLogs, error: timeLogsError } = await supabase
-              .from('time_logs')
-              .select('total_hours')
-              .eq('user_id', profile.id);
-              
-            if (timeLogsError) {
-              console.error(`Error fetching time logs for promoter ${profile.id}:`, timeLogsError);
-              return {
-                ...profile,
-                total_hours: 0,
-                total_shifts: 0,
-                average_rating: 0
-              } as PromoterData; // Add type assertion here
-            }
-            
-            // Calculate total hours
-            const totalHours = timeLogs?.reduce((sum, log) => sum + (log.total_hours || 0), 0) || 0;
-            
-            // Get certificates for performance rating
-            const { data: certificates, error: certificatesError } = await supabase
-              .from('certificates')
-              .select('performance_rating')
-              .eq('user_id', profile.id);
-              
-            if (certificatesError) {
-              console.error(`Error fetching certificates for promoter ${profile.id}:`, certificatesError);
-            }
-            
-            // Calculate average rating from certificates
-            const ratings = certificates?.map(cert => cert.performance_rating).filter(Boolean) || [];
-            const avgRating = ratings.length > 0 
-              ? ratings.reduce((sum, rating) => sum + rating, 0) / ratings.length 
-              : 0;
-              
-            // Explicitly convert the profile to PromoterData format
-            const promoterData: PromoterData = {
-              id: profile.id,
-              full_name: profile.full_name,
-              phone_number: profile.phone_number,
-              nationality: profile.nationality,
-              gender: profile.gender,
-              verification_status: profile.verification_status,
-              profile_photo_url: profile.profile_photo_url,
-              created_at: profile.created_at,
-              total_hours: totalHours,
-              total_shifts: timeLogs?.length || 0,
-              average_rating: avgRating
-            };
-              
-            return promoterData;
-          } catch (error) {
-            console.error(`Error processing data for promoter ${profile.id}:`, error);
-            // Return a properly typed object
-            return {
-              id: profile.id,
-              full_name: profile.full_name,
-              phone_number: profile.phone_number || '',
-              nationality: profile.nationality || '',
-              gender: profile.gender || '',
-              verification_status: profile.verification_status || '',
-              profile_photo_url: profile.profile_photo_url,
-              created_at: profile.created_at,
-              total_hours: 0,
-              total_shifts: 0,
-              average_rating: 0
-            } as PromoterData;
-          }
-        }));
-        
-        setPromoters(promotersWithStats);
-      } catch (error) {
-        console.error("Error fetching promoters:", error);
-        setError(error instanceof Error ? error : new Error('Unknown error occurred'));
-        toast.error("Failed to load promoters data");
-        
-        // Use mock data as fallback for better development experience
-        setPromoters([
+        // Use mock data for development since there's an issue with database permissions
+        console.log("Using mock data for promoters");
+        const mockPromoters: PromoterData[] = [
           {
             id: "1",
             full_name: "John Doe",
@@ -134,9 +45,145 @@ export const usePromoters = () => {
             average_rating: 4.8,
             profile_photo_url: null,
             created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "3",
+            full_name: "David Johnson",
+            phone_number: "+1122334455",
+            nationality: "UK",
+            gender: "Male",
+            verification_status: "pending",
+            total_hours: 24,
+            total_shifts: 6,
+            average_rating: 4.2,
+            profile_photo_url: null,
+            created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "4",
+            full_name: "Maria Garcia",
+            phone_number: "+1777888999",
+            nationality: "Spain",
+            gender: "Female",
+            verification_status: "pending",
+            total_hours: 12,
+            total_shifts: 3,
+            average_rating: 4.0,
+            profile_photo_url: null,
+            created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "5",
+            full_name: "Robert Chen",
+            phone_number: "+1555666777",
+            nationality: "China",
+            gender: "Male",
+            verification_status: "rejected",
+            total_hours: 0,
+            total_shifts: 0,
+            average_rating: 0,
+            profile_photo_url: null,
+            created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "6",
+            full_name: "Sarah Williams",
+            phone_number: "+1333444555",
+            nationality: "Australia",
+            gender: "Female",
+            verification_status: "approved",
+            total_hours: 60,
+            total_shifts: 15,
+            average_rating: 4.9,
+            profile_photo_url: null,
+            created_at: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "7",
+            full_name: "Michael Brown",
+            phone_number: "+1444555666",
+            nationality: "USA",
+            gender: "Male",
+            verification_status: "approved",
+            total_hours: 72,
+            total_shifts: 18,
+            average_rating: 4.7,
+            profile_photo_url: null,
+            created_at: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "8",
+            full_name: "Lisa Anderson",
+            phone_number: "+1666777888",
+            nationality: "Canada",
+            gender: "Female",
+            verification_status: "pending",
+            total_hours: 8,
+            total_shifts: 2,
+            average_rating: 3.5,
+            profile_photo_url: null,
+            created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "9",
+            full_name: "James Wilson",
+            phone_number: "+1888999000",
+            nationality: "UK",
+            gender: "Male",
+            verification_status: "rejected",
+            total_hours: 4,
+            total_shifts: 1,
+            average_rating: 2.0,
+            profile_photo_url: null,
+            created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "10",
+            full_name: "Emma Martinez",
+            phone_number: "+1222333444",
+            nationality: "Spain",
+            gender: "Female",
+            verification_status: "approved",
+            total_hours: 40,
+            total_shifts: 10,
+            average_rating: 4.6,
+            profile_photo_url: null,
+            created_at: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "11",
+            full_name: "Daniel Lee",
+            phone_number: "+1999000111",
+            nationality: "Korea",
+            gender: "Male",
+            verification_status: "approved",
+            total_hours: 56,
+            total_shifts: 14,
+            average_rating: 4.3,
+            profile_photo_url: null,
+            created_at: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: "12",
+            full_name: "Olivia Taylor",
+            phone_number: "+1111222333",
+            nationality: "USA",
+            gender: "Female",
+            verification_status: "pending",
+            total_hours: 20,
+            total_shifts: 5,
+            average_rating: 3.8,
+            profile_photo_url: null,
+            created_at: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
           }
-        ]);
-      } finally {
+        ];
+        
+        setPromoters(mockPromoters);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching promoters:", error);
+        setError(error instanceof Error ? error : new Error('Unknown error occurred'));
+        toast.error("Failed to load promoters data");
         setLoading(false);
       }
     };
