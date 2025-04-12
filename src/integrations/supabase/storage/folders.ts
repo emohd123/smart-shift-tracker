@@ -6,39 +6,35 @@ import { normalizePath, joinPaths } from "./pathUtils";
 
 /**
  * Create a folder in a bucket
- * Note: Supabase storage doesn't have explicit folder creation,
- * this creates an empty .folder file to simulate the folder
  */
 export const createFolder = async (
   bucket: string,
   folderPath: string
-): Promise<StorageResult<string>> => {
+): Promise<StorageResult<void>> => {
   try {
-    const normalizedPath = normalizePath(folderPath);
-    const folderMarkerPath = normalizedPath.endsWith('/') 
-      ? `${normalizedPath}.folder` 
-      : `${normalizedPath}/.folder`;
+    // Normalize and ensure path ends with '/'
+    let normalizedPath = normalizePath(folderPath);
+    if (!normalizedPath.endsWith('/')) {
+      normalizedPath += '/';
+    }
     
-    // Upload an empty file to mark the folder
+    // Create an empty file as a placeholder
     const { error } = await supabase.storage
       .from(bucket)
-      .upload(folderMarkerPath, new Blob([]), {
-        contentType: 'application/x-directory',
-        upsert: true
-      });
+      .upload(`${normalizedPath}.folder`, new Blob([]));
       
     if (error) {
-      return createErrorResponse<string>(
+      return createErrorResponse<void>(
         `Error creating folder in ${bucket}/${normalizedPath}: ${error.message}`,
         'FOLDER_CREATE_ERROR',
         error
       );
     }
     
-    return createSuccessResponse<string>(normalizedPath);
+    return createSuccessResponse<void>();
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return createErrorResponse<string>(
+    return createErrorResponse<void>(
       `Unexpected error creating folder: ${errorMessage}`,
       'FOLDER_CREATE_UNEXPECTED_ERROR',
       error
@@ -54,25 +50,44 @@ export const folderExistsInBucket = async (
   folderPath: string
 ): Promise<StorageResult<boolean>> => {
   try {
-    const normalizedPath = normalizePath(folderPath);
+    // Normalize path and ensure it ends with '/'
+    let normalizedPath = normalizePath(folderPath);
+    if (!normalizedPath.endsWith('/')) {
+      normalizedPath += '/';
+    }
     
-    // List files in the folder
+    // List the folder contents
     const { data, error } = await supabase.storage
       .from(bucket)
-      .list(normalizedPath, { limit: 1 });
+      .list(normalizedPath);
       
-    if (error && error.message !== 'The resource was not found') {
+    // If we can list contents, it exists
+    if (!error) {
+      return createSuccessResponse<boolean>(true);
+    }
+    
+    // Check for parent folder
+    const parentPath = normalizedPath.split('/').slice(0, -2).join('/');
+    const folderName = normalizedPath.split('/').slice(-2)[0];
+    
+    const { data: parentContents, error: parentError } = await supabase.storage
+      .from(bucket)
+      .list(parentPath);
+      
+    if (parentError) {
       return createErrorResponse<boolean>(
-        `Error checking if folder exists in ${bucket}/${normalizedPath}: ${error.message}`,
+        `Error checking if folder exists in ${bucket}/${normalizedPath}: ${parentError.message}`,
         'FOLDER_CHECK_ERROR',
-        error
+        parentError
       );
     }
     
-    // If we got data or a specific error, the folder exists
-    const exists = !!data && data.length > 0;
+    // Check if any item in the parent folder starts with our folder name
+    const exists = parentContents?.some(item => 
+      item.name === folderName || item.name === `${folderName}/`
+    );
     
-    return createSuccessResponse<boolean>(exists);
+    return createSuccessResponse<boolean>(!!exists);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return createErrorResponse<boolean>(
@@ -84,23 +99,19 @@ export const folderExistsInBucket = async (
 };
 
 /**
- * List all items in a folder
+ * List contents of a folder
  */
 export const listFolder = async (
   bucket: string,
-  folderPath: string = '',
-  options?: { limit?: number; offset?: number; sortBy?: { column: string; order: 'asc' | 'desc' } }
+  folderPath: string
 ): Promise<StorageResult<any[]>> => {
   try {
+    // Normalize path
     const normalizedPath = normalizePath(folderPath);
     
     const { data, error } = await supabase.storage
       .from(bucket)
-      .list(normalizedPath, {
-        limit: options?.limit || 100,
-        offset: options?.offset || 0,
-        sortBy: options?.sortBy
-      });
+      .list(normalizedPath);
       
     if (error) {
       return createErrorResponse<any[]>(
@@ -129,55 +140,53 @@ export const deleteFolder = async (
   folderPath: string
 ): Promise<StorageResult<void>> => {
   try {
-    const normalizedPath = normalizePath(folderPath);
+    // Normalize path and ensure it ends with '/'
+    let normalizedPath = normalizePath(folderPath);
+    if (!normalizedPath.endsWith('/')) {
+      normalizedPath += '/';
+    }
     
-    // First list all items in the folder
-    const listResult = await listFolder(bucket, normalizedPath, { limit: 1000 });
-    
-    if (!listResult.success) {
+    // First list all files in the folder
+    const { data, error } = await supabase.storage
+      .from(bucket)
+      .list(normalizedPath);
+      
+    if (error) {
       return createErrorResponse<void>(
-        `Error listing folder contents for deletion: ${listResult.error?.message}`,
+        `Error listing folder contents for deletion in ${bucket}/${normalizedPath}: ${error.message}`,
         'FOLDER_DELETE_LIST_ERROR',
-        listResult.error
+        error
       );
     }
     
-    const items = listResult.data || [];
-    
-    // Recursively delete subfolders and files
-    const deletionPromises = items.map(async (item) => {
+    // Process each item in the folder
+    for (const item of data || []) {
       const itemPath = joinPaths(normalizedPath, item.name);
       
-      if (item.id === '.folder' || item.id === '.emptyFolderPlaceholder') {
-        // Skip folder markers
-        return;
-      }
-      
-      if (item.metadata && item.metadata.mimetype === 'application/x-directory') {
-        // Recursively delete subfolder
-        return deleteFolder(bucket, itemPath);
-      } else {
-        // Delete file
-        const { error } = await supabase.storage
+      if (item.id) {
+        // It's a file, delete it
+        const { error: deleteError } = await supabase.storage
           .from(bucket)
           .remove([itemPath]);
           
-        if (error) {
-          console.error(`Error deleting ${itemPath}:`, error);
+        if (deleteError) {
+          console.error(`Error deleting file ${itemPath}:`, deleteError);
+          // Continue with other files
         }
+      } else {
+        // It's a subfolder, recursively delete it
+        await deleteFolder(bucket, itemPath);
       }
-    });
+    }
     
-    // Wait for all deletions to complete
-    await Promise.all(deletionPromises);
-    
-    // Finally, delete the folder marker if it exists
-    const { error } = await supabase.storage
+    // Delete the .folder placeholder if it exists
+    const { error: placeholderError } = await supabase.storage
       .from(bucket)
-      .remove([`${normalizedPath}/.folder`]);
+      .remove([`${normalizedPath}.folder`]);
       
-    if (error && error.message !== 'The resource was not found') {
-      console.error(`Error deleting folder marker:`, error);
+    if (placeholderError) {
+      console.error(`Error deleting folder placeholder:`, placeholderError);
+      // Not critical, continue
     }
     
     return createSuccessResponse<void>();
