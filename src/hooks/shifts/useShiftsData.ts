@@ -51,10 +51,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
       } catch (err) {
         console.error('Error fetching shifts:', err);
         setError(err instanceof Error ? err : new Error('Unknown error occurred'));
-        toast({
-          title: "Error",
-          description: "Failed to load shifts. Please try again."
-        });
+        toast.error("Failed to load shifts. Please try again.");
       } finally {
         setLoading(false);
       }
@@ -94,8 +91,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
       
       // Verify if user is admin before allowing deletion
       if (userRole !== 'admin') {
-        toast({
-          title: "Permission Denied",
+        toast.error("Permission Denied", {
           description: "Only admin users can delete shifts"
         });
         return;
@@ -122,18 +118,14 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
         console.error('Error removing shift from localStorage:', e);
       }
       
-      toast({
-        title: "Shift Deleted",
+      toast.success("Shift Deleted", {
         description: "The shift has been successfully deleted"
       });
       
     } catch (err) {
       console.error('Error deleting shift:', err);
       setError(err instanceof Error ? err : new Error('Failed to delete shift'));
-      toast({
-        title: "Error",
-        description: "Failed to delete shift. Please try again."
-      });
+      toast.error("Failed to delete shift. Please try again.");
     }
   }, [userRole]);
 
