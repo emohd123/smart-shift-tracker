@@ -7,8 +7,9 @@ import { Progress } from "@/components/ui/progress";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { PromoterData } from "../types";
-import { Eye } from "lucide-react";
+import { Eye, Phone, Mail, MapPin } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface PromoterTableRowProps {
   promoter: PromoterData;
@@ -78,7 +79,10 @@ export function PromoterTableRow({
 
   return (
     <TableRow 
-      className="cursor-pointer transition-colors hover:bg-muted/50"
+      className={cn(
+        "cursor-pointer transition-colors hover:bg-muted/50",
+        selectedPromoters.includes(promoter.id) && "bg-primary/5"
+      )}
       data-state={selectedPromoters.includes(promoter.id) ? "selected" : undefined}
     >
       <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
@@ -90,23 +94,40 @@ export function PromoterTableRow({
       </TableCell>
       <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)}>
         <div className="flex items-center gap-3">
-          <Avatar>
+          <Avatar className="border border-muted h-10 w-10">
             <AvatarImage src={promoter.profile_photo_url || ''} alt={promoter.full_name} />
-            <AvatarFallback className="bg-primary/10 text-primary">{getInitials(promoter.full_name)}</AvatarFallback>
+            <AvatarFallback className="bg-primary/10 text-primary font-medium">{getInitials(promoter.full_name)}</AvatarFallback>
           </Avatar>
           <div>
             <div className="font-medium">{promoter.full_name}</div>
-            <div className="text-sm text-muted-foreground">{promoter.phone_number}</div>
+            <div className="flex gap-2 text-sm text-muted-foreground">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center">
+                      <Phone className="h-3 w-3 mr-1" />
+                      <span>{promoter.phone_number}</span>
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Phone Number</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         </div>
       </TableCell>
       <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)}>
-        {promoter.nationality}
+        <div className="flex items-center gap-1">
+          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+          {promoter.nationality}
+        </div>
       </TableCell>
       <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)}>
         <div className="flex items-center gap-2">
           <div className={`w-2 h-2 rounded-full ${getStatusDotColor(promoter.verification_status)}`}></div>
-          <Badge variant="outline" className={getStatusColor(promoter.verification_status)}>
+          <Badge variant="outline" className={cn(getStatusColor(promoter.verification_status), "font-normal")}>
             {promoter.verification_status.charAt(0).toUpperCase() + promoter.verification_status.slice(1)}
           </Badge>
         </div>
