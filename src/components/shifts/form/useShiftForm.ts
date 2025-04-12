@@ -1,11 +1,10 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import usePromoters from "./usePromoters";
 import useShiftSubmission from "./useShiftSubmission";
 import { ShiftFormData } from "../types/ShiftTypes";
 
-export default function useShiftForm() {
+export default function useShiftForm(onExternalSubmit?: (data: ShiftFormData) => void) {
   const [formData, setFormData] = useState<ShiftFormData>({
     title: "",
     location: "",
@@ -54,7 +53,12 @@ export default function useShiftForm() {
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    submitShift(formData, e);
+    if (onExternalSubmit) {
+      e.preventDefault();
+      onExternalSubmit(formData);
+    } else {
+      submitShift(formData, e);
+    }
   };
 
   return {

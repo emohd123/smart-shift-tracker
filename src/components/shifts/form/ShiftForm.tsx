@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { CheckCircle2, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { PromoterOption } from "../types/PromoterTypes";
 import ShiftFormHeader from "./ShiftFormHeader";
 import BasicInfoFields from "./BasicInfoFields";
@@ -13,8 +13,13 @@ import LocationMapToggle from "./LocationMapToggle";
 import SubmitButton from "./SubmitButton";
 import useShiftForm from "./useShiftForm";
 import ValidationErrors from "./ValidationErrors";
+import { ShiftFormData } from "../types/ShiftTypes";
 
-export function ShiftForm() {
+interface ShiftFormProps {
+  onExternalSubmit?: (data: ShiftFormData) => void;
+}
+
+export function ShiftForm({ onExternalSubmit }: ShiftFormProps) {
   const {
     formData,
     loading,
@@ -25,7 +30,7 @@ export function ShiftForm() {
     handlePayRateTypeChange,
     handlePromoterSelect,
     handleSubmit
-  } = useShiftForm();
+  } = useShiftForm(onExternalSubmit);
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 

@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -74,7 +75,7 @@ const CreateShift = () => {
   return (
     <AppLayout title="Create Shift">
       <div className="max-w-4xl mx-auto">
-        <ShiftForm onSubmit={handleFormSubmit} />
+        <ShiftForm onExternalSubmit={handleFormSubmit} />
       </div>
     </AppLayout>
   );
