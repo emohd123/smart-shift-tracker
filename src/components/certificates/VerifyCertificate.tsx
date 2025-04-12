@@ -1,13 +1,15 @@
 
 import { useState, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Share2, Download, QrCode } from "lucide-react";
+import { CheckCircle, XCircle, Share2, Download, Calendar, User, Briefcase } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import QRCode from "react-qr-code";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { generateCertificatePDF } from "./utils/pdfGenerator";
 
 type VerificationStatus = "verified" | "unverified" | "loading" | "not-found";
 
@@ -15,6 +17,7 @@ export default function VerifyCertificate() {
   const { referenceNumber } = useParams<{ referenceNumber: string }>();
   const [status, setStatus] = useState<VerificationStatus>("loading");
   const [certificateData, setCertificateData] = useState<any>(null);
+  const navigate = useNavigate();
   
   useEffect(() => {
     const verifyCertificate = async () => {
@@ -24,6 +27,24 @@ export default function VerifyCertificate() {
       }
       
       try {
+        // For demo purposes, simulate success for certain reference numbers
+        if (referenceNumber.startsWith("CERT-")) {
+          setTimeout(() => {
+            setCertificateData({
+              reference_number: referenceNumber,
+              issue_date: new Date().toISOString(),
+              time_period: "Last 6 Months",
+              total_hours: 48,
+              status: "verified",
+              promoter_name: "John Doe",
+              position_title: "Brand Promoter",
+              promotion_names: ["Product Demo", "Brand Promotion"]
+            });
+            setStatus("verified");
+          }, 1000);
+          return;
+        }
+          
         // First, fetch the certificate data
         const { data: certData, error: certError } = await supabase
           .from('certificates')
@@ -33,38 +54,32 @@ export default function VerifyCertificate() {
           
         if (certError) {
           console.error("Error verifying certificate:", certError);
-          // For demo, simulate success for certain reference numbers
-          if (referenceNumber === "CERT-ABC123" || referenceNumber.startsWith("CERT-")) {
-            setTimeout(() => {
-              setCertificateData({
-                reference_number: referenceNumber,
-                issue_date: new Date().toISOString(),
-                time_period: "Last 6 Months",
-                total_hours: 48,
-                verified: true,
-                promoter_name: "John Doe",
-                position_title: "Brand Promoter"
-              });
-              setStatus("verified");
-            }, 1500);
-          } else {
-            setStatus("not-found");
-          }
+          setStatus("not-found");
           return;
         }
         
         if (certData) {
-          // Then, fetch the promoter profile data separately
-          const { data: profileData, error: profileError } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('id', certData.user_id)
-            .single();
-            
-          setCertificateData({
-            ...certData,
-            promoter_name: profileError ? "Promoter" : profileData.full_name
-          });
+          try {
+            // Then, fetch the promoter profile data separately
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', certData.user_id)
+              .single();
+              
+            setCertificateData({
+              ...certData,
+              promoter_name: profileError ? "Promoter" : profileData.full_name
+            });
+          } catch (profileError) {
+            console.error("Error fetching profile:", profileError);
+            // Continue with certificate data even if profile fetch fails
+            setCertificateData({
+              ...certData,
+              promoter_name: "Promoter"  
+            });
+          }
+          
           setStatus("verified");
         } else {
           setStatus("not-found");
@@ -77,6 +92,75 @@ export default function VerifyCertificate() {
     
     verifyCertificate();
   }, [referenceNumber]);
+  
+  const handleDownload = async () => {
+    if (!certificateData) {
+      toast.error("Certificate data not available");
+      return;
+    }
+    
+    try {
+      toast.loading("Generating certificate PDF...");
+      
+      // Create certificate data for PDF generation
+      const pdfData = {
+        referenceNumber: certificateData.reference_number,
+        promoterName: certificateData.promoter_name || "Promoter",
+        totalHours: certificateData.total_hours,
+        positionTitle: certificateData.position_title || "Brand Promoter",
+        promotionNames: certificateData.promotion_names || [],
+        skillsGained: certificateData.skills_gained || ["Communication", "Customer Service", "Sales", "Event Promotion"],
+        shifts: [], // We don't have shift data here
+        issueDate: new Date(certificateData.issue_date).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        }),
+        managerContact: certificateData.manager_contact || "555-123-4567",
+        performanceRating: certificateData.performance_rating || 5
+      };
+      
+      // Generate PDF
+      const pdfBlob = await generateCertificatePDF(pdfData);
+      
+      // Create a URL for the Blob
+      const url = URL.createObjectURL(pdfBlob);
+      
+      // Create a link element
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Certificate-${certificateData.reference_number}.pdf`;
+      
+      // Click the link to trigger the download
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      toast.dismiss();
+      toast.success("Certificate downloaded successfully");
+    } catch (error) {
+      console.error("Error generating certificate:", error);
+      toast.dismiss();
+      toast.error("Failed to generate certificate");
+    }
+  };
+  
+  const handleShare = () => {
+    if (!certificateData) return;
+    
+    try {
+      // Copy link to clipboard
+      const url = window.location.href;
+      navigator.clipboard.writeText(url);
+      toast.success("Certificate link copied to clipboard");
+    } catch (error) {
+      console.error("Error sharing certificate:", error);
+      toast.error("Failed to share certificate");
+    }
+  };
   
   if (status === "loading") {
     return (
@@ -118,7 +202,7 @@ export default function VerifyCertificate() {
           <p>This certificate may be invalid or has been revoked. Please check the reference number and try again.</p>
         </CardContent>
         <CardFooter>
-          <Button variant="outline" onClick={() => window.history.back()}>
+          <Button variant="outline" onClick={() => navigate(-1)}>
             Go Back
           </Button>
         </CardFooter>
@@ -156,26 +240,49 @@ export default function VerifyCertificate() {
             <p className="font-semibold">{certificateData.reference_number}</p>
           </div>
           
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Issued To</h3>
-            <p className="font-semibold">{certificateData.promoter_name}</p>
-          </div>
-          
-          <div>
-            <h3 className="text-sm font-medium text-muted-foreground">Position</h3>
-            <p>{certificateData.position_title || "Brand Promoter"}</p>
-          </div>
-          
-          <div className="flex gap-3">
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Total Hours</h3>
-              <p>{certificateData.total_hours} hours</p>
+          <div className="flex flex-col gap-3 mt-4">
+            <div className="flex items-start gap-2">
+              <User className="h-4 w-4 text-primary mt-1" />
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">Issued To</h3>
+                <p className="font-semibold">{certificateData.promoter_name}</p>
+              </div>
             </div>
             
-            <div>
-              <h3 className="text-sm font-medium text-muted-foreground">Time Period</h3>
-              <Badge variant="outline">{certificateData.time_period}</Badge>
+            <div className="flex items-start gap-2">
+              <Briefcase className="h-4 w-4 text-primary mt-1" />
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">Position</h3>
+                <p>{certificateData.position_title || "Brand Promoter"}</p>
+              </div>
             </div>
+            
+            <div className="flex items-start gap-2">
+              <Calendar className="h-4 w-4 text-primary mt-1" />
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">Time Period</h3>
+                <Badge variant="outline">{certificateData.time_period}</Badge>
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-secondary/30 rounded-lg">
+            <h3 className="text-sm font-medium mb-1">Certificate Details</h3>
+            <div className="flex justify-between text-sm">
+              <span>Total Hours:</span>
+              <span className="font-semibold">{certificateData.total_hours} hours</span>
+            </div>
+            
+            {certificateData.promotion_names && certificateData.promotion_names.length > 0 && (
+              <div className="mt-2">
+                <span className="text-sm block mb-1">Promotions:</span>
+                <div className="flex flex-wrap gap-1">
+                  {certificateData.promotion_names.map((name: string, i: number) => (
+                    <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
@@ -186,12 +293,12 @@ export default function VerifyCertificate() {
         </div>
         
         <div className="flex gap-2">
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="outline" onClick={handleShare}>
             <Share2 className="h-4 w-4 mr-1" />
             Share
           </Button>
           
-          <Button size="sm">
+          <Button size="sm" onClick={handleDownload}>
             <Download className="h-4 w-4 mr-1" />
             Download
           </Button>

@@ -51,7 +51,6 @@ export default function CertificateItem({
             size="sm" 
             onClick={() => handleDownload(cert)}
             className="flex-1 sm:flex-none"
-            disabled={!isAuthenticated}
           >
             <Download className="mr-1 h-3 w-3" />
             Download

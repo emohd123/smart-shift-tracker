@@ -18,7 +18,7 @@ export default function CertificatesList({
   handleViewDetails,
   formatDateForDisplay,
 }: CertificatesListProps) {
-  if (certificates.length === 0) {
+  if (!certificates || certificates.length === 0) {
     return null;
   }
 

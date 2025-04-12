@@ -15,94 +15,99 @@ export default function useCertificateList() {
   const [filterType, setFilterType] = useState<string>("all");
   
   const fetchCertificates = useCallback(async () => {
-    if (!user) {
-      setLoading(false);
-      return;
-    }
-    
     try {
       setLoading(true);
       
-      // Fetch certificates from the database
-      const { data, error } = await supabase
-        .from('certificates')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('issue_date', { ascending: false });
-        
-      if (error) {
-        console.error("Error fetching certificates:", error);
-        // For demo purposes, show mock data even if there's an error
-        setTimeout(() => {
-          setCertificates([
-            {
-              id: "1",
-              reference_number: "CERT-ABC123",
-              issue_date: new Date().toISOString(),
-              time_period: "Last 6 Months",
-              total_hours: 48,
-              pdf_url: null,
-              status: "verified",
-              promotion_names: ["Product Demo", "Brand Promotion"]
-            },
-            {
-              id: "2",
-              reference_number: "CERT-DEF456",
-              issue_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-              time_period: "Last 3 Months",
-              total_hours: 24,
-              pdf_url: null,
-              status: "verified",
-              promotion_names: ["Tech Expo"]
-            },
-            {
-              id: "3",
-              reference_number: "CERT-GHI789",
-              issue_date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-              time_period: "Last 1 Year",
-              total_hours: 120,
-              pdf_url: null,
-              status: "verified",
-              promotion_names: ["New Product Launch", "Sales Event"]
-            }
-          ]);
-          setLoading(false);
-        }, 1000);
+      // Demo data (used as fallback if DB fetch fails)
+      const demoCertificates = [
+        {
+          id: "1",
+          reference_number: "CERT-ABC123",
+          issue_date: new Date().toISOString(),
+          time_period: "Last 6 Months",
+          total_hours: 48,
+          pdf_url: null,
+          status: "verified",
+          promotion_names: ["Product Demo", "Brand Promotion"]
+        },
+        {
+          id: "2",
+          reference_number: "CERT-DEF456",
+          issue_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          time_period: "Last 3 Months",
+          total_hours: 24,
+          pdf_url: null,
+          status: "verified",
+          promotion_names: ["Tech Expo"]
+        },
+        {
+          id: "3",
+          reference_number: "CERT-GHI789",
+          issue_date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+          time_period: "Last 1 Year",
+          total_hours: 120,
+          pdf_url: null,
+          status: "verified",
+          promotion_names: ["New Product Launch", "Sales Event"]
+        }
+      ];
+
+      // If user is not authenticated, use demo data
+      if (!user) {
+        setCertificates(demoCertificates);
+        setLoading(false);
         return;
       }
       
-      if (data && data.length > 0) {
-        setCertificates(data);
-      } else {
-        // Demo data if no certificates found
-        setCertificates([
-          {
-            id: "1",
-            reference_number: "CERT-ABC123",
-            issue_date: new Date().toISOString(),
-            time_period: "Last 6 Months",
-            total_hours: 48,
-            pdf_url: null,
-            status: "verified",
-            promotion_names: ["Product Demo", "Brand Promotion"]
-          },
-          {
-            id: "2",
-            reference_number: "CERT-DEF456",
-            issue_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-            time_period: "Last 3 Months",
-            total_hours: 24,
-            pdf_url: null,
-            status: "verified",
-            promotion_names: ["Tech Expo"]
-          }
-        ]);
+      try {
+        // Fetch certificates from the database
+        const { data, error } = await supabase
+          .from('certificates')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('issue_date', { ascending: false });
+          
+        if (error) {
+          console.error("Error fetching certificates:", error);
+          setCertificates(demoCertificates);
+        } else if (data && data.length > 0) {
+          setCertificates(data);
+        } else {
+          // No certificates found, use demo data
+          setCertificates(demoCertificates);
+        }
+      } catch (dbError) {
+        console.error("Database error:", dbError);
+        setCertificates(demoCertificates);
       }
       
       setLoading(false);
     } catch (error) {
-      console.error("Error fetching certificates:", error);
+      console.error("Unexpected error in fetchCertificates:", error);
       setLoading(false);
+      // Set demo data as fallback
+      setCertificates([
+        {
+          id: "1",
+          reference_number: "CERT-ABC123",
+          issue_date: new Date().toISOString(),
+          time_period: "Last 6 Months",
+          total_hours: 48,
+          pdf_url: null,
+          status: "verified",
+          promotion_names: ["Product Demo", "Brand Promotion"]
+        },
+        {
+          id: "2",
+          reference_number: "CERT-DEF456",
+          issue_date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+          time_period: "Last 3 Months",
+          total_hours: 24,
+          pdf_url: null,
+          status: "verified",
+          promotion_names: ["Tech Expo"]
+        }
+      ]);
     }
   }, [user]);
   
@@ -116,52 +121,21 @@ export default function useCertificateList() {
       return;
     }
     
-    if (cert.pdf_url) {
-      window.open(cert.pdf_url, '_blank');
-      toast.success("Opening certificate PDF");
-      return;
-    }
-    
-    // If no PDF URL, try to generate one on the fly
-    toast.loading("Generating certificate PDF...");
-    
     try {
-      // Get certificate data
-      const { data, error } = await supabase
-        .from('certificates')
-        .select('*')
-        .eq('reference_number', cert.reference_number)
-        .single();
-        
-      if (error || !data) {
-        toast.error("Could not retrieve certificate data");
-        return;
-      }
-      
-      // Get user data
-      const { data: userData, error: userError } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', data.user_id)
-        .single();
-        
-      if (userError || !userData) {
-        toast.error("Could not retrieve user data");
-        return;
-      }
+      toast.loading("Generating certificate PDF...");
       
       // Create certificate data for PDF generation
       const certificateData = {
-        referenceNumber: data.reference_number,
-        promoterName: userData.full_name,
-        totalHours: data.total_hours,
-        positionTitle: data.position_title || "Brand Promoter",
-        promotionNames: data.promotion_names || [],
-        skillsGained: data.skills_gained || ["Communication", "Customer Service", "Sales", "Event Promotion"],
+        referenceNumber: cert.reference_number,
+        promoterName: user?.user_metadata?.name || "Promoter",
+        totalHours: cert.total_hours,
+        positionTitle: "Brand Promoter",
+        promotionNames: cert.promotion_names || [],
+        skillsGained: ["Communication", "Customer Service", "Sales", "Event Promotion"],
         shifts: [], // We don't have shift data here
-        issueDate: format(new Date(data.issue_date), "MMMM dd, yyyy"),
-        managerContact: data.manager_contact || "555-123-4567",
-        performanceRating: data.performance_rating || 5
+        issueDate: format(new Date(cert.issue_date), "MMMM dd, yyyy"),
+        managerContact: "555-123-4567",
+        performanceRating: 5
       };
       
       // Generate PDF
@@ -183,15 +157,18 @@ export default function useCertificateList() {
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
       
+      toast.dismiss();
       toast.success("Certificate downloaded successfully");
     } catch (error) {
       console.error("Error generating certificate:", error);
+      toast.dismiss();
       toast.error("Failed to generate certificate");
     }
   };
   
   const handleViewDetails = (cert: Certificate) => {
-    window.open(`/verify-certificate/${cert.reference_number}`, '_blank');
+    // Open in same tab to avoid popup blockers
+    window.location.href = `/verify-certificate/${cert.reference_number}`;
   };
   
   // Filter certificates by search term and filter type
