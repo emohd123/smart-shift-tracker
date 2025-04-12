@@ -25,10 +25,23 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
     // Simulate API request
     const timer = setTimeout(() => {
       try {
+        // Check localStorage for any saved shifts
+        const savedShifts = localStorage.getItem('shifts');
+        let allShifts = mockShifts;
+        
+        if (savedShifts) {
+          try {
+            const parsedShifts = JSON.parse(savedShifts);
+            allShifts = [...mockShifts, ...parsedShifts];
+          } catch (e) {
+            console.error('Error parsing saved shifts:', e);
+          }
+        }
+        
         // If admin, show all shifts, otherwise filter for the specific user
         const filteredShifts = userRole === 'admin' 
-          ? mockShifts 
-          : mockShifts.filter(shift => 
+          ? allShifts 
+          : allShifts.filter(shift => 
               // In a real app, you'd filter by shifts assigned to this promoter
               // For now, we'll return all shifts for any non-admin
               true
@@ -52,6 +65,30 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
     return () => clearTimeout(timer);
   }, [isAuthenticated, userId, userRole, toast]);
 
+  // Add a shift to the list
+  const addShift = useCallback((shift: Shift) => {
+    setShifts(prev => [shift, ...prev]);
+    
+    // Save to localStorage as well
+    try {
+      const savedShifts = localStorage.getItem('shifts');
+      let newSavedShifts = [shift];
+      
+      if (savedShifts) {
+        try {
+          const parsedShifts = JSON.parse(savedShifts);
+          newSavedShifts = [shift, ...parsedShifts];
+        } catch (e) {
+          console.error('Error parsing saved shifts:', e);
+        }
+      }
+      
+      localStorage.setItem('shifts', JSON.stringify(newSavedShifts));
+    } catch (e) {
+      console.error('Error saving shift to localStorage:', e);
+    }
+  }, []);
+
   // Handle shift deletion
   const deleteShift = useCallback((id: string) => {
     try {
@@ -67,6 +104,18 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
       
       // Remove the shift from the list
       setShifts(prev => prev.filter(shift => shift.id !== id));
+      
+      // Remove from localStorage if it exists there
+      try {
+        const savedShifts = localStorage.getItem('shifts');
+        if (savedShifts) {
+          const parsedShifts = JSON.parse(savedShifts);
+          const updatedShifts = parsedShifts.filter((shift: Shift) => shift.id !== id);
+          localStorage.setItem('shifts', JSON.stringify(updatedShifts));
+        }
+      } catch (e) {
+        console.error('Error removing shift from localStorage:', e);
+      }
       
       toast({
         title: "Shift Deleted",
@@ -90,6 +139,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
     shifts,
     loading,
     error,
-    deleteShift
+    deleteShift,
+    addShift
   };
 };

@@ -1,56 +1,59 @@
-
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import usePromoters from "./usePromoters";
 import useShiftSubmission from "./useShiftSubmission";
-import { ShiftFormData, UseShiftFormReturn } from "./types";
+import { ShiftFormData } from "./types";
 
-export default function useShiftForm(): UseShiftFormReturn {
-  const { promoters, loadingPromoters } = usePromoters();
-  const { submitShift, loading } = useShiftSubmission();
-  
+export default function useShiftForm() {
   const [formData, setFormData] = useState<ShiftFormData>({
     title: "",
     location: "",
     dateRange: undefined,
-    startTime: "09:00",
-    endTime: "17:00",
-    payRate: "15",
+    startTime: "",
+    endTime: "",
+    payRate: "",
     payRateType: "hour",
-    selectedPromoterId: ""
+    selectedPromoterIds: []
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const { promoters, loadingPromoters } = usePromoters();
+  const { submitShift, loading } = useShiftSubmission();
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData({
-      ...formData,
-      [name]: value
-    });
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleDateRangeChange = (range: DateRange | undefined) => {
-    setFormData({
-      ...formData,
-      dateRange: range
-    });
+    setFormData(prev => ({ ...prev, dateRange: range }));
   };
 
   const handlePayRateTypeChange = (value: string) => {
-    setFormData({
-      ...formData,
-      payRateType: value
-    });
+    setFormData(prev => ({ ...prev, payRateType: value }));
   };
 
-  const handlePromoterSelect = (value: string) => {
-    setFormData({
-      ...formData,
-      selectedPromoterId: value
+  const handlePromoterSelect = (promoterId: string) => {
+    setFormData(prev => {
+      if (promoterId === "none") {
+        return { ...prev, selectedPromoterIds: [] };
+      }
+      
+      if (prev.selectedPromoterIds.includes(promoterId)) {
+        return {
+          ...prev,
+          selectedPromoterIds: prev.selectedPromoterIds.filter(id => id !== promoterId)
+        };
+      }
+      
+      return {
+        ...prev,
+        selectedPromoterIds: [...prev.selectedPromoterIds, promoterId]
+      };
     });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
-    return submitShift(formData, e);
+    submitShift(formData, e);
   };
 
   return {

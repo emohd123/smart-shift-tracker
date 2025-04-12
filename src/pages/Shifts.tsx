@@ -12,7 +12,7 @@ const Shifts = () => {
   const navigate = useNavigate();
   
   // Fetch shifts data based on user role and authentication status
-  const { shifts, loading, error, deleteShift } = useShiftsData({
+  const { shifts, loading, error, deleteShift, addShift } = useShiftsData({
     userId: user?.id,
     userRole: user?.role,
     isAuthenticated
@@ -33,6 +33,15 @@ const Shifts = () => {
       navigate("/login");
     }
   }, [isAuthenticated, navigate]);
+
+  // Make addShift available globally for other components
+  useEffect(() => {
+    window.addShift = addShift;
+    
+    return () => {
+      window.addShift = undefined;
+    };
+  }, [addShift]);
 
   if (!isAuthenticated) {
     return null; // Don't render anything while redirecting

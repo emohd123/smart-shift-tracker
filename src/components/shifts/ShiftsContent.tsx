@@ -13,6 +13,7 @@ declare global {
   interface Window {
     deleteShift?: (id: string) => void;
     startTimeTracking?: (shift: Shift) => void;
+    addShift?: (shift: Shift) => void;
   }
 }
 

@@ -90,7 +90,7 @@ export function ShiftForm() {
             <Info className="h-4 w-4" />
             <AlertTitle>Info</AlertTitle>
             <AlertDescription>
-              Fill in all required fields to create a new shift. Optionally, you can assign a promoter and set a precise location.
+              Fill in all required fields to create a new shift. You can assign multiple promoters and set a precise location.
             </AlertDescription>
           </Alert>
 
@@ -118,7 +118,7 @@ export function ShiftForm() {
           
           <PromoterSelector
             promoters={promoters}
-            selectedPromoterId={formData.selectedPromoterId}
+            selectedPromoterIds={formData.selectedPromoterIds}
             onSelect={handlePromoterSelect}
             loading={loadingPromoters}
           />
