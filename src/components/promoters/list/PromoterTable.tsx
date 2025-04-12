@@ -9,6 +9,7 @@ import { PromoterTableHeader } from "./PromoterTableHeader";
 import { PromoterTableRow } from "./PromoterTableRow";
 import { TablePagination } from "./TablePagination";
 import { PromoterData } from "../types";
+import { Card } from "@/components/ui/card";
 
 interface PromoterTableProps {
   paginatedPromoters: PromoterData[];
@@ -42,45 +43,48 @@ export function PromoterTable({
   const totalPages = Math.ceil(filteredByStatus.length / itemsPerPage);
 
   return (
-    <div className="rounded-md border bg-card">
-      <Table>
-        <PromoterTableHeader
-          toggleSort={toggleSort}
-          sortBy={sortBy}
-          sortDirection={sortDirection}
-          handleSelectAll={handleSelectAll}
-          selectedPromoters={selectedPromoters}
-          paginatedPromoters={paginatedPromoters}
-        />
-        <TableBody>
-          {paginatedPromoters.length === 0 ? (
-            <TableRow>
-              <TableCell colSpan={8} className="h-24 text-center">
-                No promoters found.
-              </TableCell>
-            </TableRow>
-          ) : (
-            paginatedPromoters.map((promoter) => (
-              <PromoterTableRow
-                key={promoter.id}
-                promoter={promoter}
-                setSelectedPromoter={setSelectedPromoter}
-                handleSelectPromoter={handleSelectPromoter}
-                selectedPromoters={selectedPromoters}
-              />
-            ))
-          )}
-        </TableBody>
-      </Table>
+    <Card className="overflow-hidden">
+      <div className="rounded-md border-0 bg-card">
+        <Table>
+          <PromoterTableHeader
+            toggleSort={toggleSort}
+            sortBy={sortBy}
+            sortDirection={sortDirection}
+            handleSelectAll={handleSelectAll}
+            selectedPromoters={selectedPromoters}
+            paginatedPromoters={paginatedPromoters}
+          />
+          <TableBody>
+            {paginatedPromoters.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={8} className="h-24 text-center">
+                  No promoters found.
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginatedPromoters.map((promoter) => (
+                <PromoterTableRow
+                  key={promoter.id}
+                  promoter={promoter}
+                  setSelectedPromoter={setSelectedPromoter}
+                  handleSelectPromoter={handleSelectPromoter}
+                  selectedPromoters={selectedPromoters}
+                />
+              ))
+            )}
+          </TableBody>
+        </Table>
 
-      {/* Pagination */}
-      {filteredByStatus.length > itemsPerPage && (
-        <TablePagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          setCurrentPage={setCurrentPage}
-        />
-      )}
-    </div>
+        {/* Pagination */}
+        {filteredByStatus.length > 0 && (
+          <TablePagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            setCurrentPage={setCurrentPage}
+            totalItems={filteredByStatus.length}
+          />
+        )}
+      </div>
+    </Card>
   );
 }

@@ -7,6 +7,7 @@ import { Progress } from "@/components/ui/progress";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { format, parseISO } from "date-fns";
 import { PromoterData } from "../types";
+import { Eye } from "lucide-react";
 
 interface PromoterTableRowProps {
   promoter: PromoterData;
@@ -52,21 +53,38 @@ export function PromoterTableRow({
         return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   };
+  
+  // Get status dot indicator color
+  const getStatusDotColor = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return 'bg-green-500';
+      case 'pending':
+        return 'bg-yellow-500';
+      case 'rejected':
+        return 'bg-red-500';
+      default:
+        return 'bg-gray-500';
+    }
+  };
 
   return (
-    <TableRow className="cursor-pointer hover:bg-muted/50">
-      <TableCell onClick={(e) => e.stopPropagation()}>
+    <TableRow 
+      className="cursor-pointer transition-colors hover:bg-muted/50"
+      data-state={selectedPromoters.includes(promoter.id) ? "selected" : undefined}
+    >
+      <TableCell className="py-3" onClick={(e) => e.stopPropagation()}>
         <Checkbox 
           checked={selectedPromoters.includes(promoter.id)}
           onCheckedChange={() => handleSelectPromoter(promoter.id)}
           aria-label={`Select ${promoter.full_name}`}
         />
       </TableCell>
-      <TableCell onClick={() => setSelectedPromoter(promoter.id)}>
+      <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)}>
         <div className="flex items-center gap-3">
           <Avatar>
             <AvatarImage src={promoter.profile_photo_url || ''} alt={promoter.full_name} />
-            <AvatarFallback>{getInitials(promoter.full_name)}</AvatarFallback>
+            <AvatarFallback className="bg-primary/10 text-primary">{getInitials(promoter.full_name)}</AvatarFallback>
           </Avatar>
           <div>
             <div className="font-medium">{promoter.full_name}</div>
@@ -74,31 +92,40 @@ export function PromoterTableRow({
           </div>
         </div>
       </TableCell>
-      <TableCell onClick={() => setSelectedPromoter(promoter.id)}>
+      <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)}>
         {promoter.nationality}
       </TableCell>
-      <TableCell onClick={() => setSelectedPromoter(promoter.id)}>
-        <Badge variant="outline" className={getStatusColor(promoter.verification_status)}>
-          {promoter.verification_status.charAt(0).toUpperCase() + promoter.verification_status.slice(1)}
-        </Badge>
+      <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)}>
+        <div className="flex items-center gap-2">
+          <div className={`w-2 h-2 rounded-full ${getStatusDotColor(promoter.verification_status)}`}></div>
+          <Badge variant="outline" className={getStatusColor(promoter.verification_status)}>
+            {promoter.verification_status.charAt(0).toUpperCase() + promoter.verification_status.slice(1)}
+          </Badge>
+        </div>
       </TableCell>
-      <TableCell onClick={() => setSelectedPromoter(promoter.id)} className="text-right">
+      <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)} className="text-right">
         <div className="font-medium">{promoter.total_hours.toFixed(1)}</div>
         <div className="text-xs text-muted-foreground">{promoter.total_shifts} shifts</div>
       </TableCell>
-      <TableCell onClick={() => setSelectedPromoter(promoter.id)} className="text-right">
+      <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)} className="text-right">
         <div className="font-medium">{promoter.average_rating.toFixed(1)}/5</div>
-        <Progress value={promoter.average_rating * 20} className="h-1 w-16 ml-auto" />
+        <Progress 
+          value={promoter.average_rating * 20} 
+          className="h-1 w-16 ml-auto" 
+          indicatorClassName={promoter.average_rating >= 4 ? "bg-green-500" : promoter.average_rating >= 3 ? "bg-yellow-500" : "bg-red-500"}
+        />
       </TableCell>
-      <TableCell onClick={() => setSelectedPromoter(promoter.id)} className="text-right">
+      <TableCell className="py-3" onClick={() => setSelectedPromoter(promoter.id)} className="text-right">
         {formatDate(promoter.created_at)}
       </TableCell>
-      <TableCell>
+      <TableCell className="py-3">
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setSelectedPromoter(promoter.id)}
+          className="hover:bg-primary/10 hover:text-primary"
         >
+          <Eye className="h-4 w-4 mr-1" />
           View
         </Button>
       </TableCell>

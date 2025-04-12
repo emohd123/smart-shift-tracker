@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { PromoterData } from "../types";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 interface PromoterTableHeaderProps {
   toggleSort: (field: keyof PromoterData) => void;
@@ -22,13 +23,35 @@ export function PromoterTableHeader({
   paginatedPromoters
 }: PromoterTableHeaderProps) {
   // Get sort indicator
-  const getSortIndicator = (field: string) => {
+  const getSortIndicator = (field: keyof PromoterData) => {
     if (sortBy !== field) return null;
-    return sortDirection === 'asc' ? '↑' : '↓';
+    return sortDirection === 'asc' 
+      ? <ArrowUp className="h-3 w-3 ml-1 inline" /> 
+      : <ArrowDown className="h-3 w-3 ml-1 inline" />;
   };
 
+  // Create a sortable header
+  const SortableHeader = ({ 
+    field, 
+    label, 
+    className = "" 
+  }: { 
+    field: keyof PromoterData, 
+    label: string, 
+    className?: string 
+  }) => (
+    <Button 
+      variant="ghost" 
+      onClick={() => toggleSort(field)}
+      className={`font-semibold text-sm h-auto px-2 py-1 ${className}`}
+    >
+      <span>{label}</span>
+      {getSortIndicator(field)}
+    </Button>
+  );
+
   return (
-    <TableHeader>
+    <TableHeader className="bg-muted/50">
       <TableRow>
         <TableHead className="w-[50px]">
           <Checkbox 
@@ -38,60 +61,24 @@ export function PromoterTableHeader({
           />
         </TableHead>
         <TableHead className="w-[250px]">
-          <Button 
-            variant="ghost" 
-            onClick={() => toggleSort('full_name')}
-            className="font-semibold"
-          >
-            Promoter {getSortIndicator('full_name')}
-          </Button>
+          <SortableHeader field="full_name" label="Promoter" />
         </TableHead>
         <TableHead>
-          <Button 
-            variant="ghost" 
-            onClick={() => toggleSort('nationality')}
-            className="font-semibold"
-          >
-            Nationality {getSortIndicator('nationality')}
-          </Button>
+          <SortableHeader field="nationality" label="Nationality" />
         </TableHead>
         <TableHead>
-          <Button 
-            variant="ghost" 
-            onClick={() => toggleSort('verification_status')}
-            className="font-semibold"
-          >
-            Status {getSortIndicator('verification_status')}
-          </Button>
+          <SortableHeader field="verification_status" label="Status" />
         </TableHead>
         <TableHead className="text-right">
-          <Button 
-            variant="ghost" 
-            onClick={() => toggleSort('total_hours')}
-            className="font-semibold"
-          >
-            Hours {getSortIndicator('total_hours')}
-          </Button>
+          <SortableHeader field="total_hours" label="Hours" className="justify-end" />
         </TableHead>
         <TableHead className="text-right">
-          <Button 
-            variant="ghost" 
-            onClick={() => toggleSort('average_rating')}
-            className="font-semibold"
-          >
-            Rating {getSortIndicator('average_rating')}
-          </Button>
+          <SortableHeader field="average_rating" label="Rating" className="justify-end" />
         </TableHead>
         <TableHead className="text-right">
-          <Button 
-            variant="ghost" 
-            onClick={() => toggleSort('created_at')}
-            className="font-semibold"
-          >
-            Joined {getSortIndicator('created_at')}
-          </Button>
+          <SortableHeader field="created_at" label="Joined" className="justify-end" />
         </TableHead>
-        <TableHead className="w-[100px]"></TableHead>
+        <TableHead className="w-[100px] text-right">Actions</TableHead>
       </TableRow>
     </TableHeader>
   );

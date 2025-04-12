@@ -12,15 +12,24 @@ interface TablePaginationProps {
   currentPage: number;
   totalPages: number;
   setCurrentPage: (page: number) => void;
+  totalItems?: number;
 }
 
 export function TablePagination({
   currentPage,
   totalPages,
   setCurrentPage,
+  totalItems,
 }: TablePaginationProps) {
   return (
-    <div className="py-4 border-t">
+    <div className="py-4 border-t flex flex-col md:flex-row justify-between items-center gap-2">
+      {totalItems !== undefined && (
+        <div className="text-sm text-muted-foreground">
+          Showing {totalItems > 0 ? (currentPage - 1) * 10 + 1 : 0} to{" "}
+          {Math.min(currentPage * 10, totalItems)} of {totalItems} promoters
+        </div>
+      )}
+      
       <Pagination>
         <PaginationContent>
           <PaginationItem>
