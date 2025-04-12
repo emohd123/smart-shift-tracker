@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Save } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 type SaveLocationProps = {
@@ -18,21 +18,39 @@ export default function SaveLocation({
   radius,
   onSave 
 }: SaveLocationProps) {
-  const { toast } = useToast();
   const [saveLoading, setSaveLoading] = useState(false);
 
   const handleSaveLocation = async () => {
     if (!location) {
-      toast({
-        title: "Location Required",
-        description: "Please select a location on the map before saving.",
-        variant: "destructive"
+      toast.error("Location Required", {
+        description: "Please select a location on the map before saving."
       });
       return;
     }
     
     try {
       setSaveLoading(true);
+      
+      if (shiftId === "new") {
+        // For new shifts, we'll store the location in localStorage temporarily
+        const tempLocation = {
+          latitude: location.lat,
+          longitude: location.lng,
+          radius: radius,
+          timestamp: new Date().toISOString()
+        };
+        
+        localStorage.setItem('temp_shift_location', JSON.stringify(tempLocation));
+        
+        if (onSave) onSave();
+        
+        toast.success("Location Saved", {
+          description: "The location will be associated with your shift when you submit the form."
+        });
+        
+        setSaveLoading(false);
+        return;
+      }
       
       const { data: existingLocation } = await supabase
         .from('shift_locations')
@@ -66,18 +84,15 @@ export default function SaveLocation({
         throw result.error;
       }
       
-      toast({
-        title: "Location Saved",
-        description: "The check-in location has been set successfully.",
+      toast.success("Location Saved", {
+        description: "The check-in location has been set successfully."
       });
       
       if (onSave) onSave();
     } catch (error: any) {
       console.error("Error saving location:", error);
-      toast({
-        title: "Save Error",
-        description: error.message || "Could not save the location. Please try again.",
-        variant: "destructive"
+      toast.error("Save Error", {
+        description: error.message || "Could not save the location. Please try again."
       });
     } finally {
       setSaveLoading(false);

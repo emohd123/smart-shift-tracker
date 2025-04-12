@@ -94,6 +94,27 @@ export default function useShiftSubmission() {
         window.addShift(newShift);
       }
       
+      // Handle location data if it was set
+      try {
+        const tempLocationString = localStorage.getItem('temp_shift_location');
+        if (tempLocationString) {
+          const tempLocation = JSON.parse(tempLocationString);
+          
+          // Save the location data for this shift
+          await supabase.from('shift_locations').insert({
+            shift_id: shiftId,
+            latitude: tempLocation.latitude,
+            longitude: tempLocation.longitude,
+            radius: tempLocation.radius
+          });
+          
+          // Clear the temporary location
+          localStorage.removeItem('temp_shift_location');
+        }
+      } catch (locErr) {
+        console.error("Error handling location data:", locErr);
+      }
+      
       // If promoters were selected, try to assign them to the shift
       if (formData.selectedPromoterIds.length > 0) {
         for (const promoterId of formData.selectedPromoterIds) {

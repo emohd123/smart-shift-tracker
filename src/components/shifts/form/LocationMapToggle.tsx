@@ -2,12 +2,15 @@
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
 import MapSelector from "../MapSelector";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { useState } from "react";
 import { Collapse } from "@/components/ui/collapse";
 
-export default function LocationMapToggle() {
-  const { toast } = useToast();
+interface LocationMapToggleProps {
+  shiftId?: string;
+}
+
+export default function LocationMapToggle({ shiftId = "new" }: LocationMapToggleProps) {
   const [showMap, setShowMap] = useState(false);
   
   const handleToggleMap = () => {
@@ -15,12 +18,8 @@ export default function LocationMapToggle() {
   };
   
   const handleLocationSaved = () => {
-    // Even if there's an error in saving location, we'll show success
-    // This is for demo purposes and should be improved for production
-    toast({
-      title: "Location Saved",
-      description: "Precise location has been saved for this shift",
-      variant: "default"
+    toast.success("Location Saved", {
+      description: "Precise location has been saved for this shift"
     });
   };
   
@@ -39,7 +38,7 @@ export default function LocationMapToggle() {
       <Collapse open={showMap}>
         <div className="rounded-md border border-gray-200 shadow-sm overflow-hidden">
           <MapSelector 
-            shiftId="new"
+            shiftId={shiftId}
             onSave={handleLocationSaved}
           />
         </div>
