@@ -1,5 +1,5 @@
 
-import { Shift } from "../../shifts/ShiftCard";
+import { Shift } from "../../shifts/types/ShiftTypes";
 import { Calendar, Clock, MapPin, BanknoteIcon } from "lucide-react";
 import { formatBHD } from "../../shifts/utils/currencyUtils";
 

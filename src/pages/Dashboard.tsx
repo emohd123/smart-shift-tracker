@@ -6,7 +6,7 @@ import PromoterDashboard from "@/components/dashboard/PromoterDashboard";
 import { useAuth } from "@/context/AuthContext";
 import { ShiftStatus } from "@/types/database";
 import { useDashboardData } from "@/hooks/useDashboardData";
-import { Shift } from "@/components/shifts/ShiftCard";
+import { Shift } from "@/components/shifts/types/ShiftTypes";
 
 // Mock dashboard data for testing
 const mockCompletedShifts: Shift[] = [

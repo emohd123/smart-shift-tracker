@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, CheckCircle, DollarSign, Wallet } from "lucide-react";
-import { Shift } from "../../shifts/ShiftCard";
+import { Shift } from "../../shifts/types/ShiftTypes";
 import { formatBHD } from "../../shifts/utils/currencyUtils";
 
 type DashboardStatsProps = {

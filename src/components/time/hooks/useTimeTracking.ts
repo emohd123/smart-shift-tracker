@@ -1,6 +1,6 @@
 
 import { useCallback } from "react";
-import { Shift } from "../../shifts/ShiftCard";
+import { Shift } from "../../shifts/types/ShiftTypes";
 import { useAuth } from "@/context/AuthContext";
 import { useTimeTrackingState } from "./useTimeTrackingState";
 import { useActiveTimeLogCheck } from "./useActiveTimeLogCheck";

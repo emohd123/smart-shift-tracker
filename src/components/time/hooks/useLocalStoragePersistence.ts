@@ -1,6 +1,5 @@
-
 import { useEffect } from "react";
-import { Shift } from "../../shifts/ShiftCard";
+import { Shift } from "../../shifts/types/ShiftTypes";
 
 type UseLocalStoragePersistenceProps = {
   isTracking: boolean;

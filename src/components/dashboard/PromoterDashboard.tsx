@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import { Shift } from "../shifts/ShiftCard";
+import { Shift } from "../shifts/types/ShiftTypes";
 import DashboardStats from "./components/DashboardStats";
 import NextShiftCard from "./components/NextShiftCard";
 import UpcomingShiftsList from "./components/UpcomingShiftsList";

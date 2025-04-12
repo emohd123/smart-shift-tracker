@@ -1,5 +1,5 @@
 
-import { Shift } from "@/components/shifts/ShiftCard";
+import { Shift } from "@/components/shifts/types/ShiftTypes";
 
 /**
  * Custom hook to process dashboard data

@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Shift } from "@/components/shifts/ShiftCard";
+import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { mockShifts } from "@/utils/mockData";

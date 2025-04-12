@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Clock, DollarSign, MapPin, AlertCircle } from "lucide-react";
-import { Shift } from "../../shifts/ShiftCard";
+import { Shift } from "../../shifts/types/ShiftTypes";
 import { formatBHD } from "../../shifts/utils/currencyUtils";
 
 type NextShiftCardProps = {

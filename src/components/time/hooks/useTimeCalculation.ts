@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { Shift } from "../../shifts/ShiftCard";
+import { Shift } from "../../shifts/types/ShiftTypes";
 
 export function useTimeCalculation(isTracking: boolean, shift?: Shift, onCheckOutTime?: () => void) {
   const [elapsedTime, setElapsedTime] = useState(0);

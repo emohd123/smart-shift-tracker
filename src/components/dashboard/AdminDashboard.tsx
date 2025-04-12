@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ShiftList from "../shifts/ShiftList";
-import { Shift } from "../shifts/ShiftCard";
+import { Shift } from "../shifts/types/ShiftTypes";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { formatBHD } from "../shifts/utils/currencyUtils";
