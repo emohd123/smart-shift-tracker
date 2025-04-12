@@ -1,8 +1,10 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { mockShifts } from "@/utils/mockData";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { ShiftStatus } from "@/types/database";
 
 interface UseShiftsDataProps {
   userId?: string;
@@ -42,7 +44,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
             startTime: shift.start_time,
             endTime: shift.end_time,
             payRate: shift.pay_rate,
-            status: shift.status,
+            status: shift.status as ShiftStatus,
             isPaid: shift.is_paid
           }));
           
@@ -81,7 +83,9 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
       } catch (err) {
         console.error('Error fetching shifts:', err);
         setError(err instanceof Error ? err : new Error('Unknown error occurred'));
-        toast.error("Failed to load shifts. Please try again.");
+        toast.error("Failed to load shifts", {
+          description: "Please try again."
+        });
       } finally {
         setLoading(false);
       }
@@ -106,7 +110,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
           location: shift.location,
           status: shift.status,
           pay_rate: shift.payRate,
-          pay_rate_type: 'hour',
+          pay_rate_type: shift.payRateType || 'hour',
           is_paid: shift.isPaid || false
         })
         .select();
@@ -139,10 +143,14 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
         console.error('Error saving shift to localStorage:', e);
       }
       
-      toast.success("Shift added successfully");
+      toast.success("Shift added successfully", {
+        description: "The shift has been added to the database"
+      });
     } catch (error) {
       console.error('Error adding shift:', error);
-      toast.error("Failed to add shift to database. Saving locally only.");
+      toast.error("Failed to add shift to database", {
+        description: "Saving locally only"
+      });
       
       // If database save fails, at least update local state
       setShifts(prev => [shift, ...prev]);
@@ -203,7 +211,9 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
     } catch (err) {
       console.error('Error deleting shift:', err);
       setError(err instanceof Error ? err : new Error('Failed to delete shift'));
-      toast.error("Failed to delete shift. Please try again.");
+      toast.error("Failed to delete shift", {
+        description: "Please try again"
+      });
     }
   }, [userRole]);
 

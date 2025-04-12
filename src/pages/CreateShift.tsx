@@ -3,12 +3,13 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
 import AppLayout from "@/components/layout/AppLayout";
-import ShiftForm from "@/components/shifts/form/ShiftForm";
+import { ShiftForm } from "@/components/shifts/form/ShiftForm";
 import { useShiftsData } from "@/hooks/shifts/useShiftsData";
 import { useAuth } from "@/context/AuthContext";
 import { ShiftFormData } from "@/components/shifts/types/ShiftTypes";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import { ShiftStatus } from "@/types/database";
 
 const CreateShift = () => {
   const navigate = useNavigate();
@@ -56,7 +57,7 @@ const CreateShift = () => {
       startTime: data.startTime,
       endTime: data.endTime,
       location: data.location,
-      status: "upcoming",
+      status: ShiftStatus.Upcoming,
       payRate: parseFloat(data.payRate),
       payRateType: data.payRateType,
       isPaid: false,
