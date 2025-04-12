@@ -16,15 +16,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { PromoterOption } from "../ShiftForm";
+import { PromoterOption } from "../types/PromoterTypes";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-type PromoterSelectorProps = {
+interface PromoterSelectorProps {
   promoters: PromoterOption[];
   selectedPromoterIds: string[];
   onSelect: (value: string) => void;
   loading: boolean;
-};
+}
 
 export default function PromoterSelector({
   promoters,

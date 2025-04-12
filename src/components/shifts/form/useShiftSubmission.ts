@@ -5,8 +5,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { ShiftStatus } from "@/types/database";
-import { ShiftFormData } from "./types";
 import { v4 as uuidv4 } from 'uuid';
+import { Shift, ShiftFormData } from "../types/ShiftTypes";
 
 export default function useShiftSubmission() {
   const navigate = useNavigate();
@@ -72,7 +72,7 @@ export default function useShiftSubmission() {
       // Create a shift object for the frontend with the correct Shift interface properties
       const payRateValue = formData.payRate ? parseFloat(formData.payRate) : 0;
       
-      const newShift = {
+      const newShift: Shift = {
         id: shiftId,
         title: formData.title,
         location: formData.location,
@@ -81,8 +81,8 @@ export default function useShiftSubmission() {
         startTime: formData.startTime,
         endTime: formData.endTime,
         status: ShiftStatus.Upcoming,
-        payRateType: formData.payRateType,
         payRate: payRateValue,
+        payRateType: formData.payRateType,
         isPaid: false,
         is_assigned: formData.selectedPromoterIds.length > 0,
         assigned_promoters: formData.selectedPromoterIds.length,
@@ -117,42 +117,7 @@ export default function useShiftSubmission() {
       
       // If promoters were selected, try to assign them to the shift
       if (formData.selectedPromoterIds.length > 0) {
-        for (const promoterId of formData.selectedPromoterIds) {
-          try {
-            const { error: assignmentError } = await supabase
-              .from('shift_assignments')
-              .insert({
-                shift_id: shiftId,
-                promoter_id: promoterId
-              });
-
-            if (assignmentError) {
-              console.error("Assignment error:", assignmentError);
-              // Continue with success flow even if there's an error
-            }
-            
-            // Try to create a notification for the promoter
-            try {
-              const { error: notificationError } = await supabase
-                .from('notifications')
-                .insert({
-                  user_id: promoterId,
-                  title: "New Shift Assignment",
-                  message: `You have been assigned to a new shift: ${formData.title}`,
-                  type: "shift_assignment",
-                  related_id: shiftId
-                });
-                
-              if (notificationError) {
-                console.error("Notification error:", notificationError);
-              }
-            } catch (notifErr) {
-              console.error("Error creating notification:", notifErr);
-            }
-          } catch (innerError) {
-            console.error("Inner assignment error:", innerError);
-          }
-        }
+        await assignPromotersToShift(shiftId, formData.title, formData.selectedPromoterIds);
       }
 
       toast.success("Success", {
@@ -167,6 +132,45 @@ export default function useShiftSubmission() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+  
+  const assignPromotersToShift = async (shiftId: string, shiftTitle: string, promoterIds: string[]) => {
+    for (const promoterId of promoterIds) {
+      try {
+        const { error: assignmentError } = await supabase
+          .from('shift_assignments')
+          .insert({
+            shift_id: shiftId,
+            promoter_id: promoterId
+          });
+
+        if (assignmentError) {
+          console.error("Assignment error:", assignmentError);
+          // Continue with success flow even if there's an error
+        }
+        
+        // Try to create a notification for the promoter
+        try {
+          const { error: notificationError } = await supabase
+            .from('notifications')
+            .insert({
+              user_id: promoterId,
+              title: "New Shift Assignment",
+              message: `You have been assigned to a new shift: ${shiftTitle}`,
+              type: "shift_assignment",
+              related_id: shiftId
+            });
+            
+          if (notificationError) {
+            console.error("Notification error:", notificationError);
+          }
+        } catch (notifErr) {
+          console.error("Error creating notification:", notifErr);
+        }
+      } catch (innerError) {
+        console.error("Inner assignment error:", innerError);
+      }
     }
   };
 

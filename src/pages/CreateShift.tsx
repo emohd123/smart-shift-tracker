@@ -1,9 +1,11 @@
 
-import { ShiftForm } from "@/components/shifts/ShiftForm";
+import { ShiftForm } from "@/components/shifts/form/ShiftForm";
 import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { ShieldAlert } from "lucide-react";
 
 export default function CreateShift() {
   const { user, isAuthenticated } = useAuth();
@@ -21,8 +23,22 @@ export default function CreateShift() {
     }
   }, [isAuthenticated, user, navigate]);
   
-  if (!isAuthenticated || (user && user.role !== "admin")) {
+  if (!isAuthenticated) {
     return null;
+  }
+  
+  if (user && user.role !== "admin") {
+    return (
+      <AppLayout title="Unauthorized">
+        <Alert variant="destructive" className="max-w-md mx-auto">
+          <ShieldAlert className="h-4 w-4" />
+          <AlertTitle>Access Denied</AlertTitle>
+          <AlertDescription>
+            You don't have permission to create shifts. This feature is only available to administrators.
+          </AlertDescription>
+        </Alert>
+      </AppLayout>
+    );
   }
   
   return (

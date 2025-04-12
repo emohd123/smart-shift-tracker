@@ -1,8 +1,9 @@
+
 import { useState } from "react";
 import { DateRange } from "react-day-picker";
 import usePromoters from "./usePromoters";
 import useShiftSubmission from "./useShiftSubmission";
-import { ShiftFormData } from "./types";
+import { ShiftFormData } from "../types/ShiftTypes";
 
 export default function useShiftForm() {
   const [formData, setFormData] = useState<ShiftFormData>({

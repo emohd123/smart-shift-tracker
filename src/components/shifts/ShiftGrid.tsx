@@ -1,5 +1,5 @@
 
-import { Shift } from "./ShiftCard";
+import { Shift } from "../types/ShiftTypes";
 import ShiftCard from "./ShiftCard";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -9,7 +9,11 @@ interface ShiftGridProps {
   onSelectShift?: (shiftId: string) => void;
 }
 
-const ShiftGrid = ({ shifts, selectedShifts = [], onSelectShift }: ShiftGridProps) => {
+export default function ShiftGrid({ 
+  shifts, 
+  selectedShifts = [], 
+  onSelectShift 
+}: ShiftGridProps) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {shifts.map((shift) => (
@@ -31,6 +35,4 @@ const ShiftGrid = ({ shifts, selectedShifts = [], onSelectShift }: ShiftGridProp
       ))}
     </div>
   );
-};
-
-export default ShiftGrid;
+}

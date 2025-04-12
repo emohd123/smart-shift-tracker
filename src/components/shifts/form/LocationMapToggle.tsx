@@ -1,10 +1,9 @@
 
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { MapPin } from "lucide-react";
-import MapSelector from "../MapSelector";
-import { toast } from "sonner";
-import { useState } from "react";
 import { Collapse } from "@/components/ui/collapse";
+import MapSelector from "../maps/MapSelector";
 
 interface LocationMapToggleProps {
   shiftId?: string;
@@ -18,9 +17,8 @@ export default function LocationMapToggle({ shiftId = "new" }: LocationMapToggle
   };
   
   const handleLocationSaved = () => {
-    toast.success("Location Saved", {
-      description: "Precise location has been saved for this shift"
-    });
+    // Map will auto-hide when location is saved
+    setShowMap(false);
   };
   
   return (

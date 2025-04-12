@@ -4,30 +4,16 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Clock, MapPin, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ShiftStatus } from "@/types/database";
 import { getStatusBadge, formatDate } from "./utils/shiftUtils";
 import { formatBHD } from "./utils/currencyUtils";
-
-export interface Shift {
-  id: string;
-  title: string;
-  date: string;
-  endDate?: string;
-  startTime: string;
-  endTime: string;
-  location: string;
-  status: ShiftStatus;
-  payRate: number;
-  payRateType?: string;
-  isPaid: boolean;
-}
+import { Shift } from "./types/ShiftTypes";
 
 interface ShiftCardProps {
   shift: Shift;
   selected?: boolean;
 }
 
-const ShiftCard = ({ shift, selected = false }: ShiftCardProps) => {
+export default function ShiftCard({ shift, selected = false }: ShiftCardProps) {
   const statusBadge = getStatusBadge(shift.status);
   
   // Create a formatted rate display
@@ -99,6 +85,4 @@ const ShiftCard = ({ shift, selected = false }: ShiftCardProps) => {
       </Card>
     </Link>
   );
-};
-
-export default ShiftCard;
+}

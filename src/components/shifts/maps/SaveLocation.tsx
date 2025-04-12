@@ -5,12 +5,12 @@ import { Save } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
-type SaveLocationProps = {
+interface SaveLocationProps {
   shiftId: string;
   location: { lat: number; lng: number } | null;
   radius: number;
   onSave?: () => void;
-};
+}
 
 export default function SaveLocation({ 
   shiftId, 
@@ -42,47 +42,17 @@ export default function SaveLocation({
         
         localStorage.setItem('temp_shift_location', JSON.stringify(tempLocation));
         
-        if (onSave) onSave();
-        
         toast.success("Location Saved", {
           description: "The location will be associated with your shift when you submit the form."
         });
         
+        if (onSave) onSave();
         setSaveLoading(false);
         return;
       }
       
-      const { data: existingLocation } = await supabase
-        .from('shift_locations')
-        .select('id')
-        .eq('shift_id', shiftId)
-        .single();
-      
-      let result;
-      
-      if (existingLocation) {
-        result = await supabase
-          .from('shift_locations')
-          .update({
-            latitude: location.lat,
-            longitude: location.lng,
-            radius: radius
-          })
-          .eq('id', existingLocation.id);
-      } else {
-        result = await supabase
-          .from('shift_locations')
-          .insert({
-            shift_id: shiftId,
-            latitude: location.lat,
-            longitude: location.lng,
-            radius: radius
-          });
-      }
-      
-      if (result.error) {
-        throw result.error;
-      }
+      // For existing shifts, save to database
+      await saveLocationToDatabase(shiftId, location, radius);
       
       toast.success("Location Saved", {
         description: "The check-in location has been set successfully."
@@ -97,6 +67,46 @@ export default function SaveLocation({
     } finally {
       setSaveLoading(false);
     }
+  };
+  
+  const saveLocationToDatabase = async (
+    shiftId: string, 
+    location: { lat: number; lng: number }, 
+    radius: number
+  ) => {
+    const { data: existingLocation } = await supabase
+      .from('shift_locations')
+      .select('id')
+      .eq('shift_id', shiftId)
+      .single();
+    
+    let result;
+    
+    if (existingLocation) {
+      result = await supabase
+        .from('shift_locations')
+        .update({
+          latitude: location.lat,
+          longitude: location.lng,
+          radius: radius
+        })
+        .eq('id', existingLocation.id);
+    } else {
+      result = await supabase
+        .from('shift_locations')
+        .insert({
+          shift_id: shiftId,
+          latitude: location.lat,
+          longitude: location.lng,
+          radius: radius
+        });
+    }
+    
+    if (result.error) {
+      throw result.error;
+    }
+    
+    return result;
   };
 
   return (
