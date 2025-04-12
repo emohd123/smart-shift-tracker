@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { v4 as uuidv4 } from "uuid";
@@ -20,14 +19,12 @@ const CreateShift = () => {
     isAuthenticated
   });
   
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
     
-    // Check if user is admin
     if (user?.role !== "admin") {
       toast.error("Permission Denied", {
         description: "Only admin users can create shifts"
@@ -39,7 +36,6 @@ const CreateShift = () => {
   const handleFormSubmit = (data: ShiftFormData) => {
     if (!isAuthenticated || !window.addShift) return;
     
-    // Format dates from the date picker
     const shiftDate = data.dateRange?.from 
       ? format(data.dateRange.from, 'yyyy-MM-dd') 
       : format(new Date(), 'yyyy-MM-dd');
@@ -48,7 +44,6 @@ const CreateShift = () => {
       ? format(data.dateRange.to, 'yyyy-MM-dd') 
       : undefined;
       
-    // Create the new shift object
     const newShift = {
       id: uuidv4(),
       title: data.title,
@@ -64,10 +59,8 @@ const CreateShift = () => {
       assigned_promoters: data.selectedPromoterIds.length,
     };
     
-    // Add shift using the global function (which calls the hook function)
     window.addShift(newShift);
     
-    // Redirect to shifts page
     toast.success("Shift Created", {
       description: "The shift has been successfully created"
     });
@@ -75,7 +68,7 @@ const CreateShift = () => {
   };
 
   if (!isAuthenticated || user?.role !== "admin") {
-    return null; // Don't render anything during redirect
+    return null;
   }
 
   return (
