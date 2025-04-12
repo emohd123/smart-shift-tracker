@@ -1,6 +1,6 @@
 
 import { forwardRef } from "react";
-import { Shift } from "../shifts/types/ShiftTypes";
+import { Shift } from "@/components/shifts/types/ShiftTypes";
 import TimeTrackerWrapper from "./TimeTrackerWrapper";
 
 type TimeTrackerProps = {

@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { Shift } from "./types/ShiftTypes"; // Update import path
+import { Shift } from "./types/ShiftTypes";
 import ShiftList from "./ShiftList";
 import { ShiftsLoading } from "./ShiftsLoading";
 import { motion } from "framer-motion";

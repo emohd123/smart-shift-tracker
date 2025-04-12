@@ -8,13 +8,13 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import ShiftGrid from "./ShiftGrid";
-import { Shift } from "./types/ShiftTypes"; // Update import path
-import { supabase } from "@/integrations/supabase/client";
+import { Shift } from "./types/ShiftTypes";
+import { toast } from "sonner";
 
 interface ShiftListProps {
   shifts: Shift[];
   title?: string;
-  deleteShift?: (id: string) => void; // Make deleteShift optional
+  deleteShift?: (id: string) => void;
 }
 
 const ShiftList = ({ shifts, title = "Shifts", deleteShift }: ShiftListProps) => {
@@ -50,42 +50,29 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift }: ShiftListProps) =>
     setIsDeleting(true);
     
     try {
-      // First delete all shift assignments
-      for (const shiftId of selectedShifts) {
-        const { error: assignmentError } = await supabase
-          .from('shift_assignments')
-          .delete()
-          .eq('shift_id', shiftId);
-        
-        if (assignmentError) {
-          console.error(`Error deleting assignments for shift ${shiftId}:`, assignmentError);
-        }
+      // Since we're using mock data, we'll skip the database operations
+      // and just call the deleteShift function for each selected shift
+      
+      console.log("Selected shifts for deletion:", selectedShifts);
+      
+      if (deleteShift) {
+        // Use the provided deleteShift function
+        selectedShifts.forEach(id => {
+          console.log("Deleting shift:", id);
+          deleteShift(id);
+        });
+      } else if (window.deleteShift) {
+        // Fallback to global deleteShift function
+        selectedShifts.forEach(id => {
+          console.log("Using global deleteShift for:", id);
+          window.deleteShift?.(id);
+        });
       }
-      
-      // Then delete the shifts
-      const { error } = await supabase
-        .from('shifts')
-        .delete()
-        .in('id', selectedShifts);
-      
-      if (error) throw error;
       
       toast({
         title: "Success",
         description: `${selectedShifts.length} shift${selectedShifts.length > 1 ? 's' : ''} deleted successfully`
       });
-      
-      // Update local state by removing deleted shifts
-      // Use the global deleteShift function if available
-      if (deleteShift && window.deleteShift) {
-        selectedShifts.forEach(id => {
-          window.deleteShift?.(id);
-        });
-      } else if (window.deleteShift) {
-        selectedShifts.forEach(id => {
-          window.deleteShift?.(id);
-        });
-      }
       
       // Clear selection
       setSelectedShifts([]);

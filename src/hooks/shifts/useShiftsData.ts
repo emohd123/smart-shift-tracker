@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useCallback } from "react";
-import { Shift } from "@/components/shifts/types/ShiftTypes"; // Update import path
+import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { mockShifts } from "@/utils/mockData";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 
 interface UseShiftsDataProps {
   userId?: string;
@@ -14,7 +14,6 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
   const [shifts, setShifts] = useState<Shift[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
 
   // Load shifts based on user role
   useEffect(() => {
@@ -54,8 +53,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
         setError(err instanceof Error ? err : new Error('Unknown error occurred'));
         toast({
           title: "Error",
-          description: "Failed to load shifts. Please try again.",
-          variant: "destructive"
+          description: "Failed to load shifts. Please try again."
         });
       } finally {
         setLoading(false);
@@ -63,7 +61,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
     }, 800);
     
     return () => clearTimeout(timer);
-  }, [isAuthenticated, userId, userRole, toast]);
+  }, [isAuthenticated, userId, userRole]);
 
   // Add a shift to the list
   const addShift = useCallback((shift: Shift) => {
@@ -98,21 +96,21 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
       if (userRole !== 'admin') {
         toast({
           title: "Permission Denied",
-          description: "Only admin users can delete shifts",
-          variant: "destructive"
+          description: "Only admin users can delete shifts"
         });
         return;
       }
       
-      // Remove the shift from the list - filter out the shift with matching ID
+      // Remove the shift from the list 
       setShifts(prev => {
-        console.log("Previous shifts:", prev);
+        console.log("Previous shifts count:", prev.length);
         const filtered = prev.filter(shift => shift.id !== id);
-        console.log("Filtered shifts:", filtered);
+        console.log("Filtered shifts count:", filtered.length);
+        console.log("Removed:", prev.length - filtered.length, "shifts");
         return filtered;
       });
       
-      // Remove from localStorage if it exists there
+      // Update localStorage if it exists there
       try {
         const savedShifts = localStorage.getItem('shifts');
         if (savedShifts) {
@@ -126,21 +124,18 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
       
       toast({
         title: "Shift Deleted",
-        description: "The shift has been successfully deleted",
+        description: "The shift has been successfully deleted"
       });
       
-      // In a real app, you'd make an API request to delete the shift from the database
-      console.log("Deleting shift from database:", id);
     } catch (err) {
       console.error('Error deleting shift:', err);
       setError(err instanceof Error ? err : new Error('Failed to delete shift'));
       toast({
         title: "Error",
-        description: "Failed to delete shift. Please try again.",
-        variant: "destructive"
+        description: "Failed to delete shift. Please try again."
       });
     }
-  }, [userRole, toast]);
+  }, [userRole]);
 
   return {
     shifts,
