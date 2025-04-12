@@ -69,18 +69,21 @@ export default function useShiftSubmission() {
         console.error("Error with Supabase shift creation:", err);
       }
       
-      // Create a shift object for the frontend
+      // Create a shift object for the frontend with the correct Shift interface properties
+      const payRateValue = formData.payRate ? parseFloat(formData.payRate) : 0;
+      
       const newShift = {
         id: shiftId,
         title: formData.title,
         location: formData.location,
         date: formattedStartDate,
-        end_date: formattedEndDate,
-        start_time: formData.startTime,
-        end_time: formData.endTime,
+        endDate: formattedEndDate,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
         status: ShiftStatus.Upcoming,
-        pay_rate_type: formData.payRateType,
-        pay_rate: formData.payRate ? parseFloat(formData.payRate) : null,
+        payRateType: formData.payRateType,
+        payRate: payRateValue,
+        isPaid: false,
         is_assigned: formData.selectedPromoterIds.length > 0,
         assigned_promoters: formData.selectedPromoterIds.length,
         created_at: new Date().toISOString()
