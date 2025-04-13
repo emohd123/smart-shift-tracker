@@ -16,7 +16,7 @@ export type Certificate = {
     timestamp: string;
     ip_address: string;
     user_agent: string;
-  }>;
+  }> | any; // Use 'any' to handle JSONB from database
 };
 
 export type TimePeriod = "3months" | "6months" | "1year" | "all";
