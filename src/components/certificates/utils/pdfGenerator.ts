@@ -2,8 +2,18 @@
 import { CertificateData } from "../types/certificate";
 import { jsPDF } from "jspdf";
 import 'jspdf-autotable';
-import QRCode from 'qrcode';
-import { setupPdfStyles, addPdfHeader, addCertificateTitle, addRecipientInfo, addExperienceSection, addSkillsSection, addShiftsTable, addFooterInformation, addVerificationQRCode, addSignatureAndWatermark } from "./pdfGeneratorUtils";
+import { 
+  setupPdfStyles, 
+  addPdfHeader, 
+  addCertificateTitle, 
+  addRecipientInfo, 
+  addExperienceSection, 
+  addSkillsSection, 
+  addShiftsTable,
+  addFooterInformation, 
+  addVerificationQRCode, 
+  addSignatureAndWatermark 
+} from "./pdfGeneratorUtils";
 
 // We need to add this to make TypeScript recognize the autotable plugin
 declare module 'jspdf' {
