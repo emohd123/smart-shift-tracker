@@ -100,12 +100,12 @@ export const useStorageOperations = () => {
       
       // Check if file exists
       const filePath = `${userId}/${referenceNumber}.pdf`;
-      const { exists, error: existsError } = await fileExistsInBucket(
+      const existsResult = await fileExistsInBucket(
         certificateBucket,
         filePath
       );
       
-      if (existsError || !exists) {
+      if (!existsResult.success || existsResult.error || !existsResult.data) {
         console.warn(`Certificate PDF not found: ${filePath}`);
         return null;
       }
