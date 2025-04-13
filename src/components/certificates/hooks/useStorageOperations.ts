@@ -5,117 +5,177 @@ import { toast } from "sonner";
 import { 
   uploadFileToBucket, 
   getFileFromBucket, 
-  fileExistsInBucket,
-  createBucketIfNotExists,
-  getPublicUrl,
-  joinPaths
-} from "@/integrations/supabase/storage";
+  fileExistsInBucket, 
+  createBucketIfNotExists 
+} from "@/integrations/supabase/storageUtils";
+
+// Simple in-memory PDF cache to avoid regenerating the same PDFs
+const pdfBlobCache = new Map<string, Blob>();
 
 /**
- * Hook for handling certificate storage file operations
+ * Hook for certificate storage operations with optimized performance
  */
 export const useStorageOperations = () => {
-  const checkCertificateExists = useCallback(async (
-    userId: string,
-    referenceNumber: string
-  ) => {
-    try {
-      // Ensure certificate bucket exists
-      const bucketResult = await createBucketIfNotExists("certificates");
-      if (!bucketResult.success) {
-        console.error("Failed to ensure certificates bucket exists:", bucketResult.error);
-        return { exists: false, error: bucketResult.error };
-      }
+  const certificateBucket = "certificates";
 
-      // Check if PDF exists in storage using properly joined path
-      const path = joinPaths(userId, `${referenceNumber}.pdf`);
-      const fileResult = await fileExistsInBucket("certificates", path);
-      
-      if (!fileResult.success) {
-        console.error("Error checking if certificate exists:", fileResult.error);
-        return { exists: false, error: fileResult.error };
-      }
-      
-      return { exists: !!fileResult.data };
-    } catch (error) {
-      console.error("Error in checkCertificateExists:", error);
-      return { 
-        exists: false, 
-        error: {
-          message: error instanceof Error ? error.message : "Unknown error checking certificate existence",
-          code: "CERTIFICATE_CHECK_ERROR"
-        }
-      };
+  // Ensure bucket exists
+  const ensureBucketExists = useCallback(async () => {
+    const { success, error } = await createBucketIfNotExists(certificateBucket, {
+      public: false,
+      fileSizeLimit: 10 * 1024 * 1024 // 10MB limit for PDFs
+    });
+    
+    if (!success) {
+      console.error("Failed to ensure certificate bucket exists:", error);
+      return false;
     }
+    
+    return true;
   }, []);
 
+  // Upload certificate PDF to storage
   const uploadCertificatePDF = useCallback(async (
     userId: string,
     referenceNumber: string,
     pdfBlob: Blob
-  ) => {
+  ): Promise<string | null> => {
     try {
-      const file = new File([pdfBlob], `${referenceNumber}.pdf`, { type: "application/pdf" });
-      const path = joinPaths(userId, `${referenceNumber}.pdf`);
-      
-      // Upload the PDF file
-      const uploadResult = await uploadFileToBucket(file, "certificates", path);
-      
-      if (!uploadResult.success || !uploadResult.data) {
-        console.error("Error uploading PDF to storage:", uploadResult.error);
-        toast.error("Failed to upload certificate PDF");
+      const bucketExists = await ensureBucketExists();
+      if (!bucketExists) {
         return null;
       }
       
-      // Get the public URL
-      const urlResult = getPublicUrl("certificates", path);
-      const publicUrl = urlResult.success ? urlResult.data : uploadResult.data;
+      // Create a File object from the Blob
+      const pdfFile = new File([pdfBlob], `${referenceNumber}.pdf`, {
+        type: "application/pdf",
+        lastModified: new Date().getTime()
+      });
       
-      // Update certificate record with PDF URL
-      const { error: updateError } = await supabase
-        .from('certificates')
-        .update({ pdf_url: publicUrl })
-        .eq('reference_number', referenceNumber);
-        
-      if (updateError) {
-        console.error("Error updating certificate record:", updateError);
-        toast.error("Failed to update certificate with PDF URL");
+      // Upload the file
+      const filePath = `${userId}/${referenceNumber}.pdf`;
+      const { data: url, error, success } = await uploadFileToBucket(
+        pdfFile,
+        certificateBucket,
+        filePath,
+        { upsert: true, cacheControl: "3600" }
+      );
+      
+      if (!success || error) {
+        console.error("Error uploading certificate PDF:", error);
+        return null;
       }
       
-      return publicUrl;
+      // Update the certificates table with the PDF URL
+      const { error: updateError } = await supabase
+        .from("certificates")
+        .update({ pdf_url: url })
+        .eq("reference_number", referenceNumber);
+        
+      if (updateError) {
+        console.error("Error updating certificate with PDF URL:", updateError);
+      }
+      
+      // Add to cache
+      pdfBlobCache.set(`${userId}-${referenceNumber}`, pdfBlob);
+      
+      return url;
     } catch (error) {
-      console.error("Error in uploadCertificatePDF:", error);
-      toast.error("An unexpected error occurred while uploading PDF");
+      console.error("Unexpected error uploading certificate PDF:", error);
+      return null;
+    }
+  }, [ensureBucketExists]);
+
+  // Download certificate PDF from storage
+  const downloadCertificatePDF = useCallback(async (
+    userId: string,
+    referenceNumber: string
+  ): Promise<Blob | null> => {
+    try {
+      // Check cache first
+      const cacheKey = `${userId}-${referenceNumber}`;
+      if (pdfBlobCache.has(cacheKey)) {
+        console.log("Using cached PDF blob");
+        return pdfBlobCache.get(cacheKey) as Blob;
+      }
+      
+      // Check if file exists
+      const filePath = `${userId}/${referenceNumber}.pdf`;
+      const { exists, error: existsError } = await fileExistsInBucket(
+        certificateBucket,
+        filePath
+      );
+      
+      if (existsError || !exists) {
+        console.warn(`Certificate PDF not found: ${filePath}`);
+        return null;
+      }
+      
+      // Download the file
+      const { data: blob, error, success } = await getFileFromBucket(
+        certificateBucket,
+        filePath
+      );
+      
+      if (!success || error || !blob) {
+        console.error("Error downloading certificate PDF:", error);
+        return null;
+      }
+      
+      // Cache the blob
+      pdfBlobCache.set(cacheKey, blob);
+      
+      return blob;
+    } catch (error) {
+      console.error("Unexpected error downloading certificate PDF:", error);
       return null;
     }
   }, []);
 
-  const downloadCertificatePDF = useCallback(async (
+  // Check if certificate exists
+  const checkCertificateExists = useCallback(async (
     userId: string,
-    referenceNumber: string
-  ) => {
+    referenceNumber: string | null = null,
+    timePeriod: string | null = null
+  ): Promise<{ exists: boolean; error?: any; data?: any }> => {
     try {
-      const path = joinPaths(userId, `${referenceNumber}.pdf`);
+      let query = supabase
+        .from("certificates")
+        .select("*")
+        .eq("user_id", userId);
       
-      const downloadResult = await getFileFromBucket("certificates", path);
-      
-      if (!downloadResult.success) {
-        console.error("Error downloading certificate PDF:", downloadResult.error);
-        toast.error("Failed to download certificate PDF");
-        return null;
+      if (referenceNumber) {
+        query = query.eq("reference_number", referenceNumber);
       }
       
-      return downloadResult.data;
+      if (timePeriod) {
+        query = query.eq("time_period", timePeriod);
+      }
+      
+      const { data, error } = await query
+        .order("issued_date", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      if (error) {
+        return { exists: false, error };
+      }
+      
+      return { exists: !!data, data };
     } catch (error) {
-      console.error("Error in downloadCertificatePDF:", error);
-      toast.error("An unexpected error occurred while downloading PDF");
-      return null;
+      console.error("Error checking certificate existence:", error);
+      return { exists: false, error };
     }
+  }, []);
+
+  // Clear PDF cache
+  const clearPDFCache = useCallback(() => {
+    pdfBlobCache.clear();
   }, []);
 
   return {
     uploadCertificatePDF,
     downloadCertificatePDF,
-    checkCertificateExists
+    checkCertificateExists,
+    clearPDFCache
   };
 };
