@@ -11,8 +11,11 @@ export type Database = {
     Tables: {
       certificates: {
         Row: {
+          expiration_date: string | null
           id: string
           issue_date: string | null
+          issued_by: string | null
+          issued_date: string | null
           manager_contact: string
           pdf_url: string | null
           performance_rating: number | null
@@ -20,14 +23,19 @@ export type Database = {
           promotion_names: string[]
           reference_number: string
           skills_gained: string[]
+          status: string | null
           time_period: string
           total_hours: number
           user_id: string
+          verification_logs: Json | null
           verified: boolean | null
         }
         Insert: {
+          expiration_date?: string | null
           id?: string
           issue_date?: string | null
+          issued_by?: string | null
+          issued_date?: string | null
           manager_contact?: string
           pdf_url?: string | null
           performance_rating?: number | null
@@ -35,14 +43,19 @@ export type Database = {
           promotion_names: string[]
           reference_number: string
           skills_gained?: string[]
+          status?: string | null
           time_period: string
           total_hours: number
           user_id: string
+          verification_logs?: Json | null
           verified?: boolean | null
         }
         Update: {
+          expiration_date?: string | null
           id?: string
           issue_date?: string | null
+          issued_by?: string | null
+          issued_date?: string | null
           manager_contact?: string
           pdf_url?: string | null
           performance_rating?: number | null
@@ -50,9 +63,11 @@ export type Database = {
           promotion_names?: string[]
           reference_number?: string
           skills_gained?: string[]
+          status?: string | null
           time_period?: string
           total_hours?: number
           user_id?: string
+          verification_logs?: Json | null
           verified?: boolean | null
         }
         Relationships: []
@@ -404,6 +419,14 @@ export type Database = {
       }
       delete_user_time_logs: {
         Args: { user_id_param: string }
+        Returns: undefined
+      }
+      is_certificate_valid: {
+        Args: { ref_number: string }
+        Returns: boolean
+      }
+      log_certificate_verification: {
+        Args: { ref_number: string; ip_address: string; user_agent: string }
         Returns: undefined
       }
     }

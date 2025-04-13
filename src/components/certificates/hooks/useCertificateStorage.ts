@@ -1,4 +1,3 @@
-
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -12,11 +11,14 @@ import {
   normalizePath,
   joinPaths
 } from "@/integrations/supabase/storage";
+import { useAuth } from "@/context/AuthContext";
 
 /**
  * Hook for handling certificate storage operations
  */
 export const useCertificateStorage = () => {
+  const { user } = useAuth();
+  
   const saveCertificateRecord = useCallback(async (
     userId: string,
     certificateData: CertificateData
@@ -35,6 +37,12 @@ export const useCertificateStorage = () => {
         return false;
       }
       
+      // Determine if the user is an admin
+      const isAdmin = user?.role === 'admin';
+      
+      // Default status - admins can auto-approve
+      const certStatus = isAdmin ? 'approved' : 'pending';
+      
       if (existingCert) {
         console.log("Certificate already exists, updating record");
         
@@ -45,8 +53,10 @@ export const useCertificateStorage = () => {
             total_hours: certificateData.totalHours,
             promotion_names: certificateData.promotionNames,
             skills_gained: certificateData.skillsGained,
-            issue_date: new Date().toISOString(),
-            position_title: certificateData.positionTitle
+            issued_date: new Date().toISOString(),
+            position_title: certificateData.positionTitle,
+            status: certStatus,
+            issued_by: user?.id
           })
           .eq('reference_number', certificateData.referenceNumber);
           
@@ -59,7 +69,7 @@ export const useCertificateStorage = () => {
         return true;
       }
       
-      // Insert new record
+      // Insert new record with enhanced fields
       const { error } = await supabase
         .from('certificates')
         .insert({
@@ -71,7 +81,12 @@ export const useCertificateStorage = () => {
           skills_gained: certificateData.skillsGained,
           position_title: certificateData.positionTitle,
           performance_rating: certificateData.performanceRating,
-          manager_contact: certificateData.managerContact
+          manager_contact: certificateData.managerContact,
+          status: certStatus,
+          issued_by: user?.id,
+          issued_date: new Date().toISOString(),
+          // Expiration date optional, calculated if needed
+          expiration_date: certificateData.expirationDate || null
         });
         
       if (error) {
@@ -86,7 +101,7 @@ export const useCertificateStorage = () => {
       toast.error("An unexpected error occurred while saving certificate");
       return false;
     }
-  }, []);
+  }, [user]);
 
   const checkCertificateExists = useCallback(async (
     userId: string,
@@ -186,10 +201,70 @@ export const useCertificateStorage = () => {
     }
   }, []);
 
+  const logCertificateVerification = useCallback(async (
+    referenceNumber: string
+  ) => {
+    try {
+      // Get client IP and user agent
+      const ipAddress = "client-ip"; // In a real app, you would get this from the request
+      const userAgent = navigator.userAgent;
+      
+      // Call the RPC function to log verification
+      const { error } = await supabase.rpc(
+        'log_certificate_verification',
+        { 
+          ref_number: referenceNumber,
+          ip_address: ipAddress,
+          user_agent: userAgent
+        }
+      );
+      
+      if (error) {
+        console.error("Error logging certificate verification:", error);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error in logCertificateVerification:", error);
+      return false;
+    }
+  }, []);
+  
+  const checkCertificateValidity = useCallback(async (
+    referenceNumber: string
+  ) => {
+    try {
+      // Call the RPC function to check if certificate is valid
+      const { data, error } = await supabase.rpc(
+        'is_certificate_valid',
+        { ref_number: referenceNumber }
+      );
+      
+      if (error) {
+        console.error("Error checking certificate validity:", error);
+        return { valid: false, error };
+      }
+      
+      return { valid: !!data, error: null };
+    } catch (error) {
+      console.error("Error in checkCertificateValidity:", error);
+      return { 
+        valid: false, 
+        error: {
+          message: error instanceof Error ? error.message : "Unknown error checking certificate validity",
+          code: "CERTIFICATE_VALIDITY_CHECK_ERROR"
+        }
+      };
+    }
+  }, []);
+
   return {
     saveCertificateRecord,
     uploadCertificatePDF,
     downloadCertificatePDF,
-    checkCertificateExists
+    checkCertificateExists,
+    logCertificateVerification,
+    checkCertificateValidity
   };
 };

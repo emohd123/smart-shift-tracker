@@ -1,23 +1,24 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, XCircle, Share2, Download, Calendar, User, Briefcase } from "lucide-react";
+import { CheckCircle, XCircle, Share2, Download, Calendar, User, Briefcase, Clock, Shield } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { generateCertificatePDF } from "./utils/pdfGenerator";
+import { useCertificateStorage } from "./hooks/useCertificateStorage";
 
-type VerificationStatus = "verified" | "unverified" | "loading" | "not-found";
+type VerificationStatus = "verified" | "unverified" | "loading" | "not-found" | "expired";
 
 export default function VerifyCertificate() {
   const { referenceNumber } = useParams<{ referenceNumber: string }>();
   const [status, setStatus] = useState<VerificationStatus>("loading");
   const [certificateData, setCertificateData] = useState<any>(null);
   const navigate = useNavigate();
+  const { logCertificateVerification } = useCertificateStorage();
   
   useEffect(() => {
     const verifyCertificate = async () => {
@@ -27,15 +28,19 @@ export default function VerifyCertificate() {
       }
       
       try {
+        // Log this verification attempt
+        await logCertificateVerification(referenceNumber);
+        
         // For demo purposes, simulate success for certain reference numbers
         if (referenceNumber.startsWith("CERT-")) {
           setTimeout(() => {
             setCertificateData({
               reference_number: referenceNumber,
               issue_date: new Date().toISOString(),
+              issued_date: new Date().toISOString(),
               time_period: "Last 6 Months",
               total_hours: 48,
-              status: "verified",
+              status: "approved",
               promoter_name: "John Doe",
               position_title: "Brand Promoter",
               promotion_names: ["Product Demo", "Brand Promotion"]
@@ -45,39 +50,29 @@ export default function VerifyCertificate() {
           return;
         }
           
-        // First, fetch the certificate data
-        const { data: certData, error: certError } = await supabase
-          .from('certificates')
-          .select('*')
-          .eq('reference_number', referenceNumber)
-          .single();
-          
-        if (certError) {
-          console.error("Error verifying certificate:", certError);
-          setStatus("not-found");
+        // Call the Supabase Edge Function to verify the certificate
+        const res = await fetch(
+          `${window.location.origin}/functions/v1/verify-certificate?reference=${referenceNumber}`
+        );
+        
+        const data = await res.json();
+        
+        if (!res.ok || !data.valid) {
+          console.error("Error verifying certificate:", data.error);
+          setStatus(data.expired ? "expired" : "not-found");
           return;
         }
         
-        if (certData) {
-          try {
-            // Then, fetch the promoter profile data separately
-            const { data: profileData, error: profileError } = await supabase
-              .from('profiles')
-              .select('full_name')
-              .eq('id', certData.user_id)
-              .single();
-              
-            setCertificateData({
-              ...certData,
-              promoter_name: profileError ? "Promoter" : profileData.full_name
-            });
-          } catch (profileError) {
-            console.error("Error fetching profile:", profileError);
-            // Continue with certificate data even if profile fetch fails
-            setCertificateData({
-              ...certData,
-              promoter_name: "Promoter"  
-            });
+        if (data.certificate) {
+          setCertificateData(data.certificate);
+          
+          // Check if certificate is expired
+          if (data.certificate.expiration_date) {
+            const expiryDate = new Date(data.certificate.expiration_date);
+            if (expiryDate < new Date()) {
+              setStatus("expired");
+              return;
+            }
           }
           
           setStatus("verified");
@@ -91,7 +86,7 @@ export default function VerifyCertificate() {
     };
     
     verifyCertificate();
-  }, [referenceNumber]);
+  }, [referenceNumber, logCertificateVerification]);
   
   const handleDownload = async () => {
     if (!certificateData) {
@@ -210,16 +205,51 @@ export default function VerifyCertificate() {
     );
   }
   
+  if (status === "expired") {
+    return (
+      <Card className="max-w-lg mx-auto border-yellow-500">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-yellow-500">
+            <Clock className="h-6 w-6" />
+            Certificate Expired
+          </CardTitle>
+          <CardDescription>
+            This certificate has expired: {referenceNumber}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p>This certificate was valid but has now expired. Please contact the issuer for an updated certificate.</p>
+        </CardContent>
+        <CardFooter>
+          <Button variant="outline" onClick={() => navigate(-1)}>
+            Go Back
+          </Button>
+        </CardFooter>
+      </Card>
+    );
+  }
+  
   return (
     <Card className="max-w-lg mx-auto">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-green-600 dark:text-green-500">
-          <CheckCircle className="h-6 w-6" />
-          Certificate Verified
-        </CardTitle>
-        <CardDescription>
-          This is a valid work certificate issued by SmartShift
-        </CardDescription>
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="flex items-center gap-2 text-green-600 dark:text-green-500">
+              <CheckCircle className="h-6 w-6" />
+              Certificate Verified
+            </CardTitle>
+            <CardDescription>
+              This is a valid work certificate issued by SmartShift
+            </CardDescription>
+          </div>
+          <Badge 
+            variant={certificateData.status === "approved" ? "default" : "outline"} 
+            className="capitalize"
+          >
+            <Shield className="h-3.5 w-3.5 mr-1" />
+            {certificateData.status || "Verified"}
+          </Badge>
+        </div>
       </CardHeader>
       
       <CardContent className="space-y-6">
@@ -264,6 +294,16 @@ export default function VerifyCertificate() {
                 <Badge variant="outline">{certificateData.time_period}</Badge>
               </div>
             </div>
+            
+            {certificateData.expiration_date && (
+              <div className="flex items-start gap-2">
+                <Clock className="h-4 w-4 text-primary mt-1" />
+                <div>
+                  <h3 className="text-sm font-medium text-muted-foreground">Valid Until</h3>
+                  <p>{new Date(certificateData.expiration_date).toLocaleDateString()}</p>
+                </div>
+              </div>
+            )}
           </div>
           
           <div className="mt-4 p-3 bg-secondary/30 rounded-lg">
@@ -289,7 +329,7 @@ export default function VerifyCertificate() {
       
       <CardFooter className="flex flex-wrap gap-3 justify-between">
         <div className="text-sm text-muted-foreground">
-          Issued on: {new Date(certificateData.issue_date).toLocaleDateString()}
+          Issued on: {new Date(certificateData.issued_date || certificateData.issue_date).toLocaleDateString()}
         </div>
         
         <div className="flex gap-2">

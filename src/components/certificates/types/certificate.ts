@@ -7,8 +7,16 @@ export type Certificate = {
   total_hours: number;
   pdf_url: string | null;
   promotion_names?: string[];
-  status?: 'verified' | 'pending' | 'expired' | string; // Allow any string for backward compatibility
+  status?: 'approved' | 'pending' | 'rejected' | string; // Allow any string for backward compatibility
   performance_rating?: number;
+  issued_by?: string;
+  issued_date?: string;
+  expiration_date?: string;
+  verification_logs?: Array<{
+    timestamp: string;
+    ip_address: string;
+    user_agent: string;
+  }>;
 };
 
 export type TimePeriod = "3months" | "6months" | "1year" | "all";
@@ -24,4 +32,6 @@ export interface CertificateData {
   issueDate: string;
   managerContact: string;
   performanceRating: number;
-}
+  expirationDate?: string; // Optional expiration date
+  status?: string; // Certificate status
+};
