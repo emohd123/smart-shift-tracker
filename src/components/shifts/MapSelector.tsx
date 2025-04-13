@@ -26,6 +26,16 @@ export default function MapSelector({ shiftId, onSave }: MapSelectorProps) {
         setLoading(true);
         // Don't try to fetch location for a new shift
         if (shiftId === "new") {
+          // Check if there's a temporary location in localStorage
+          const tempLocationString = localStorage.getItem('temp_shift_location');
+          if (tempLocationString) {
+            const tempLocation = JSON.parse(tempLocationString);
+            setLocation({ 
+              lat: tempLocation.latitude, 
+              lng: tempLocation.longitude 
+            });
+            setRadius(tempLocation.radius);
+          }
           setLoading(false);
           return;
         }

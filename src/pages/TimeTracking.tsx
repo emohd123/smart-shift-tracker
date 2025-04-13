@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -71,53 +70,37 @@ const TimeTracking = () => {
             .eq('user_id', user.id)
             .is('check_out_time', null)
             .maybeSingle();
-            
-          if (timeLogError) {
-            console.error("Error fetching time log:", timeLogError);
-            toast.error("Could not retrieve active time tracking session");
-            setLoading(false);
-            return;
-          }
           
-          if (timeLogData) {
-            try {
-              const { data: shiftData, error: shiftError } = await supabase
-                .from('shifts')
-                .select('*')
-                .eq('id', timeLogData.shift_id)
-                .maybeSingle();
-                
-              if (shiftData && !shiftError) {
-                const shift: Shift = {
-                  id: shiftData.id,
-                  title: shiftData.title,
-                  date: shiftData.date,
-                  startTime: shiftData.start_time,
-                  endTime: shiftData.end_time,
-                  location: shiftData.location,
-                  status: shiftData.status as ShiftStatus,
-                  payRate: shiftData.pay_rate,
-                  isPaid: shiftData.is_paid || false
-                };
-                
-                setActiveShift(shift);
-              } else {
-                const mockShift: Shift = {
-                  id: timeLogData.shift_id,
-                  title: "Active Shift",
-                  date: new Date().toISOString().split('T')[0],
-                  startTime: new Date(timeLogData.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                  endTime: "End Time TBD",
-                  location: "Current Location",
-                  status: ShiftStatus.Ongoing,
-                  payRate: 10.00,
-                  isPaid: false
-                };
-                
-                setActiveShift(mockShift);
-              }
-            } catch (error) {
-              console.error("Error retrieving shift data:", error);
+        if (timeLogError) {
+          console.error("Error fetching time log:", timeLogError);
+          toast.error("Could not retrieve active time tracking session");
+          setLoading(false);
+          return;
+        }
+        
+        if (timeLogData) {
+          try {
+            const { data: shiftData, error: shiftError } = await supabase
+              .from('shifts')
+              .select('*')
+              .eq('id', timeLogData.shift_id)
+              .maybeSingle();
+              
+            if (shiftData && !shiftError) {
+              const shift: Shift = {
+                id: shiftData.id,
+                title: shiftData.title,
+                date: shiftData.date,
+                startTime: shiftData.start_time,
+                endTime: shiftData.end_time,
+                location: shiftData.location,
+                status: shiftData.status as ShiftStatus,
+                payRate: shiftData.pay_rate,
+                isPaid: shiftData.is_paid || false
+              };
+              
+              setActiveShift(shift);
+            } else {
               const mockShift: Shift = {
                 id: timeLogData.shift_id,
                 title: "Active Shift",
@@ -132,53 +115,69 @@ const TimeTracking = () => {
               
               setActiveShift(mockShift);
             }
+          } catch (error) {
+            console.error("Error retrieving shift data:", error);
+            const mockShift: Shift = {
+              id: timeLogData.shift_id,
+              title: "Active Shift",
+              date: new Date().toISOString().split('T')[0],
+              startTime: new Date(timeLogData.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+              endTime: "End Time TBD",
+              location: "Current Location",
+              status: ShiftStatus.Ongoing,
+              payRate: 10.00,
+              isPaid: false
+            };
+            
+            setActiveShift(mockShift);
           }
         }
-      } catch (error) {
-        console.error("Error checking active time tracking:", error);
-        toast.error("Error loading time tracking data");
-      } finally {
-        setLoading(false);
       }
-    };
-    
-    const fetchTimeLogHistory = async () => {
-      if (!user) return;
-      
-      setLoadingHistory(true);
-      try {
-        const { data, error } = await supabase
-          .from('time_logs')
-          .select(`
-            id,
-            shift_id,
-            check_in_time,
-            check_out_time,
-            total_hours,
-            earnings
-          `)
-          .eq('user_id', user.id)
-          .not('check_out_time', 'is', null)
-          .order('check_in_time', { ascending: false })
-          .limit(5);
-          
-        if (error) {
-          console.error("Error fetching time log history:", error);
-        } else {
-          setTimeLogHistory(data || []);
-        }
-      } catch (error) {
-        console.error("Error retrieving time log history:", error);
-      } finally {
-        setLoadingHistory(false);
-      }
-    };
-    
-    if (user) {
-      checkActiveTimeTracking();
-      fetchTimeLogHistory();
+    } catch (error) {
+      console.error("Error checking active time tracking:", error);
+      toast.error("Error loading time tracking data");
+    } finally {
+      setLoading(false);
     }
-  }, [user]);
+  };
+  
+  const fetchTimeLogHistory = async () => {
+    if (!user) return;
+    
+    setLoadingHistory(true);
+    try {
+      const { data, error } = await supabase
+        .from('time_logs')
+        .select(`
+          id,
+          shift_id,
+          check_in_time,
+          check_out_time,
+          total_hours,
+          earnings
+        `)
+        .eq('user_id', user.id)
+        .not('check_out_time', 'is', null)
+        .order('check_in_time', { ascending: false })
+        .limit(5);
+        
+      if (error) {
+        console.error("Error fetching time log history:", error);
+      } else {
+        setTimeLogHistory(data || []);
+      }
+    } catch (error) {
+      console.error("Error retrieving time log history:", error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+  
+  if (user) {
+    checkActiveTimeTracking();
+    fetchTimeLogHistory();
+  }
+}, [user]);
 
   const handleViewAllShifts = () => {
     navigate('/shifts');
