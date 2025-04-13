@@ -29,6 +29,29 @@ export const useShiftsDelete = ({ setShifts, setError, userRole }: UseShiftsDele
       const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       
       if (isValidUUID) {
+        // Delete any shift assignments first
+        const { error: assignmentError } = await supabase
+          .from('shift_assignments')
+          .delete()
+          .eq('shift_id', id);
+          
+        if (assignmentError) {
+          console.error('Error deleting shift assignments:', assignmentError);
+          // Continue with shift deletion even if assignment deletion fails
+        }
+        
+        // Delete any shift locations
+        const { error: locationError } = await supabase
+          .from('shift_locations')
+          .delete()
+          .eq('shift_id', id);
+          
+        if (locationError) {
+          console.error('Error deleting shift location:', locationError);
+          // Continue with shift deletion even if location deletion fails
+        }
+        
+        // Delete the shift
         const { error } = await supabase
           .from('shifts')
           .delete()
@@ -36,9 +59,9 @@ export const useShiftsDelete = ({ setShifts, setError, userRole }: UseShiftsDele
         
         if (error) {
           console.error('Error deleting shift from database:', error);
-          // Continue with local deletion even if database deletion fails
+          throw new Error(`Database error: ${error.message}`);
         } else {
-          console.log("Shift deleted from database");
+          console.log("Shift deleted from database successfully");
         }
       } else {
         console.log("Not a valid UUID, skipping database deletion for mock data:", id);

@@ -1,9 +1,14 @@
+
 import { useState, useEffect } from "react";
 import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { mockShifts } from "@/utils/mockData";
 import { toast } from "sonner";
-import { formatDatabaseShifts, filterShiftsByRole } from "./utils/shiftDataUtils";
+import { 
+  formatDatabaseShifts, 
+  filterShiftsByRole, 
+  synchronizeShifts 
+} from "./utils/shiftDataUtils";
 
 interface UseShiftsFetchProps {
   userId?: string;
@@ -28,17 +33,47 @@ export const useShiftsFetch = ({ userId, userRole, isAuthenticated }: UseShiftsF
         // First check if we have actual shifts in the database
         const { data: dbShifts, error: dbError } = await supabase
           .from('shifts')
-          .select('*');
+          .select('*, shift_assignments(promoter_id)');
         
-        if (dbError) throw dbError;
+        if (dbError) {
+          console.error('Database error fetching shifts:', dbError);
+          throw dbError;
+        }
         
         // If we have shifts in the database, use those
         if (dbShifts && dbShifts.length > 0) {
           console.log('Using shifts from database:', dbShifts);
-          const formattedShifts = formatDatabaseShifts(dbShifts);
+          
+          // Process shift assignments for each shift
+          const processedShifts = dbShifts.map(shift => {
+            const assignments = shift.shift_assignments || [];
+            return {
+              ...shift,
+              is_assigned: assignments.length > 0,
+              assigned_promoters: assignments.length
+            };
+          });
+          
+          const formattedShifts = formatDatabaseShifts(processedShifts);
+          
+          // Check localStorage for any saved shifts
+          const savedShifts = localStorage.getItem('shifts');
+          let localShifts: Shift[] = [];
+          
+          if (savedShifts) {
+            try {
+              localShifts = JSON.parse(savedShifts);
+              console.log('Local shifts found:', localShifts.length);
+            } catch (e) {
+              console.error('Error parsing saved shifts:', e);
+            }
+          }
+          
+          // Synchronize database and local shifts
+          const mergedShifts = synchronizeShifts(localShifts, formattedShifts);
           
           // Filter shifts based on user role
-          const filteredShifts = filterShiftsByRole(formattedShifts, userRole, userId);
+          const filteredShifts = filterShiftsByRole(mergedShifts, userRole, userId);
           setShifts(filteredShifts);
         } else {
           // Otherwise fall back to mock data and localStorage
@@ -69,6 +104,22 @@ export const useShiftsFetch = ({ userId, userRole, isAuthenticated }: UseShiftsF
         toast.error("Failed to load shifts", {
           description: "Please try again."
         });
+        
+        // Attempt to load from localStorage as fallback
+        try {
+          const savedShifts = localStorage.getItem('shifts');
+          if (savedShifts) {
+            const parsedShifts = JSON.parse(savedShifts);
+            const allShifts = [...mockShifts, ...parsedShifts];
+            const filteredShifts = filterShiftsByRole(allShifts, userRole, userId);
+            setShifts(filteredShifts);
+          } else {
+            setShifts(filterShiftsByRole(mockShifts, userRole, userId));
+          }
+        } catch (localErr) {
+          console.error('Error loading from localStorage:', localErr);
+          setShifts(filterShiftsByRole(mockShifts, userRole, userId));
+        }
       } finally {
         setLoading(false);
       }
