@@ -33,13 +33,18 @@ export const useRealTimeEnabled = () => {
     };
 
     // Call the function to enable realtime
-    const unsubscribe = enableRealtime();
+    const unsubscribePromise = enableRealtime();
     
     // Cleanup on unmount
     return () => {
-      if (unsubscribe && typeof unsubscribe === 'function') {
-        unsubscribe();
-      }
+      // Handle the promise properly
+      unsubscribePromise.then(unsubscribe => {
+        if (unsubscribe && typeof unsubscribe === 'function') {
+          unsubscribe();
+        }
+      }).catch(err => {
+        console.error("Error in cleanup:", err);
+      });
     };
   }, []);
 };
