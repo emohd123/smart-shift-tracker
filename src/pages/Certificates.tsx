@@ -1,11 +1,13 @@
 
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ArrowLeft } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import WorkCertificateGenerator from "@/components/certificates/WorkCertificateGenerator";
 import MyCertificates from "@/components/certificates/MyCertificates";
 import { useAuth } from "@/context/AuthContext";
-import { Award, FileText, Briefcase, HelpCircle } from "lucide-react";
+import { Award, FileText, HelpCircle } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,17 +15,26 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 export default function Certificates() {
   const [activeTab, setActiveTab] = useState("generator");
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   return (
     <AppLayout title="Professional Certificates">
       <div className="space-y-8">
         <div className="flex flex-wrap justify-between items-start gap-4">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Professional Work Certificates</h1>
-            <p className="text-muted-foreground max-w-2xl">
-              Generate official certificates that validate your work experience and skills for potential employers. 
-              These certificates include verification codes and can be shared digitally or as printed documents.
-            </p>
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => navigate(-1)}
+              className="group hover:bg-primary/10"
+            >
+              <ArrowLeft 
+                size={16} 
+                className="mr-2 group-hover:-translate-x-1 transition-transform" 
+              />
+              Back
+            </Button>
+            <h1 className="text-3xl font-bold">Professional Work Certificates</h1>
           </div>
           
           <TooltipProvider>
