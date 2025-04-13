@@ -1,11 +1,12 @@
 
 import { Link } from "react-router-dom";
-import { ChevronLeft, Clock, Settings, LogOut, User, Home, Calendar, BarChart, Users, Award } from "lucide-react";
+import { ChevronLeft, Clock, Settings, LogOut, User, Home, Calendar, BarChart, Users, Award, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NavigationLinks } from "./NavigationLinks";
 import { User as UserType } from "@/context/AuthContext";
 import UserProfile from "./UserProfile";
 import { useAuth } from "@/context/AuthContext";
+import UnreadMessagesBadge from "@/components/notifications/UnreadMessagesBadge";
 
 interface AppSidebarProps {
   user: UserType | null;
@@ -39,6 +40,16 @@ export function AppSidebar({
         { label: "Shifts", icon: <Calendar size={20} />, href: "/shifts" },
         { label: "Time Tracking", icon: <Clock size={20} />, href: "/time-tracking" },
         { label: "Promoters", icon: <Users size={20} />, href: "/promoters" },
+        { 
+          label: "Messages", 
+          icon: (
+            <div className="relative">
+              <MessageSquare size={20} />
+              <UnreadMessagesBadge />
+            </div>
+          ), 
+          href: "/messages" 
+        },
         { label: "Reports", icon: <BarChart size={20} />, href: "/reports" },
         { label: "Certificates", icon: <Award size={20} />, href: "/certificates" },
         { label: "Settings", icon: <Settings size={20} />, href: "/settings" },
@@ -47,6 +58,16 @@ export function AppSidebar({
         { label: "Dashboard", icon: <Home size={20} />, href: "/dashboard" },
         { label: "My Shifts", icon: <Calendar size={20} />, href: "/shifts" },
         { label: "Time Tracker", icon: <Clock size={20} />, href: "/time-tracking" },
+        { 
+          label: "Messages", 
+          icon: (
+            <div className="relative">
+              <MessageSquare size={20} />
+              <UnreadMessagesBadge />
+            </div>
+          ), 
+          href: "/messages" 
+        },
         { label: "Certificates", icon: <Award size={20} />, href: "/certificates" },
       ];
 

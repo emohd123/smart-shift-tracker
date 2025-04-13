@@ -1,4 +1,3 @@
-
 import { lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "sonner";
@@ -26,6 +25,7 @@ const CreateShift = lazy(() => import("@/pages/CreateShift"));
 const Certificates = lazy(() => import("@/pages/Certificates"));
 const VerifyCertificatePage = lazy(() => import("@/pages/VerifyCertificatePage"));
 const Promoters = lazy(() => import("@/pages/Promoters"));
+const Messages = lazy(() => import("@/pages/Messages"));
 
 // Loading fallback for lazy-loaded components
 const PageLoader = () => (
@@ -100,6 +100,7 @@ function App() {
                 <Route path="/certificates" element={<Certificates />} />
                 <Route path="/create-shift" element={<CreateShift />} />
                 <Route path="/promoters" element={<Promoters />} />
+                <Route path="/messages" element={<Messages />} />
               </Route>
               
               {/* Public routes for certificate verification */}
