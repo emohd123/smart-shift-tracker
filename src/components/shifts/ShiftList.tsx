@@ -1,4 +1,3 @@
-
 // We need to add this component since there might be errors related to shift assignments
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -50,38 +49,53 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift }: ShiftListProps) =>
     setIsDeleting(true);
     
     try {
-      // Since we're using mock data, we'll skip the database operations
-      // and just call the deleteShift function for each selected shift
-      
       console.log("Selected shifts for deletion:", selectedShifts);
       
-      if (deleteShift) {
-        // Use the provided deleteShift function
-        selectedShifts.forEach(id => {
+      // Process deletions one by one to handle errors individually
+      const deletePromises = selectedShifts.map(async (id) => {
+        try {
           console.log("Deleting shift:", id);
-          deleteShift(id);
-        });
-      } else if (window.deleteShift) {
-        // Fallback to global deleteShift function
-        selectedShifts.forEach(id => {
-          console.log("Using global deleteShift for:", id);
-          window.deleteShift?.(id);
+          
+          if (deleteShift) {
+            await deleteShift(id);
+            return { id, success: true };
+          } else if (window.deleteShift) {
+            window.deleteShift(id);
+            return { id, success: true };
+          }
+          return { id, success: false, error: "No delete function available" };
+        } catch (error) {
+          console.error(`Error deleting shift ${id}:`, error);
+          return { id, success: false, error };
+        }
+      });
+      
+      const results = await Promise.all(deletePromises);
+      const successful = results.filter(r => r.success).length;
+      
+      if (successful > 0) {
+        toast({
+          title: "Success",
+          description: `${successful} shift${successful > 1 ? 's' : ''} deleted successfully`
         });
       }
       
-      toast({
-        title: "Success",
-        description: `${selectedShifts.length} shift${selectedShifts.length > 1 ? 's' : ''} deleted successfully`
-      });
+      if (successful < selectedShifts.length) {
+        toast({
+          title: "Warning",
+          description: `${selectedShifts.length - successful} shift(s) could not be deleted`,
+          variant: "destructive"
+        });
+      }
       
       // Clear selection
       setSelectedShifts([]);
       
     } catch (error) {
-      console.error("Error deleting shifts:", error);
+      console.error("Error in bulk delete operation:", error);
       toast({
         title: "Error",
-        description: "Failed to delete shifts",
+        description: "Failed to complete delete operation",
         variant: "destructive"
       });
     } finally {

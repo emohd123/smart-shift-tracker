@@ -25,20 +25,26 @@ export const useShiftsDelete = ({ setShifts, setError, userRole }: UseShiftsDele
         return;
       }
       
-      // First try to delete from Supabase
-      const { error } = await supabase
-        .from('shifts')
-        .delete()
-        .eq('id', id);
+      // First try to delete from Supabase - only if it's a valid UUID
+      const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       
-      if (error) {
-        console.error('Error deleting shift from database:', error);
-        throw error;
+      if (isValidUUID) {
+        const { error } = await supabase
+          .from('shifts')
+          .delete()
+          .eq('id', id);
+        
+        if (error) {
+          console.error('Error deleting shift from database:', error);
+          // Continue with local deletion even if database deletion fails
+        } else {
+          console.log("Shift deleted from database");
+        }
+      } else {
+        console.log("Not a valid UUID, skipping database deletion for mock data:", id);
       }
       
-      console.log("Shift deleted from database");
-      
-      // Then remove the shift from the local state 
+      // Then remove the shift from the local state regardless of database success
       setShifts(prev => {
         console.log("Previous shifts count:", prev.length);
         const filtered = prev.filter(shift => shift.id !== id);

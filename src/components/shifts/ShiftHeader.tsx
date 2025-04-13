@@ -1,6 +1,6 @@
 
 import { Badge } from "@/components/ui/badge";
-import { Shift } from "./types/ShiftTypes"; // Update import path
+import { Shift } from "./types/ShiftTypes";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,18 @@ import {
   CardDescription, 
   CardHeader 
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 type ShiftHeaderProps = {
   shift: Shift;
@@ -18,11 +30,19 @@ type ShiftHeaderProps = {
 };
 
 export function ShiftHeader({ shift, isAdmin, onDelete }: ShiftHeaderProps) {
+  const [isDeleting, setIsDeleting] = useState(false);
   const statusBadge = getStatusBadge(shift.status);
   
   const handleDelete = () => {
+    setIsDeleting(true);
     console.log("ShiftHeader - handleDelete called for shift:", shift.id);
-    onDelete(shift.id);
+    
+    try {
+      onDelete(shift.id);
+    } catch (error) {
+      console.error("Error during deletion:", error);
+      setIsDeleting(false);
+    }
   };
   
   return (
@@ -44,15 +64,38 @@ export function ShiftHeader({ shift, isAdmin, onDelete }: ShiftHeaderProps) {
               <Edit size={14} className="mr-2" />
               Edit
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="text-destructive hover:text-destructive"
-              onClick={handleDelete}
-            >
-              <Trash size={14} className="mr-2" />
-              Delete
-            </Button>
+            
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="text-destructive hover:text-destructive"
+                  disabled={isDeleting}
+                >
+                  <Trash size={14} className="mr-2" />
+                  Delete
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete the shift "{shift.title}". 
+                    This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction 
+                    onClick={handleDelete} 
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         )}
       </div>
