@@ -4,6 +4,7 @@ import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { formatShiftForDatabase, saveShiftsToLocalStorage } from "./utils/shiftDataUtils";
+import { ShiftStatus } from "@/types/database";
 
 interface UseShiftsAddProps {
   setShifts: React.Dispatch<React.SetStateAction<Shift[]>>;
@@ -65,7 +66,7 @@ export const useShiftsAdd = ({ setShifts }: UseShiftsAddProps) => {
         startTime: data.start_time,
         endTime: data.end_time,
         location: data.location,
-        status: data.status,
+        status: data.status as ShiftStatus, // Cast to ShiftStatus enum
         payRate: data.pay_rate || 0,
         payRateType: data.pay_rate_type || 'hour',
         isPaid: data.is_paid || false,
