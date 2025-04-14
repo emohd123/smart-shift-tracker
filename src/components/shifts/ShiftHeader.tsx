@@ -33,14 +33,16 @@ export function ShiftHeader({ shift, isAdmin, onDelete }: ShiftHeaderProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const statusBadge = getStatusBadge(shift.status);
   
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setIsDeleting(true);
     console.log("ShiftHeader - handleDelete called for shift:", shift.id);
     
     try {
-      onDelete(shift.id);
+      // Call the deletion function
+      await onDelete(shift.id);
     } catch (error) {
       console.error("Error during deletion:", error);
+    } finally {
       setIsDeleting(false);
     }
   };
@@ -74,7 +76,7 @@ export function ShiftHeader({ shift, isAdmin, onDelete }: ShiftHeaderProps) {
                   disabled={isDeleting}
                 >
                   <Trash size={14} className="mr-2" />
-                  Delete
+                  {isDeleting ? 'Deleting...' : 'Delete'}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>

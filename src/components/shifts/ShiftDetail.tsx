@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Shift } from "./types/ShiftTypes"; // Update import path
+import { Shift } from "./types/ShiftTypes"; 
 import { 
   Card
 } from "@/components/ui/card";
@@ -70,30 +70,39 @@ export default function ShiftDetail({
     if (onCheckOut) onCheckOut();
   };
 
-  const handleDelete = (shiftId: string) => {
+  const handleDelete = async (shiftId: string) => {
     console.log("ShiftDetail - handleDelete called with ID:", shiftId);
     
-    if (onDelete) {
-      onDelete(shiftId);
-      toast({
-        title: "Shift Deleted",
-        description: `The shift "${shift.title}" has been deleted`,
-        variant: "destructive"
-      });
-      navigate("/shifts");
-    } else if (window.deleteShift) {
-      // Fallback to the global deleteShift function if available
-      window.deleteShift(shiftId);
-      toast({
-        title: "Shift Deleted",
-        description: `The shift "${shift.title}" has been deleted`,
-        variant: "destructive"
-      });
-      navigate("/shifts");
-    } else {
+    try {
+      if (onDelete) {
+        await onDelete(shiftId);
+        toast({
+          title: "Shift Deleted",
+          description: `The shift "${shift.title}" has been deleted`,
+          variant: "destructive"
+        });
+        navigate("/shifts");
+      } else if (window.deleteShift) {
+        // Fallback to the global deleteShift function if available
+        window.deleteShift(shiftId);
+        toast({
+          title: "Shift Deleted",
+          description: `The shift "${shift.title}" has been deleted`,
+          variant: "destructive"
+        });
+        navigate("/shifts");
+      } else {
+        toast({
+          title: "Error",
+          description: "Unable to delete shift - delete function not available",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting shift:", error);
       toast({
         title: "Error",
-        description: "Unable to delete shift - delete function not available",
+        description: "Failed to delete shift. Please try again.",
         variant: "destructive"
       });
     }

@@ -24,11 +24,12 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
   // Use the add hook for adding shifts
   const { addShift } = useShiftsAdd({ setShifts });
   
-  // Use the delete hook for deleting shifts
+  // Use the delete hook for deleting shifts, passing refreshShifts
   const { deleteShift } = useShiftsDelete({ 
     setShifts, 
     setError, 
-    userRole 
+    userRole,
+    refreshShifts  // Pass the refreshShifts function to ensure data is refreshed after deletion
   });
 
   return {

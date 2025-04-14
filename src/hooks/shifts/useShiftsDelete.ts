@@ -9,9 +9,10 @@ interface UseShiftsDeleteProps {
   setShifts: React.Dispatch<React.SetStateAction<Shift[]>>;
   setError: React.Dispatch<React.SetStateAction<Error | null>>;
   userRole?: string;
+  refreshShifts?: () => void; // Add refreshShifts parameter
 }
 
-export const useShiftsDelete = ({ setShifts, setError, userRole }: UseShiftsDeleteProps) => {
+export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }: UseShiftsDeleteProps) => {
   // Handle shift deletion
   const deleteShift = useCallback(async (id: string) => {
     try {
@@ -85,17 +86,22 @@ export const useShiftsDelete = ({ setShifts, setError, userRole }: UseShiftsDele
         }
         
         // 5. Finally delete the shift itself
-        const { error, count } = await supabase
+        const { error } = await supabase
           .from('shifts')
           .delete()
-          .eq('id', id)
-          .select('count');
+          .eq('id', id);
         
         if (error) {
           console.error('Error deleting shift from database:', error);
           throw new Error(`Database error: ${error.message}`);
         } else {
-          console.log(`Shift deleted from database successfully. Affected rows: ${count}`);
+          console.log(`Shift deleted from database successfully.`);
+          
+          // Add an explicit refresh after deletion is confirmed
+          if (refreshShifts) {
+            console.log('Refreshing shifts data after deletion');
+            refreshShifts();
+          }
         }
       } else {
         console.log("Not a valid UUID, skipping database deletion for mock data:", id);
@@ -124,7 +130,7 @@ export const useShiftsDelete = ({ setShifts, setError, userRole }: UseShiftsDele
         description: "Please try again"
       });
     }
-  }, [userRole, setShifts, setError]);
+  }, [userRole, setShifts, setError, refreshShifts]);
 
   return {
     deleteShift
