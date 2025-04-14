@@ -4,7 +4,7 @@ import { Shift } from "./types/ShiftTypes";
 import ShiftList from "./ShiftList";
 import { ShiftsLoading } from "./ShiftsLoading";
 import { motion } from "framer-motion";
-import { Calendar, AlertCircle } from "lucide-react";
+import { Calendar, AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -14,6 +14,7 @@ declare global {
     deleteShift?: (id: string) => void;
     startTimeTracking?: (shift: Shift) => void;
     addShift?: (shift: Shift) => void;
+    refreshShifts?: () => void;
   }
 }
 
@@ -22,9 +23,16 @@ interface ShiftsContentProps {
   loading: boolean;
   title: string;
   deleteShift: (id: string) => void;
+  refreshShifts?: () => void;
 }
 
-export const ShiftsContent = ({ shifts, loading, title, deleteShift }: ShiftsContentProps) => {
+export const ShiftsContent = ({ 
+  shifts, 
+  loading, 
+  title, 
+  deleteShift, 
+  refreshShifts 
+}: ShiftsContentProps) => {
   const navigate = useNavigate();
   
   // Register the deleteShift function globally, but clean up on unmount
@@ -36,6 +44,12 @@ export const ShiftsContent = ({ shifts, loading, title, deleteShift }: ShiftsCon
       window.deleteShift = undefined;
     };
   }, [deleteShift]);
+  
+  const handleRefresh = () => {
+    if (refreshShifts) {
+      refreshShifts();
+    }
+  };
   
   if (loading) {
     return <ShiftsLoading />;
@@ -56,13 +70,26 @@ export const ShiftsContent = ({ shifts, loading, title, deleteShift }: ShiftsCon
         <p className="text-muted-foreground mb-8 max-w-md">
           When shifts are created, they will appear here. Check back later or create a new shift.
         </p>
-        <Button 
-          onClick={() => navigate("/create-shift")}
-          className="gap-2"
-        >
-          <Calendar className="h-4 w-4" />
-          Create New Shift
-        </Button>
+        <div className="flex gap-4">
+          <Button 
+            onClick={() => navigate("/create-shift")}
+            className="gap-2"
+          >
+            <Calendar className="h-4 w-4" />
+            Create New Shift
+          </Button>
+          
+          {refreshShifts && (
+            <Button 
+              variant="outline" 
+              onClick={handleRefresh}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh Data
+            </Button>
+          )}
+        </div>
       </motion.div>
     );
   }
@@ -77,6 +104,7 @@ export const ShiftsContent = ({ shifts, loading, title, deleteShift }: ShiftsCon
         shifts={shifts} 
         title={title}
         deleteShift={deleteShift}
+        refreshShifts={refreshShifts}
       />
     </motion.div>
   );

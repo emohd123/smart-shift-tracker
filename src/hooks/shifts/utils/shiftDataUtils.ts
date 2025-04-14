@@ -113,6 +113,18 @@ export const removeShiftFromLocalStorage = (shiftId: string): void => {
 };
 
 /**
+ * Clear all shifts from localStorage
+ */
+export const clearShiftsFromLocalStorage = (): void => {
+  try {
+    localStorage.removeItem('shifts');
+    console.log('All shifts cleared from localStorage');
+  } catch (e) {
+    console.error('Error clearing shifts from localStorage:', e);
+  }
+};
+
+/**
  * Synchronize local shifts with database shifts
  * This resolves conflicts by preferring database data
  */

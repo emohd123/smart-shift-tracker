@@ -1,8 +1,8 @@
-// We need to add this component since there might be errors related to shift assignments
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PlusCircle, Search, Trash2 } from "lucide-react";
+import { PlusCircle, Search, Trash2, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
@@ -14,15 +14,17 @@ interface ShiftListProps {
   shifts: Shift[];
   title?: string;
   deleteShift?: (id: string) => void;
+  refreshShifts?: () => void;
 }
 
-const ShiftList = ({ shifts, title = "Shifts", deleteShift }: ShiftListProps) => {
+const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: ShiftListProps) => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedShifts, setSelectedShifts] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   
   const isAdmin = user?.role === "admin";
   
@@ -40,6 +42,30 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift }: ShiftListProps) =>
         ? prev.filter(id => id !== shiftId)
         : [...prev, shiftId]
     );
+  };
+  
+  // Handle manual refresh of shift data
+  const handleRefresh = async () => {
+    if (!refreshShifts) return;
+    
+    setIsRefreshing(true);
+    
+    try {
+      await refreshShifts();
+      toast({
+        title: "Data Refreshed",
+        description: "The shifts list has been updated with the latest data"
+      });
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+      toast({
+        title: "Refresh Failed",
+        description: "Could not refresh data. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
   
   // Handle bulk delete
@@ -78,6 +104,11 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift }: ShiftListProps) =>
           title: "Success",
           description: `${successful} shift${successful > 1 ? 's' : ''} deleted successfully`
         });
+        
+        // Refresh the data to ensure UI is in sync with database
+        if (refreshShifts) {
+          await refreshShifts();
+        }
       }
       
       if (successful < selectedShifts.length) {
@@ -108,12 +139,26 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift }: ShiftListProps) =>
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">{title}</h2>
         
-        {isAdmin && (
-          <Button onClick={() => navigate("/create-shift")}>
-            <PlusCircle className="mr-2 h-4 w-4" />
-            Create Shift
-          </Button>
-        )}
+        <div className="flex gap-2">
+          {refreshShifts && (
+            <Button 
+              variant="outline" 
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="gap-1"
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Button>
+          )}
+          
+          {isAdmin && (
+            <Button onClick={() => navigate("/create-shift")}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Create Shift
+            </Button>
+          )}
+        </div>
       </div>
       
       <div className="flex gap-4 items-center">

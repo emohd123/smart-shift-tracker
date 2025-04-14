@@ -12,7 +12,7 @@ const Shifts = () => {
   const navigate = useNavigate();
   
   // Fetch shifts data based on user role and authentication status
-  const { shifts, loading, error, deleteShift, addShift } = useShiftsData({
+  const { shifts, loading, error, deleteShift, addShift, refreshShifts } = useShiftsData({
     userId: user?.id,
     userRole: user?.role,
     isAuthenticated
@@ -36,12 +36,27 @@ const Shifts = () => {
 
   // Make addShift available globally for other components
   useEffect(() => {
-    window.addShift = addShift;
+    window.addShift = (shift) => {
+      addShift(shift);
+      // After adding a shift, refresh the data to ensure it's up to date
+      refreshShifts();
+    };
+    
+    // Make deleteShift and refreshShifts available globally
+    window.deleteShift = (id) => {
+      deleteShift(id);
+      // After deleting a shift, refresh the data to ensure it's up to date
+      refreshShifts();
+    };
+    
+    window.refreshShifts = refreshShifts;
     
     return () => {
       window.addShift = undefined;
+      window.deleteShift = undefined;
+      window.refreshShifts = undefined;
     };
-  }, [addShift]);
+  }, [addShift, deleteShift, refreshShifts]);
 
   if (!isAuthenticated) {
     return null; // Don't render anything while redirecting
@@ -56,6 +71,7 @@ const Shifts = () => {
         loading={loading} 
         title={pageTitle}
         deleteShift={deleteShift}
+        refreshShifts={refreshShifts}
       />
     </AppLayout>
   );

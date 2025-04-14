@@ -28,7 +28,7 @@ export const useShiftsAdd = ({ setShifts }: UseShiftsAddProps) => {
         throw error;
       }
       
-      console.log('Shift added to database:', data);
+      console.log('Shift added to database successfully:', data);
       
       // If shift has location data, add it to the shift_locations table
       const locationData = localStorage.getItem('temp_shift_location');
@@ -55,11 +55,30 @@ export const useShiftsAdd = ({ setShifts }: UseShiftsAddProps) => {
         }
       }
       
-      // Then update local state
-      setShifts(prev => [shift, ...prev]);
+      // Then update local state with the data from the database
+      // This ensures we're using the exact data that was saved
+      const freshShift: Shift = {
+        id: data.id,
+        title: data.title,
+        date: data.date,
+        endDate: data.end_date,
+        startTime: data.start_time,
+        endTime: data.end_time,
+        location: data.location,
+        status: data.status,
+        payRate: data.pay_rate || 0,
+        payRateType: data.pay_rate_type || 'hour',
+        isPaid: data.is_paid || false,
+        is_assigned: false,
+        assigned_promoters: 0,
+        created_at: data.created_at
+      };
       
-      // Save to localStorage as fallback
-      saveShiftsToLocalStorage(shift);
+      setShifts(prev => [freshShift, ...prev]);
+      
+      // Only save to localStorage as fallback if database save succeeded
+      // This prevents having inconsistent data
+      saveShiftsToLocalStorage(freshShift);
       
       toast.success("Shift added successfully", {
         description: "The shift has been added to the database"
@@ -67,7 +86,7 @@ export const useShiftsAdd = ({ setShifts }: UseShiftsAddProps) => {
     } catch (error) {
       console.error('Error adding shift:', error);
       toast.error("Failed to add shift to database", {
-        description: "Saving locally only"
+        description: "Saving locally only as fallback"
       });
       
       // If database save fails, at least update local state

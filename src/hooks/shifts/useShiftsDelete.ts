@@ -29,7 +29,9 @@ export const useShiftsDelete = ({ setShifts, setError, userRole }: UseShiftsDele
       const isValidUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       
       if (isValidUUID) {
-        // Delete any shift assignments first
+        // Delete related data first to maintain referential integrity
+        
+        // 1. Delete shift assignments
         const { error: assignmentError } = await supabase
           .from('shift_assignments')
           .delete()
@@ -38,9 +40,11 @@ export const useShiftsDelete = ({ setShifts, setError, userRole }: UseShiftsDele
         if (assignmentError) {
           console.error('Error deleting shift assignments:', assignmentError);
           // Continue with shift deletion even if assignment deletion fails
+        } else {
+          console.log('Successfully deleted related shift assignments');
         }
         
-        // Delete any shift locations
+        // 2. Delete shift locations
         const { error: locationError } = await supabase
           .from('shift_locations')
           .delete()
@@ -49,25 +53,55 @@ export const useShiftsDelete = ({ setShifts, setError, userRole }: UseShiftsDele
         if (locationError) {
           console.error('Error deleting shift location:', locationError);
           // Continue with shift deletion even if location deletion fails
+        } else {
+          console.log('Successfully deleted related shift locations');
         }
         
-        // Delete the shift
-        const { error } = await supabase
+        // 3. Delete time logs if any exist
+        const { error: timeLogError } = await supabase
+          .from('time_logs')
+          .delete()
+          .eq('shift_id', id);
+        
+        if (timeLogError) {
+          console.error('Error deleting related time logs:', timeLogError);
+          // Continue with main deletion
+        } else {
+          console.log('Successfully deleted related time logs if any existed');
+        }
+        
+        // 4. Delete notifications related to this shift
+        const { error: notificationError } = await supabase
+          .from('notifications')
+          .delete()
+          .eq('related_id', id)
+          .eq('type', 'shift_assignment');
+        
+        if (notificationError) {
+          console.error('Error deleting related notifications:', notificationError);
+          // Continue with main deletion
+        } else {
+          console.log('Successfully deleted related notifications if any existed');
+        }
+        
+        // 5. Finally delete the shift itself
+        const { error, count } = await supabase
           .from('shifts')
           .delete()
-          .eq('id', id);
+          .eq('id', id)
+          .select('count');
         
         if (error) {
           console.error('Error deleting shift from database:', error);
           throw new Error(`Database error: ${error.message}`);
         } else {
-          console.log("Shift deleted from database successfully");
+          console.log(`Shift deleted from database successfully. Affected rows: ${count}`);
         }
       } else {
         console.log("Not a valid UUID, skipping database deletion for mock data:", id);
       }
       
-      // Then remove the shift from the local state regardless of database success
+      // Remove from local state regardless of database success
       setShifts(prev => {
         console.log("Previous shifts count:", prev.length);
         const filtered = prev.filter(shift => shift.id !== id);
@@ -80,7 +114,7 @@ export const useShiftsDelete = ({ setShifts, setError, userRole }: UseShiftsDele
       removeShiftFromLocalStorage(id);
       
       toast.success("Shift Deleted", {
-        description: "The shift has been successfully deleted"
+        description: "The shift has been permanently deleted"
       });
       
     } catch (err) {

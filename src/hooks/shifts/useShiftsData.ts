@@ -15,7 +15,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
   const [error, setError] = useState<Error | null>(null);
   
   // Use the fetch hook to get shifts
-  const { shifts, loading, setShifts } = useShiftsFetch({ 
+  const { shifts, loading, setShifts, refreshShifts } = useShiftsFetch({ 
     userId, 
     userRole, 
     isAuthenticated 
@@ -36,6 +36,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
     loading,
     error,
     deleteShift,
-    addShift
+    addShift,
+    refreshShifts
   };
 };
