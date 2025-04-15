@@ -87,18 +87,18 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
       const success = await deleteAllShiftsFromDatabase(userRole);
       
       if (!success) {
-        toast.error("Failed to Delete All Shifts", {
-          description: "Some shift data couldn't be removed. Check console for details."
+        toast.error("Partial Deletion Completed", {
+          description: "Some shift data couldn't be removed completely. The database will be refreshed."
         });
       } else {
-        // Update client state
-        setShifts([]);
-        clearShiftsFromLocalStorage();
-        
         toast.success("All Shifts Deleted", {
           description: "All shifts have been permanently removed"
         });
       }
+      
+      // Always update client state regardless of partial errors
+      setShifts([]);
+      clearShiftsFromLocalStorage();
       
       // Always refresh shifts to ensure UI reflects the current database state
       if (refreshShifts) {
