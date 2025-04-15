@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Shift } from "./types/ShiftTypes";
@@ -25,14 +24,12 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
   
   const isAdmin = user?.role === "admin";
   
-  // Filter shifts based on search term
   const filteredShifts = shifts.filter(shift => 
     shift.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shift.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shift.date.includes(searchTerm)
   );
   
-  // Handle shift selection for bulk actions
   const handleSelectShift = (shiftId: string) => {
     setSelectedShifts(prev => 
       prev.includes(shiftId) 
@@ -41,7 +38,6 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
     );
   };
   
-  // Handle manual refresh of shift data
   const handleRefresh = async () => {
     if (!refreshShifts) return;
     
@@ -49,21 +45,19 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
     
     try {
       await refreshShifts();
-      toast("Data Refreshed", {
+      toast.success("Data Refreshed", {
         description: "The shifts list has been updated with the latest data"
       });
     } catch (error) {
       console.error("Error refreshing data:", error);
-      toast("Refresh Failed", {
-        description: "Could not refresh data. Please try again.",
-        variant: "destructive"
+      toast.error("Refresh Failed", {
+        description: "Could not refresh data. Please try again."
       });
     } finally {
       setIsRefreshing(false);
     }
   };
   
-  // Handle bulk delete
   const handleBulkDelete = async () => {
     if (selectedShifts.length === 0) return;
     
@@ -72,7 +66,6 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
     try {
       console.log("Selected shifts for deletion:", selectedShifts);
       
-      // Process deletions one by one to handle errors individually
       const deletePromises = selectedShifts.map(async (id) => {
         try {
           console.log("Deleting shift:", id);
@@ -95,31 +88,27 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
       const successful = results.filter(r => r.success).length;
       
       if (successful > 0) {
-        toast("Success", {
+        toast.success("Success", {
           description: `${successful} shift${successful > 1 ? 's' : ''} deleted successfully`
         });
         
-        // Refresh the data to ensure UI is in sync with database
         if (refreshShifts) {
           await refreshShifts();
         }
       }
       
       if (successful < selectedShifts.length) {
-        toast("Warning", {
-          description: `${selectedShifts.length - successful} shift(s) could not be deleted`,
-          variant: "destructive"
+        toast.error("Warning", {
+          description: `${selectedShifts.length - successful} shift(s) could not be deleted`
         });
       }
       
-      // Clear selection
       setSelectedShifts([]);
       
     } catch (error) {
       console.error("Error in bulk delete operation:", error);
-      toast("Error", {
-        description: "Failed to complete delete operation",
-        variant: "destructive"
+      toast.error("Error", {
+        description: "Failed to complete delete operation"
       });
     } finally {
       setIsDeleting(false);
