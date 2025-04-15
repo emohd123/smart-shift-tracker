@@ -1,6 +1,6 @@
+
 import { lazy, Suspense } from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
-import { Toaster } from "sonner";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { ToastContainer, useAppNotifications } from "@/components/feedback/ToastContainer";
 import { Loader2 } from "lucide-react";
@@ -113,19 +113,7 @@ function App() {
         </motion.div>
       </AnimatePresence>
       
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          duration: 5000,
-          className: "toast-enhanced",
-          style: {
-            background: "var(--background)",
-            color: "var(--foreground)",
-            border: "1px solid var(--border)",
-            borderRadius: "var(--radius)",
-          },
-        }}
-      />
+      {/* Removed the duplicate Toaster component */}
     </div>
   );
 }

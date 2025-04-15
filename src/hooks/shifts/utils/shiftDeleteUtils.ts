@@ -1,6 +1,5 @@
 
 import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
 
 // Handle deletion of related data for a specific shift
 export const deleteShiftDataFromDatabase = async (shiftId: string): Promise<boolean> => {
@@ -82,11 +81,11 @@ export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<bo
       return false;
     }
 
-    // Delete from shift_assignments
+    // Delete from shift_assignments - use a proper SQL query instead of placeholder
     const { error: assignmentsError } = await supabase
       .from('shift_assignments')
       .delete()
-      .neq('id', 'no-match-placeholder');
+      .gte('id', '00000000-0000-0000-0000-000000000000');
     
     if (assignmentsError) {
       console.error('Error clearing shift_assignments:', assignmentsError);
@@ -96,7 +95,7 @@ export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<bo
     const { error: locationsError } = await supabase
       .from('shift_locations')
       .delete()
-      .neq('id', 'no-match-placeholder');
+      .gte('id', '00000000-0000-0000-0000-000000000000');
     
     if (locationsError) {
       console.error('Error clearing shift_locations:', locationsError);
@@ -106,7 +105,7 @@ export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<bo
     const { error: timeLogsError } = await supabase
       .from('time_logs')
       .delete()
-      .neq('id', 'no-match-placeholder');
+      .gte('id', '00000000-0000-0000-0000-000000000000');
     
     if (timeLogsError) {
       console.error('Error clearing time_logs:', timeLogsError);
@@ -126,7 +125,7 @@ export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<bo
     const { error: shiftsError } = await supabase
       .from('shifts')
       .delete()
-      .neq('id', 'no-match-placeholder');
+      .gte('id', '00000000-0000-0000-0000-000000000000');
     
     if (shiftsError) {
       console.error('Error clearing shifts:', shiftsError);
