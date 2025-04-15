@@ -12,7 +12,7 @@ const Shifts = () => {
   const navigate = useNavigate();
   
   // Fetch shifts data based on user role and authentication status
-  const { shifts, loading, error, deleteShift, addShift, refreshShifts } = useShiftsData({
+  const { shifts, loading, error, deleteShift, deleteAllShifts, addShift, refreshShifts } = useShiftsData({
     userId: user?.id,
     userRole: user?.role,
     isAuthenticated
@@ -34,7 +34,7 @@ const Shifts = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Make addShift available globally for other components
+  // Make global functions available
   useEffect(() => {
     window.addShift = (shift) => {
       addShift(shift);
@@ -42,10 +42,16 @@ const Shifts = () => {
       refreshShifts();
     };
     
-    // Make deleteShift and refreshShifts available globally
+    // Make deleteShift, deleteAllShifts and refreshShifts available globally
     window.deleteShift = (id) => {
       deleteShift(id);
       // After deleting a shift, refresh the data to ensure it's up to date
+      refreshShifts();
+    };
+    
+    window.deleteAllShifts = () => {
+      deleteAllShifts();
+      // After deleting all shifts, refresh the data
       refreshShifts();
     };
     
@@ -54,9 +60,10 @@ const Shifts = () => {
     return () => {
       window.addShift = undefined;
       window.deleteShift = undefined;
+      window.deleteAllShifts = undefined;
       window.refreshShifts = undefined;
     };
-  }, [addShift, deleteShift, refreshShifts]);
+  }, [addShift, deleteShift, deleteAllShifts, refreshShifts]);
 
   if (!isAuthenticated) {
     return null; // Don't render anything while redirecting
@@ -71,6 +78,7 @@ const Shifts = () => {
         loading={loading} 
         title={pageTitle}
         deleteShift={deleteShift}
+        deleteAllShifts={deleteAllShifts}
         refreshShifts={refreshShifts}
       />
     </AppLayout>

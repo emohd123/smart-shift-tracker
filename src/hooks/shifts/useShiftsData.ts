@@ -25,7 +25,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
   const { addShift } = useShiftsAdd({ setShifts });
   
   // Use the delete hook for deleting shifts, passing refreshShifts
-  const { deleteShift } = useShiftsDelete({ 
+  const { deleteShift, deleteAllShifts } = useShiftsDelete({ 
     setShifts, 
     setError, 
     userRole,
@@ -37,6 +37,7 @@ export const useShiftsData = ({ userId, userRole, isAuthenticated }: UseShiftsDa
     loading,
     error,
     deleteShift,
+    deleteAllShifts,
     addShift,
     refreshShifts
   };

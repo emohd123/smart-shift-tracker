@@ -4,14 +4,16 @@ import { Shift } from "./types/ShiftTypes";
 import ShiftList from "./ShiftList";
 import { ShiftsLoading } from "./ShiftsLoading";
 import { motion } from "framer-motion";
-import { Calendar, AlertCircle, RefreshCw } from "lucide-react";
+import { Calendar, AlertCircle, RefreshCw, Trash } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
 // Define global functions for TypeScript
 declare global {
   interface Window {
     deleteShift?: (id: string) => void;
+    deleteAllShifts?: () => void;
     startTimeTracking?: (shift: Shift) => void;
     addShift?: (shift: Shift) => void;
     refreshShifts?: () => void;
@@ -23,6 +25,7 @@ interface ShiftsContentProps {
   loading: boolean;
   title: string;
   deleteShift: (id: string) => void;
+  deleteAllShifts?: () => void;
   refreshShifts?: () => void;
 }
 
@@ -30,20 +33,28 @@ export const ShiftsContent = ({
   shifts, 
   loading, 
   title, 
-  deleteShift, 
+  deleteShift,
+  deleteAllShifts,
   refreshShifts 
 }: ShiftsContentProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   
   // Register the deleteShift function globally, but clean up on unmount
   useEffect(() => {
     console.log("Setting deleteShift function globally");
     window.deleteShift = deleteShift;
     
+    if (deleteAllShifts) {
+      window.deleteAllShifts = deleteAllShifts;
+    }
+    
     return () => {
       window.deleteShift = undefined;
+      window.deleteAllShifts = undefined;
     };
-  }, [deleteShift]);
+  }, [deleteShift, deleteAllShifts]);
   
   const handleRefresh = () => {
     if (refreshShifts) {
@@ -100,6 +111,21 @@ export const ShiftsContent = ({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold">{title}</h1>
+        
+        {isAdmin && deleteAllShifts && (
+          <Button 
+            variant="destructive" 
+            onClick={deleteAllShifts}
+            className="gap-2"
+          >
+            <Trash className="h-4 w-4" />
+            Delete All Shifts
+          </Button>
+        )}
+      </div>
+      
       <ShiftList 
         shifts={shifts} 
         title={title}

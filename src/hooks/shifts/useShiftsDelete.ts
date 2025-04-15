@@ -3,13 +3,13 @@ import { useCallback } from "react";
 import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { removeShiftFromLocalStorage } from "./utils/shiftDataUtils";
+import { clearShiftsFromLocalStorage } from "./utils/shiftDataUtils";
 
 interface UseShiftsDeleteProps {
   setShifts: React.Dispatch<React.SetStateAction<Shift[]>>;
   setError: React.Dispatch<React.SetStateAction<Error | null>>;
   userRole?: string;
-  refreshShifts?: () => void; // Add refreshShifts parameter
+  refreshShifts?: () => void;
 }
 
 export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }: UseShiftsDeleteProps) => {
@@ -117,7 +117,7 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
       });
       
       // Update localStorage if it exists there
-      removeShiftFromLocalStorage(id);
+      clearShiftsFromLocalStorage();
       
       toast.success("Shift Deleted", {
         description: "The shift has been permanently deleted"
@@ -132,7 +132,105 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
     }
   }, [userRole, setShifts, setError, refreshShifts]);
 
+  // Add a new function to delete all shifts
+  const deleteAllShifts = useCallback(async () => {
+    try {
+      // Verify user is admin before allowing bulk deletion
+      if (userRole !== 'admin') {
+        toast.error("Permission Denied", {
+          description: "Only admin users can delete all shifts"
+        });
+        return;
+      }
+
+      console.log("Attempting to delete all shifts");
+      
+      // 1. Delete all shift assignments
+      const { error: assignmentError } = await supabase
+        .from('shift_assignments')
+        .delete()
+        .neq('shift_id', 'no-match-placeholder'); // Delete all rows
+        
+      if (assignmentError) {
+        console.error('Error deleting shift assignments:', assignmentError);
+      } else {
+        console.log('Successfully deleted all shift assignments');
+      }
+      
+      // 2. Delete all shift locations
+      const { error: locationError } = await supabase
+        .from('shift_locations')
+        .delete()
+        .neq('shift_id', 'no-match-placeholder'); // Delete all rows
+        
+      if (locationError) {
+        console.error('Error deleting shift locations:', locationError);
+      } else {
+        console.log('Successfully deleted all shift locations');
+      }
+      
+      // 3. Delete all time logs
+      const { error: timeLogError } = await supabase
+        .from('time_logs')
+        .delete()
+        .neq('shift_id', 'no-match-placeholder'); // Delete all rows
+      
+      if (timeLogError) {
+        console.error('Error deleting time logs:', timeLogError);
+      } else {
+        console.log('Successfully deleted all time logs');
+      }
+      
+      // 4. Delete all shift-related notifications
+      const { error: notificationError } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('type', 'shift_assignment');
+      
+      if (notificationError) {
+        console.error('Error deleting shift notifications:', notificationError);
+      } else {
+        console.log('Successfully deleted all shift notifications');
+      }
+      
+      // 5. Finally delete all shifts
+      const { error } = await supabase
+        .from('shifts')
+        .delete()
+        .neq('id', 'no-match-placeholder'); // Delete all rows
+      
+      if (error) {
+        console.error('Error deleting shifts from database:', error);
+        throw new Error(`Database error: ${error.message}`);
+      } else {
+        console.log('All shifts deleted from database successfully');
+        
+        // Clear all shifts from local state
+        setShifts([]);
+        
+        // Clear all shifts from localStorage
+        clearShiftsFromLocalStorage();
+        
+        if (refreshShifts) {
+          console.log('Refreshing shifts data after bulk deletion');
+          refreshShifts();
+        }
+        
+        toast.success("All Shifts Deleted", {
+          description: "All shifts have been permanently removed"
+        });
+      }
+    } catch (err) {
+      console.error('Error deleting all shifts:', err);
+      setError(err instanceof Error ? err : new Error('Failed to delete all shifts'));
+      toast.error("Failed to delete all shifts", {
+        description: "Please try again"
+      });
+    }
+  }, [userRole, setShifts, setError, refreshShifts]);
+
   return {
-    deleteShift
+    deleteShift,
+    deleteAllShifts
   };
 };
