@@ -1,0 +1,122 @@
+
+import { supabase } from "@/integrations/supabase/client";
+
+/**
+ * Deletes related data from shift_assignments table for a specific shift
+ * @param shiftId ID of the shift to delete assignments for
+ * @returns Object containing success status and any error
+ */
+export const deleteShiftAssignments = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
+  try {
+    const { error } = await supabase
+      .from('shift_assignments')
+      .delete()
+      .eq('shift_id', shiftId);
+    
+    if (error) {
+      console.error('Error deleting from shift_assignments:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (err) {
+    console.error(`Error in assignment deletion for shift ${shiftId}:`, err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * Deletes related data from shift_locations table for a specific shift
+ * @param shiftId ID of the shift to delete locations for
+ * @returns Object containing success status and any error
+ */
+export const deleteShiftLocations = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
+  try {
+    const { error } = await supabase
+      .from('shift_locations')
+      .delete()
+      .eq('shift_id', shiftId);
+    
+    if (error) {
+      console.error('Error deleting from shift_locations:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (err) {
+    console.error(`Error in locations deletion for shift ${shiftId}:`, err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * Deletes related data from time_logs table for a specific shift
+ * @param shiftId ID of the shift to delete time logs for
+ * @returns Object containing success status and any error
+ */
+export const deleteShiftTimeLogs = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
+  try {
+    const { error } = await supabase
+      .from('time_logs')
+      .delete()
+      .eq('shift_id', shiftId);
+    
+    if (error) {
+      console.error('Error deleting from time_logs:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (err) {
+    console.error(`Error in time logs deletion for shift ${shiftId}:`, err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * Deletes related data from notifications table for a specific shift
+ * @param shiftId ID of the shift to delete notifications for
+ * @returns Object containing success status and any error
+ */
+export const deleteShiftNotifications = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('related_id', shiftId);
+    
+    if (error) {
+      console.error('Error deleting from notifications:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (err) {
+    console.error(`Error in notifications deletion for shift ${shiftId}:`, err);
+    return { success: false, error: err };
+  }
+};
+
+/**
+ * Deletes the main shift record from the shifts table
+ * @param shiftId ID of the shift to delete
+ * @returns Object containing success status and any error
+ */
+export const deleteMainShiftRecord = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
+  try {
+    const { error } = await supabase
+      .from('shifts')
+      .delete()
+      .eq('id', shiftId);
+    
+    if (error) {
+      console.error('Error deleting shift:', error);
+      return { success: false, error };
+    }
+    
+    return { success: true };
+  } catch (err) {
+    console.error(`Error deleting shift ${shiftId}:`, err);
+    return { success: false, error: err };
+  }
+};

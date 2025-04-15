@@ -1,9 +1,8 @@
-
 import { useCallback, useState } from "react";
 import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { toast } from "sonner";
 import { clearShiftsFromLocalStorage } from "./utils/shiftDataUtils";
-import { deleteShiftDataFromDatabase, deleteAllShiftsFromDatabase } from "./utils/shiftDeleteUtils";
+import { deleteShiftDataFromDatabase, deleteAllShiftsFromDatabase } from "./utils/delete";
 
 interface UseShiftsDeleteProps {
   setShifts: React.Dispatch<React.SetStateAction<Shift[]>>;
