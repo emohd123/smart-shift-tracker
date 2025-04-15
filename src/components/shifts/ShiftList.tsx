@@ -49,14 +49,12 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
     
     try {
       await refreshShifts();
-      toast({
-        title: "Data Refreshed",
+      toast("Data Refreshed", {
         description: "The shifts list has been updated with the latest data"
       });
     } catch (error) {
       console.error("Error refreshing data:", error);
-      toast({
-        title: "Refresh Failed",
+      toast("Refresh Failed", {
         description: "Could not refresh data. Please try again.",
         variant: "destructive"
       });
@@ -97,8 +95,7 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
       const successful = results.filter(r => r.success).length;
       
       if (successful > 0) {
-        toast({
-          title: "Success",
+        toast("Success", {
           description: `${successful} shift${successful > 1 ? 's' : ''} deleted successfully`
         });
         
@@ -109,8 +106,7 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
       }
       
       if (successful < selectedShifts.length) {
-        toast({
-          title: "Warning",
+        toast("Warning", {
           description: `${selectedShifts.length - successful} shift(s) could not be deleted`,
           variant: "destructive"
         });
@@ -121,8 +117,7 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
       
     } catch (error) {
       console.error("Error in bulk delete operation:", error);
-      toast({
-        title: "Error",
+      toast("Error", {
         description: "Failed to complete delete operation",
         variant: "destructive"
       });
