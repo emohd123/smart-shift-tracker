@@ -1,14 +1,13 @@
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { PlusCircle, Search, Trash2, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import ShiftGrid from "./ShiftGrid";
 import { Shift } from "./types/ShiftTypes";
 import { toast } from "sonner";
+import ShiftGrid from "./ShiftGrid";
+import SearchBar from "./list/SearchBar";
+import ShiftListHeader from "./list/ShiftListHeader";
+import BulkDeleteButton from "./list/BulkDeleteButton";
+import EmptyShifts from "./list/EmptyShifts";
 
 interface ShiftListProps {
   shifts: Shift[];
@@ -18,8 +17,6 @@ interface ShiftListProps {
 }
 
 const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: ShiftListProps) => {
-  const navigate = useNavigate();
-  const { toast } = useToast();
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedShifts, setSelectedShifts] = useState<string[]>([]);
@@ -136,58 +133,31 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-bold">{title}</h2>
-        
-        <div className="flex gap-2">
-          {refreshShifts && (
-            <Button 
-              variant="outline" 
-              onClick={handleRefresh}
-              disabled={isRefreshing}
-              className="gap-1"
-            >
-              <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-              {isRefreshing ? 'Refreshing...' : 'Refresh'}
-            </Button>
-          )}
-          
-          {isAdmin && (
-            <Button onClick={() => navigate("/create-shift")}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Create Shift
-            </Button>
-          )}
-        </div>
-      </div>
+      <ShiftListHeader 
+        title={title}
+        isAdmin={isAdmin}
+        isRefreshing={isRefreshing}
+        handleRefresh={handleRefresh}
+        refreshShifts={refreshShifts}
+      />
       
       <div className="flex gap-4 items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
-            placeholder="Search shifts..."
-            className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        <SearchBar 
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+        />
         
-        {isAdmin && selectedShifts.length > 0 && (
-          <Button 
-            variant="destructive" 
-            onClick={handleBulkDelete}
-            disabled={isDeleting}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Delete ({selectedShifts.length})
-          </Button>
+        {isAdmin && (
+          <BulkDeleteButton
+            selectedCount={selectedShifts.length}
+            isDeleting={isDeleting}
+            onBulkDelete={handleBulkDelete}
+          />
         )}
       </div>
       
       {filteredShifts.length === 0 ? (
-        <div className="text-center p-8 border rounded-lg bg-muted/20">
-          <p className="text-muted-foreground">No shifts found</p>
-        </div>
+        <EmptyShifts />
       ) : (
         <ShiftGrid 
           shifts={filteredShifts} 
