@@ -119,7 +119,7 @@ export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<bo
       .eq('type', 'shift');
     
     if (notificationsError) {
-      console.error('Error clearing notifications:', notifications);
+      console.error('Error clearing notifications:', notificationsError);
     }
     
     // Delete all shifts
