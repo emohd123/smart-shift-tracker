@@ -79,26 +79,25 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
       
       if (!success) {
         toast.error("Failed to Delete All Shifts", {
-          description: "Error removing shifts from the database"
+          description: "Some shift data couldn't be removed. Check console for details."
         });
-        return;
+      } else {
+        // Update client state
+        setShifts([]);
+        clearShiftsFromLocalStorage();
+        
+        toast.success("All Shifts Deleted", {
+          description: "All shifts have been permanently removed"
+        });
       }
       
-      // Update client state
-      setShifts([]);
-      clearShiftsFromLocalStorage();
-      
-      toast.success("All Shifts Deleted", {
-        description: "All shifts have been permanently removed"
-      });
-      
-      // Refresh shifts if the function is provided
+      // Always refresh shifts to ensure UI reflects the current database state
       if (refreshShifts) refreshShifts();
     } catch (err) {
       console.error('Bulk deletion error:', err);
       setError(err instanceof Error ? err : new Error('Unknown bulk deletion error'));
       toast.error("Deletion Failed", {
-        description: "Unable to delete all shifts"
+        description: "Unable to delete all shifts. Please try again later."
       });
     } finally {
       setIsDeleting(false);

@@ -77,62 +77,99 @@ export const deleteShiftDataFromDatabase = async (shiftId: string): Promise<bool
 // Handle deletion of all shifts data
 export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<boolean> => {
   try {
+    // Check user permissions
     if (userRole !== 'admin') {
+      console.error('Permission denied: Only admin users can perform bulk deletion');
       return false;
     }
 
-    // Delete from shift_assignments - use a proper SQL query instead of placeholder
-    const { error: assignmentsError } = await supabase
-      .from('shift_assignments')
-      .delete()
-      .gte('id', '00000000-0000-0000-0000-000000000000');
+    let hasErrors = false;
     
-    if (assignmentsError) {
-      console.error('Error clearing shift_assignments:', assignmentsError);
+    // Attempt to delete each related table in sequence
+    // This approach tries each table independently so errors in one don't stop others
+    
+    // Clear shift assignments
+    try {
+      const { error: assignmentsError } = await supabase
+        .from('shift_assignments')
+        .delete()
+        .gte('id', '00000000-0000-0000-0000-000000000000');
+      
+      if (assignmentsError) {
+        console.error('Error clearing shift_assignments:', assignmentsError);
+        hasErrors = true;
+      }
+    } catch (err) {
+      console.error('Error in shift_assignments deletion:', err);
+      hasErrors = true;
     }
     
-    // Delete from shift_locations
-    const { error: locationsError } = await supabase
-      .from('shift_locations')
-      .delete()
-      .gte('id', '00000000-0000-0000-0000-000000000000');
-    
-    if (locationsError) {
-      console.error('Error clearing shift_locations:', locationsError);
+    // Clear shift locations
+    try {
+      const { error: locationsError } = await supabase
+        .from('shift_locations')
+        .delete()
+        .gte('id', '00000000-0000-0000-0000-000000000000');
+      
+      if (locationsError) {
+        console.error('Error clearing shift_locations:', locationsError);
+        hasErrors = true;
+      }
+    } catch (err) {
+      console.error('Error in shift_locations deletion:', err);
+      hasErrors = true;
     }
     
-    // Delete from time_logs
-    const { error: timeLogsError } = await supabase
-      .from('time_logs')
-      .delete()
-      .gte('id', '00000000-0000-0000-0000-000000000000');
-    
-    if (timeLogsError) {
-      console.error('Error clearing time_logs:', timeLogsError);
+    // Clear time logs
+    try {
+      const { error: timeLogsError } = await supabase
+        .from('time_logs')
+        .delete()
+        .gte('id', '00000000-0000-0000-0000-000000000000');
+      
+      if (timeLogsError) {
+        console.error('Error clearing time_logs:', timeLogsError);
+        hasErrors = true;
+      }
+    } catch (err) {
+      console.error('Error in time_logs deletion:', err);
+      hasErrors = true;
     }
     
-    // Delete from notifications related to shifts
-    const { error: notificationsError } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('type', 'shift');
-    
-    if (notificationsError) {
-      console.error('Error clearing notifications:', notificationsError);
+    // Clear notifications related to shifts
+    try {
+      const { error: notificationsError } = await supabase
+        .from('notifications')
+        .delete()
+        .eq('type', 'shift');
+      
+      if (notificationsError) {
+        console.error('Error clearing notifications:', notificationsError);
+        hasErrors = true;
+      }
+    } catch (err) {
+      console.error('Error in notifications deletion:', err);
+      hasErrors = true;
     }
     
-    // Delete all shifts
-    const { error: shiftsError } = await supabase
-      .from('shifts')
-      .delete()
-      .gte('id', '00000000-0000-0000-0000-000000000000');
-    
-    if (shiftsError) {
-      console.error('Error clearing shifts:', shiftsError);
-      return false;
+    // Finally, clear all shifts
+    try {
+      const { error: shiftsError } = await supabase
+        .from('shifts')
+        .delete()
+        .gte('id', '00000000-0000-0000-0000-000000000000');
+      
+      if (shiftsError) {
+        console.error('Error clearing shifts:', shiftsError);
+        hasErrors = true;
+      }
+    } catch (err) {
+      console.error('Error in shifts deletion:', err);
+      hasErrors = true;
     }
     
-    return true;
+    // Return success if at least one operation succeeded
+    return !hasErrors;
   } catch (err) {
     console.error('Bulk deletion error:', err);
     return false;
