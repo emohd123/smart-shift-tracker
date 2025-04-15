@@ -17,29 +17,54 @@ export const deleteShiftDataFromDatabase = async (shiftId: string): Promise<bool
       return false;
     }
 
-    // Define the tables where we need to delete related data
-    const tables = ['shift_assignments', 'shift_locations', 'time_logs', 'notifications'];
+    // Delete related data from shift_assignments
+    const { error: assignmentsError } = await supabase
+      .from('shift_assignments')
+      .delete()
+      .eq('shift_id', shiftId);
     
-    // Delete related data from each table
-    for (const table of tables) {
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .eq(table === 'notifications' ? 'related_id' : 'shift_id', shiftId);
-      
-      if (error) {
-        console.error(`Error deleting from ${table}:`, error);
-      }
+    if (assignmentsError) {
+      console.error('Error deleting from shift_assignments:', assignmentsError);
+    }
+    
+    // Delete related data from shift_locations
+    const { error: locationsError } = await supabase
+      .from('shift_locations')
+      .delete()
+      .eq('shift_id', shiftId);
+    
+    if (locationsError) {
+      console.error('Error deleting from shift_locations:', locationsError);
+    }
+    
+    // Delete related data from time_logs
+    const { error: timeLogsError } = await supabase
+      .from('time_logs')
+      .delete()
+      .eq('shift_id', shiftId);
+    
+    if (timeLogsError) {
+      console.error('Error deleting from time_logs:', timeLogsError);
+    }
+    
+    // Delete related data from notifications
+    const { error: notificationsError } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('related_id', shiftId);
+    
+    if (notificationsError) {
+      console.error('Error deleting from notifications:', notificationsError);
     }
     
     // Finally delete the shift itself
-    const { error } = await supabase
+    const { error: shiftError } = await supabase
       .from('shifts')
       .delete()
       .eq('id', shiftId);
     
-    if (error) {
-      console.error('Error deleting shift:', error);
+    if (shiftError) {
+      console.error('Error deleting shift:', shiftError);
       return false;
     }
     
@@ -57,19 +82,55 @@ export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<bo
       return false;
     }
 
-    // Define the tables to clear in order (to avoid foreign key constraints)
-    const tables = ['shift_assignments', 'shift_locations', 'time_logs', 'notifications', 'shifts'];
+    // Delete from shift_assignments
+    const { error: assignmentsError } = await supabase
+      .from('shift_assignments')
+      .delete()
+      .neq('id', 'no-match-placeholder');
     
-    // Clear all data from each table
-    for (const table of tables) {
-      const { error } = await supabase
-        .from(table)
-        .delete()
-        .neq('id', 'no-match-placeholder');
-      
-      if (error) {
-        console.error(`Error clearing ${table}:`, error);
-      }
+    if (assignmentsError) {
+      console.error('Error clearing shift_assignments:', assignmentsError);
+    }
+    
+    // Delete from shift_locations
+    const { error: locationsError } = await supabase
+      .from('shift_locations')
+      .delete()
+      .neq('id', 'no-match-placeholder');
+    
+    if (locationsError) {
+      console.error('Error clearing shift_locations:', locationsError);
+    }
+    
+    // Delete from time_logs
+    const { error: timeLogsError } = await supabase
+      .from('time_logs')
+      .delete()
+      .neq('id', 'no-match-placeholder');
+    
+    if (timeLogsError) {
+      console.error('Error clearing time_logs:', timeLogsError);
+    }
+    
+    // Delete from notifications related to shifts
+    const { error: notificationsError } = await supabase
+      .from('notifications')
+      .delete()
+      .eq('type', 'shift');
+    
+    if (notificationsError) {
+      console.error('Error clearing notifications:', notifications);
+    }
+    
+    // Delete all shifts
+    const { error: shiftsError } = await supabase
+      .from('shifts')
+      .delete()
+      .neq('id', 'no-match-placeholder');
+    
+    if (shiftsError) {
+      console.error('Error clearing shifts:', shiftsError);
+      return false;
     }
     
     return true;
