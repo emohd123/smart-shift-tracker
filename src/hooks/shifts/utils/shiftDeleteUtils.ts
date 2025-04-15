@@ -1,5 +1,6 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 // Handle deletion of related data for a specific shift
 export const deleteShiftDataFromDatabase = async (shiftId: string): Promise<boolean> => {
@@ -80,24 +81,41 @@ export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<bo
     // Check user permissions
     if (userRole !== 'admin') {
       console.error('Permission denied: Only admin users can perform bulk deletion');
+      toast.error("Permission Denied", {
+        description: "Only admin users can delete all shifts"
+      });
       return false;
     }
 
     let hasErrors = false;
     
-    // Attempt to delete each related table in sequence
-    // This approach tries each table independently so errors in one don't stop others
+    // First fetch all shift IDs to ensure we have proper references for related deletions
+    const { data: shiftIds, error: fetchError } = await supabase
+      .from('shifts')
+      .select('id');
+    
+    if (fetchError) {
+      console.error('Error fetching shift IDs:', fetchError);
+      toast.error("Database Error", {
+        description: "Could not retrieve shifts to delete"
+      });
+      return false;
+    }
+
+    console.log(`Found ${shiftIds?.length || 0} shifts to delete`);
     
     // Clear shift assignments
     try {
       const { error: assignmentsError } = await supabase
         .from('shift_assignments')
         .delete()
-        .gte('id', '00000000-0000-0000-0000-000000000000');
+        .filter('shift_id', 'in', shiftIds?.map(s => s.id) || []);
       
       if (assignmentsError) {
         console.error('Error clearing shift_assignments:', assignmentsError);
         hasErrors = true;
+      } else {
+        console.log('Successfully deleted shift assignments');
       }
     } catch (err) {
       console.error('Error in shift_assignments deletion:', err);
@@ -109,27 +127,31 @@ export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<bo
       const { error: locationsError } = await supabase
         .from('shift_locations')
         .delete()
-        .gte('id', '00000000-0000-0000-0000-000000000000');
+        .filter('shift_id', 'in', shiftIds?.map(s => s.id) || []);
       
       if (locationsError) {
         console.error('Error clearing shift_locations:', locationsError);
         hasErrors = true;
+      } else {
+        console.log('Successfully deleted shift locations');
       }
     } catch (err) {
       console.error('Error in shift_locations deletion:', err);
       hasErrors = true;
     }
     
-    // Clear time logs
+    // Clear time logs related to shifts
     try {
       const { error: timeLogsError } = await supabase
         .from('time_logs')
         .delete()
-        .gte('id', '00000000-0000-0000-0000-000000000000');
+        .filter('shift_id', 'in', shiftIds?.map(s => s.id) || []);
       
       if (timeLogsError) {
         console.error('Error clearing time_logs:', timeLogsError);
         hasErrors = true;
+      } else {
+        console.log('Successfully deleted time logs');
       }
     } catch (err) {
       console.error('Error in time_logs deletion:', err);
@@ -141,11 +163,13 @@ export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<bo
       const { error: notificationsError } = await supabase
         .from('notifications')
         .delete()
-        .eq('type', 'shift');
+        .filter('type', 'eq', 'shift');
       
       if (notificationsError) {
         console.error('Error clearing notifications:', notificationsError);
         hasErrors = true;
+      } else {
+        console.log('Successfully deleted shift notifications');
       }
     } catch (err) {
       console.error('Error in notifications deletion:', err);
@@ -162,13 +186,19 @@ export const deleteAllShiftsFromDatabase = async (userRole?: string): Promise<bo
       if (shiftsError) {
         console.error('Error clearing shifts:', shiftsError);
         hasErrors = true;
+      } else {
+        console.log('Successfully deleted all shifts');
+        
+        // Clear local storage cache of shifts as well
+        localStorage.removeItem('shifts');
+        console.log('Cleared shifts from local storage');
       }
     } catch (err) {
       console.error('Error in shifts deletion:', err);
       hasErrors = true;
     }
     
-    // Return success if at least one operation succeeded
+    // Return success if there were no errors
     return !hasErrors;
   } catch (err) {
     console.error('Bulk deletion error:', err);

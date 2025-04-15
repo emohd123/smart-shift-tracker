@@ -47,7 +47,7 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
         description: "The shift has been permanently deleted"
       });
       
-      // Refresh shifts if the function is provided
+      // Refresh shifts if the function is provided to ensure UI is in sync with database
       if (refreshShifts) refreshShifts();
     } catch (err) {
       console.error('Deletion error:', err);
@@ -62,7 +62,12 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
 
   const deleteAllShifts = useCallback(async () => {
     // Prevent multiple deletion operations at once
-    if (isDeleting) return;
+    if (isDeleting) {
+      toast.info("Deletion in Progress", {
+        description: "Please wait for the current operation to complete"
+      });
+      return;
+    }
     
     setIsDeleting(true);
     
@@ -73,6 +78,10 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
         });
         return;
       }
+
+      toast.info("Deleting All Shifts", {
+        description: "This may take a moment..."
+      });
 
       // Use the utility function to delete all shifts from database
       const success = await deleteAllShiftsFromDatabase(userRole);
@@ -92,7 +101,10 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
       }
       
       // Always refresh shifts to ensure UI reflects the current database state
-      if (refreshShifts) refreshShifts();
+      if (refreshShifts) {
+        console.log("Refreshing shifts after bulk deletion");
+        refreshShifts();
+      }
     } catch (err) {
       console.error('Bulk deletion error:', err);
       setError(err instanceof Error ? err : new Error('Unknown bulk deletion error'));

@@ -112,8 +112,6 @@ function App() {
           </Suspense>
         </motion.div>
       </AnimatePresence>
-      
-      {/* Removed the duplicate Toaster component */}
     </div>
   );
 }
