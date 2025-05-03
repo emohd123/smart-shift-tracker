@@ -9,7 +9,7 @@ interface UseShiftsDeleteProps {
   setShifts: React.Dispatch<React.SetStateAction<Shift[]>>;
   setError: React.Dispatch<React.SetStateAction<Error | null>>;
   userRole?: string;
-  refreshShifts?: () => void;
+  refreshShifts?: () => Promise<void>;
 }
 
 export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }: UseShiftsDeleteProps) => {
@@ -41,14 +41,13 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
       
       // Update client state
       setShifts(prev => prev.filter(shift => shift.id !== id));
-      clearShiftsFromLocalStorage();
       
       toast.success("Shift Deleted", {
         description: "The shift has been permanently deleted"
       });
       
       // Refresh shifts if the function is provided to ensure UI is in sync with database
-      if (refreshShifts) refreshShifts();
+      if (refreshShifts) await refreshShifts();
     } catch (err) {
       console.error('Deletion error:', err);
       setError(err instanceof Error ? err : new Error('Unknown deletion error'));
@@ -86,9 +85,13 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
       // Use the utility function to delete all shifts from database
       const success = await deleteAllShiftsFromDatabase(userRole);
       
+      // Update client state regardless of success (we'll refresh after)
+      setShifts([]);
+      clearShiftsFromLocalStorage();
+      
       if (!success) {
-        toast.error("Partial Deletion Completed", {
-          description: "Some shift data couldn't be removed completely. The database will be refreshed."
+        toast.error("Deletion Error", {
+          description: "Some shift data couldn't be removed completely."
         });
       } else {
         toast.success("All Shifts Deleted", {
@@ -96,21 +99,17 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
         });
       }
       
-      // Always update client state regardless of partial errors
-      setShifts([]);
-      clearShiftsFromLocalStorage();
-      
       // Always refresh shifts to ensure UI reflects the current database state
-      if (refreshShifts) {
-        console.log("Refreshing shifts after bulk deletion");
-        refreshShifts();
-      }
+      if (refreshShifts) await refreshShifts();
     } catch (err) {
       console.error('Bulk deletion error:', err);
       setError(err instanceof Error ? err : new Error('Unknown bulk deletion error'));
       toast.error("Deletion Failed", {
         description: "Unable to delete all shifts. Please try again later."
       });
+      
+      // Always refresh to ensure we show the current state
+      if (refreshShifts) await refreshShifts();
     } finally {
       setIsDeleting(false);
     }

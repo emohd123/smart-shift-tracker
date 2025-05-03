@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from "react";
 import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { supabase } from "@/integrations/supabase/client";
@@ -6,7 +7,8 @@ import { toast } from "sonner";
 import { 
   formatDatabaseShifts, 
   filterShiftsByRole, 
-  synchronizeShifts 
+  synchronizeShifts,
+  clearShiftsFromLocalStorage
 } from "./utils/shiftDataUtils";
 
 interface UseShiftsFetchProps {
@@ -27,10 +29,15 @@ export const useShiftsFetch = ({ userId, userRole, isAuthenticated }: UseShiftsF
     setLoading(true);
     
     try {
-      // First check if we have actual shifts in the database
+      // Clear local storage cache to ensure fresh data
+      clearShiftsFromLocalStorage();
+      
+      console.log('Fetching shifts from database...');
+      
+      // Simple query to get all shifts
       const { data: dbShifts, error: dbError } = await supabase
         .from('shifts')
-        .select('*, shift_assignments(promoter_id)')
+        .select('*')
         .order('created_at', { ascending: false });
       
       if (dbError) {
@@ -42,57 +49,30 @@ export const useShiftsFetch = ({ userId, userRole, isAuthenticated }: UseShiftsF
       if (dbShifts && dbShifts.length > 0) {
         console.log('Using shifts from database:', dbShifts.length, 'shifts found');
         
-        // Process shift assignments for each shift
-        const processedShifts = dbShifts.map(shift => {
-          const assignments = shift.shift_assignments || [];
-          return {
-            ...shift,
-            is_assigned: assignments.length > 0,
-            assigned_promoters: assignments.length
-          };
-        });
-        
-        const formattedShifts = formatDatabaseShifts(processedShifts);
+        const formattedShifts = formatDatabaseShifts(dbShifts);
         
         // Filter shifts based on user role
         const filteredShifts = filterShiftsByRole(formattedShifts, userRole, userId);
         
-        // Clear out any stale local data
-        localStorage.removeItem('shifts');
-        
         setShifts(filteredShifts);
         console.log('Shifts loaded from database:', filteredShifts.length);
       } else {
-        // Otherwise fall back to mock data
-        console.log('No shifts in database, using mock data');
-        
-        const filteredShifts = filterShiftsByRole(mockShifts, userRole, userId);
-        setShifts(filteredShifts);
+        console.log('No shifts in database, using empty array');
+        setShifts([]);
       }
       
       setError(null);
     } catch (err) {
       console.error('Error fetching shifts:', err);
       setError(err instanceof Error ? err : new Error('Unknown error occurred'));
-      toast.error("Failed to load shifts", {
-        description: "Please try again."
-      });
       
-      // Attempt to load from localStorage as fallback
-      try {
-        const savedShifts = localStorage.getItem('shifts');
-        if (savedShifts) {
-          const parsedShifts = JSON.parse(savedShifts);
-          const allShifts = [...mockShifts, ...parsedShifts];
-          const filteredShifts = filterShiftsByRole(allShifts, userRole, userId);
-          setShifts(filteredShifts);
-        } else {
-          setShifts(filterShiftsByRole(mockShifts, userRole, userId));
-        }
-      } catch (localErr) {
-        console.error('Error loading from localStorage:', localErr);
-        setShifts(filterShiftsByRole(mockShifts, userRole, userId));
-      }
+      // Last resort: fall back to an empty array
+      setShifts([]);
+      
+      // Show error toast
+      toast.error("Failed to load shifts", {
+        description: "Please try refreshing the page."
+      });
     } finally {
       setLoading(false);
     }
@@ -109,7 +89,7 @@ export const useShiftsFetch = ({ userId, userRole, isAuthenticated }: UseShiftsF
     
     // Subscribe to real-time changes in the shifts table
     const shiftsChannel = supabase
-      .channel('shifts-channel')
+      .channel('shifts-changes')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'shifts' }, 
         (payload) => {
@@ -118,23 +98,10 @@ export const useShiftsFetch = ({ userId, userRole, isAuthenticated }: UseShiftsF
         }
       )
       .subscribe();
-      
-    // Also listen for changes in the shift_assignments table
-    const assignmentsChannel = supabase
-      .channel('assignments-channel')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'shift_assignments' }, 
-        (payload) => {
-          console.log('Realtime update received for shift_assignments:', payload);
-          refreshShifts();
-        }
-      )
-      .subscribe();
     
     // Cleanup on unmount
     return () => {
       supabase.removeChannel(shiftsChannel);
-      supabase.removeChannel(assignmentsChannel);
     };
   }, [isAuthenticated, refreshShifts]);
 

@@ -4,10 +4,11 @@ import { Shift } from "./types/ShiftTypes";
 import ShiftList from "./ShiftList";
 import { ShiftsLoading } from "./ShiftsLoading";
 import { motion } from "framer-motion";
-import { Calendar, AlertCircle, RefreshCw, Trash } from "lucide-react";
+import { Calendar, AlertCircle, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 // Define global functions for TypeScript
 declare global {
@@ -25,8 +26,8 @@ interface ShiftsContentProps {
   loading: boolean;
   title: string;
   deleteShift: (id: string) => void;
-  deleteAllShifts?: () => void;
-  refreshShifts?: () => void;
+  deleteAllShifts?: () => Promise<void>;
+  refreshShifts?: () => Promise<void>;
 }
 
 export const ShiftsContent = ({ 
@@ -56,9 +57,27 @@ export const ShiftsContent = ({
     };
   }, [deleteShift, deleteAllShifts]);
   
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     if (refreshShifts) {
-      refreshShifts();
+      try {
+        toast.info("Refreshing shifts data...");
+        await refreshShifts();
+        toast.success("Data refreshed successfully");
+      } catch (error) {
+        toast.error("Failed to refresh data");
+      }
+    }
+  };
+  
+  const handleDeleteAll = async () => {
+    if (deleteAllShifts) {
+      try {
+        toast.info("Deleting all shifts...");
+        await deleteAllShifts();
+        toast.success("All shifts deleted successfully");
+      } catch (error) {
+        toast.error("Failed to delete shifts");
+      }
     }
   };
   
@@ -79,11 +98,11 @@ export const ShiftsContent = ({
         </div>
         <h2 className="text-2xl font-semibold mb-2">No shifts found</h2>
         <p className="text-muted-foreground mb-8 max-w-md">
-          When shifts are created, they will appear here. Check back later or create a new shift.
+          When shifts are created, they will appear here. You can create a new shift using the button below.
         </p>
         <div className="flex gap-4">
           <Button 
-            onClick={() => navigate("/create-shift")}
+            onClick={() => navigate("/shifts/create")}
             className="gap-2"
           >
             <Calendar className="h-4 w-4" />
@@ -114,16 +133,29 @@ export const ShiftsContent = ({
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">{title}</h1>
         
-        {isAdmin && deleteAllShifts && (
-          <Button 
-            variant="destructive" 
-            onClick={deleteAllShifts}
-            className="gap-2"
-          >
-            <Trash className="h-4 w-4" />
-            Delete All Shifts
-          </Button>
-        )}
+        <div className="flex gap-4">
+          {refreshShifts && (
+            <Button 
+              variant="outline" 
+              onClick={handleRefresh}
+              className="gap-2"
+            >
+              <RefreshCw className="h-4 w-4" />
+              Refresh
+            </Button>
+          )}
+          
+          {isAdmin && deleteAllShifts && (
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteAll}
+              className="gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete All Shifts
+            </Button>
+          )}
+        </div>
       </div>
       
       <ShiftList 

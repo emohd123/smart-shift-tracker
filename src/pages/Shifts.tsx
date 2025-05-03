@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/context/AuthContext";
@@ -10,6 +10,7 @@ import { toast } from "sonner";
 const Shifts = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const [isDeleting, setIsDeleting] = useState(false);
   
   // Fetch shifts data based on user role and authentication status
   const { shifts, loading, error, deleteShift, deleteAllShifts, addShift, refreshShifts } = useShiftsData({
@@ -34,6 +35,34 @@ const Shifts = () => {
     }
   }, [isAuthenticated, navigate]);
 
+  // Handle delete all shifts with proper error handling
+  const handleDeleteAllShifts = async () => {
+    if (isDeleting) return;
+    
+    setIsDeleting(true);
+    try {
+      if (!deleteAllShifts) {
+        throw new Error("Delete function not available");
+      }
+      
+      await deleteAllShifts();
+      
+      // Force refresh data after deletion
+      if (refreshShifts) {
+        await refreshShifts();
+      }
+      
+      toast.success("All shifts deleted successfully");
+    } catch (error) {
+      console.error("Error deleting all shifts:", error);
+      toast.error("Failed to delete all shifts", {
+        description: "Please try again later or contact support."
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Make global functions available
   useEffect(() => {
     window.addShift = (shift) => {
@@ -50,9 +79,7 @@ const Shifts = () => {
     };
     
     window.deleteAllShifts = () => {
-      deleteAllShifts();
-      // After deleting all shifts, refresh the data
-      refreshShifts();
+      handleDeleteAllShifts();
     };
     
     window.refreshShifts = refreshShifts;
@@ -63,7 +90,7 @@ const Shifts = () => {
       window.deleteAllShifts = undefined;
       window.refreshShifts = undefined;
     };
-  }, [addShift, deleteShift, deleteAllShifts, refreshShifts]);
+  }, [addShift, deleteShift, deleteAllShifts, refreshShifts, handleDeleteAllShifts]);
 
   if (!isAuthenticated) {
     return null; // Don't render anything while redirecting
@@ -78,7 +105,7 @@ const Shifts = () => {
         loading={loading} 
         title={pageTitle}
         deleteShift={deleteShift}
-        deleteAllShifts={deleteAllShifts}
+        deleteAllShifts={handleDeleteAllShifts}
         refreshShifts={refreshShifts}
       />
     </AppLayout>
