@@ -2,11 +2,12 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { ErrorSeverity, useError } from "@/context/ErrorContext";
 
 export const useAuthentication = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
-
+  
   const login = async (emailOrUsername: string, password: string, remember: boolean = false) => {
     // Prevent login attempt with empty fields
     if (!emailOrUsername || !password) {
@@ -41,6 +42,8 @@ export const useAuthentication = () => {
           throw new Error("Invalid email or password. Please try again.");
         } else if (error.message.includes("Email not confirmed")) {
           throw new Error("Please confirm your email before signing in.");
+        } else if (error.message.includes("network")) {
+          throw new Error("Network error. Please check your connection and try again.");
         } else {
           throw new Error(error.message || "Login failed. Please check your credentials.");
         }
@@ -89,7 +92,15 @@ export const useAuthentication = () => {
 
       if (error) {
         console.error("Supabase signup error:", error);
-        throw error;
+        
+        // Provide more user-friendly error messages
+        if (error.message.includes("already registered")) {
+          throw new Error("This email is already registered. Please use a different email or try logging in.");
+        } else if (error.message.includes("network")) {
+          throw new Error("Network error. Please check your connection and try again.");
+        } else {
+          throw error;
+        }
       }
 
       if (!data.user) {

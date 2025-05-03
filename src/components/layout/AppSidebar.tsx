@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { ChevronLeft, Clock, Settings, LogOut, User, Home, Calendar, BarChart, Users, Award, MessageSquare } from "lucide-react";
+import { ChevronLeft, Clock, Settings, LogOut, User, Home, Calendar, BarChart, Users, Award, MessageSquare, Clock4, History, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NavigationLinks } from "./NavigationLinks";
 import { User as UserType } from "@/context/AuthContext";
@@ -34,42 +34,48 @@ export function AppSidebar({
     }
   };
 
-  const navItems = user?.role === "admin" 
-    ? [
-        { label: "Dashboard", icon: <Home size={20} />, href: "/dashboard" },
-        { label: "Shifts", icon: <Calendar size={20} />, href: "/shifts" },
-        { label: "Time Tracking", icon: <Clock size={20} />, href: "/time-tracking" },
-        { label: "Promoters", icon: <Users size={20} />, href: "/promoters" },
-        { 
-          label: "Messages", 
-          icon: (
-            <div className="relative">
-              <MessageSquare size={20} />
-              <UnreadMessagesBadge />
-            </div>
-          ), 
-          href: "/messages" 
-        },
-        { label: "Reports", icon: <BarChart size={20} />, href: "/reports" },
-        { label: "Certificates", icon: <Award size={20} />, href: "/certificates" },
-        { label: "Settings", icon: <Settings size={20} />, href: "/settings" },
-      ]
-    : [
-        { label: "Dashboard", icon: <Home size={20} />, href: "/dashboard" },
-        { label: "My Shifts", icon: <Calendar size={20} />, href: "/shifts" },
-        { label: "Time Tracker", icon: <Clock size={20} />, href: "/time-tracking" },
-        { 
-          label: "Messages", 
-          icon: (
-            <div className="relative">
-              <MessageSquare size={20} />
-              <UnreadMessagesBadge />
-            </div>
-          ), 
-          href: "/messages" 
-        },
-        { label: "Certificates", icon: <Award size={20} />, href: "/certificates" },
-      ];
+  const adminNavItems = [
+    { label: "Dashboard", icon: <Home size={20} />, href: "/dashboard" },
+    { label: "Shifts", icon: <Calendar size={20} />, href: "/shifts" },
+    { label: "Time Tracking", icon: <Clock size={20} />, href: "/time-tracking" },
+    { label: "Time History", icon: <History size={20} />, href: "/time-history" },
+    { label: "Promoters", icon: <Users size={20} />, href: "/promoters" },
+    { 
+      label: "Messages", 
+      icon: (
+        <div className="relative">
+          <MessageSquare size={20} />
+          <UnreadMessagesBadge />
+        </div>
+      ), 
+      href: "/messages" 
+    },
+    { label: "Reports", icon: <BarChart size={20} />, href: "/reports", isNew: true },
+    { label: "Certificates", icon: <Award size={20} />, href: "/certificates" },
+    { label: "Create Shift", icon: <Calendar size={20} />, href: "/create-shift" },
+    { label: "Account Settings", icon: <UserCog size={20} />, href: "/account-settings" },
+  ];
+  
+  const userNavItems = [
+    { label: "Dashboard", icon: <Home size={20} />, href: "/dashboard" },
+    { label: "My Shifts", icon: <Calendar size={20} />, href: "/shifts" },
+    { label: "Time Tracker", icon: <Clock size={20} />, href: "/time-tracking" },
+    { label: "Time History", icon: <History size={20} />, href: "/time-history" },
+    { 
+      label: "Messages", 
+      icon: (
+        <div className="relative">
+          <MessageSquare size={20} />
+          <UnreadMessagesBadge />
+        </div>
+      ), 
+      href: "/messages" 
+    },
+    { label: "Certificates", icon: <Award size={20} />, href: "/certificates" },
+    { label: "Account Settings", icon: <UserCog size={20} />, href: "/account-settings" },
+  ];
+
+  const navItems = user?.role === "admin" ? adminNavItems : userNavItems;
 
   return (
     <div
@@ -100,7 +106,7 @@ export function AppSidebar({
       {/* Nav Links */}
       <NavigationLinks navItems={navItems} />
 
-      {/* User profile at bottom - now pass the user and onLogout props correctly */}
+      {/* User profile at bottom */}
       <div className="absolute bottom-0 left-0 w-full p-4 border-t border-border">
         <UserProfile 
           user={user} 

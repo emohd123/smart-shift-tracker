@@ -17,8 +17,48 @@ export const usePromoters = () => {
       try {
         setLoading(true);
         
-        // Use mock data for development since there's an issue with database permissions
-        console.log("Using mock data for promoters");
+        // Fetch promoters from profiles table in Supabase
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('*');
+          
+        if (profileError) {
+          throw profileError;
+        }
+        
+        if (profileData) {
+          // Transform profiles data into PromoterData format
+          const promotersData: PromoterData[] = profileData.map(profile => {
+            // Calculate mock stats since we don't have this data yet
+            const totalHours = Math.floor(Math.random() * 100);
+            const totalShifts = Math.floor(totalHours / 4);
+            
+            return {
+              id: profile.id,
+              full_name: profile.full_name,
+              phone_number: profile.phone_number || '',
+              nationality: profile.nationality || '',
+              gender: profile.gender || '',
+              verification_status: profile.verification_status || 'pending',
+              total_hours: totalHours,
+              total_shifts: totalShifts,
+              average_rating: parseFloat((Math.random() * 2 + 3).toFixed(1)), // Random rating between 3-5
+              profile_photo_url: profile.profile_photo_url,
+              created_at: profile.created_at
+            };
+          });
+          
+          setPromoters(promotersData);
+        }
+        
+        setLoading(false);
+      } catch (error) {
+        console.error("Error fetching promoters:", error);
+        setError(error instanceof Error ? error : new Error('Unknown error occurred'));
+        toast.error("Failed to load promoters data");
+        
+        // Fall back to mock data in case of error
+        console.log("Falling back to mock data for promoters");
         const mockPromoters: PromoterData[] = [
           {
             id: "1",
@@ -179,11 +219,6 @@ export const usePromoters = () => {
         ];
         
         setPromoters(mockPromoters);
-        setLoading(false);
-      } catch (error) {
-        console.error("Error fetching promoters:", error);
-        setError(error instanceof Error ? error : new Error('Unknown error occurred'));
-        toast.error("Failed to load promoters data");
         setLoading(false);
       }
     };

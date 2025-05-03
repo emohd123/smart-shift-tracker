@@ -26,6 +26,7 @@ const Certificates = lazy(() => import("@/pages/Certificates"));
 const VerifyCertificatePage = lazy(() => import("@/pages/VerifyCertificatePage"));
 const Promoters = lazy(() => import("@/pages/Promoters"));
 const Messages = lazy(() => import("@/pages/Messages"));
+const Reports = lazy(() => import("@/pages/Reports"));
 
 // Loading fallback for lazy-loaded components
 const PageLoader = () => (
@@ -101,6 +102,7 @@ function App() {
                 <Route path="/create-shift" element={<CreateShift />} />
                 <Route path="/promoters" element={<Promoters />} />
                 <Route path="/messages" element={<Messages />} />
+                <Route path="/reports" element={<Reports />} />
               </Route>
               
               {/* Public routes for certificate verification */}
