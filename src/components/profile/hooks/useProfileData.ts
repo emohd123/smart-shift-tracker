@@ -20,11 +20,21 @@ export function useProfileData(user: User | null) {
         try {
           console.log("Fetching profile for user ID:", user.id);
           
-          // Use the getUserProfile function from useProfile hook
-          const data = await getUserProfile(user.id);
+          // Get profile data from profiles table directly instead of auth.users
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) {
+            console.error("Error loading profile:", error);
+            setError(error.message);
+            return;
+          }
           
           if (data) {
-            setProfileData(data);
+            setProfileData(data as UserProfile);
             
             // Set photo URLs if they exist
             if (data.profile_photo_url) {
@@ -58,7 +68,7 @@ export function useProfileData(user: User | null) {
     };
     
     loadProfile();
-  }, [user, getUserProfile]);
+  }, [user]);
 
   // Helper function to get public URL for storage items
   const getPublicUrl = async (bucketName: string, filePath: string) => {

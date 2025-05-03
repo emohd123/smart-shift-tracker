@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { UserProfile } from "@/context/AuthContext";
 import { ProfileUpdate } from "@/hooks/useAuthHooks";
-import { ErrorSeverity, useError } from "@/context/ErrorContext";
 
 export const useProfile = () => {
   const [loading, setLoading] = useState<boolean>(false);
@@ -15,7 +14,7 @@ export const useProfile = () => {
       console.log("Fetching profile for user ID:", userId);
       setLoading(true);
       
-      // Query the profiles table
+      // Query the profiles table instead of auth.users
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
