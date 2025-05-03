@@ -1,7 +1,7 @@
 
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { ErrorContextProvider } from "./context/ErrorContext";
-import { AuthContextProvider } from "./context/AuthContext";
+import { ErrorProvider } from "./context/ErrorContext";
+import { AuthProvider } from "./context/AuthContext";
 import { Toaster } from "./components/ui/sonner";
 
 // Pages
@@ -27,8 +27,8 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // Root component
 function App() {
   return (
-    <ErrorContextProvider>
-      <AuthContextProvider>
+    <ErrorProvider>
+      <AuthProvider>
         <BrowserRouter>
           <Routes>
             {/* Public routes */}
@@ -39,25 +39,27 @@ function App() {
             <Route path="/reset-password" element={<ResetPassword />} />
             
             {/* Protected routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-            <Route path="/shifts" element={<ProtectedRoute><Shifts /></ProtectedRoute>} />
-            <Route path="/shifts/create" element={<ProtectedRoute adminOnly={true}><CreateShift /></ProtectedRoute>} />
-            <Route path="/shifts/:id" element={<ProtectedRoute><ShiftDetails /></ProtectedRoute>} />
-            <Route path="/settings" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
-            <Route path="/promoters" element={<ProtectedRoute adminOnly={true}><Promoters /></ProtectedRoute>} />
-            <Route path="/time" element={<ProtectedRoute><TimeTracking /></ProtectedRoute>} />
-            <Route path="/time-history" element={<ProtectedRoute><TimeHistory /></ProtectedRoute>} />
-            <Route path="/reports" element={<ProtectedRoute><Reports /></ProtectedRoute>} />
-            <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
-            <Route path="/data-purge" element={<ProtectedRoute adminOnly={true}><DataPurge /></ProtectedRoute>} />
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/shifts" element={<Shifts />} />
+              <Route path="/shifts/create" element={<CreateShift />} />
+              <Route path="/shifts/:id" element={<ShiftDetails />} />
+              <Route path="/settings" element={<AccountSettings />} />
+              <Route path="/promoters" element={<Promoters />} />
+              <Route path="/time" element={<TimeTracking />} />
+              <Route path="/time-history" element={<TimeHistory />} />
+              <Route path="/reports" element={<Reports />} />
+              <Route path="/messages" element={<Messages />} />
+              <Route path="/data-purge" element={<DataPurge />} />
+            </Route>
             
             {/* Fallback route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
         <Toaster richColors />
-      </AuthContextProvider>
-    </ErrorContextProvider>
+      </AuthProvider>
+    </ErrorProvider>
   );
 }
 

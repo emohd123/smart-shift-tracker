@@ -34,49 +34,6 @@ export function AppSidebar({
     }
   };
 
-  const adminNavItems = [
-    { label: "Dashboard", icon: <Home size={20} />, href: "/dashboard" },
-    { label: "Shifts", icon: <Calendar size={20} />, href: "/shifts" },
-    { label: "Time Tracking", icon: <Clock size={20} />, href: "/time-tracking" },
-    { label: "Time History", icon: <History size={20} />, href: "/time-history" },
-    { label: "Promoters", icon: <Users size={20} />, href: "/promoters" },
-    { 
-      label: "Messages", 
-      icon: (
-        <div className="relative">
-          <MessageSquare size={20} />
-          <UnreadMessagesBadge />
-        </div>
-      ), 
-      href: "/messages" 
-    },
-    { label: "Reports", icon: <BarChart size={20} />, href: "/reports", isNew: true },
-    { label: "Certificates", icon: <Award size={20} />, href: "/certificates" },
-    { label: "Create Shift", icon: <Calendar size={20} />, href: "/create-shift" },
-    { label: "Account Settings", icon: <UserCog size={20} />, href: "/account-settings" },
-  ];
-  
-  const userNavItems = [
-    { label: "Dashboard", icon: <Home size={20} />, href: "/dashboard" },
-    { label: "My Shifts", icon: <Calendar size={20} />, href: "/shifts" },
-    { label: "Time Tracker", icon: <Clock size={20} />, href: "/time-tracking" },
-    { label: "Time History", icon: <History size={20} />, href: "/time-history" },
-    { 
-      label: "Messages", 
-      icon: (
-        <div className="relative">
-          <MessageSquare size={20} />
-          <UnreadMessagesBadge />
-        </div>
-      ), 
-      href: "/messages" 
-    },
-    { label: "Certificates", icon: <Award size={20} />, href: "/certificates" },
-    { label: "Account Settings", icon: <UserCog size={20} />, href: "/account-settings" },
-  ];
-
-  const navItems = user?.role === "admin" ? adminNavItems : userNavItems;
-
   return (
     <div
       className={cn(
@@ -104,7 +61,7 @@ export function AppSidebar({
       </div>
 
       {/* Nav Links */}
-      <NavigationLinks navItems={navItems} />
+      <NavigationLinks />
 
       {/* User profile at bottom */}
       <div className="absolute bottom-0 left-0 w-full p-4 border-t border-border">

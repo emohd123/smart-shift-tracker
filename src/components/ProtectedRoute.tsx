@@ -10,10 +10,10 @@ const ProtectedRoute = () => {
   
   // Check if the route is admin-only
   const isAdminRoute = location.pathname.startsWith('/admin') || 
-                       location.pathname === '/dashboard' ||
                        location.pathname === '/promoters' ||
                        location.pathname === '/reports' ||
-                       location.pathname === '/create-shift';
+                       location.pathname === '/shifts/create' || 
+                       location.pathname === '/data-purge';
 
   // Show a loading indicator while authentication state is being determined
   if (loading) {
@@ -27,7 +27,7 @@ const ProtectedRoute = () => {
 
   // If not authenticated, redirect to login page
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
   // If it's an admin route but user is not an admin, redirect to user dashboard

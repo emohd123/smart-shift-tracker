@@ -1,8 +1,6 @@
 
 import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
-import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from './context/AuthContext';
 import { ErrorProvider, ErrorBoundary } from './context/ErrorContext';
 import { Loader2 } from 'lucide-react';
 import './index.css';
@@ -30,13 +28,9 @@ root.render(
   <React.StrictMode>
     <ErrorProvider>
       <ErrorBoundary>
-        <BrowserRouter>
-          <AuthProvider>
-            <Suspense fallback={<LoadingFallback />}>
-              <App />
-            </Suspense>
-          </AuthProvider>
-        </BrowserRouter>
+        <Suspense fallback={<LoadingFallback />}>
+          <App />
+        </Suspense>
       </ErrorBoundary>
     </ErrorProvider>
   </React.StrictMode>
