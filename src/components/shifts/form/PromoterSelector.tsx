@@ -55,7 +55,7 @@ export default function PromoterSelector({
               : `${selectedPromoterIds.length} promoter${selectedPromoterIds.length > 1 ? 's' : ''} selected`}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="p-0" align="start" side="bottom" sideOffset={4} width="target">
+        <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start" side="bottom" sideOffset={4}>
           <Command>
             <CommandInput placeholder="Search promoters..." />
             <CommandList>
