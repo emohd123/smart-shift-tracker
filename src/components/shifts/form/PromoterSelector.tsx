@@ -1,5 +1,5 @@
 
-import { CheckIcon } from "lucide-react";
+import { CheckIcon, Phone } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -55,7 +55,7 @@ export default function PromoterSelector({
               : `${selectedPromoterIds.length} promoter${selectedPromoterIds.length > 1 ? 's' : ''} selected`}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="p-0" align="start" side="bottom">
+        <PopoverContent className="p-0" align="start" side="bottom" sideOffset={4} width="target">
           <Command>
             <CommandInput placeholder="Search promoters..." />
             <CommandList>
@@ -74,18 +74,32 @@ export default function PromoterSelector({
                 </CommandItem>
                 
                 <ScrollArea className="h-[200px]">
-                  {promoters.map((promoter) => (
-                    <CommandItem
-                      key={promoter.id}
-                      onSelect={() => onSelect(promoter.id)}
-                      className="flex items-center"
-                    >
-                      <div className={`mr-2 h-4 w-4 ${selectedPromoterIds.includes(promoter.id) ? "text-primary" : ""}`}>
-                        {selectedPromoterIds.includes(promoter.id) && <CheckIcon className="h-4 w-4" />}
-                      </div>
-                      <span>{promoter.full_name}</span>
-                    </CommandItem>
-                  ))}
+                  {promoters.length === 0 && !loading ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      No approved promoters available
+                    </div>
+                  ) : (
+                    promoters.map((promoter) => (
+                      <CommandItem
+                        key={promoter.id}
+                        onSelect={() => onSelect(promoter.id)}
+                        className="flex items-center justify-between"
+                      >
+                        <div className="flex items-center">
+                          <div className={`mr-2 h-4 w-4 ${selectedPromoterIds.includes(promoter.id) ? "text-primary" : ""}`}>
+                            {selectedPromoterIds.includes(promoter.id) && <CheckIcon className="h-4 w-4" />}
+                          </div>
+                          <span>{promoter.full_name}</span>
+                        </div>
+                        {promoter.phone_number && (
+                          <div className="flex items-center text-xs text-muted-foreground">
+                            <Phone className="h-3 w-3 mr-1" />
+                            {promoter.phone_number}
+                          </div>
+                        )}
+                      </CommandItem>
+                    ))
+                  )}
                 </ScrollArea>
               </CommandGroup>
             </CommandList>
