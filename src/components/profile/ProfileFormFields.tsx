@@ -3,14 +3,39 @@ import { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { GenderType } from "@/types/database";
+import { 
+  Form, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormControl, 
+  FormMessage 
+} from "@/components/ui/form";
 
-interface ProfileFormFieldsProps {
+export interface ProfileFormFieldsProps {
   form: UseFormReturn<any>;
+  readOnly?: boolean;
 }
 
-export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
+// Alternative props interface for backward compatibility
+export interface LegacyProfileFormFieldsProps {
+  formData: any;
+  setFormData: (data: any) => void;
+  readOnly: boolean;
+}
+
+export default function ProfileFormFields({ 
+  form, 
+  readOnly = false 
+}: ProfileFormFieldsProps) {
   return (
     <>
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
@@ -20,6 +45,8 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
             id="full_name"
             type="text"
             {...form.register("full_name")}
+            readOnly={readOnly}
+            disabled={readOnly}
           />
           {form.formState.errors.full_name && (
             <p className="text-sm text-red-500">{form.formState.errors.full_name.message as string}</p>
@@ -32,6 +59,8 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
             id="nationality"
             type="text"
             {...form.register("nationality")}
+            readOnly={readOnly}
+            disabled={readOnly}
           />
           {form.formState.errors.nationality && (
             <p className="text-sm text-red-500">{form.formState.errors.nationality.message as string}</p>
@@ -44,6 +73,8 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
             id="age"
             type="number"
             {...form.register("age", { valueAsNumber: true })}
+            readOnly={readOnly}
+            disabled={readOnly}
           />
           {form.formState.errors.age && (
             <p className="text-sm text-red-500">{form.formState.errors.age.message as string}</p>
@@ -56,6 +87,8 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
             id="phone_number"
             type="tel"
             {...form.register("phone_number")}
+            readOnly={readOnly}
+            disabled={readOnly}
           />
           {form.formState.errors.phone_number && (
             <p className="text-sm text-red-500">{form.formState.errors.phone_number.message as string}</p>
@@ -67,6 +100,7 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
           <Select 
             onValueChange={(value) => form.setValue("gender", value as GenderType)}
             defaultValue={form.getValues("gender")}
+            disabled={readOnly}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select gender" />
@@ -88,6 +122,8 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
             id="height"
             type="number"
             {...form.register("height", { valueAsNumber: true })}
+            readOnly={readOnly}
+            disabled={readOnly}
           />
           {form.formState.errors.height && (
             <p className="text-sm text-red-500">{form.formState.errors.height.message as string}</p>
@@ -100,6 +136,8 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
             id="weight"
             type="number"
             {...form.register("weight", { valueAsNumber: true })}
+            readOnly={readOnly}
+            disabled={readOnly}
           />
           {form.formState.errors.weight && (
             <p className="text-sm text-red-500">{form.formState.errors.weight.message as string}</p>
@@ -112,6 +150,8 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
             id="address"
             type="text"
             {...form.register("address")}
+            readOnly={readOnly}
+            disabled={readOnly}
           />
           {form.formState.errors.address && (
             <p className="text-sm text-red-500">{form.formState.errors.address.message as string}</p>
@@ -124,6 +164,8 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
             id="bank_details"
             type="text"
             {...form.register("bank_details")}
+            readOnly={readOnly}
+            disabled={readOnly}
           />
           {form.formState.errors.bank_details && (
             <p className="text-sm text-red-500">{form.formState.errors.bank_details.message as string}</p>
@@ -136,6 +178,7 @@ export default function ProfileFormFields({ form }: ProfileFormFieldsProps) {
           id="is_student"
           checked={form.watch("is_student") as boolean}
           onCheckedChange={(checked) => form.setValue("is_student", !!checked)}
+          disabled={readOnly}
         />
         <Label htmlFor="is_student">I am a student</Label>
       </div>
