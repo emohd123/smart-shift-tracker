@@ -66,22 +66,9 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
   const updateUserProfile = async (userId: string, formData: any, idCardUrl: string, profilePhotoUrl: string) => {
     try {
       console.log("Updating profile for user ID:", userId);
-      console.log("Form data:", formData);
       
-      // First check if a profile already exists
-      const { data: existingProfile, error: fetchError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .maybeSingle();
-        
-      if (fetchError) {
-        console.error("Error fetching existing profile:", fetchError);
-        throw fetchError;
-      }
-
-      // Ensure proper handling of phone number to avoid unique constraint violations
-      const phoneNumber = formData.phoneNumber?.trim() || null;
+      // Always ensure phone number is null if empty
+      const phoneNumber = formData.phoneNumber?.trim() ? formData.phoneNumber.trim() : null;
       
       // Ensure all form data is properly formatted for database storage
       const profileData = {
@@ -102,98 +89,22 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
       };
       
       console.log("Profile data to save:", profileData);
+
+      // Instead of trying to upsert, just update the profile
+      // The trigger we created will have already made a profile on signup
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(profileData)
+        .eq('id', userId)
+        .select();
         
-      // If profile exists, update it
-      if (existingProfile) {
-        console.log("Updating existing profile");
-        
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .update(profileData)
-            .eq('id', userId)
-            .select();
-            
-          if (error) {
-            console.error("Error updating profile:", error);
-            throw error;
-          }
-          
-          console.log("Profile updated successfully:", data);
-          return data;
-        } catch (updateError: any) {
-          // If phone number violation, retry without it
-          if (updateError.code === '23505' && updateError.message.includes('profiles_phone_number_key')) {
-            console.log("Phone number conflict detected, retrying without phone number");
-            
-            const { data, error } = await supabase
-              .from('profiles')
-              .update({
-                ...profileData,
-                phone_number: null
-              })
-              .eq('id', userId)
-              .select();
-              
-            if (error) {
-              console.error("Error updating profile on retry:", error);
-              throw error;
-            }
-            
-            console.log("Profile updated successfully on retry:", data);
-            return data;
-          } else {
-            throw updateError;
-          }
-        }
-      } else {
-        // If profile doesn't exist, insert a new one
-        console.log("Creating new profile");
-        try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .insert({
-              id: userId,
-              ...profileData
-            })
-            .select();
-            
-          if (error) {
-            console.error("Error creating profile:", error);
-            
-            // Special handling for duplicate key errors - retry without phone number if it's a duplicate
-            if (error.code === '23505' && error.message.includes('profiles_phone_number_key')) {
-              console.log("Duplicate phone number detected, retrying without phone number");
-              
-              // Try again without phone number
-              const { data: retryData, error: retryError } = await supabase
-                .from('profiles')
-                .insert({
-                  id: userId,
-                  ...profileData,
-                  phone_number: null // Set to null to avoid conflict
-                })
-                .select();
-                
-              if (retryError) {
-                console.error("Error creating profile even after retry:", retryError);
-                throw retryError;
-              }
-              
-              console.log("Profile created successfully after retry:", retryData);
-              return retryData;
-            }
-            
-            throw error;
-          }
-          
-          console.log("Profile created successfully:", data);
-          return data;
-        } catch (insertError: any) {
-          console.error("Error creating profile:", insertError);
-          throw insertError;
-        }
+      if (error) {
+        console.error("Error updating profile:", error);
+        throw error;
       }
+      
+      console.log("Profile updated successfully:", data);
+      return data;
     } catch (error: any) {
       console.error("Error updating profile:", error);
       throw error;

@@ -38,7 +38,6 @@ export const useSignupFormValidation = (
     if (
       !formData.nationality ||
       !formData.age ||
-      !formData.phoneNumber ||
       !formData.gender ||
       !formData.height ||
       !formData.weight ||
@@ -56,6 +55,12 @@ export const useSignupFormValidation = (
     
     if (!/^\d+$/.test(formData.height) || !/^\d+$/.test(formData.weight)) {
       setFormError("Height and weight must be numeric values");
+      return false;
+    }
+    
+    // Phone number is optional now
+    if (formData.phoneNumber && !/^\+?[\d\s-]{10,15}$/.test(formData.phoneNumber.trim())) {
+      setFormError("Please enter a valid phone number or leave it empty");
       return false;
     }
     

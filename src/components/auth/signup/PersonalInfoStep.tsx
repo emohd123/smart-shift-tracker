@@ -1,160 +1,141 @@
 
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { FormData } from "./types";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { GenderType } from "@/types/database";
 
-interface PersonalInfoStepProps {
-  formData: FormData;
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
-  setFormData: React.Dispatch<React.SetStateAction<FormData>>;
-}
-
-export function PersonalInfoStep({ formData, handleChange, setFormData }: PersonalInfoStepProps) {
-  const handleGenderChange = (value: string) => {
-    // Convert the string value to a GenderType enum
-    setFormData({ ...formData, gender: value as GenderType });
-  };
-
+export function PersonalInfoStep({ 
+  formData, 
+  handleChange, 
+  setFormData 
+}: { 
+  formData: any; 
+  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  setFormData: (data: any) => void; 
+}) {
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-medium">Personal Details</h3>
+    <div className="grid gap-4">
+      <h3 className="text-lg font-medium">Personal Information</h3>
       
-      <div className="space-y-2">
-        <Label htmlFor="nationality">Nationality</Label>
-        <Input
-          id="nationality"
-          name="nationality"
-          type="text"
-          placeholder="Enter your nationality"
-          value={formData.nationality}
-          onChange={handleChange}
-          required
-          className="h-11"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="age">Age (18+)</Label>
+          <Label htmlFor="nationality">Nationality</Label>
+          <Input
+            id="nationality"
+            name="nationality"
+            type="text"
+            value={formData.nationality}
+            onChange={handleChange}
+            placeholder="Your nationality"
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="age">Age</Label>
           <Input
             id="age"
             name="age"
             type="number"
-            min="18"
-            placeholder="21"
             value={formData.age}
             onChange={handleChange}
-            required
-            className="h-11"
+            min="18"
           />
         </div>
-
+        
         <div className="space-y-2">
-          <Label htmlFor="phoneNumber">Phone Number</Label>
+          <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
           <Input
             id="phoneNumber"
             name="phoneNumber"
             type="tel"
-            placeholder="+1 123 456 7890"
-            value={formData.phoneNumber}
+            value={formData.phoneNumber || ''}
             onChange={handleChange}
-            required
-            className="h-11"
+            placeholder="+123 456 7890"
           />
         </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="gender">Gender</Label>
-        <Select 
-          defaultValue={formData.gender || GenderType.Male}
-          onValueChange={handleGenderChange}
-        >
-          <SelectTrigger id="gender" className="h-11">
-            <SelectValue placeholder="Select gender" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={GenderType.Male}>Male</SelectItem>
-            <SelectItem value={GenderType.Female}>Female</SelectItem>
-            <SelectItem value={GenderType.Other}>Other</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        
+        <div className="space-y-2">
+          <Label htmlFor="gender">Gender</Label>
+          <Select 
+            name="gender" 
+            value={formData.gender} 
+            onValueChange={(value) => setFormData({ ...formData, gender: value })}
+          >
+            <SelectTrigger id="gender">
+              <SelectValue placeholder="Select gender" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={GenderType.Male}>Male</SelectItem>
+              <SelectItem value={GenderType.Female}>Female</SelectItem>
+              <SelectItem value={GenderType.Other}>Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
         <div className="space-y-2">
           <Label htmlFor="height">Height (cm)</Label>
           <Input
             id="height"
             name="height"
             type="number"
-            placeholder="175"
             value={formData.height}
             onChange={handleChange}
-            required
-            className="h-11"
+            placeholder="Height in cm"
           />
         </div>
-
+        
         <div className="space-y-2">
           <Label htmlFor="weight">Weight (kg)</Label>
           <Input
             id="weight"
             name="weight"
             type="number"
-            placeholder="70"
             value={formData.weight}
             onChange={handleChange}
-            required
-            className="h-11"
+            placeholder="Weight in kg"
           />
         </div>
       </div>
-
-      <div className="space-y-2">
-        <div className="flex items-center space-x-2">
-          <input
-            id="isStudent"
-            name="isStudent"
-            type="checkbox"
-            className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-            checked={formData.isStudent}
-            onChange={handleChange}
-          />
-          <Label htmlFor="isStudent">Are you a student?</Label>
-        </div>
-      </div>
-
+      
       <div className="space-y-2">
         <Label htmlFor="address">Address</Label>
-        <textarea
+        <Input
           id="address"
           name="address"
-          rows={3}
-          placeholder="Enter your full address"
+          type="text"
           value={formData.address}
           onChange={handleChange}
-          required
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          placeholder="Your address"
         />
       </div>
-
+      
       <div className="space-y-2">
-        <Label htmlFor="bankDetails">Bank Account Details (Optional)</Label>
-        <textarea
+        <Label htmlFor="bankDetails">Bank Details (Optional)</Label>
+        <Input
           id="bankDetails"
           name="bankDetails"
-          rows={3}
-          placeholder="Enter your bank account details for payment processing"
-          value={formData.bankDetails}
+          type="text"
+          value={formData.bankDetails || ''}
           onChange={handleChange}
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          placeholder="Bank account details"
         />
-        <p className="text-xs text-muted-foreground">
-          This information is securely stored and only accessible to admins for payment processing.
-        </p>
+      </div>
+      
+      <div className="flex items-center space-x-2">
+        <Checkbox
+          id="isStudent"
+          name="isStudent"
+          checked={formData.isStudent || false}
+          onCheckedChange={(checked) => setFormData({ ...formData, isStudent: !!checked })}
+        />
+        <Label htmlFor="isStudent">I am a student</Label>
       </div>
     </div>
   );

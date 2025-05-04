@@ -232,7 +232,7 @@ export type Database = {
           id_card_url: string | null
           is_student: boolean
           nationality: string
-          phone_number: string
+          phone_number: string | null
           profile_photo_url: string | null
           role: string
           updated_at: string
@@ -251,7 +251,7 @@ export type Database = {
           id_card_url?: string | null
           is_student: boolean
           nationality: string
-          phone_number: string
+          phone_number?: string | null
           profile_photo_url?: string | null
           role?: string
           updated_at?: string
@@ -270,7 +270,7 @@ export type Database = {
           id_card_url?: string | null
           is_student?: boolean
           nationality?: string
-          phone_number?: string
+          phone_number?: string | null
           profile_photo_url?: string | null
           role?: string
           updated_at?: string

@@ -61,7 +61,7 @@ export const useSignupForm = () => {
       setFormError(null);
       console.log("Form data to submit:", formData);
       
-      // Format phone number - if empty, make it explicitly null to avoid DB constraints
+      // Always ensure phone number is null if empty
       const formattedData = {
         ...formData,
         phoneNumber: formData.phoneNumber?.trim() || null
@@ -83,7 +83,7 @@ export const useSignupForm = () => {
         const { idCardUrl, profilePhotoUrl } = await uploadFiles(userData.id, fileData);
         console.log("Files uploaded:", { idCardUrl, profilePhotoUrl });
         
-        // Update profile with properly handled phone number
+        // Update profile
         await updateUserProfile(userData.id, formattedData, idCardUrl || '', profilePhotoUrl || '');
         console.log("Profile updated successfully");
         
@@ -99,7 +99,7 @@ export const useSignupForm = () => {
       } catch (profileError: any) {
         console.error("Profile creation error:", profileError);
         
-        // Even if profile creation fails, the user has been created
+        // Even if profile update fails, the user has been created and should have a basic profile
         // Show success but with a warning
         setIsSuccess(true);
         toast({
@@ -109,7 +109,7 @@ export const useSignupForm = () => {
         });
         
         setTimeout(() => {
-          navigate("/profile");
+          navigate("/login");
         }, 3000);
       }
     } catch (error: any) {

@@ -98,9 +98,6 @@ export const useAuthentication = () => {
           throw new Error("This email is already registered. Please use a different email or try logging in.");
         } else if (error.message.includes("network")) {
           throw new Error("Network error. Please check your connection and try again.");
-        } else if (error.message.includes("Database error saving new user")) {
-          // Specific error for database issues
-          throw new Error("We encountered a problem creating your account. Please try again with a different phone number or contact support.");
         } else {
           throw error;
         }
