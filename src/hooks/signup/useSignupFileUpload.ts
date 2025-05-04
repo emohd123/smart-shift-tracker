@@ -80,12 +80,15 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         throw fetchError;
       }
 
+      // Ensure proper handling of phone number to avoid unique constraint violations
+      const phoneNumber = formData.phoneNumber?.trim() || null;
+      
       // Ensure all form data is properly formatted for database storage
       const profileData = {
         full_name: formData.fullName || 'New User',
         nationality: formData.nationality || '',
         age: parseInt(formData.age) || 18,
-        phone_number: formData.phoneNumber ? formData.phoneNumber : null, // Set to null if empty to avoid unique constraint violation
+        phone_number: phoneNumber, // Explicitly set to null if empty
         gender: formData.gender as GenderType || GenderType.Male,
         height: parseInt(formData.height) || 170,
         weight: parseInt(formData.weight) || 70,
@@ -103,61 +106,93 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
       // If profile exists, update it
       if (existingProfile) {
         console.log("Updating existing profile");
-        const { data, error } = await supabase
-          .from('profiles')
-          .update(profileData)
-          .eq('id', userId)
-          .select();
-          
-        if (error) {
-          console.error("Error updating profile:", error);
-          throw error;
-        }
         
-        console.log("Profile updated successfully:", data);
-        return data;
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .update(profileData)
+            .eq('id', userId)
+            .select();
+            
+          if (error) {
+            console.error("Error updating profile:", error);
+            throw error;
+          }
+          
+          console.log("Profile updated successfully:", data);
+          return data;
+        } catch (updateError: any) {
+          // If phone number violation, retry without it
+          if (updateError.code === '23505' && updateError.message.includes('profiles_phone_number_key')) {
+            console.log("Phone number conflict detected, retrying without phone number");
+            
+            const { data, error } = await supabase
+              .from('profiles')
+              .update({
+                ...profileData,
+                phone_number: null
+              })
+              .eq('id', userId)
+              .select();
+              
+            if (error) {
+              console.error("Error updating profile on retry:", error);
+              throw error;
+            }
+            
+            console.log("Profile updated successfully on retry:", data);
+            return data;
+          } else {
+            throw updateError;
+          }
+        }
       } else {
         // If profile doesn't exist, insert a new one
         console.log("Creating new profile");
-        const { data, error } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            ...profileData
-          })
-          .select();
-          
-        if (error) {
-          console.error("Error creating profile:", error);
-          
-          // Special handling for duplicate key errors - retry without phone number if it's a duplicate
-          if (error.code === '23505' && error.message.includes('profiles_phone_number_key')) {
-            console.log("Duplicate phone number detected, retrying without phone number");
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .insert({
+              id: userId,
+              ...profileData
+            })
+            .select();
             
-            // Try again without phone number
-            const { data: retryData, error: retryError } = await supabase
-              .from('profiles')
-              .insert({
-                id: userId,
-                ...profileData,
-                phone_number: null // Set to null to avoid conflict
-              })
-              .select();
+          if (error) {
+            console.error("Error creating profile:", error);
+            
+            // Special handling for duplicate key errors - retry without phone number if it's a duplicate
+            if (error.code === '23505' && error.message.includes('profiles_phone_number_key')) {
+              console.log("Duplicate phone number detected, retrying without phone number");
               
-            if (retryError) {
-              console.error("Error creating profile even after retry:", retryError);
-              throw retryError;
+              // Try again without phone number
+              const { data: retryData, error: retryError } = await supabase
+                .from('profiles')
+                .insert({
+                  id: userId,
+                  ...profileData,
+                  phone_number: null // Set to null to avoid conflict
+                })
+                .select();
+                
+              if (retryError) {
+                console.error("Error creating profile even after retry:", retryError);
+                throw retryError;
+              }
+              
+              console.log("Profile created successfully after retry:", retryData);
+              return retryData;
             }
             
-            console.log("Profile created successfully after retry:", retryData);
-            return retryData;
+            throw error;
           }
           
-          throw error;
+          console.log("Profile created successfully:", data);
+          return data;
+        } catch (insertError: any) {
+          console.error("Error creating profile:", insertError);
+          throw insertError;
         }
-        
-        console.log("Profile created successfully:", data);
-        return data;
       }
     } catch (error: any) {
       console.error("Error updating profile:", error);

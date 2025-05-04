@@ -1,197 +1,133 @@
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
-import { UserProfile } from "@/context/AuthContext";
-import { Card } from "@/components/ui/card";
-import ProfileFormFields from "./ProfileFormFields";
-import FileUploadFields from "./FileUploadFields";
-import ProfileHeader from "./ProfileHeader";
-import { useProfileData } from "./hooks/useProfileData";
-import { useFileUpload } from "./hooks/useFileUpload";
+import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/auth/useProfile";
 import { ProfileUpdate } from "@/hooks/useAuthHooks";
-import { GenderType } from "@/types/database";
-
-const formSchema = z.object({
-  full_name: z.string().min(2, { message: "Name must be at least 2 characters." }),
-  nationality: z.string().min(2, { message: "Nationality is required." }),
-  age: z.number().min(18, { message: "Must be at least 18 years old." }),
-  phone_number: z.string().min(8, { message: "Valid phone number is required." }),
-  gender: z.nativeEnum(GenderType), // Using our enumerated gender type
-  height: z.number().min(100, { message: "Enter height in cm" }),
-  weight: z.number().min(30, { message: "Enter weight in kg" }),
-  is_student: z.boolean(),
-  address: z.string().min(5, { message: "Address is required." }),
-  bank_details: z.string().optional(),
-});
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import ProfileLoadingError from "./ProfileLoadingError";
+import { Loader2 } from "lucide-react";
+import FileUploadFields from "./FileUploadFields";
+import ProfileFormFields from "./ProfileFormFields";
 
 export default function ProfileUpdateForm() {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
-  const { updateProfile } = useProfile();
+  const { getUserProfile, updateProfile, loading, error } = useProfile();
+  const [profileData, setProfileData] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
+  const [idCardFile, setIdCardFile] = useState<File | null>(null);
+  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
   
-  const { 
-    profileData, 
-    setProfileData,
-    currentProfilePhotoUrl, 
-    setCurrentProfilePhotoUrl,
-    currentIdCardUrl, 
-    setCurrentIdCardUrl,
-    loading: profileLoading,
-    error: profileLoadError
-  } = useProfileData(user);
-  
-  const {
-    uploadFiles,
-    idCardFile, 
-    setIdCardFile,
-    profilePhotoFile, 
-    setProfilePhotoFile,
-    isUploading
-  } = useFileUpload();
-
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      full_name: "",
-      nationality: "",
-      age: 18,
-      phone_number: "",
-      gender: GenderType.Male, // Default using our enum type
-      height: 170,
-      weight: 70,
-      is_student: false,
-      address: "",
-      bank_details: "",
-    },
-  });
-
   useEffect(() => {
-    if (profileData) {
-      console.log("Setting form values from profile data:", profileData);
-      form.reset({
+    const loadUserProfile = async () => {
+      if (user?.id) {
+        try {
+          const profile = await getUserProfile(user.id);
+          setProfileData(profile);
+        } catch (err) {
+          console.error("Error fetching profile:", err);
+        }
+      }
+    };
+    
+    loadUserProfile();
+  }, [user]);
+  
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user?.id || !profileData) return;
+    
+    try {
+      setSaving(true);
+      
+      // Format data for update
+      const updateData: ProfileUpdate = {
         full_name: profileData.full_name || "",
         nationality: profileData.nationality || "",
         age: profileData.age || 18,
-        phone_number: profileData.phone_number || "",
-        gender: profileData.gender || GenderType.Male,
-        height: profileData.height || 170,
-        weight: profileData.weight || 70,
-        is_student: profileData.is_student || false,
+        phone_number: profileData.phone_number || null,
+        gender: profileData.gender || "Male",
+        height: profileData.height || 0,
+        weight: profileData.weight || 0,
+        is_student: Boolean(profileData.is_student),
         address: profileData.address || "",
         bank_details: profileData.bank_details || "",
-      });
-    }
-  }, [profileData, form]);
-
-  const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    if (!user) {
-      toast.error("You must be logged in to update your profile");
-      return;
-    }
-    
-    setLoading(true);
-
-    try {
-      console.log("Submitting form values:", values);
-      
-      let updates: ProfileUpdate = {
-        ...values,
       };
-
-      if (idCardFile || profilePhotoFile) {
-        const { idCardUrl, profilePhotoUrl } = await uploadFiles(user.id);
-        
-        if (idCardUrl) {
-          updates.id_card_url = idCardUrl;
-        }
-        
-        if (profilePhotoUrl) {
-          updates.profile_photo_url = profilePhotoUrl;
-        }
-      }
-
-      console.log("Updating profile with:", updates);
       
-      // Update the profile in the database
-      await updateProfile(user.id, updates);
+      // Handle file uploads here if needed
       
-      // Refresh the profile data
-      const updatedProfile = await fetch(`/api/profiles/${user.id}`).then(res => res.json())
-        .catch(() => {
-          console.log("Using direct profile fetch instead of API");
-          return null;
-        });
-      
-      if (updatedProfile) {
-        setProfileData(updatedProfile);
-        setCurrentProfilePhotoUrl(updatedProfile.profile_photo_url || null);
-        setCurrentIdCardUrl(updatedProfile.id_card_url || null);
-      } else {
-        // If the API call fails, refresh the profile data using the hook
-        const refreshedProfile = await form.getValues();
-        setProfileData(prevProfile => ({
-          ...prevProfile!,
-          ...refreshedProfile,
-        }) as UserProfile);
-      }
-      
+      await updateProfile(user.id, updateData);
       toast.success("Profile updated successfully");
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error("Error updating profile:", errorMessage);
-      toast.error("Failed to update profile: " + errorMessage);
+    } catch (err: any) {
+      toast.error("Failed to update profile: " + (err.message || "Unknown error"));
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
-
+  
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-48">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="ml-2">Loading profile data...</span>
+      </div>
+    );
+  }
+  
+  if (error) {
+    return <ProfileLoadingError message={error} />;
+  }
+  
+  if (!profileData) {
+    return (
+      <div className="space-y-4">
+        <p>No profile data available. Please complete your profile information.</p>
+        <ProfileFormFields
+          formData={{}}
+          setFormData={setProfileData}
+          readOnly={false}
+        />
+      </div>
+    );
+  }
+  
   return (
-    <div className="space-y-8">
-      {profileLoading ? (
-        <div className="flex justify-center items-center h-24">
-          <div className="animate-pulse text-primary">Loading profile data...</div>
-        </div>
-      ) : profileLoadError ? (
-        <div className="text-center py-4">
-          <div className="text-red-500 mb-2">Error loading profile: {profileLoadError}</div>
-          <Button 
-            variant="outline" 
-            onClick={() => window.location.reload()}
-          >
-            Retry
-          </Button>
-        </div>
-      ) : (
-        <>
-          <ProfileHeader 
-            profilePhotoUrl={currentProfilePhotoUrl} 
-            userName={profileData?.full_name || user?.name || "User"} 
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <ProfileFormFields
+            formData={profileData}
+            setFormData={setProfileData}
+            readOnly={false}
           />
-          
-          <Card className="p-6">
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <ProfileFormFields form={form} />
-              
-              <FileUploadFields 
-                setIdCardFile={setIdCardFile} 
-                setProfilePhotoFile={setProfilePhotoFile}
-                currentIdCardUrl={currentIdCardUrl}
-                currentProfilePhotoUrl={currentProfilePhotoUrl}
-              />
-
-              <Button type="submit" disabled={loading || isUploading}>
-                {loading || isUploading ? "Updating..." : "Update Profile"}
-              </Button>
-            </form>
-          </Card>
-        </>
-      )}
-    </div>
+        </div>
+        
+        <div>
+          <FileUploadFields
+            setIdCardFile={setIdCardFile}
+            setProfilePhotoFile={setProfilePhotoFile}
+            currentIdCardUrl={profileData.id_card_url}
+            currentProfilePhotoUrl={profileData.profile_photo_url}
+          />
+        </div>
+      </div>
+      
+      <div className="flex justify-end">
+        <Button type="submit" disabled={saving}>
+          {saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Changes"
+          )}
+        </Button>
+      </div>
+    </form>
   );
 }

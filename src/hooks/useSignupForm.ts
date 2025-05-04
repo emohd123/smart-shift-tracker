@@ -61,7 +61,13 @@ export const useSignupForm = () => {
       setFormError(null);
       console.log("Form data to submit:", formData);
       
-      const { fullName, email, password } = formData;
+      // Format phone number - if empty, make it explicitly null to avoid DB constraints
+      const formattedData = {
+        ...formData,
+        phoneNumber: formData.phoneNumber?.trim() || null
+      };
+      
+      const { fullName, email, password } = formattedData;
       
       console.log("Creating user with:", { fullName, email });
       const userData = await signup(fullName, email, password);
@@ -77,8 +83,8 @@ export const useSignupForm = () => {
         const { idCardUrl, profilePhotoUrl } = await uploadFiles(userData.id, fileData);
         console.log("Files uploaded:", { idCardUrl, profilePhotoUrl });
         
-        // Update profile
-        await updateUserProfile(userData.id, formData, idCardUrl || '', profilePhotoUrl || '');
+        // Update profile with properly handled phone number
+        await updateUserProfile(userData.id, formattedData, idCardUrl || '', profilePhotoUrl || '');
         console.log("Profile updated successfully");
         
         setIsSuccess(true);
@@ -94,7 +100,7 @@ export const useSignupForm = () => {
         console.error("Profile creation error:", profileError);
         
         // Even if profile creation fails, the user has been created
-        // So we'll show success but with a warning
+        // Show success but with a warning
         setIsSuccess(true);
         toast({
           title: "Registration partially successful",
