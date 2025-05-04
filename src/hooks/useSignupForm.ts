@@ -72,23 +72,39 @@ export const useSignupForm = () => {
       
       console.log("User created successfully:", userData);
       
-      // Upload files
-      const { idCardUrl, profilePhotoUrl } = await uploadFiles(userData.id, fileData);
-      console.log("Files uploaded:", { idCardUrl, profilePhotoUrl });
-      
-      // Update profile
-      await updateUserProfile(userData.id, formData, idCardUrl || '', profilePhotoUrl || '');
-      console.log("Profile updated successfully");
-      
-      setIsSuccess(true);
-      toast({
-        title: "Registration successful",
-        description: "Your account is now pending verification.",
-      });
-      
-      setTimeout(() => {
-        navigate("/login");
-      }, 2000);
+      try {
+        // Upload files
+        const { idCardUrl, profilePhotoUrl } = await uploadFiles(userData.id, fileData);
+        console.log("Files uploaded:", { idCardUrl, profilePhotoUrl });
+        
+        // Update profile
+        await updateUserProfile(userData.id, formData, idCardUrl || '', profilePhotoUrl || '');
+        console.log("Profile updated successfully");
+        
+        setIsSuccess(true);
+        toast({
+          title: "Registration successful",
+          description: "Your account is now pending verification.",
+        });
+        
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      } catch (profileError: any) {
+        console.error("Profile creation error:", profileError);
+        // Even if profile creation fails, the user has been created
+        // So we'll show success but with a warning
+        setIsSuccess(true);
+        toast({
+          title: "Registration partially successful",
+          description: "Your account was created, but there was an issue with your profile. Please complete your profile after login.",
+          variant: "destructive",
+        });
+        
+        setTimeout(() => {
+          navigate("/login");
+        }, 3000);
+      }
     } catch (error: any) {
       console.error("Registration error:", error);
       setFormError(error.message || "Registration failed. Please try again.");

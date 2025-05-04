@@ -22,6 +22,7 @@ import NotFound from "./pages/NotFound";
 import Reports from "./pages/Reports";
 import Messages from "./pages/Messages";
 import DataPurge from "./pages/DataPurge";
+import Profile from "./pages/Profile";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Root component
@@ -44,6 +45,7 @@ function App() {
               <Route path="/shifts" element={<Shifts />} />
               <Route path="/shifts/create" element={<CreateShift />} />
               <Route path="/shifts/:id" element={<ShiftDetails />} />
+              <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<AccountSettings />} />
               <Route path="/promoters" element={<Promoters />} />
               <Route path="/time" element={<TimeTracking />} />

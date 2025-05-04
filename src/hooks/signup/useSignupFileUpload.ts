@@ -85,7 +85,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         full_name: formData.fullName || 'New User',
         nationality: formData.nationality || '',
         age: parseInt(formData.age) || 18,
-        phone_number: formData.phoneNumber || '',
+        phone_number: formData.phoneNumber || null, // Set to null if empty to avoid unique constraint violation
         gender: formData.gender as GenderType || GenderType.Male,
         height: parseInt(formData.height) || 170,
         weight: parseInt(formData.weight) || 70,
@@ -106,7 +106,8 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         const { data, error } = await supabase
           .from('profiles')
           .update(profileData)
-          .eq('id', userId);
+          .eq('id', userId)
+          .select();
           
         if (error) {
           console.error("Error updating profile:", error);
@@ -114,6 +115,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         }
         
         console.log("Profile updated successfully:", data);
+        return data;
       } else {
         // If profile doesn't exist, insert a new one
         console.log("Creating new profile");
@@ -122,7 +124,8 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
           .insert({
             id: userId,
             ...profileData
-          });
+          })
+          .select();
           
         if (error) {
           console.error("Error creating profile:", error);
@@ -130,28 +133,8 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         }
         
         console.log("Profile created successfully:", data);
+        return data;
       }
-
-      // Also update the user metadata to match the profile
-      const { error: updateUserError } = await supabase.auth.updateUser({
-        data: {
-          full_name: formData.fullName,
-          nationality: formData.nationality,
-          gender: formData.gender,
-          age: parseInt(formData.age) || 18,
-          phone_number: formData.phoneNumber,
-          height: parseInt(formData.height) || 170,
-          weight: parseInt(formData.weight) || 70,
-          is_student: formData.isStudent === true,
-          address: formData.address,
-          role: 'promoter'
-        }
-      });
-
-      if (updateUserError) {
-        console.error("Error updating user metadata:", updateUserError);
-      }
-      
     } catch (error: any) {
       console.error("Error updating profile:", error);
       throw error;
