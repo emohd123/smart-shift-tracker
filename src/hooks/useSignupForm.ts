@@ -88,10 +88,11 @@ export const useSignupForm = () => {
         });
         
         setTimeout(() => {
-          navigate("/login");
+          navigate("/profile");
         }, 2000);
       } catch (profileError: any) {
         console.error("Profile creation error:", profileError);
+        
         // Even if profile creation fails, the user has been created
         // So we'll show success but with a warning
         setIsSuccess(true);
@@ -102,7 +103,7 @@ export const useSignupForm = () => {
         });
         
         setTimeout(() => {
-          navigate("/login");
+          navigate("/profile");
         }, 3000);
       }
     } catch (error: any) {

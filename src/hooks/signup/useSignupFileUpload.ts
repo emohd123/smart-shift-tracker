@@ -85,7 +85,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         full_name: formData.fullName || 'New User',
         nationality: formData.nationality || '',
         age: parseInt(formData.age) || 18,
-        phone_number: formData.phoneNumber || null, // Set to null if empty to avoid unique constraint violation
+        phone_number: formData.phoneNumber ? formData.phoneNumber : null, // Set to null if empty to avoid unique constraint violation
         gender: formData.gender as GenderType || GenderType.Male,
         height: parseInt(formData.height) || 170,
         weight: parseInt(formData.weight) || 70,
@@ -129,6 +129,30 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
           
         if (error) {
           console.error("Error creating profile:", error);
+          
+          // Special handling for duplicate key errors - retry without phone number if it's a duplicate
+          if (error.code === '23505' && error.message.includes('profiles_phone_number_key')) {
+            console.log("Duplicate phone number detected, retrying without phone number");
+            
+            // Try again without phone number
+            const { data: retryData, error: retryError } = await supabase
+              .from('profiles')
+              .insert({
+                id: userId,
+                ...profileData,
+                phone_number: null // Set to null to avoid conflict
+              })
+              .select();
+              
+            if (retryError) {
+              console.error("Error creating profile even after retry:", retryError);
+              throw retryError;
+            }
+            
+            console.log("Profile created successfully after retry:", retryData);
+            return retryData;
+          }
+          
           throw error;
         }
         
