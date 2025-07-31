@@ -1,7 +1,9 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ErrorProvider } from "./context/ErrorContext";
 import { AuthProvider } from "./context/AuthContext";
+import { SecurityProvider } from "./components/security/SecurityProvider";
 import { Toaster } from "./components/ui/sonner";
+import DevToolsPanel from "./components/devtools/DevToolsPanel";
 
 // Pages
 import Index from "./pages/Index";
@@ -28,6 +30,7 @@ import Revenue from "./pages/Revenue";
 import Jobs from "./pages/Jobs";
 import Credits from "./pages/Credits";
 import Training from "./pages/Training";
+import Referrals from "./pages/Referrals";
 import VerifyCertificatePage from "./pages/VerifyCertificatePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -35,8 +38,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 function App() {
   return (
     <ErrorProvider>
-      <AuthProvider>
-        <BrowserRouter>
+      <SecurityProvider>
+        <AuthProvider>
+          <BrowserRouter>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Index />} />
@@ -66,14 +70,17 @@ function App() {
               <Route path="/jobs" element={<Jobs />} />
               <Route path="/credits" element={<Credits />} />
               <Route path="/training" element={<Training />} />
+              <Route path="/referrals" element={<Referrals />} />
             </Route>
             
             {/* Fallback route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <DevToolsPanel />
         </BrowserRouter>
         <Toaster richColors />
       </AuthProvider>
+      </SecurityProvider>
     </ErrorProvider>
   );
 }
