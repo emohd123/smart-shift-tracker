@@ -21,6 +21,8 @@ export type Certificate = {
 
 export type TimePeriod = "3months" | "6months" | "1year" | "all";
 
+export type CertificateType = "skills" | "work_experience";
+
 export interface CertificateData {
   referenceNumber: string;
   promoterName: string;
@@ -34,4 +36,38 @@ export interface CertificateData {
   performanceRating: number;
   expirationDate?: string; // Optional expiration date
   status?: string; // Certificate status
-};
+  certificateType?: CertificateType; // Type of certificate
+}
+
+export interface WorkExperienceData {
+  referenceNumber: string;
+  promoterName: string;
+  totalHours: number;
+  totalShifts: number;
+  workPeriod: {
+    startDate: string;
+    endDate: string;
+  };
+  roles: string[];
+  locations: string[];
+  shifts: { 
+    date: string; 
+    title: string; 
+    hours: number; 
+    location?: string;
+    timeLog?: {
+      checkIn: string;
+      checkOut: string;
+      actualHours: number;
+    };
+  }[];
+  timeLogs: {
+    totalTrackedHours: number;
+    averageHoursPerShift: number;
+    mostProductiveDay: string;
+  };
+  issueDate: string;
+  managerContact: string;
+  performanceRating: number;
+  certificateType: CertificateType;
+}

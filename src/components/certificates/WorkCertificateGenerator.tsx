@@ -8,16 +8,19 @@ import { Badge } from "@/components/ui/badge";
 import { Collapse } from "@/components/ui/collapse";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useCertificateGeneration } from "./hooks/useCertificateGeneration";
-import CertificatePreview from "./CertificatePreview";
+import UnifiedCertificatePreview from "./UnifiedCertificatePreview";
 import AdminCertificateSelector from "./AdminCertificateSelector";
 import TimePeriodSelector from "./generator/TimePeriodSelector";
 import GenerateButton from "./generator/GenerateButton";
-import CertificateActions from "./generator/CertificateActions";
-import { TimePeriod } from "./types/certificate";
+import UnifiedCertificateActions from "./generator/UnifiedCertificateActions";
+import { TimePeriod, CertificateType } from "./types/certificate";
+import CertificateTypeSelector from "./generator/CertificateTypeSelector";
+import { useUnifiedCertificateGeneration } from "./hooks/useUnifiedCertificateGeneration";
 
 export default function WorkCertificateGenerator() {
   const { user, isAuthenticated } = useAuth();
   const [timePeriod, setTimePeriod] = useState<TimePeriod>("6months");
+  const [certificateType, setCertificateType] = useState<CertificateType>("skills");
   const [showPreview, setShowPreview] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [promoters, setPromoters] = useState<any[]>([]);
@@ -34,7 +37,7 @@ export default function WorkCertificateGenerator() {
     handleShare,
     handleEmail,
     fetchPromoters
-  } = useCertificateGeneration(selectedUserId || user?.id || "", timePeriod);
+  } = useUnifiedCertificateGeneration(selectedUserId || user?.id || "", timePeriod, certificateType);
   
   // Set initial user ID
   useEffect(() => {
@@ -97,10 +100,10 @@ export default function WorkCertificateGenerator() {
           <div>
             <CardTitle className="text-2xl font-bold flex items-center gap-2">
               <Shield className="h-5 w-5 text-primary" />
-              Work Certificate Generator
+              Professional Certificate Generator
             </CardTitle>
             <CardDescription className="mt-1">
-              Generate a professional certificate validated with a unique QR code and digital signature
+              Generate professional certificates for skills validation or comprehensive work experience verification
             </CardDescription>
           </div>
           <Badge variant="outline" className="px-3 py-1 border-primary/30 bg-primary/5">
@@ -130,6 +133,11 @@ export default function WorkCertificateGenerator() {
           />
         )}
         
+        <CertificateTypeSelector 
+          certificateType={certificateType} 
+          setCertificateType={setCertificateType} 
+        />
+        
         <TimePeriodSelector timePeriod={timePeriod} setTimePeriod={setTimePeriod} />
         
         <GenerateButton 
@@ -140,20 +148,24 @@ export default function WorkCertificateGenerator() {
         
         <Collapse open={showPreview && !!certificateData}>
           <div className="pt-4">
-            <CertificatePreview certificateData={certificateData} />
+            <UnifiedCertificatePreview 
+              certificateData={certificateData} 
+              certificateType={certificateType}
+            />
           </div>
         </Collapse>
       </CardContent>
       
       {showPreview && certificateData && (
         <CardFooter className="flex flex-wrap gap-2 justify-center bg-secondary/20 p-6 rounded-b-lg">
-          <CertificateActions
+          <UnifiedCertificateActions
             certificateData={certificateData}
+            certificateType={certificateType}
             downloading={downloading}
             sharing={sharing}
             isAuthenticated={isAuthenticated}
             handleDownload={handleDownload}
-            handleShare={handleEmail}
+            handleShare={handleShare}
             handleEmail={handleEmail}
           />
         </CardFooter>

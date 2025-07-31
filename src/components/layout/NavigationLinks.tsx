@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { 
   CalendarDays, ChevronDown, 
   ClipboardList, Clock, Home, MessageCircle, 
-  Settings, UserRound, Users, FileBarChart2, Eraser
+  Settings, UserRound, Users, FileBarChart2, Eraser, Award
 } from "lucide-react";
 import { UserRole } from "@/types/database";
 import {
@@ -60,6 +60,10 @@ export const NavigationLinks = () => {
       
       <AppLink to="/messages" icon={<MessageCircle className="h-4 w-4" />}>
         Messages
+      </AppLink>
+      
+      <AppLink to="/certificates" icon={<Award className="h-4 w-4" />}>
+        Certificates
       </AppLink>
       
       {isAdmin && (

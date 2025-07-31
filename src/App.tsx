@@ -23,6 +23,7 @@ import Reports from "./pages/Reports";
 import Messages from "./pages/Messages";
 import DataPurge from "./pages/DataPurge";
 import Profile from "./pages/Profile";
+import Certificates from "./pages/Certificates";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Root component
@@ -53,6 +54,7 @@ function App() {
               <Route path="/reports" element={<Reports />} />
               <Route path="/messages" element={<Messages />} />
               <Route path="/data-purge" element={<DataPurge />} />
+              <Route path="/certificates" element={<Certificates />} />
             </Route>
             
             {/* Fallback route */}
