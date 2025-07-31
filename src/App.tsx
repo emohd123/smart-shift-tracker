@@ -1,4 +1,3 @@
-
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ErrorProvider } from "./context/ErrorContext";
 import { AuthProvider } from "./context/AuthContext";
@@ -25,9 +24,7 @@ import DataPurge from "./pages/DataPurge";
 import Profile from "./pages/Profile";
 import Certificates from "./pages/Certificates";
 import Subscription from "./pages/Subscription";
-import Credits from "./pages/Credits";
-import Training from "./pages/Training";
-import Jobs from "./pages/Jobs";
+import Revenue from "./pages/Revenue";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Root component
@@ -60,9 +57,7 @@ function App() {
               <Route path="/data-purge" element={<DataPurge />} />
               <Route path="/certificates" element={<Certificates />} />
               <Route path="/subscription" element={<Subscription />} />
-              <Route path="/credits" element={<Credits />} />
-              <Route path="/training" element={<Training />} />
-              <Route path="/jobs" element={<Jobs />} />
+              <Route path="/revenue" element={<Revenue />} />
             </Route>
             
             {/* Fallback route */}

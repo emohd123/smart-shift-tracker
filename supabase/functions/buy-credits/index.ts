@@ -19,14 +19,17 @@ serve(async (req) => {
   );
 
   try {
-    const authHeader = req.headers.get("Authorization")!;
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) throw new Error("No authorization header provided");
+
     const token = authHeader.replace("Bearer ", "");
-    const { data } = await supabaseClient.auth.getUser(token);
-    const user = data.user;
-    if (!user?.email) throw new Error("User not authenticated");
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser(token);
+    if (userError) throw new Error(`Authentication error: ${userError.message}`);
+    const user = userData.user;
+    if (!user?.email) throw new Error("User not authenticated or email not available");
 
-    const { credits = 50 } = await req.json(); // Default 50 credits for $5
-
+    const { credits } = await req.json();
+    
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", { apiVersion: "2023-10-16" });
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId;
@@ -34,9 +37,14 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    // Calculate price: $0.10 per credit
-    const pricePerCredit = 10; // cents
-    const totalAmount = credits * pricePerCredit;
+    // Credit packages - different pricing tiers
+    const creditPackages = {
+      small: { credits: 100, amount: 999, name: "100 Credits Pack" },
+      medium: { credits: 500, amount: 3999, name: "500 Credits Pack (20% bonus)" },
+      large: { credits: 1200, amount: 7999, name: "1200 Credits Pack (50% bonus)" }
+    };
+
+    const selectedPackage = creditPackages[credits as keyof typeof creditPackages] || creditPackages.small;
 
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
@@ -46,21 +54,21 @@ serve(async (req) => {
           price_data: {
             currency: "usd",
             product_data: { 
-              name: `${credits} Credits`,
-              description: `Pay-per-use credits for certificates, job postings, and training modules`
+              name: selectedPackage.name,
+              description: `Purchase ${selectedPackage.credits} credits for certificates, training, and premium features`
             },
-            unit_amount: totalAmount,
+            unit_amount: selectedPackage.amount,
           },
           quantity: 1,
         },
       ],
       mode: "payment",
-      success_url: `${req.headers.get("origin")}/dashboard?credits=purchased&amount=${credits}`,
+      success_url: `${req.headers.get("origin")}/dashboard?credits=success&amount=${selectedPackage.credits}`,
       cancel_url: `${req.headers.get("origin")}/dashboard?credits=cancelled`,
       metadata: {
-        credits: credits.toString(),
         user_id: user.id,
-        type: "credit_purchase"
+        credits_amount: selectedPackage.credits.toString(),
+        credit_package: credits
       }
     });
 

@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Clock, Users, Award, BookOpen, Play, Lock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Clock, BookOpen, Award, PlayCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-interface TrainingModule {
+type TrainingModule = {
   id: string;
   title: string;
   description: string;
@@ -19,279 +18,220 @@ interface TrainingModule {
   category: string;
   skills_covered: string[];
   preview_content: string;
-}
-
-interface UserProgress {
-  progress_percentage: number;
-  completed_at: string | null;
-  certificate_issued: boolean;
-  started_at: string;
-}
-
-interface UserCredits {
-  credits_balance: number;
-}
+};
 
 export default function TrainingModules() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, subscription } = useAuth();
   const [modules, setModules] = useState<TrainingModule[]>([]);
-  const [userProgress, setUserProgress] = useState<Record<string, UserProgress>>({});
-  const [userCredits, setUserCredits] = useState<UserCredits>({ credits_balance: 0 });
-  const [loading, setLoading] = useState(false);
-  const [enrollingId, setEnrollingId] = useState<string | null>(null);
+  const [userCredits, setUserCredits] = useState<number>(0);
+  const [loading, setLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    loadModules();
+    fetchModules();
     if (isAuthenticated) {
-      loadUserProgress();
-      loadUserCredits();
+      fetchUserCredits();
     }
   }, [isAuthenticated]);
 
-  const loadModules = async () => {
+  const fetchModules = async () => {
     try {
       const { data, error } = await supabase
-        .from('training_modules')
-        .select('*')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-
+        .from("training_modules")
+        .select("*")
+        .eq("is_active", true)
+        .order("price_credits", { ascending: true });
+      
       if (error) throw error;
       setModules(data || []);
     } catch (error) {
-      console.error('Error loading modules:', error);
+      console.error("Error fetching modules:", error);
     }
   };
 
-  const loadUserProgress = async () => {
+  const fetchUserCredits = async () => {
     try {
-      const { data, error } = await supabase
-        .from('user_module_progress')
-        .select('module_id, progress_percentage, completed_at, certificate_issued, started_at');
-
-      if (error) throw error;
-      
-      const progressMap = (data || []).reduce((acc, item) => {
-        acc[item.module_id] = {
-          progress_percentage: item.progress_percentage,
-          completed_at: item.completed_at,
-          certificate_issued: item.certificate_issued,
-          started_at: item.started_at
-        };
-        return acc;
-      }, {} as Record<string, UserProgress>);
-      
-      setUserProgress(progressMap);
-    } catch (error) {
-      console.error('Error loading progress:', error);
-    }
-  };
-
-  const loadUserCredits = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('user_credits')
-        .select('credits_balance')
+      const { data } = await supabase
+        .from("user_credits")
+        .select("credits_balance")
         .single();
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
+      
+      if (data) {
+        setUserCredits(data.credits_balance);
       }
-
-      setUserCredits(data || { credits_balance: 0 });
     } catch (error) {
-      console.error('Error loading credits:', error);
+      console.error("Error fetching credits:", error);
     }
   };
 
-  const handleEnroll = async (moduleId: string, priceCredits: number) => {
+  const handleEnrollModule = async (moduleId: string, creditsRequired: number) => {
     if (!isAuthenticated) {
       toast.error("Please log in to enroll in training modules");
       return;
     }
 
-    if (priceCredits > userCredits.credits_balance) {
-      toast.error(`Insufficient credits. You need ${priceCredits} credits but only have ${userCredits.credits_balance}.`);
+    // Check if user is subscribed (premium users get free access)
+    if (subscription?.subscribed && ['premium', 'enterprise'].includes(subscription.subscription_tier)) {
+      toast.success("Free access with your premium subscription!");
+      // Redirect to module content or mark as enrolled
       return;
     }
 
-    setEnrollingId(moduleId);
+    if (userCredits < creditsRequired) {
+      toast.error(`Insufficient credits. You need ${creditsRequired} credits for this module.`);
+      return;
+    }
+
+    setLoading(moduleId);
     try {
-      const { data, error } = await supabase.functions.invoke('enroll-training', {
-        body: { moduleId }
+      const { data, error } = await supabase.functions.invoke('use-credits', {
+        body: { 
+          certificateId: moduleId, 
+          creditsRequired 
+        }
       });
 
       if (error) throw error;
 
-      toast.success("Successfully enrolled in training module!");
-      loadUserProgress();
-      loadUserCredits();
+      if (data.success) {
+        toast.success("Successfully enrolled in training module!");
+        setUserCredits(data.remainingBalance);
+        
+        // Record enrollment - get current user ID
+        const { data: userData } = await supabase.auth.getUser();
+        if (userData.user) {
+          await supabase
+            .from("user_module_progress")
+            .insert({
+              user_id: userData.user.id,
+              module_id: moduleId,
+              progress_percentage: 0
+            });
+        }
+      }
     } catch (error) {
       console.error('Enrollment error:', error);
       toast.error("Failed to enroll in module");
     } finally {
-      setEnrollingId(null);
+      setLoading(null);
     }
   };
 
   const getDifficultyColor = (level: string) => {
     switch (level) {
-      case 'beginner': return 'bg-green-100 text-green-800';
-      case 'intermediate': return 'bg-yellow-100 text-yellow-800';
-      case 'advanced': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'beginner': return 'bg-green-500';
+      case 'intermediate': return 'bg-yellow-500';
+      case 'advanced': return 'bg-red-500';
+      default: return 'bg-gray-500';
     }
   };
 
   const getContentTypeIcon = (type: string) => {
     switch (type) {
-      case 'video': return Play;
-      case 'interactive': return Users;
-      case 'mixed': return BookOpen;
-      default: return BookOpen;
+      case 'video': return <PlayCircle className="h-4 w-4" />;
+      case 'interactive': return <Award className="h-4 w-4" />;
+      default: return <BookOpen className="h-4 w-4" />;
     }
   };
 
   return (
     <div className="space-y-6">
       <div className="text-center space-y-2">
-        <h2 className="text-3xl font-bold">Training Modules</h2>
+        <h2 className="text-3xl font-bold">Professional Training Modules</h2>
         <p className="text-muted-foreground">
-          Enhance your skills with our professional training courses
+          Enhance your skills with expert-designed training courses
         </p>
         {isAuthenticated && (
-          <Badge variant="outline" className="text-sm">
-            <Award className="h-3 w-3 mr-1" />
-            Credits Available: {userCredits.credits_balance}
-          </Badge>
+          <p className="text-sm text-muted-foreground">
+            Current Credits: <strong>{userCredits}</strong>
+          </p>
         )}
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {modules.map((module) => {
-          const ContentIcon = getContentTypeIcon(module.content_type);
-          const progress = userProgress[module.id];
-          const isEnrolled = !!progress;
-          const isCompleted = progress?.progress_percentage === 100;
-          const canEnroll = isAuthenticated && !isEnrolled && userCredits.credits_balance >= module.price_credits;
-
-          return (
-            <Card key={module.id} className="h-full flex flex-col">
-              <CardHeader className="space-y-3">
-                <div className="flex items-start justify-between">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {modules.map((module) => (
+          <Card key={module.id} className="relative">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <CardTitle className="text-lg">{module.title}</CardTitle>
+                  <CardDescription className="mt-2">
+                    {module.description}
+                  </CardDescription>
+                </div>
+                <div className="flex flex-col items-end gap-2">
                   <Badge className={getDifficultyColor(module.difficulty_level)}>
                     {module.difficulty_level}
                   </Badge>
-                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                    <ContentIcon className="h-4 w-4" />
-                    {module.content_type}
-                  </div>
-                </div>
-                
-                <CardTitle className="text-lg">{module.title}</CardTitle>
-                
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Clock className="h-4 w-4" />
-                    {module.estimated_duration} min
-                  </div>
-                  <Badge variant="secondary">
-                    {module.category}
-                  </Badge>
-                </div>
-              </CardHeader>
-
-              <CardContent className="flex-1 space-y-4">
-                <CardDescription className="line-clamp-3">
-                  {module.description}
-                </CardDescription>
-
-                <div className="space-y-2">
-                  <p className="text-sm font-medium">Skills you'll learn:</p>
-                  <div className="flex flex-wrap gap-1">
-                    {module.skills_covered.slice(0, 3).map((skill, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {skill}
-                      </Badge>
-                    ))}
-                    {module.skills_covered.length > 3 && (
-                      <Badge variant="outline" className="text-xs">
-                        +{module.skills_covered.length - 3} more
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-
-                {isEnrolled && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Progress</span>
-                      <span>{progress.progress_percentage}%</span>
-                    </div>
-                    <Progress value={progress.progress_percentage} className="h-2" />
-                    {isCompleted && (
-                      <Badge className="bg-green-500">
-                        <Award className="h-3 w-3 mr-1" />
-                        Completed
-                      </Badge>
-                    )}
-                  </div>
-                )}
-
-                <div className="pt-2 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-lg font-semibold">
-                      {module.price_credits === 0 ? 'Free' : `${module.price_credits} credits`}
-                    </span>
-                  </div>
-
-                  {isEnrolled ? (
-                    <Button className="w-full" variant={isCompleted ? "secondary" : "default"}>
-                      {isCompleted ? "Review Course" : "Continue Learning"}
-                    </Button>
-                  ) : isAuthenticated ? (
-                    <Button
-                      onClick={() => handleEnroll(module.id, module.price_credits)}
-                      disabled={!canEnroll || enrollingId === module.id}
-                      className="w-full"
-                      variant={canEnroll ? "default" : "outline"}
-                    >
-                      {enrollingId === module.id ? (
-                        <div className="flex items-center gap-2">
-                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                          Enrolling...
-                        </div>
-                      ) : !canEnroll && module.price_credits > 0 ? (
-                        <div className="flex items-center gap-2">
-                          <Lock className="h-4 w-4" />
-                          Need {module.price_credits - userCredits.credits_balance} more credits
-                        </div>
-                      ) : (
-                        `Enroll ${module.price_credits > 0 ? `(${module.price_credits} credits)` : '(Free)'}`
-                      )}
-                    </Button>
-                  ) : (
-                    <Button disabled className="w-full">
-                      Login to Enroll
-                    </Button>
+                  {module.price_credits > 0 && (
+                    <Badge variant="outline">
+                      {module.price_credits} credits
+                    </Badge>
                   )}
                 </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Clock className="h-4 w-4" />
+                  <span>{module.estimated_duration} min</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  {getContentTypeIcon(module.content_type)}
+                  <span className="capitalize">{module.content_type}</span>
+                </div>
+                <Badge variant="secondary">{module.category}</Badge>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">Skills You'll Learn:</h4>
+                <div className="flex flex-wrap gap-1">
+                  {module.skills_covered.map((skill, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {skill}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">Preview:</h4>
+                <p className="text-sm text-muted-foreground">
+                  {module.preview_content}
+                </p>
+              </div>
+
+              <Button
+                onClick={() => handleEnrollModule(module.id, module.price_credits)}
+                disabled={loading === module.id || (!isAuthenticated)}
+                className="w-full"
+                variant={module.price_credits === 0 ? "default" : "outline"}
+              >
+                {loading === module.id ? (
+                  <div className="flex items-center gap-2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                    Enrolling...
+                  </div>
+                ) : (
+                  <>
+                    {module.price_credits === 0 ? "Start Free Course" : 
+                     subscription?.subscribed && ['premium', 'enterprise'].includes(subscription.subscription_tier) ? 
+                     "Access with Subscription" : `Enroll for ${module.price_credits} Credits`}
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {modules.length === 0 && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <BookOpen className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">No Training Modules Available</h3>
-            <p className="text-muted-foreground">
-              Training modules will appear here once they are published.
-            </p>
-          </CardContent>
-        </Card>
+      {subscription?.subscribed && (
+        <div className="text-center bg-primary/5 p-4 rounded-lg">
+          <p className="text-sm text-muted-foreground">
+            <strong>Premium Benefit:</strong> As a {subscription.subscription_tier} subscriber, you get free access to all training modules!
+          </p>
+        </div>
       )}
     </div>
   );
