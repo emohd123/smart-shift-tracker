@@ -46,10 +46,15 @@ export function DocumentUploadStep({
 
   return (
     <div className="space-y-6">
-      <h3 className="text-lg font-medium">Document Upload</h3>
+      <div className="text-center space-y-2">
+        <h3 className="text-lg font-medium">Document Upload</h3>
+        <p className="text-sm text-muted-foreground">
+          Upload your documents now or skip and add them later from your profile
+        </p>
+      </div>
       
       <div className="space-y-4">
-        <Label htmlFor="idCard">ID Card (Required)</Label>
+        <Label htmlFor="idCard">ID Card (Optional)</Label>
         <div className={`border-2 border-dashed rounded-lg p-4 md:p-6 text-center ${idCardError ? 'border-destructive bg-destructive/5' : 'border-gray-300'}`}>
           {idCardError && (
             <div className="flex items-center justify-center text-destructive mb-2 text-sm">
@@ -129,7 +134,7 @@ export function DocumentUploadStep({
       </div>
 
       <div className="space-y-4">
-        <Label htmlFor="profilePhoto">Profile Photo (Required)</Label>
+        <Label htmlFor="profilePhoto">Profile Photo (Optional)</Label>
         <div className={`border-2 border-dashed rounded-lg p-4 md:p-6 text-center ${profilePhotoError ? 'border-destructive bg-destructive/5' : 'border-gray-300'}`}>
           {profilePhotoError && (
             <div className="flex items-center justify-center text-destructive mb-2 text-sm">

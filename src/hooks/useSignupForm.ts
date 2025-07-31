@@ -84,7 +84,7 @@ export const useSignupForm = () => {
         console.log("Files uploaded:", { idCardUrl, profilePhotoUrl });
         
         // Update profile
-        await updateUserProfile(userData.id, formattedData, idCardUrl || '', profilePhotoUrl || '');
+        await updateUserProfile(userData.id, formattedData, idCardUrl || null, profilePhotoUrl || null);
         console.log("Profile updated successfully");
         
         setIsSuccess(true);

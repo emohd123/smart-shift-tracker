@@ -63,7 +63,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
     }
   };
 
-  const updateUserProfile = async (userId: string, formData: any, idCardUrl: string, profilePhotoUrl: string) => {
+  const updateUserProfile = async (userId: string, formData: any, idCardUrl: string | null, profilePhotoUrl: string | null) => {
     try {
       console.log("Updating profile for user ID:", userId);
       

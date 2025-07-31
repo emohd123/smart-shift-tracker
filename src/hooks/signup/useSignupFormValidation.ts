@@ -70,16 +70,8 @@ export const useSignupFormValidation = (
   const validateDocuments = () => {
     setFormError(null);
     
-    if (!fileData.idCard) {
-      setFormError("Please upload your ID card");
-      return false;
-    }
-    
-    if (!fileData.profilePhoto) {
-      setFormError("Please upload your profile photo");
-      return false;
-    }
-    
+    // Documents are now optional - always return true
+    // Users can upload documents later from their profile
     return true;
   };
   
@@ -97,10 +89,10 @@ export const useSignupFormValidation = (
   };
   
   const validateForm = () => {
-    // Validate all sections before submitting
+    // Validate required sections before submitting
     if (!validateAccountInfo()) return false;
     if (!validatePersonalInfo()) return false;
-    if (!validateDocuments()) return false;
+    // Documents are optional, so we don't need to validate them
     
     return true;
   };

@@ -142,18 +142,27 @@ export default function SignupForm() {
                   <ArrowLeft size={16} className="mr-2" />
                   Back
                 </Button>
-                <Button 
-                  type="submit" 
-                  disabled={loading || uploadingFiles}
-                  className="gap-2"
-                >
-                  {loading || uploadingFiles ? "Processing..." : (
-                    <>
-                      <Save size={16} />
-                      Complete Registration
-                    </>
-                  )}
-                </Button>
+                <div className="flex gap-2">
+                  <Button 
+                    type="submit" 
+                    variant="outline"
+                    disabled={loading || uploadingFiles}
+                  >
+                    {loading || uploadingFiles ? "Processing..." : "Skip & Complete"}
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={loading || uploadingFiles}
+                    className="gap-2"
+                  >
+                    {loading || uploadingFiles ? "Processing..." : (
+                      <>
+                        <Save size={16} />
+                        Complete Registration
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
             </TabsContent>
           </Tabs>
