@@ -77,6 +77,36 @@ export type Database = {
         }
         Relationships: []
       }
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          reference_id: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          reference_id?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          reference_id?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       documents: {
         Row: {
           document_type: string
@@ -116,6 +146,110 @@ export type Database = {
           verified?: boolean
           verified_at?: string | null
           verified_by?: string | null
+        }
+        Relationships: []
+      }
+      job_applications: {
+        Row: {
+          applicant_id: string
+          applied_at: string
+          cover_letter: string | null
+          id: string
+          job_id: string
+          reviewed_at: string | null
+          status: string | null
+        }
+        Insert: {
+          applicant_id: string
+          applied_at?: string
+          cover_letter?: string | null
+          id?: string
+          job_id: string
+          reviewed_at?: string | null
+          status?: string | null
+        }
+        Update: {
+          applicant_id?: string
+          applied_at?: string
+          cover_letter?: string | null
+          id?: string
+          job_id?: string
+          reviewed_at?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "job_applications_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "job_postings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      job_postings: {
+        Row: {
+          benefits: string[] | null
+          created_at: string
+          description: string
+          employer_id: string
+          end_date: string | null
+          id: string
+          is_featured: boolean | null
+          is_premium: boolean | null
+          is_urgent: boolean | null
+          job_type: string
+          location: string
+          pay_rate: number | null
+          pay_rate_type: string | null
+          positions_available: number | null
+          requirements: string[] | null
+          start_date: string | null
+          status: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          benefits?: string[] | null
+          created_at?: string
+          description: string
+          employer_id: string
+          end_date?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_premium?: boolean | null
+          is_urgent?: boolean | null
+          job_type: string
+          location: string
+          pay_rate?: number | null
+          pay_rate_type?: string | null
+          positions_available?: number | null
+          requirements?: string[] | null
+          start_date?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          benefits?: string[] | null
+          created_at?: string
+          description?: string
+          employer_id?: string
+          end_date?: string | null
+          id?: string
+          is_featured?: boolean | null
+          is_premium?: boolean | null
+          is_urgent?: boolean | null
+          job_type?: string
+          location?: string
+          pay_rate?: number | null
+          pay_rate_type?: string | null
+          positions_available?: number | null
+          requirements?: string[] | null
+          start_date?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -455,11 +589,154 @@ export type Database = {
         }
         Relationships: []
       }
+      training_modules: {
+        Row: {
+          category: string
+          completion_certificate: boolean | null
+          content_type: string
+          created_at: string
+          description: string
+          difficulty_level: string
+          estimated_duration: number
+          full_content: string | null
+          id: string
+          is_active: boolean | null
+          preview_content: string | null
+          price_credits: number
+          skills_covered: string[] | null
+          title: string
+          updated_at: string
+          video_url: string | null
+        }
+        Insert: {
+          category: string
+          completion_certificate?: boolean | null
+          content_type: string
+          created_at?: string
+          description: string
+          difficulty_level: string
+          estimated_duration: number
+          full_content?: string | null
+          id?: string
+          is_active?: boolean | null
+          preview_content?: string | null
+          price_credits?: number
+          skills_covered?: string[] | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Update: {
+          category?: string
+          completion_certificate?: boolean | null
+          content_type?: string
+          created_at?: string
+          description?: string
+          difficulty_level?: string
+          estimated_duration?: number
+          full_content?: string | null
+          id?: string
+          is_active?: boolean | null
+          preview_content?: string | null
+          price_credits?: number
+          skills_covered?: string[] | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      user_credits: {
+        Row: {
+          created_at: string
+          credits_balance: number
+          id: string
+          total_purchased: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          credits_balance?: number
+          id?: string
+          total_purchased?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          credits_balance?: number
+          id?: string
+          total_purchased?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_module_progress: {
+        Row: {
+          certificate_issued: boolean | null
+          completed_at: string | null
+          id: string
+          last_accessed: string
+          module_id: string
+          progress_percentage: number | null
+          started_at: string
+          user_id: string
+        }
+        Insert: {
+          certificate_issued?: boolean | null
+          completed_at?: string | null
+          id?: string
+          last_accessed?: string
+          module_id: string
+          progress_percentage?: number | null
+          started_at?: string
+          user_id: string
+        }
+        Update: {
+          certificate_issued?: boolean | null
+          completed_at?: string | null
+          id?: string
+          last_accessed?: string
+          module_id?: string
+          progress_percentage?: number | null
+          started_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_module_progress_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "training_modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      add_user_credits: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_description: string
+          p_reference_id?: string
+        }
+        Returns: boolean
+      }
+      deduct_user_credits: {
+        Args: {
+          p_user_id: string
+          p_amount: number
+          p_description: string
+          p_reference_id?: string
+        }
+        Returns: boolean
+      }
       delete_user: {
         Args: Record<PropertyKey, never>
         Returns: undefined
