@@ -5,7 +5,7 @@ import {
   CalendarDays, ChevronDown, 
   ClipboardList, Clock, Home, MessageCircle, 
   Settings, UserRound, Users, FileBarChart2, Eraser, Award,
-  Briefcase, BookOpen, Coins, CreditCard
+  Briefcase, BookOpen, Coins, CreditCard, Share2
 } from "lucide-react";
 import { UserRole } from "@/types/database";
 import {
@@ -81,6 +81,10 @@ export const NavigationLinks = () => {
       
       <AppLink to="/subscription" icon={<CreditCard className="h-4 w-4" />}>
         Subscription
+      </AppLink>
+      
+      <AppLink to="/referrals" icon={<Share2 className="h-4 w-4" />}>
+        Referrals
       </AppLink>
       
       {isAdmin && (
