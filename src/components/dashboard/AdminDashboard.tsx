@@ -1,4 +1,5 @@
 
+import React, { useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { 
   CheckCircle, 
@@ -15,101 +16,115 @@ import { Shift } from "../shifts/types/ShiftTypes";
 import { Separator } from "@/components/ui/separator";
 import { useNavigate } from "react-router-dom";
 import { formatBHD } from "../shifts/utils/currencyUtils";
+import { LoadingState } from "@/components/ui/enhanced-loading";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 type AdminDashboardProps = {
   shifts: Shift[];
+  loading?: boolean;
 };
 
-export default function AdminDashboard({ shifts }: AdminDashboardProps) {
+const AdminDashboard = React.memo(({ shifts, loading = false }: AdminDashboardProps) => {
   const navigate = useNavigate();
   
-  // Get today's shifts
-  const todaysShifts = shifts.filter(shift => {
+  // Memoized calculations for performance
+  const dashboardStats = useMemo(() => {
     const today = new Date().toISOString().split('T')[0];
-    return shift.date === today;
-  });
-  
-  // Get ongoing shifts - using our enumerated status type
-  const ongoingShifts = shifts.filter(shift => shift.status === "ongoing");
-  
-  // Calculate earnings (this would come from API in real app)
-  const totalPayable = shifts
-    .filter(shift => shift.status === "completed")
-    .reduce((sum, shift) => {
-      // Assuming 8 hour shifts for simplicity in this example
-      const hours = 8;
+    
+    const todaysShifts = shifts.filter(shift => shift.date === today);
+    const ongoingShifts = shifts.filter(shift => shift.status === "ongoing");
+    const completedShifts = shifts.filter(shift => shift.status === "completed");
+    
+    // Calculate earnings (this would come from API in real app)
+    const totalPayable = completedShifts.reduce((sum, shift) => {
+      const hours = 8; // Assuming 8 hour shifts
       return sum + (shift.payRate * hours);
     }, 0);
+    
+    return {
+      todaysShifts,
+      ongoingShifts,
+      completedShifts,
+      totalPayable
+    };
+  }, [shifts]);
   
+  if (loading) {
+    return <LoadingState message="Loading dashboard..." />;
+  }
+
+  const { todaysShifts, ongoingShifts, completedShifts, totalPayable } = dashboardStats;
+
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="space-y-2">
-        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-        <p className="text-muted-foreground">Manage shifts, promoters and track operations</p>
-      </div>
-      
-      {/* Stats cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center text-base font-medium">
-              <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-              Today's Shifts
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{todaysShifts.length}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              {ongoingShifts.length} currently active
-            </p>
-          </CardContent>
-        </Card>
+    <ErrorBoundary>
+      <div className="space-y-8 animate-fade-in">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+          <p className="text-muted-foreground">Manage shifts, promoters and track operations</p>
+        </div>
         
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center text-base font-medium">
-              <Users className="h-4 w-4 mr-2 text-muted-foreground" />
-              Active Promoters
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">5</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              3 scheduled today
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center text-base font-medium">
-              <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
-              Hours Tracked
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">48.5</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              This week (Mon-Sun)
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center text-base font-medium">
-              <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-              Payable Amount
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatBHD(totalPayable)}</div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Pending approval
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+        {/* Stats cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="hover-scale">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-base font-medium">
+                <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+                Today's Shifts
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{todaysShifts.length}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {ongoingShifts.length} currently active
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover-scale">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-base font-medium">
+                <Users className="h-4 w-4 mr-2 text-muted-foreground" />
+                Active Promoters
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">5</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                3 scheduled today
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover-scale">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-base font-medium">
+                <Clock className="h-4 w-4 mr-2 text-muted-foreground" />
+                Hours Tracked
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">48.5</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                This week (Mon-Sun)
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card className="hover-scale">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-base font-medium">
+                <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
+                Payable Amount
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatBHD(totalPayable)}</div>
+              <p className="text-xs text-muted-foreground mt-1">
+                Pending approval
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       
       {/* Live attendance */}
       <div>
@@ -169,7 +184,12 @@ export default function AdminDashboard({ shifts }: AdminDashboardProps) {
             </Button>
           </div>
         )}
+        </div>
       </div>
-    </div>
+    </ErrorBoundary>
   );
-}
+});
+
+AdminDashboard.displayName = "AdminDashboard";
+
+export default AdminDashboard;
