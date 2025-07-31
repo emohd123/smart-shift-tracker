@@ -56,7 +56,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
       // Navigate to time tracking with Ctrl+T
       if (e.ctrlKey && e.key === 't') {
         e.preventDefault();
-        navigate('/time-tracking');
+        navigate('/time');
         toast.success("Navigated to Time Tracking", {
           description: "Keyboard shortcut: Ctrl+T"
         });

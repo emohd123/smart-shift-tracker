@@ -25,6 +25,10 @@ import Profile from "./pages/Profile";
 import Certificates from "./pages/Certificates";
 import Subscription from "./pages/Subscription";
 import Revenue from "./pages/Revenue";
+import Jobs from "./pages/Jobs";
+import Credits from "./pages/Credits";
+import Training from "./pages/Training";
+import VerifyCertificatePage from "./pages/VerifyCertificatePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 // Root component
@@ -40,6 +44,7 @@ function App() {
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-certificate" element={<VerifyCertificatePage />} />
             
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
@@ -58,6 +63,9 @@ function App() {
               <Route path="/certificates" element={<Certificates />} />
               <Route path="/subscription" element={<Subscription />} />
               <Route path="/revenue" element={<Revenue />} />
+              <Route path="/jobs" element={<Jobs />} />
+              <Route path="/credits" element={<Credits />} />
+              <Route path="/training" element={<Training />} />
             </Route>
             
             {/* Fallback route */}
