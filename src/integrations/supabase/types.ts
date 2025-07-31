@@ -418,6 +418,77 @@ export type Database = {
         }
         Relationships: []
       }
+      shift_applications: {
+        Row: {
+          admin_notes: string | null
+          application_date: string
+          cover_letter: string | null
+          created_at: string
+          id: string
+          promoter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          shift_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          admin_notes?: string | null
+          application_date?: string
+          cover_letter?: string | null
+          created_at?: string
+          id?: string
+          promoter_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shift_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_notes?: string | null
+          application_date?: string
+          cover_letter?: string | null
+          created_at?: string
+          id?: string
+          promoter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          shift_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shift_applications_promoter_id_fkey"
+            columns: ["promoter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_applications_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_applications_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shift_applications_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts_with_stats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       shift_assignments: {
         Row: {
           created_at: string
@@ -468,45 +539,69 @@ export type Database = {
       }
       shifts: {
         Row: {
+          application_deadline: string | null
+          contact_email: string | null
+          contact_person: string | null
+          contact_phone: string | null
           created_at: string
           date: string
+          description: string | null
           end_date: string | null
           end_time: string
           id: string
           is_paid: boolean | null
+          is_urgent: boolean | null
           location: string
+          max_promoters: number | null
           pay_rate: number | null
           pay_rate_type: string | null
+          requirements: string[] | null
           start_time: string
           status: string
           title: string
           updated_at: string
         }
         Insert: {
+          application_deadline?: string | null
+          contact_email?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
           created_at?: string
           date: string
+          description?: string | null
           end_date?: string | null
           end_time: string
           id?: string
           is_paid?: boolean | null
+          is_urgent?: boolean | null
           location: string
+          max_promoters?: number | null
           pay_rate?: number | null
           pay_rate_type?: string | null
+          requirements?: string[] | null
           start_time: string
           status: string
           title: string
           updated_at?: string
         }
         Update: {
+          application_deadline?: string | null
+          contact_email?: string | null
+          contact_person?: string | null
+          contact_phone?: string | null
           created_at?: string
           date?: string
+          description?: string | null
           end_date?: string | null
           end_time?: string
           id?: string
           is_paid?: boolean | null
+          is_urgent?: boolean | null
           location?: string
+          max_promoters?: number | null
           pay_rate?: number | null
           pay_rate_type?: string | null
+          requirements?: string[] | null
           start_time?: string
           status?: string
           title?: string
@@ -716,7 +811,36 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      shifts_with_stats: {
+        Row: {
+          application_deadline: string | null
+          approved_applications: number | null
+          contact_email: string | null
+          contact_person: string | null
+          contact_phone: string | null
+          created_at: string | null
+          date: string | null
+          description: string | null
+          end_date: string | null
+          end_time: string | null
+          id: string | null
+          is_full: boolean | null
+          is_paid: boolean | null
+          is_urgent: boolean | null
+          location: string | null
+          max_promoters: number | null
+          pay_rate: number | null
+          pay_rate_type: string | null
+          pending_applications: number | null
+          requirements: string[] | null
+          start_time: string | null
+          status: string | null
+          title: string | null
+          total_applications: number | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_user_credits: {
