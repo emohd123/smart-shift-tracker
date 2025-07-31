@@ -32,6 +32,11 @@ export const usePerformanceMonitor = (componentName: string) => {
 
   useEffect(() => {
     renderStartTime.current = performance.now();
+    
+    // Create performance mark for this component
+    if ('performance' in window && 'mark' in performance) {
+      performance.mark(`${componentName}-render-start`);
+    }
   });
 
   useEffect(() => {
@@ -59,14 +64,19 @@ export const usePerformanceMonitor = (componentName: string) => {
         console.warn(`Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`);
       }
 
-      // Track performance metrics
-      if ('performance' in window && 'measure' in performance) {
-        performance.mark(`${componentName}-render-end`);
-        performance.measure(
-          `${componentName}-render`,
-          `${componentName}-render-start`,
-          `${componentName}-render-end`
-        );
+      // Track performance metrics safely
+      if ('performance' in window && 'mark' in performance && 'measure' in performance) {
+        try {
+          performance.mark(`${componentName}-render-end`);
+          performance.measure(
+            `${componentName}-render`,
+            `${componentName}-render-start`,
+            `${componentName}-render-end`
+          );
+        } catch (error) {
+          // Silently handle case where start mark doesn't exist
+          console.debug(`Performance measurement failed for ${componentName}:`, error);
+        }
       }
     }
   });
