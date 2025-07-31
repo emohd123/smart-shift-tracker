@@ -745,6 +745,10 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: undefined
       }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
       is_certificate_valid: {
         Args: { ref_number: string }
         Returns: boolean
