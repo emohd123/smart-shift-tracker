@@ -17,6 +17,17 @@ export default function useShiftSubmission() {
     try {
       setLoading(true);
       
+      // Debug authentication state
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      console.log("Current session:", session);
+      console.log("Current user:", user);
+      console.log("Session error:", sessionError);
+      
+      if (!session) {
+        toast.error("Authentication required. Please log in again.");
+        return;
+      }
+      
       if (!formData.dateRange?.from) {
         toast.error("Start date is required");
         return;

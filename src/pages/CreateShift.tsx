@@ -11,12 +11,17 @@ const CreateShift = () => {
   const { isAuthenticated, user } = useAuth();
   
   useEffect(() => {
+    // Debug auth state
+    console.log("CreateShift - Auth state:", { isAuthenticated, user, userRole: user?.role });
+    
     if (!isAuthenticated) {
+      console.log("CreateShift - Not authenticated, redirecting to login");
       navigate("/login");
       return;
     }
     
     if (user?.role !== "admin") {
+      console.log("CreateShift - User is not admin, role:", user?.role);
       toast.error("Permission Denied", {
         description: "Only admin users can create shifts"
       });
