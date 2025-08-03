@@ -76,7 +76,6 @@ function App() {
             {/* Fallback route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-          <DevToolsPanel />
         </BrowserRouter>
         <Toaster richColors />
       </AuthProvider>

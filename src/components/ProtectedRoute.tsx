@@ -12,6 +12,7 @@ const ProtectedRoute = () => {
   const isAdminRoute = location.pathname.startsWith('/admin') || 
                        location.pathname === '/promoters' ||
                        location.pathname === '/reports' ||
+                       location.pathname === '/revenue' ||
                        location.pathname === '/shifts/create' || 
                        location.pathname === '/data-purge';
 

@@ -35,7 +35,11 @@ export const usePerformanceMonitor = (componentName: string) => {
     
     // Create performance mark for this component
     if ('performance' in window && 'mark' in performance) {
-      performance.mark(`${componentName}-render-start`);
+      try {
+        performance.mark(`${componentName}-render-start`);
+      } catch (error) {
+        console.debug(`Performance mark failed for ${componentName}:`, error);
+      }
     }
   });
 
@@ -49,19 +53,26 @@ export const usePerformanceMonitor = (componentName: string) => {
         renderTimes.current.shift();
       }
 
-      const newMetrics: ComponentMetrics = {
-        name: componentName,
-        renderCount: metrics.renderCount + 1,
-        lastRenderTime: renderTime,
-        maxRenderTime: Math.max(metrics.maxRenderTime, renderTime),
-        averageRenderTime: renderTimes.current.reduce((a, b) => a + b, 0) / renderTimes.current.length
-      };
+      // Only update metrics if there's a meaningful change to prevent infinite loops
+      const shouldUpdate = metrics.renderCount === 0 || 
+        Math.abs(renderTime - metrics.lastRenderTime) > 1 ||
+        renderTime > metrics.maxRenderTime;
 
-      setMetrics(newMetrics);
+      if (shouldUpdate) {
+        const newMetrics: ComponentMetrics = {
+          name: componentName,
+          renderCount: metrics.renderCount + 1,
+          lastRenderTime: renderTime,
+          maxRenderTime: Math.max(metrics.maxRenderTime, renderTime),
+          averageRenderTime: renderTimes.current.reduce((a, b) => a + b, 0) / renderTimes.current.length
+        };
 
-      // Log slow renders
-      if (renderTime > 16) {
-        console.warn(`Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`);
+        setMetrics(newMetrics);
+
+        // Log slow renders
+        if (renderTime > 16) {
+          console.warn(`Slow render detected in ${componentName}: ${renderTime.toFixed(2)}ms`);
+        }
       }
 
       // Track performance metrics safely
@@ -79,7 +90,7 @@ export const usePerformanceMonitor = (componentName: string) => {
         }
       }
     }
-  });
+  }, [componentName]); // Add componentName as dependency to prevent infinite loops
 
   const getMemoryUsage = useCallback(() => {
     if ('memory' in performance) {

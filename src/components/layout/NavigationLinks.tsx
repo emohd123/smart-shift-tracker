@@ -97,6 +97,10 @@ export const NavigationLinks = () => {
             Reports
           </AppLink>
           
+          <AppLink to="/revenue" icon={<Coins className="h-4 w-4" />}>
+            Revenue
+          </AppLink>
+          
           <AppLink to="/data-purge" icon={<Eraser className="h-4 w-4" />}>
             Data Management
           </AppLink>

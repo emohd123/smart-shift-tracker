@@ -5,6 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import SubscriptionPlans from "@/components/subscription/SubscriptionPlans";
 import CreditPurchase from "@/components/credits/CreditPurchase";
 import TrainingModules from "@/components/training/TrainingModules";
+import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -56,13 +57,14 @@ export default function RevenuePage() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="text-center space-y-4 mb-8">
-        <h1 className="text-4xl font-bold">Upgrade Your Experience</h1>
-        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Choose from subscription plans, purchase credits, or enhance your skills with professional training modules
-        </p>
-      </div>
+    <AppLayout title="Revenue Management">
+      <div className="container mx-auto py-8 px-4">
+        <div className="text-center space-y-4 mb-8">
+          <h1 className="text-4xl font-bold">Revenue Management</h1>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Manage subscription plans, credit purchases, and training module revenues
+          </p>
+        </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full grid-cols-3 mb-8">
@@ -95,6 +97,7 @@ export default function RevenuePage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </AppLayout>
   );
 }
