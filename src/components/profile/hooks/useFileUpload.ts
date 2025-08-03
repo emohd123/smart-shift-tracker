@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { uploadFileToBucket } from "@/integrations/supabase/storage";
+import { validateFileUpload } from "@/utils/validation";
 
 export function useFileUpload() {
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
@@ -18,16 +19,40 @@ export function useFileUpload() {
   };
 
   /**
-   * Handles file upload for a specific file type
+   * Handles file upload for a specific file type with security validation
    */
   const handleFileUpload = async (file: File | null, bucket: string, userId: string): Promise<string | null> => {
     if (!file) return null;
     
     try {
       setIsUploading(true);
+      
+      // Security validation for file uploads
+      const allowedTypes = bucket === 'profile_photos' 
+        ? ['image/jpeg', 'image/png', 'image/webp'] 
+        : ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+      
+      const maxSize = bucket === 'profile_photos' ? 2 * 1024 * 1024 : 5 * 1024 * 1024; // 2MB for photos, 5MB for documents
+      
+      const validation = validateFileUpload(file, {
+        maxSize,
+        allowedTypes
+      });
+      
+      if (!validation.isValid) {
+        toast.error(`File validation failed: ${validation.errors.join(', ')}`);
+        return null;
+      }
+      
+      // Additional security checks
+      if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\\')) {
+        toast.error("Invalid file name detected");
+        return null;
+      }
+      
       const fileName = createFilePath(userId, file);
       
-      console.log(`Starting upload to ${bucket}/${fileName}`);
+      console.log(`Starting secure upload to ${bucket}/${fileName}`);
       const { success, data: url, error } = await uploadFileToBucket(file, bucket, fileName);
 
       if (!success || !url) {
