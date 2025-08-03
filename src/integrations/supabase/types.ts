@@ -374,6 +374,7 @@ export type Database = {
           phone_number: string | null
           profile_photo_url: string | null
           role: string
+          unique_code: string
           updated_at: string
           verification_status: string
           weight: number
@@ -393,6 +394,7 @@ export type Database = {
           phone_number?: string | null
           profile_photo_url?: string | null
           role?: string
+          unique_code?: string
           updated_at?: string
           verification_status?: string
           weight: number
@@ -412,6 +414,7 @@ export type Database = {
           phone_number?: string | null
           profile_photo_url?: string | null
           role?: string
+          unique_code?: string
           updated_at?: string
           verification_status?: string
           weight?: number
@@ -868,6 +871,10 @@ export type Database = {
       delete_user_time_logs: {
         Args: { user_id_param: string }
         Returns: undefined
+      }
+      generate_unique_profile_code: {
+        Args: Record<PropertyKey, never>
+        Returns: string
       }
       is_admin: {
         Args: Record<PropertyKey, never>
