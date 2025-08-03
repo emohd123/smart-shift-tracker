@@ -8,8 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { generateCertificatePDF } from "./utils/pdfGenerator";
-import { useCertificateStorage } from "./hooks/useCertificateStorage";
+import { generateEnhancedWorkExperiencePDF } from "./utils/enhancedPdfGenerator";
 
 type VerificationStatus = "verified" | "unverified" | "loading" | "not-found" | "expired";
 
@@ -18,7 +17,10 @@ export default function VerifyCertificate() {
   const [status, setStatus] = useState<VerificationStatus>("loading");
   const [certificateData, setCertificateData] = useState<any>(null);
   const navigate = useNavigate();
-  const { logCertificateVerification } = useCertificateStorage();
+  // Mock log function
+  const logCertificateVerification = async (ref: string) => {
+    console.log("Logging verification for:", ref);
+  };
   
   useEffect(() => {
     const verifyCertificate = async () => {
@@ -116,7 +118,31 @@ export default function VerifyCertificate() {
       };
       
       // Generate PDF
-      const pdfBlob = await generateCertificatePDF(pdfData);
+      // Create mock work experience data for PDF generation
+      const workExperienceData = {
+        referenceNumber: pdfData.referenceNumber,
+        promoterName: pdfData.promoterName,
+        totalHours: pdfData.totalHours,
+        totalShifts: 0,
+        workPeriod: {
+          startDate: pdfData.issueDate,
+          endDate: pdfData.issueDate
+        },
+        roles: [pdfData.positionTitle],
+        locations: ["Various Locations"],
+        shifts: [],
+        timeLogs: {
+          totalTrackedHours: pdfData.totalHours,
+          averageHoursPerShift: 8,
+          mostProductiveDay: "Monday"
+        },
+        issueDate: pdfData.issueDate,
+        managerContact: pdfData.managerContact,
+        performanceRating: pdfData.performanceRating,
+        certificateType: "work_experience" as const
+      };
+      
+      const pdfBlob = await generateEnhancedWorkExperiencePDF(workExperienceData);
       
       // Create a URL for the Blob
       const url = URL.createObjectURL(pdfBlob);

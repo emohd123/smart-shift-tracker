@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
-import WorkCertificateGenerator from "@/components/certificates/WorkCertificateGenerator";
+import EnhancedWorkCertificateGenerator from "@/components/certificates/EnhancedWorkCertificateGenerator";
 import MyCertificates from "@/components/certificates/MyCertificates";
 import { useAuth } from "@/context/AuthContext";
 import { Award, FileText, HelpCircle, Shield, BookOpen, Medal } from "lucide-react";
@@ -131,7 +131,7 @@ export default function Certificates() {
           </TabsList>
           
           <TabsContent value="generator" className="focus-visible:outline-none focus-visible:ring-0">
-            <WorkCertificateGenerator />
+            <EnhancedWorkCertificateGenerator />
           </TabsContent>
           
           <TabsContent value="my-certificates" className="focus-visible:outline-none focus-visible:ring-0">

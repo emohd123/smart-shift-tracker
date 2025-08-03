@@ -3,9 +3,9 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CertificateType, TimePeriod, CertificateData, WorkExperienceData } from "../types/certificate";
-import { useCertificateGeneration } from "./useCertificateGeneration";
+// Removed dependency on useCertificateGeneration
 import { useWorkExperienceData } from "./useWorkExperienceData";
-import { generateCertificatePDF } from "../utils/pdfGenerator";
+import { generateEnhancedWorkExperiencePDF } from "../utils/enhancedPdfGenerator";
 import { generateWorkExperiencePDF } from "../utils/pdfWorkExperienceGenerator";
 import { useUserData } from "./useShiftData";
 
@@ -20,8 +20,7 @@ export const useUnifiedCertificateGeneration = (
   const [downloading, setDownloading] = useState(false);
   const [sharing, setSharing] = useState(false);
 
-  // Hooks for different certificate types
-  const skillsCertificate = useCertificateGeneration(userId, timePeriod);
+  // Hooks for certificate data
   const { fetchWorkExperienceData } = useWorkExperienceData();
   const { fetchPromoters } = useUserData();
 
@@ -35,18 +34,12 @@ export const useUnifiedCertificateGeneration = (
     setCertificateData(null);
 
     try {
-      if (certificateType === "skills") {
-        // Use existing skills certificate generation
-        await skillsCertificate.generateCertificate();
-        setCertificateData(skillsCertificate.certificateData);
-      } else {
-        // Generate work experience certificate
-        const workData = await fetchWorkExperienceData(userId, timePeriod);
-        if (workData) {
-          setCertificateData(workData);
-          // Save work experience certificate to database
-          await saveCertificateToDatabase(workData);
-        }
+      // Generate work experience certificate (unified for both types)
+      const workData = await fetchWorkExperienceData(userId, timePeriod);
+      if (workData) {
+        setCertificateData(workData);
+        // Save certificate to database
+        await saveCertificateToDatabase(workData);
       }
     } catch (error) {
       console.error('Certificate generation failed:', error);
@@ -94,9 +87,9 @@ export const useUnifiedCertificateGeneration = (
       let pdfBlob: Blob;
       
       if (certificateType === "skills") {
-        pdfBlob = await generateCertificatePDF(certificateData as CertificateData);
+        pdfBlob = await generateEnhancedWorkExperiencePDF(certificateData as unknown as WorkExperienceData);
       } else {
-        pdfBlob = await generateWorkExperiencePDF(certificateData as WorkExperienceData);
+        pdfBlob = await generateEnhancedWorkExperiencePDF(certificateData as WorkExperienceData);
       }
 
       const url = URL.createObjectURL(pdfBlob);
