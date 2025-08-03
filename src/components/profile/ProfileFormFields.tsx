@@ -40,6 +40,24 @@ export default function ProfileFormFields({
     <>
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <div className="space-y-2">
+          <Label htmlFor="unique_code">Promoter Code</Label>
+          <div className="relative">
+            <Input
+              id="unique_code"
+              type="text"
+              value={form.watch("unique_code") || ""}
+              readOnly
+              disabled
+              className="bg-muted/50 font-mono text-lg tracking-wider text-center"
+            />
+            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+              <span className="text-xs text-muted-foreground">ID</span>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">Your unique promoter identification code</p>
+        </div>
+
+        <div className="space-y-2">
           <Label htmlFor="full_name">Full Name</Label>
           <Input
             id="full_name"

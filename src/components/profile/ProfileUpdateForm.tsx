@@ -21,6 +21,7 @@ export default function ProfileUpdateForm() {
   
   const form = useForm({
     defaultValues: {
+      unique_code: "",
       full_name: "",
       nationality: "",
       age: 18,
