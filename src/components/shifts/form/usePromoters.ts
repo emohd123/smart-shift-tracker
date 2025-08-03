@@ -15,7 +15,7 @@ export default function usePromoters() {
         // Fetch verified promoters from profiles table
         const { data, error } = await supabase
           .from('profiles')
-          .select('id, full_name, phone_number')
+          .select('id, unique_code, full_name, age, nationality, phone_number')
           .eq('role', 'promoter')
           .eq('verification_status', 'approved');
         
@@ -25,9 +25,9 @@ export default function usePromoters() {
           
           // Use mock data for better user experience during development
           const mockPromoters: PromoterOption[] = [
-            { id: "mock-1", full_name: "Sample Promoter 1" },
-            { id: "mock-2", full_name: "Sample Promoter 2" },
-            { id: "mock-3", full_name: "Sample Promoter 3" }
+            { id: "mock-1", unique_code: "MOCK001A", full_name: "Sample Promoter 1", age: 25, nationality: "US" },
+            { id: "mock-2", unique_code: "MOCK002B", full_name: "Sample Promoter 2", age: 28, nationality: "UK" },
+            { id: "mock-3", unique_code: "MOCK003C", full_name: "Sample Promoter 3", age: 22, nationality: "CA" }
           ];
           setPromoters(mockPromoters);
           return;
@@ -37,7 +37,10 @@ export default function usePromoters() {
           // Map promoter profiles to PromoterOption format
           const formattedPromoters: PromoterOption[] = data.map(promoter => ({
             id: promoter.id,
+            unique_code: promoter.unique_code,
             full_name: promoter.full_name,
+            age: promoter.age,
+            nationality: promoter.nationality,
             phone_number: promoter.phone_number || ''
           }));
           
@@ -53,9 +56,9 @@ export default function usePromoters() {
         
         // Use mock data for better user experience
         const mockPromoters: PromoterOption[] = [
-          { id: "mock-1", full_name: "Sample Promoter 1" },
-          { id: "mock-2", full_name: "Sample Promoter 2" },
-          { id: "mock-3", full_name: "Sample Promoter 3" }
+          { id: "mock-1", unique_code: "MOCK001A", full_name: "Sample Promoter 1", age: 25, nationality: "US" },
+          { id: "mock-2", unique_code: "MOCK002B", full_name: "Sample Promoter 2", age: 28, nationality: "UK" },
+          { id: "mock-3", unique_code: "MOCK003C", full_name: "Sample Promoter 3", age: 22, nationality: "CA" }
         ];
         setPromoters(mockPromoters);
       } finally {

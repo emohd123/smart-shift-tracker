@@ -1,5 +1,5 @@
 
-import { CheckIcon, Phone } from "lucide-react";
+import { CheckIcon, Phone, User, MapPin, Hash } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -73,7 +73,7 @@ export default function PromoterSelector({
                   <span>None</span>
                 </CommandItem>
                 
-                <ScrollArea className="h-[200px]">
+                <ScrollArea className="h-[300px]">
                   {promoters.length === 0 && !loading ? (
                     <div className="py-6 text-center text-sm text-muted-foreground">
                       No approved promoters available
@@ -83,20 +83,37 @@ export default function PromoterSelector({
                       <CommandItem
                         key={promoter.id}
                         onSelect={() => onSelect(promoter.id)}
-                        className="flex items-center justify-between"
+                        className="flex items-start justify-between p-3 hover:bg-muted/50"
                       >
                         <div className="flex items-center">
-                          <div className={`mr-2 h-4 w-4 ${selectedPromoterIds.includes(promoter.id) ? "text-primary" : ""}`}>
+                          <div className={`mr-3 h-4 w-4 flex-shrink-0 ${selectedPromoterIds.includes(promoter.id) ? "text-primary" : ""}`}>
                             {selectedPromoterIds.includes(promoter.id) && <CheckIcon className="h-4 w-4" />}
                           </div>
-                          <span>{promoter.full_name}</span>
-                        </div>
-                        {promoter.phone_number && (
-                          <div className="flex items-center text-xs text-muted-foreground">
-                            <Phone className="h-3 w-3 mr-1" />
-                            {promoter.phone_number}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-sm">{promoter.full_name}</span>
+                              <Badge variant="outline" className="text-xs font-mono">
+                                {promoter.unique_code}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                              <div className="flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                <span>{promoter.age} years</span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                <span>{promoter.nationality}</span>
+                              </div>
+                              {promoter.phone_number && (
+                                <div className="flex items-center gap-1">
+                                  <Phone className="h-3 w-3" />
+                                  <span>{promoter.phone_number}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        )}
+                        </div>
                       </CommandItem>
                     ))
                   )}
@@ -109,11 +126,14 @@ export default function PromoterSelector({
       
       {selectedPromoterIds.length > 0 && (
         <div className="flex flex-wrap gap-2 mt-2">
-          {getSelectedPromoterNames().map((name, index) => (
-            <Badge key={index} variant="secondary">
-              {name}
-            </Badge>
-          ))}
+          {promoters
+            .filter(promoter => selectedPromoterIds.includes(promoter.id))
+            .map((promoter) => (
+              <Badge key={promoter.id} variant="secondary" className="flex items-center gap-1">
+                <span>{promoter.full_name}</span>
+                <span className="text-xs font-mono">({promoter.unique_code})</span>
+              </Badge>
+            ))}
         </div>
       )}
     </div>
