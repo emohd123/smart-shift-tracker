@@ -14,6 +14,7 @@ export type User = {
 
 export type UserProfile = {
   id: string;
+  unique_code: string;
   full_name: string;
   nationality: string;
   age: number;
