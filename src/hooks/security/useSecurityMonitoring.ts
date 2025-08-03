@@ -2,11 +2,12 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 interface SecurityEvent {
-  event_type: 'login_attempt' | 'signup_attempt' | 'role_change' | 'failed_validation';
+  event_type: 'login_attempt' | 'signup_attempt' | 'role_change' | 'failed_validation' | 'admin_action' | 'profile_update' | 'unauthorized_access';
   user_id?: string;
   ip_address?: string;
   user_agent?: string;
   details?: Record<string, any>;
+  severity?: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export const useSecurityMonitoring = () => {
@@ -83,7 +84,43 @@ export const useSecurityMonitoring = () => {
       details: {
         field,
         reason
-      }
+      },
+      severity: 'medium'
+    });
+  }, [logSecurityEvent]);
+
+  const logAdminAction = useCallback((action: string, userId: string, target?: string) => {
+    logSecurityEvent({
+      event_type: 'admin_action',
+      user_id: userId,
+      details: {
+        action,
+        target
+      },
+      severity: 'high'
+    });
+  }, [logSecurityEvent]);
+
+  const logProfileUpdate = useCallback((userId: string, fields: string[]) => {
+    logSecurityEvent({
+      event_type: 'profile_update',
+      user_id: userId,
+      details: {
+        updated_fields: fields
+      },
+      severity: 'low'
+    });
+  }, [logSecurityEvent]);
+
+  const logUnauthorizedAccess = useCallback((userId?: string, resource?: string) => {
+    logSecurityEvent({
+      event_type: 'unauthorized_access',
+      user_id: userId,
+      details: {
+        resource,
+        attempted_at: new Date().toISOString()
+      },
+      severity: 'critical'
     });
   }, [logSecurityEvent]);
 
@@ -93,6 +130,9 @@ export const useSecurityMonitoring = () => {
     logSuccessfulLogin,
     logSignupAttempt,
     logValidationFailure,
+    logAdminAction,
+    logProfileUpdate,
+    logUnauthorizedAccess,
     isLogging
   };
 };

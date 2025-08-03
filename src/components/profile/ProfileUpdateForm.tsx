@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/auth/useProfile";
 import { ProfileUpdate } from "@/hooks/useAuthHooks";
+import { useSecurityMonitoring } from "@/hooks/security/useSecurityMonitoring";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
@@ -15,6 +16,7 @@ import { GenderType } from "@/types/database";
 export default function ProfileUpdateForm() {
   const { user } = useAuth();
   const { getUserProfile, updateProfile, loading, error } = useProfile();
+  const { logProfileUpdate } = useSecurityMonitoring();
   const [saving, setSaving] = useState(false);
   const [idCardFile, setIdCardFile] = useState<File | null>(null);
   const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
@@ -78,6 +80,11 @@ export default function ProfileUpdateForm() {
       // Handle file uploads here if needed
       
       await updateProfile(user.id, updateData);
+      
+      // Log profile update for security monitoring
+      const updatedFields = Object.keys(updateData).filter(key => updateData[key as keyof ProfileUpdate] !== undefined);
+      logProfileUpdate(user.id, updatedFields);
+      
       toast.success("Profile updated successfully");
     } catch (err: any) {
       toast.error("Failed to update profile: " + (err.message || "Unknown error"));
