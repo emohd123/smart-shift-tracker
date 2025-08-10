@@ -221,46 +221,6 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ classNam
         </Card>
       </div>
 
-      {/* Performance Insights */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Performance Insights</CardTitle>
-          <CardDescription>AI-powered recommendations for growth</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div className="flex items-start gap-3 p-3 bg-green-50 dark:bg-green-950/20 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-green-500 mt-0.5" />
-              <div>
-                <p className="font-medium text-green-700 dark:text-green-300">High Engagement Period</p>
-                <p className="text-sm text-green-600 dark:text-green-400">
-                  Thursday shows 25% higher user activity. Consider scheduling more shifts on this day.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg">
-              <Activity className="h-5 w-5 text-blue-500 mt-0.5" />
-              <div>
-                <p className="font-medium text-blue-700 dark:text-blue-300">Training Opportunity</p>
-                <p className="text-sm text-blue-600 dark:text-blue-400">
-                  Certificate generation is up 45%. Consider launching advanced training modules.
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3 p-3 bg-orange-50 dark:bg-orange-950/20 rounded-lg">
-              <DollarSign className="h-5 w-5 text-orange-500 mt-0.5" />
-              <div>
-                <p className="font-medium text-orange-700 dark:text-orange-300">Revenue Optimization</p>
-                <p className="text-sm text-orange-600 dark:text-orange-400">
-                  Subscription revenue is growing steadily. Consider introducing premium tiers.
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 };
