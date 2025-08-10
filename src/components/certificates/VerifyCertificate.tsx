@@ -17,10 +17,6 @@ export default function VerifyCertificate() {
   const [status, setStatus] = useState<VerificationStatus>("loading");
   const [certificateData, setCertificateData] = useState<any>(null);
   const navigate = useNavigate();
-  // Mock log function
-  const logCertificateVerification = async (ref: string) => {
-    console.log("Logging verification for:", ref);
-  };
   
   useEffect(() => {
     const verifyCertificate = async () => {
@@ -30,27 +26,7 @@ export default function VerifyCertificate() {
       }
       
       try {
-        // Log this verification attempt
-        await logCertificateVerification(referenceNumber);
         
-        // For demo purposes, simulate success for certain reference numbers
-        if (referenceNumber.startsWith("CERT-")) {
-          setTimeout(() => {
-            setCertificateData({
-              reference_number: referenceNumber,
-              issue_date: new Date().toISOString(),
-              issued_date: new Date().toISOString(),
-              time_period: "Last 6 Months",
-              total_hours: 48,
-              status: "approved",
-              promoter_name: "John Doe",
-              position_title: "Brand Promoter",
-              promotion_names: ["Product Demo", "Brand Promotion"]
-            });
-            setStatus("verified");
-          }, 1000);
-          return;
-        }
           
         // Call the Supabase Edge Function to verify the certificate
         const res = await fetch(
@@ -88,7 +64,7 @@ export default function VerifyCertificate() {
     };
     
     verifyCertificate();
-  }, [referenceNumber, logCertificateVerification]);
+  }, [referenceNumber]);
   
   const handleDownload = async () => {
     if (!certificateData) {
@@ -118,7 +94,6 @@ export default function VerifyCertificate() {
       };
       
       // Generate PDF
-      // Create mock work experience data for PDF generation
       const workExperienceData = {
         referenceNumber: pdfData.referenceNumber,
         promoterName: pdfData.promoterName,
@@ -128,13 +103,13 @@ export default function VerifyCertificate() {
           startDate: pdfData.issueDate,
           endDate: pdfData.issueDate
         },
-        roles: [pdfData.positionTitle],
-        locations: ["Various Locations"],
+        roles: pdfData.positionTitle ? [pdfData.positionTitle] : [],
+        locations: [],
         shifts: [],
         timeLogs: {
           totalTrackedHours: pdfData.totalHours,
-          averageHoursPerShift: 8,
-          mostProductiveDay: "Monday"
+          averageHoursPerShift: 0,
+          mostProductiveDay: ""
         },
         issueDate: pdfData.issueDate,
         managerContact: pdfData.managerContact,

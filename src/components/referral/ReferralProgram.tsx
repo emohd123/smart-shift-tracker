@@ -24,32 +24,17 @@ interface Referral {
 
 const ReferralProgram: React.FC = () => {
   const [copied, setCopied] = useState(false);
-  const [referralCode] = useState('REF123ABC'); // In real app, get from user profile
+  const [referralCode] = useState(''); // TODO: load from user profile when available
   
-  // Mock data - in real app, fetch from API
+  // Real data should come from API; default to zeros
   const stats: ReferralStats = {
-    referralsCount: 12,
-    totalEarnings: 240,
-    pendingRewards: 60,
-    conversionRate: 75
+    referralsCount: 0,
+    totalEarnings: 0,
+    pendingRewards: 0,
+    conversionRate: 0
   };
 
-  const referrals: Referral[] = [
-    {
-      id: '1',
-      email: 'john@example.com',
-      status: 'completed',
-      reward: 20,
-      createdAt: '2024-01-15'
-    },
-    {
-      id: '2',
-      email: 'sarah@example.com',
-      status: 'pending',
-      reward: 20,
-      createdAt: '2024-01-20'
-    }
-  ];
+  const referrals: Referral[] = [];
 
   const referralUrl = `${window.location.origin}/signup?ref=${referralCode}`;
 

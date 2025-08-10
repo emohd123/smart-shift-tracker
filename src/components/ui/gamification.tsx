@@ -44,8 +44,8 @@ interface GamificationProps {
 }
 
 export const GamificationSystem: React.FC<GamificationProps> = ({ userId, className }) => {
-  const [userPoints, setUserPoints] = useState(1250);
-  const [userLevel, setUserLevel] = useState(3);
+  const [userPoints, setUserPoints] = useState(0);
+  const [userLevel, setUserLevel] = useState(1);
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [recentAchievement, setRecentAchievement] = useState<Achievement | null>(null);
 
@@ -82,74 +82,6 @@ export const GamificationSystem: React.FC<GamificationProps> = ({ userId, classN
     }
   ];
 
-  const mockAchievements: Achievement[] = [
-    {
-      id: "first-shift",
-      title: "First Steps",
-      description: "Complete your first shift",
-      icon: <Star className="h-5 w-5" />,
-      points: 50,
-      unlocked: true,
-      unlockedAt: "2024-01-15",
-      category: "shifts"
-    },
-    {
-      id: "week-warrior",
-      title: "Week Warrior",
-      description: "Complete 5 shifts in one week",
-      icon: <Target className="h-5 w-5" />,
-      points: 200,
-      unlocked: true,
-      unlockedAt: "2024-01-22",
-      category: "shifts"
-    },
-    {
-      id: "time-tracker",
-      title: "Time Tracker",
-      description: "Track 40+ hours in time tracking",
-      icon: <Clock className="h-5 w-5" />,
-      points: 150,
-      unlocked: false,
-      progress: 32,
-      maxProgress: 40,
-      category: "time"
-    },
-    {
-      id: "certificate-collector",
-      title: "Certificate Collector",
-      description: "Generate 3 work certificates",
-      icon: <Medal className="h-5 w-5" />,
-      points: 100,
-      unlocked: false,
-      progress: 2,
-      maxProgress: 3,
-      category: "certificates"
-    },
-    {
-      id: "social-butterfly",
-      title: "Social Butterfly",
-      description: "Send 20 messages to team members",
-      icon: <Users className="h-5 w-5" />,
-      points: 75,
-      unlocked: false,
-      progress: 12,
-      maxProgress: 20,
-      category: "engagement"
-    },
-    {
-      id: "perfect-week",
-      title: "Perfect Week",
-      description: "Complete all scheduled shifts in a week",
-      icon: <CheckCircle className="h-5 w-5" />,
-      points: 300,
-      unlocked: false,
-      category: "shifts"
-    }
-  ];
-
-  useEffect(() => {
-    setAchievements(mockAchievements);
-  }, []);
 
   const currentLevel = levels.find(l => l.level === userLevel);
   const nextLevel = levels.find(l => l.level === userLevel + 1);

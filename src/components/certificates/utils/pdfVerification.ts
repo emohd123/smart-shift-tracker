@@ -44,11 +44,7 @@ export const addVerificationQRCode = async (
     doc.text("Scan to verify", 250, startY + 35, { align: "center" });
   } catch (err) {
     console.error("QR code generation failed:", err);
-    // Fall back to a placeholder with minimal processing
-    doc.setDrawColor(100, 100, 100);
-    doc.rect(230, startY - 10, 40, 40);
-    doc.setFontSize(8);
-    doc.text("QR Code Placeholder", 250, startY + 10, { align: "center" });
+    // QR code generation failed; skip adding placeholder to avoid fake content
   }
 };
 

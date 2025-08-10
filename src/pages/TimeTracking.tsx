@@ -77,35 +77,11 @@ const TimeTracking = () => {
               
               setActiveShift(shift);
             } else {
-              const mockShift: Shift = {
-                id: timeLogData.shift_id,
-                title: "Active Shift",
-                date: new Date().toISOString().split('T')[0],
-                startTime: new Date(timeLogData.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-                endTime: "End Time TBD",
-                location: "Current Location",
-                status: ShiftStatus.Ongoing,
-                payRate: 10.00,
-                isPaid: false
-              };
-              
-              setActiveShift(mockShift);
+              setActiveShift(null);
             }
           } catch (error) {
             console.error("Error retrieving shift data:", error);
-            const mockShift: Shift = {
-              id: timeLogData.shift_id,
-              title: "Active Shift",
-              date: new Date().toISOString().split('T')[0],
-              startTime: new Date(timeLogData.check_in_time).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
-              endTime: "End Time TBD",
-              location: "Current Location",
-              status: ShiftStatus.Ongoing,
-              payRate: 10.00,
-              isPaid: false
-            };
-            
-            setActiveShift(mockShift);
+            setActiveShift(null);
           }
         }
       }

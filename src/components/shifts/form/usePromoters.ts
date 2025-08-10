@@ -22,13 +22,8 @@ export default function usePromoters() {
         console.error("Error fetching promoters:", error);
         toast.error("Failed to load promoter list");
         
-        // Use mock data for better user experience during development
-        const mockPromoters: PromoterOption[] = [
-          { id: "mock-1", unique_code: "MOCK001A", full_name: "Sample Promoter 1", age: 25, nationality: "US" },
-          { id: "mock-2", unique_code: "MOCK002B", full_name: "Sample Promoter 2", age: 28, nationality: "UK" },
-          { id: "mock-3", unique_code: "MOCK003C", full_name: "Sample Promoter 3", age: 22, nationality: "CA" }
-        ];
-        setPromoters(mockPromoters);
+        // Do not use mock data; show empty list
+        setPromoters([]);
         return;
       }
       
@@ -53,13 +48,8 @@ export default function usePromoters() {
       console.error("Error in promoters hook:", error);
       toast.error("Failed to load promoters data");
       
-      // Use mock data for better user experience
-      const mockPromoters: PromoterOption[] = [
-        { id: "mock-1", unique_code: "MOCK001A", full_name: "Sample Promoter 1", age: 25, nationality: "US" },
-        { id: "mock-2", unique_code: "MOCK002B", full_name: "Sample Promoter 2", age: 28, nationality: "UK" },
-        { id: "mock-3", unique_code: "MOCK003C", full_name: "Sample Promoter 3", age: 22, nationality: "CA" }
-      ];
-      setPromoters(mockPromoters);
+      // Do not use mock data; show empty list
+      setPromoters([]);
     } finally {
       setLoadingPromoters(false);
     }

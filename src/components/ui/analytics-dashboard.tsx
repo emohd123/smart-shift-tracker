@@ -34,36 +34,20 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ classNam
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("30d");
   const [loading, setLoading] = useState(false);
 
-  // Mock data - in real app this would come from API
-  const analyticsData: AnalyticsData[] = [
-    { timeRange: "Week 1", shifts: 45, hours: 320, revenue: 2400, activeUsers: 25 },
-    { timeRange: "Week 2", shifts: 52, hours: 380, revenue: 2800, activeUsers: 28 },
-    { timeRange: "Week 3", shifts: 48, hours: 340, revenue: 2600, activeUsers: 26 },
-    { timeRange: "Week 4", shifts: 61, hours: 420, revenue: 3200, activeUsers: 32 },
-  ];
+  // No mock data; initialize empty. Hook this to API when available
+  const analyticsData: AnalyticsData[] = [];
 
-  const userEngagementData: UserEngagementData[] = [
-    { date: "Mon", logins: 45, timeTracking: 38, certificates: 12 },
-    { date: "Tue", logins: 52, timeTracking: 44, certificates: 15 },
-    { date: "Wed", logins: 48, timeTracking: 41, certificates: 10 },
-    { date: "Thu", logins: 61, timeTracking: 55, certificates: 18 },
-    { date: "Fri", logins: 58, timeTracking: 52, certificates: 16 },
-    { date: "Sat", logins: 35, timeTracking: 28, certificates: 8 },
-    { date: "Sun", logins: 29, timeTracking: 22, certificates: 5 },
-  ];
+  const userEngagementData: UserEngagementData[] = [];
 
-  const revenueBreakdown: RevenueBreakdown[] = [
-    { source: "Subscription", amount: 4500, color: "#8884d8" },
-    { source: "Training", amount: 2300, color: "#82ca9d" },
-    { source: "Certificates", amount: 1200, color: "#ffc658" },
-    { source: "Credits", amount: 800, color: "#ff7300" },
-  ];
+  const revenueBreakdown: RevenueBreakdown[] = [];
 
-  const currentData = analyticsData[analyticsData.length - 1];
-  const previousData = analyticsData[analyticsData.length - 2];
+  const hasData = analyticsData.length >= 2;
+  const currentData = hasData ? analyticsData[analyticsData.length - 1] : { timeRange: "", shifts: 0, hours: 0, revenue: 0, activeUsers: 0 };
+  const previousData = hasData ? analyticsData[analyticsData.length - 2] : currentData;
 
   const calculateGrowth = (current: number, previous: number) => {
-    return ((current - previous) / previous * 100).toFixed(1);
+    if (previous === 0) return 0;
+    return parseFloat((((current - previous) / previous) * 100).toFixed(1));
   };
 
   const MetricCard: React.FC<{
@@ -121,26 +105,26 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ classNam
         <MetricCard
           title="Total Shifts"
           value={currentData.shifts}
-          change={parseFloat(calculateGrowth(currentData.shifts, previousData.shifts))}
+          change={calculateGrowth(currentData.shifts, previousData.shifts)}
           icon={<Activity className="h-4 w-4 text-muted-foreground" />}
         />
         <MetricCard
           title="Hours Tracked"
           value={currentData.hours}
-          change={parseFloat(calculateGrowth(currentData.hours, previousData.hours))}
+          change={calculateGrowth(currentData.hours, previousData.hours)}
           icon={<Clock className="h-4 w-4 text-muted-foreground" />}
         />
         <MetricCard
           title="Revenue"
           value={currentData.revenue}
-          change={parseFloat(calculateGrowth(currentData.revenue, previousData.revenue))}
+          change={calculateGrowth(currentData.revenue, previousData.revenue)}
           icon={<DollarSign className="h-4 w-4 text-muted-foreground" />}
           format="currency"
         />
         <MetricCard
           title="Active Users"
           value={currentData.activeUsers}
-          change={parseFloat(calculateGrowth(currentData.activeUsers, previousData.activeUsers))}
+          change={calculateGrowth(currentData.activeUsers, previousData.activeUsers)}
           icon={<Users className="h-4 w-4 text-muted-foreground" />}
         />
       </div>
