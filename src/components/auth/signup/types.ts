@@ -1,5 +1,5 @@
 
-import { GenderType } from "@/types/database";
+import { GenderType, UserRole } from "@/types/database";
 
 export interface FormData {
   fullName: string;
@@ -15,6 +15,7 @@ export interface FormData {
   isStudent: boolean;
   address: string;
   bankDetails: string;
+  role: UserRole; // 'promoter' or 'company' at signup
 }
 
 export interface FileData {

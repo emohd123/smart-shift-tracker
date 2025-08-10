@@ -85,7 +85,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         id_card_url: idCardUrl || null,
         profile_photo_url: profilePhotoUrl || null,
         verification_status: 'pending',
-        role: 'promoter'
+        role: (formData.role || 'promoter')
       };
       
       console.log("Profile data to save:", profileData);

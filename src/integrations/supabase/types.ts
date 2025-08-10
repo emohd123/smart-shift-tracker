@@ -549,6 +549,7 @@ export type Database = {
           created_at: string
           date: string
           description: string | null
+          employer_id: string | null
           end_date: string | null
           end_time: string
           id: string
@@ -572,6 +573,7 @@ export type Database = {
           created_at?: string
           date: string
           description?: string | null
+          employer_id?: string | null
           end_date?: string | null
           end_time: string
           id?: string
@@ -595,6 +597,7 @@ export type Database = {
           created_at?: string
           date?: string
           description?: string | null
+          employer_id?: string | null
           end_date?: string | null
           end_time?: string
           id?: string
@@ -886,6 +889,14 @@ export type Database = {
       }
       is_certificate_valid: {
         Args: { ref_number: string }
+        Returns: boolean
+      }
+      is_company: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      is_shift_owner: {
+        Args: { _shift_id: string }
         Returns: boolean
       }
       log_certificate_verification: {

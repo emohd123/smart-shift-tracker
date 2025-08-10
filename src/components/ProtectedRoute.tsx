@@ -8,13 +8,15 @@ const ProtectedRoute = () => {
   const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
   
-  // Check if the route is admin-only
-  const isAdminRoute = location.pathname.startsWith('/admin') || 
+  // Routes requiring admin only (companies excluded)
+  const requiresAdmin = location.pathname.startsWith('/admin') || 
                        location.pathname === '/promoters' ||
                        location.pathname === '/reports' ||
                        location.pathname === '/revenue' ||
-                       location.pathname === '/shifts/create' || 
                        location.pathname === '/data-purge';
+
+  // Routes accessible by company or admin
+  const companyAccessRoute = location.pathname === '/shifts/create';
 
   // Show a loading indicator while authentication state is being determined
   if (loading) {
@@ -31,8 +33,13 @@ const ProtectedRoute = () => {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
   
-  // If it's an admin route but user is not an admin, redirect to user dashboard
-  if (isAdminRoute && user?.role !== UserRole.Admin) {
+  // If route requires admin but user is not admin
+  if (requiresAdmin && user?.role !== UserRole.Admin) {
+    return <Navigate to="/shifts" replace />;
+  }
+
+  // If route allows company or admin but user is neither
+  if (companyAccessRoute && !(user?.role === UserRole.Admin || user?.role === UserRole.Company)) {
     return <Navigate to="/shifts" replace />;
   }
 

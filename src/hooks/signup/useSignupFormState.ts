@@ -1,7 +1,7 @@
 
 import { useState, ChangeEvent } from "react";
 import { FormData, FileData } from "@/components/auth/signup/types";
-import { GenderType } from "@/types/database";
+import { GenderType, UserRole } from "@/types/database";
 
 export const useSignupFormState = () => {
   const [formData, setFormData] = useState<FormData>({
@@ -18,6 +18,7 @@ export const useSignupFormState = () => {
     isStudent: false,
     address: "",
     bankDetails: "",
+    role: UserRole.Promoter,
   });
   
   const [fileData, setFileData] = useState<FileData>({
