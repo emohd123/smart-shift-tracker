@@ -24,12 +24,7 @@ export function usePromoterData() {
         }
         
         if (profileData) {
-          // Transform profiles data into PromoterData format
           const promotersData: PromoterData[] = profileData.map(profile => {
-            // Calculate mock stats since we don't have this data yet
-            const totalHours = Math.floor(Math.random() * 100);
-            const totalShifts = Math.floor(totalHours / 4);
-            
             return {
               id: profile.id,
               full_name: profile.full_name,
@@ -37,9 +32,9 @@ export function usePromoterData() {
               nationality: profile.nationality || '',
               gender: profile.gender || '',
               verification_status: profile.verification_status || 'pending',
-              total_hours: totalHours,
-              total_shifts: totalShifts,
-              average_rating: parseFloat((Math.random() * 2 + 3).toFixed(1)), // Random rating between 3-5
+              total_hours: 0,
+              total_shifts: 0,
+              average_rating: 0,
               profile_photo_url: profile.profile_photo_url,
               created_at: profile.created_at
             };
@@ -54,9 +49,8 @@ export function usePromoterData() {
         setError(error instanceof Error ? error : new Error('Unknown error occurred'));
         toast.error("Failed to load promoters data");
         
-        // Fall back to mock data in case of error
-        console.log("Falling back to mock data for promoters");
-        setPromoters(getMockPromoters());
+        // On error, return empty list to avoid fake data
+        setPromoters([]);
         setLoading(false);
       }
     };

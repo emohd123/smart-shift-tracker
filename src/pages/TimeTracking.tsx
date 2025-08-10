@@ -13,30 +13,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ShiftStatus } from "@/types/database";
 import { formatBHD } from "@/components/shifts/utils/currencyUtils";
 
-const mockShifts = [
-  {
-    id: "current-1",
-    title: "Product Sampling at Grocery Store",
-    date: new Date().toISOString().split('T')[0],
-    startTime: "09:00",
-    endTime: "17:00",
-    location: "GroceryMart, 123 Food St",
-    status: ShiftStatus.Ongoing as ShiftStatus,
-    payRate: 15,
-    isPaid: false
-  },
-  {
-    id: "current-2",
-    title: "Tech Expo Product Demo",
-    date: new Date().toISOString().split('T')[0],
-    startTime: "10:00",
-    endTime: "18:00",
-    location: "Convention Center, 456 Tech Blvd",
-    status: ShiftStatus.Ongoing as ShiftStatus,
-    payRate: 18,
-    isPaid: false
-  }
-];
 
 const TimeTracking = () => {
   const { user } = useAuth();

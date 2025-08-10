@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { supabase } from "@/integrations/supabase/client";
-import { mockShifts } from "@/utils/mockData";
+
 import { toast } from "sonner";
 import { 
   formatDatabaseShifts, 

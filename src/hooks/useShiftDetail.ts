@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
-import { mockShifts } from "@/utils/mockData";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDatabaseShifts } from "@/hooks/shifts/utils/shiftDataUtils";
 import { ShiftStatus } from "@/types/database";
 
 type TimeTrackerRef = {
@@ -28,27 +29,42 @@ export function useShiftDetail(shiftId: string | undefined) {
       setLoading(false);
       return;
     }
-    
-    // Simulate API request
-    setLoading(true);
-    const timer = setTimeout(() => {
-      const foundShift = mockShifts.find(s => s.id === shiftId);
-      if (foundShift) {
-        setShift(foundShift);
-        // If the shift is already ongoing, mark as checked in
-        setIsCheckedIn(foundShift.status === ShiftStatus.Ongoing);
-      } else {
-        // Handle case when shift is not found
+
+    const fetchShift = async () => {
+      try {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from('shifts')
+          .select('*')
+          .eq('id', shiftId)
+          .maybeSingle();
+        
+        if (error) throw error;
+        
+        if (data) {
+          const formatted = formatDatabaseShifts([data])[0];
+          setShift(formatted);
+          setIsCheckedIn(formatted.status === ShiftStatus.Ongoing);
+        } else {
+          toast({
+            title: "Shift Not Found",
+            description: "The requested shift could not be found",
+            variant: "destructive"
+          });
+        }
+      } catch (e) {
+        console.error("Error loading shift:", e);
         toast({
-          title: "Shift Not Found",
-          description: "The requested shift could not be found",
+          title: "Error",
+          description: "Failed to load shift details",
           variant: "destructive"
         });
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
-    }, 500);
-    
-    return () => clearTimeout(timer);
+    };
+
+    fetchShift();
   }, [shiftId, toast]);
 
   // Register global function to start time tracking
