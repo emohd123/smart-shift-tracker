@@ -872,6 +872,10 @@ export type Database = {
         Args: { user_id_param: string }
         Returns: undefined
       }
+      ensure_profile_for_current_user: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_unique_profile_code: {
         Args: Record<PropertyKey, never>
         Returns: string
