@@ -77,6 +77,39 @@ export type Database = {
         }
         Relationships: []
       }
+      company_profiles: {
+        Row: {
+          address: string
+          created_at: string
+          logo_url: string | null
+          name: string
+          registration_id: string
+          updated_at: string
+          user_id: string
+          website: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          logo_url?: string | null
+          name: string
+          registration_id: string
+          updated_at?: string
+          user_id: string
+          website?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          logo_url?: string | null
+          name?: string
+          registration_id?: string
+          updated_at?: string
+          user_id?: string
+          website?: string | null
+        }
+        Relationships: []
+      }
       credit_transactions: {
         Row: {
           amount: number

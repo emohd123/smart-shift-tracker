@@ -33,6 +33,8 @@ import Training from "./pages/Training";
 import Referrals from "./pages/Referrals";
 import VerifyCertificatePage from "./pages/VerifyCertificatePage";
 import ProtectedRoute from "./components/ProtectedRoute";
+import CompanyDashboard from "./pages/CompanyDashboard";
+import CompanyProfile from "./pages/CompanyProfile";
 
 // Root component
 function App() {
@@ -53,6 +55,8 @@ function App() {
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/company" element={<CompanyDashboard />} />
+              <Route path="/company/profile" element={<CompanyProfile />} />
               <Route path="/shifts" element={<Shifts />} />
               <Route path="/shifts/create" element={<CreateShift />} />
               <Route path="/shifts/:id" element={<ShiftDetails />} />

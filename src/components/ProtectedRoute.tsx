@@ -16,7 +16,8 @@ const ProtectedRoute = () => {
                        location.pathname === '/data-purge';
 
   // Routes accessible by company or admin
-  const companyAccessRoute = location.pathname === '/shifts/create';
+  const companyAccessRoute = location.pathname === '/shifts/create' ||
+                             location.pathname.startsWith('/company');
 
   // Show a loading indicator while authentication state is being determined
   if (loading) {
