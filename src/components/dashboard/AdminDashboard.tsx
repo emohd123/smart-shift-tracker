@@ -88,9 +88,9 @@ const AdminDashboard = React.memo(({ shifts, loading = false }: AdminDashboardPr
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">5</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground mt-1">
-                3 scheduled today
+                0 scheduled today
               </p>
             </CardContent>
           </Card>
@@ -103,7 +103,7 @@ const AdminDashboard = React.memo(({ shifts, loading = false }: AdminDashboardPr
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">48.5</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground mt-1">
                 This week (Mon-Sun)
               </p>
@@ -130,7 +130,7 @@ const AdminDashboard = React.memo(({ shifts, loading = false }: AdminDashboardPr
       <div>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-xl font-semibold">Live Attendance</h2>
-          <Button variant="outline" size="sm" onClick={() => navigate("/time-tracking")}>
+          <Button variant="outline" size="sm" onClick={() => navigate("/time")}>
             View All
           </Button>
         </div>
