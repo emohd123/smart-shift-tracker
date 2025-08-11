@@ -41,6 +41,7 @@ export const ShiftsContent = ({
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
+  const isCompany = user?.role === "company";
   
   // Register the deleteShift function globally, but clean up on unmount
   useEffect(() => {
@@ -101,13 +102,15 @@ export const ShiftsContent = ({
           When shifts are created, they will appear here. You can create a new shift using the button below.
         </p>
         <div className="flex gap-4">
-          <Button 
-            onClick={() => navigate("/shifts/create")}
-            className="gap-2"
-          >
-            <Calendar className="h-4 w-4" />
-            Create New Shift
-          </Button>
+          {(isAdmin || isCompany) && (
+            <Button 
+              onClick={() => navigate("/shifts/create")}
+              className="gap-2"
+            >
+              <Calendar className="h-4 w-4" />
+              Create New Shift
+            </Button>
+          )}
           
           {refreshShifts && (
             <Button 

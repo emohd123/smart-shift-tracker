@@ -29,7 +29,6 @@ const creditPackages = [
 
 const creditUses = [
   { icon: FileText, title: "Certificate Downloads", cost: "10 credits", description: "Download professional certificates" },
-  { icon: Star, title: "Premium Job Posting", cost: "20 credits", description: "Featured job listings with priority" },
   { icon: Users, title: "Training Modules", cost: "40-100 credits", description: "Access skill development courses" },
   { icon: TrendingUp, title: "Analytics Dashboard", cost: "15 credits", description: "Advanced performance insights" },
 ];

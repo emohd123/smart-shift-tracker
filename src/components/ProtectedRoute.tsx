@@ -16,8 +16,12 @@ const ProtectedRoute = () => {
                        location.pathname === '/data-purge';
 
   // Routes accessible by company or admin
-  const companyAccessRoute = location.pathname === '/shifts/create' ||
+  const companyAccessRoute = location.pathname === '/shifts/create' || 
                              location.pathname.startsWith('/company');
+  
+  // Routes restricted to promoters only
+  const promoterOnlyRoute = location.pathname === '/time' || 
+                            location.pathname === '/time-history';
 
   // Show a loading indicator while authentication state is being determined
   if (loading) {
@@ -41,6 +45,11 @@ const ProtectedRoute = () => {
 
   // If route allows company or admin but user is neither
   if (companyAccessRoute && !(user?.role === UserRole.Admin || user?.role === UserRole.Company)) {
+    return <Navigate to="/shifts" replace />;
+  }
+
+  // Promoter-only route restriction
+  if (promoterOnlyRoute && user?.role !== UserRole.Promoter) {
     return <Navigate to="/shifts" replace />;
   }
 

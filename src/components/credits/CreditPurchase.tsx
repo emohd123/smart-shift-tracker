@@ -176,7 +176,6 @@ export default function CreditPurchase() {
         <ul className="text-sm text-muted-foreground space-y-1">
           <li>• Certificate Download: 25 credits</li>
           <li>• Training Module Access: 50-100 credits (varies by module)</li>
-          <li>• Premium Job Posting: 200 credits</li>
           <li>• Expedited Verification: 150 credits</li>
         </ul>
       </div>

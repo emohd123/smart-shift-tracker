@@ -20,16 +20,16 @@ const CreateShift = () => {
       return;
     }
     
-    if (user?.role !== "admin") {
-      console.log("CreateShift - User is not admin, role:", user?.role);
+    if (!(user?.role === "admin" || user?.role === "company")) {
+      console.log("CreateShift - User is not admin/company, role:", user?.role);
       toast.error("Permission Denied", {
-        description: "Only admin users can create shifts"
+        description: "Only admin or company users can create shifts"
       });
       navigate("/shifts");
     }
   }, [isAuthenticated, navigate, user]);
 
-  if (!isAuthenticated || user?.role !== "admin") {
+  if (!isAuthenticated || !(user?.role === "admin" || user?.role === "company")) {
     return null;
   }
 

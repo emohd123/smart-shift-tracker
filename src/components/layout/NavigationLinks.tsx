@@ -5,7 +5,7 @@ import {
   CalendarDays, ChevronDown, 
   ClipboardList, Clock, Home, MessageCircle, 
   Settings, UserRound, Users, FileBarChart2, Eraser, Award,
-  Briefcase, BookOpen, Coins, CreditCard, Share2
+  BookOpen, Coins, CreditCard, Share2
 } from "lucide-react";
 import { UserRole } from "@/types/database";
 import {
@@ -38,8 +38,10 @@ export const NavigationLinks = () => {
     </NavLink>
   );
   
-  // Define if user is admin
+  // Define if user is admin/company/promoter
   const isAdmin = user?.role === UserRole.Admin;
+  const isCompany = user?.role === UserRole.Company;
+  const isPromoter = user?.role === UserRole.Promoter;
 
   return (
     <div className="flex flex-col gap-1">
@@ -51,13 +53,17 @@ export const NavigationLinks = () => {
         Shifts
       </AppLink>
       
-      <AppLink to="/time" icon={<Clock className="h-4 w-4" />}>
-        Time Tracking
-      </AppLink>
-      
-      <AppLink to="/time-history" icon={<ClipboardList className="h-4 w-4" />}>
-        Time History
-      </AppLink>
+      {isPromoter && (
+        <>
+          <AppLink to="/time" icon={<Clock className="h-4 w-4" />}>
+            Time Tracking
+          </AppLink>
+          
+          <AppLink to="/time-history" icon={<ClipboardList className="h-4 w-4" />}>
+            Time History
+          </AppLink>
+        </>
+      )}
       
       <AppLink to="/messages" icon={<MessageCircle className="h-4 w-4" />}>
         Messages
@@ -67,25 +73,26 @@ export const NavigationLinks = () => {
         Certificates
       </AppLink>
       
-      <AppLink to="/jobs" icon={<Briefcase className="h-4 w-4" />}>
-        Jobs
-      </AppLink>
       
-      <AppLink to="/training" icon={<BookOpen className="h-4 w-4" />}>
-        Training
-      </AppLink>
-      
-      <AppLink to="/credits" icon={<Coins className="h-4 w-4" />}>
-        Credits
-      </AppLink>
-      
-      <AppLink to="/subscription" icon={<CreditCard className="h-4 w-4" />}>
-        Subscription
-      </AppLink>
-      
-      <AppLink to="/referrals" icon={<Share2 className="h-4 w-4" />}>
-        Referrals
-      </AppLink>
+      {isPromoter && (
+        <>
+          <AppLink to="/training" icon={<BookOpen className="h-4 w-4" />}>
+            Training
+          </AppLink>
+          
+          <AppLink to="/credits" icon={<Coins className="h-4 w-4" />}>
+            Credits
+          </AppLink>
+          
+          <AppLink to="/subscription" icon={<CreditCard className="h-4 w-4" />}>
+            Subscription
+          </AppLink>
+          
+          <AppLink to="/referrals" icon={<Share2 className="h-4 w-4" />}>
+            Referrals
+          </AppLink>
+        </>
+      )}
       
       {isAdmin && (
         <>

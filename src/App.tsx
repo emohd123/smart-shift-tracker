@@ -27,7 +27,7 @@ import Profile from "./pages/Profile";
 import Certificates from "./pages/Certificates";
 import Subscription from "./pages/Subscription";
 import Revenue from "./pages/Revenue";
-import Jobs from "./pages/Jobs";
+
 import Credits from "./pages/Credits";
 import Training from "./pages/Training";
 import Referrals from "./pages/Referrals";
@@ -71,7 +71,7 @@ function App() {
               <Route path="/certificates" element={<Certificates />} />
               <Route path="/subscription" element={<Subscription />} />
               <Route path="/revenue" element={<Revenue />} />
-              <Route path="/jobs" element={<Jobs />} />
+              
               <Route path="/credits" element={<Credits />} />
               <Route path="/training" element={<Training />} />
               <Route path="/referrals" element={<Referrals />} />
