@@ -877,6 +877,10 @@ export type Database = {
         Args: { ip_address: string; ref_number: string; user_agent: string }
         Returns: undefined
       }
+      user_has_purchased_module: {
+        Args: { module_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
       gender_type: "Male" | "Female" | "Other"
