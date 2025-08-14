@@ -34,6 +34,11 @@ const Dashboard = () => {
     );
   }
 
+  if (user?.role === "company") {
+    navigate("/company");
+    return null;
+  }
+
   return (
     <AppLayout title="Promoter Dashboard">
       <PromoterDashboard shifts={shifts} />

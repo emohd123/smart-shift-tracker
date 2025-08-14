@@ -45,11 +45,29 @@ export function AdminStampConfig() {
   const loadConfig = async () => {
     setLoading(true);
     try {
-      // In a real implementation, this would load from database
-      // For now, use localStorage as demo
-      const savedConfig = localStorage.getItem('certificate-stamp-config');
-      if (savedConfig) {
-        setConfig(JSON.parse(savedConfig));
+      const { data, error } = await supabase
+        .from('admin_stamp_configs')
+        .select('*')
+        .limit(1)
+        .single();
+
+      if (error) {
+        console.error("Failed to load stamp config:", error);
+        return;
+      }
+
+      if (data) {
+        setConfig({
+          companyName: data.company_name,
+          companyWebsite: data.company_website || '',
+          companyEmail: data.company_email || '',
+          companyPhone: data.company_phone || '',
+          logoUrl: data.logo_url || '',
+          stampMessage: data.stamp_message,
+          enableDigitalSignature: data.enable_digital_signature,
+          signaturePosition: data.signature_position as StampConfig['signaturePosition'],
+          stampOpacity: data.stamp_opacity
+        });
       }
     } catch (error) {
       console.error("Failed to load stamp config:", error);
@@ -61,9 +79,23 @@ export function AdminStampConfig() {
   const saveConfig = async () => {
     setSaving(true);
     try {
-      // In a real implementation, this would save to database
-      // For now, use localStorage as demo
-      localStorage.setItem('certificate-stamp-config', JSON.stringify(config));
+      const { error } = await supabase
+        .from('admin_stamp_configs')
+        .upsert({
+          company_name: config.companyName,
+          company_website: config.companyWebsite,
+          company_email: config.companyEmail,
+          company_phone: config.companyPhone,
+          logo_url: config.logoUrl,
+          stamp_message: config.stampMessage,
+          enable_digital_signature: config.enableDigitalSignature,
+          signature_position: config.signaturePosition,
+          stamp_opacity: config.stampOpacity,
+          updated_at: new Date().toISOString()
+        });
+
+      if (error) throw error;
+      
       toast.success("Stamp configuration saved successfully!");
     } catch (error) {
       console.error("Failed to save stamp config:", error);

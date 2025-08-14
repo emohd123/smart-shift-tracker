@@ -39,8 +39,6 @@ export default function RevenuePage() {
 
   const handleCreditsPurchaseSuccess = async (amount: number) => {
     try {
-      // In production, this would be handled by Stripe webhook
-      // For demo purposes, we'll add credits directly
       const { error } = await supabase.rpc('add_user_credits', {
         p_user_id: (await supabase.auth.getUser()).data.user?.id,
         p_amount: amount,

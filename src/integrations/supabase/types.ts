@@ -7,13 +7,58 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.12 (cd3cf9e)"
   }
   public: {
     Tables: {
+      admin_stamp_configs: {
+        Row: {
+          company_email: string | null
+          company_name: string
+          company_phone: string | null
+          company_website: string | null
+          created_at: string
+          enable_digital_signature: boolean
+          id: string
+          logo_url: string | null
+          signature_position: string
+          stamp_message: string
+          stamp_opacity: number
+          updated_at: string
+        }
+        Insert: {
+          company_email?: string | null
+          company_name?: string
+          company_phone?: string | null
+          company_website?: string | null
+          created_at?: string
+          enable_digital_signature?: boolean
+          id?: string
+          logo_url?: string | null
+          signature_position?: string
+          stamp_message?: string
+          stamp_opacity?: number
+          updated_at?: string
+        }
+        Update: {
+          company_email?: string | null
+          company_name?: string
+          company_phone?: string | null
+          company_website?: string | null
+          created_at?: string
+          enable_digital_signature?: boolean
+          id?: string
+          logo_url?: string | null
+          signature_position?: string
+          stamp_message?: string
+          stamp_opacity?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           expiration_date: string | null
@@ -780,19 +825,19 @@ export type Database = {
     Functions: {
       add_user_credits: {
         Args: {
-          p_user_id: string
           p_amount: number
           p_description: string
           p_reference_id?: string
+          p_user_id: string
         }
         Returns: boolean
       }
       deduct_user_credits: {
         Args: {
-          p_user_id: string
           p_amount: number
           p_description: string
           p_reference_id?: string
+          p_user_id: string
         }
         Returns: boolean
       }
@@ -829,7 +874,7 @@ export type Database = {
         Returns: boolean
       }
       log_certificate_verification: {
-        Args: { ref_number: string; ip_address: string; user_agent: string }
+        Args: { ip_address: string; ref_number: string; user_agent: string }
         Returns: undefined
       }
     }

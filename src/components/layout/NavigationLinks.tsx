@@ -45,13 +45,25 @@ export const NavigationLinks = () => {
 
   return (
     <div className="flex flex-col gap-1">
-      <AppLink to="/dashboard" icon={<Home className="h-4 w-4" />}>
-        Dashboard
-      </AppLink>
+      {isCompany ? (
+        <AppLink to="/company" icon={<Home className="h-4 w-4" />}>
+          Dashboard
+        </AppLink>
+      ) : (
+        <AppLink to="/dashboard" icon={<Home className="h-4 w-4" />}>
+          Dashboard
+        </AppLink>
+      )}
       
       <AppLink to="/shifts" icon={<CalendarDays className="h-4 w-4" />}>
         Shifts
       </AppLink>
+      
+      {isCompany && (
+        <AppLink to="/shifts/create" icon={<CalendarDays className="h-4 w-4" />}>
+          Create Shift
+        </AppLink>
+      )}
       
       {isPromoter && (
         <>
@@ -129,7 +141,7 @@ export const NavigationLinks = () => {
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <NavLink to="/settings" className="flex w-full cursor-pointer">
+            <NavLink to={isCompany ? "/company/profile" : "/settings"} className="flex w-full cursor-pointer">
               <UserRound className="mr-2 h-4 w-4" />
               <span>Profile</span>
             </NavLink>
