@@ -7,6 +7,7 @@ import { User as UserType } from "@/context/AuthContext";
 import UserProfile from "./UserProfile";
 import { useAuth } from "@/context/AuthContext";
 import UnreadMessagesBadge from "@/components/notifications/UnreadMessagesBadge";
+import { TenantSwitcher } from "@/components/TenantSwitcher";
 
 interface AppSidebarProps {
   user: UserType | null;
@@ -58,6 +59,11 @@ export function AppSidebar({
             <ChevronLeft size={20} />
           </button>
         )}
+      </div>
+
+      {/* Tenant Switcher */}
+      <div className="px-4 py-3 border-b border-border">
+        <TenantSwitcher />
       </div>
 
       {/* Nav Links */}

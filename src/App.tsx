@@ -1,6 +1,7 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { ErrorProvider } from "./context/ErrorContext";
 import { AuthProvider } from "./context/AuthContext";
+import { TenantProvider } from "./context/TenantProvider";
 import { SecurityProvider } from "./components/security/SecurityProvider";
 import { Toaster } from "./components/ui/sonner";
 import DevToolsPanel from "./components/devtools/DevToolsPanel";
@@ -42,7 +43,8 @@ function App() {
     <ErrorProvider>
       <SecurityProvider>
         <AuthProvider>
-          <BrowserRouter>
+          <TenantProvider>
+            <BrowserRouter>
           <Routes>
             {/* Public routes */}
             <Route path="/" element={<Index />} />
@@ -80,9 +82,10 @@ function App() {
             {/* Fallback route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </BrowserRouter>
-        <Toaster richColors />
-      </AuthProvider>
+            </BrowserRouter>
+            <Toaster richColors />
+          </TenantProvider>
+        </AuthProvider>
       </SecurityProvider>
     </ErrorProvider>
   );
