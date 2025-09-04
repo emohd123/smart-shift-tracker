@@ -58,7 +58,20 @@
       "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\components\\auth\\signup/**)",
       "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\pages/**)",
       "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\hooks/**)",
-      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\components\\ui/**)"
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\components\\ui/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\hooks/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\hooks/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\pages/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\pages/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\context/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\components\\auth/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\types/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\hooks/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\hooks\\auth/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\hooks/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\hooks\\signup/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\hooks\\signup/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\hooks\\auth/**)"
     ],
     "deny": [],
     "ask": []

@@ -42,12 +42,17 @@ export default function SignupForm({ onBack, onSuccess, isModal = false }: Signu
           <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
             <Clock className="text-white" size={20} />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Create Your Account</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Welcome to SmartShift!</h2>
           <p className="text-sm text-muted-foreground mt-2">
-            Register to start your journey as a promoter
+            Your part-timer account has been created successfully
           </p>
         </div>
         <RegistrationSuccess />
+        <div className="text-center mt-4">
+          <p className="text-sm text-muted-foreground">
+            Redirecting to your dashboard...
+          </p>
+        </div>
       </div>
     );
   }

@@ -15,7 +15,7 @@ export interface FormData {
   isStudent: boolean;
   address: string;
   bankDetails: string;
-  role: UserRole; // 'promoter' or 'company' at signup
+  role: UserRole; // 'part_timer' or 'company_admin' at signup
 }
 
 export interface FileData {

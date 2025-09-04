@@ -42,14 +42,21 @@ export function SignupModal({ isOpen, onClose }: SignupModalProps) {
     onClose();
   };
 
+  const handleSuccess = () => {
+    // Close modal after a short delay to allow user to see success message
+    setTimeout(() => {
+      handleClose();
+    }, 2000);
+  };
+
   const renderContent = () => {
     switch (currentStep) {
       case "role-selection":
         return <RoleSelectionStep onRoleSelect={handleRoleSelect} onClose={handleClose} />;
       case "part-timer-signup":
-        return <SignupForm onBack={handleBack} onSuccess={handleClose} isModal={true} />;
+        return <SignupForm onBack={handleBack} onSuccess={handleSuccess} isModal={true} />;
       case "company-signup":
-        return <CompanySignupFlow onBack={handleBack} onSuccess={handleClose} />;
+        return <CompanySignupFlow onBack={handleBack} onSuccess={handleSuccess} />;
       default:
         return <RoleSelectionStep onRoleSelect={handleRoleSelect} onClose={handleClose} />;
     }

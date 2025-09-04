@@ -43,8 +43,10 @@ export function CompanySignupFlow({ onBack, onSuccess }: CompanySignupFlowProps)
           </p>
         </div>
         <RegistrationSuccess />
-        <div className="flex justify-center">
-          <Button onClick={onSuccess}>Continue to Dashboard</Button>
+        <div className="text-center mt-4">
+          <p className="text-sm text-muted-foreground">
+            Redirecting to your company dashboard...
+          </p>
         </div>
       </div>
     );

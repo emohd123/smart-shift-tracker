@@ -34,13 +34,13 @@ const Dashboard = () => {
     );
   }
 
-  if (user?.role === "company") {
+  if (user?.role === "company_admin" || user?.role === "company_manager") {
     navigate("/company");
     return null;
   }
 
   return (
-    <AppLayout title="Promoter Dashboard">
+    <AppLayout title="Part-timer Dashboard">
       <PromoterDashboard shifts={shifts} />
     </AppLayout>
   );

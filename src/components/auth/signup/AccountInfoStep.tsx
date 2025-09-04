@@ -43,20 +43,6 @@ export function AccountInfoStep({ formData, handleChange }: AccountInfoStepProps
         />
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="role">Sign up as</Label>
-        <select
-          id="role"
-          name="role"
-          value={formData.role}
-          onChange={handleChange}
-          className="h-11 w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          aria-label="Select account type"
-        >
-          <option value="promoter">Promoter</option>
-          <option value="company">Company</option>
-        </select>
-      </div>
 
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>

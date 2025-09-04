@@ -181,7 +181,20 @@ export function useCompanySignupForm() {
 
       if (membershipError) throw membershipError;
 
+      // Automatically sign in the user
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (signInError) throw signInError;
+
       setIsSuccess(true);
+      
+      // Navigate to company dashboard after a short delay
+      setTimeout(() => {
+        navigate("/company");
+      }, 1000);
       
     } catch (error) {
       console.error('Company signup error:', error);

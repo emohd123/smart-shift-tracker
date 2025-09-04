@@ -18,7 +18,7 @@ export const useSignupFormState = () => {
     isStudent: false,
     address: "",
     bankDetails: "",
-    role: UserRole.Promoter,
+    role: UserRole.PartTimer,
   });
   
   const [fileData, setFileData] = useState<FileData>({

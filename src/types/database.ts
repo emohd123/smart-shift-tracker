@@ -23,8 +23,9 @@ export enum ShiftStatus {
 
 export enum UserRole {
   Admin = "admin",
-  Promoter = "promoter",
-  Company = "company"
+  PartTimer = "part_timer", 
+  CompanyAdmin = "company_admin",
+  CompanyManager = "company_manager"
 }
 
 // Type guards for runtime type checking

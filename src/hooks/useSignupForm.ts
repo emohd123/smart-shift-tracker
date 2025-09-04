@@ -90,12 +90,13 @@ export const useSignupForm = () => {
         setIsSuccess(true);
         toast({
           title: "Registration successful",
-          description: "Your account is now pending verification.",
+          description: "Welcome to SmartShift! Redirecting to your dashboard.",
         });
         
+        // Auto sign-in and redirect to dashboard
         setTimeout(() => {
-          navigate("/profile");
-        }, 2000);
+          navigate("/dashboard");
+        }, 1000);
       } catch (profileError: any) {
         console.error("Profile creation error:", profileError);
         
@@ -109,8 +110,8 @@ export const useSignupForm = () => {
         });
         
         setTimeout(() => {
-          navigate("/login");
-        }, 3000);
+          navigate("/dashboard");
+        }, 2000);
       }
     } catch (error: any) {
       console.error("Registration error:", error);
