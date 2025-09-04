@@ -45,7 +45,12 @@
       "Bash(git commit:*)",
       "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src/**)",
       "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\components\\layout/**)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(npm install:*)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\pages/**)",
+      "Bash(npm run build:*)",
+      "Bash(npm run lint)"
     ],
     "deny": [],
     "ask": []

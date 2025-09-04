@@ -1,120 +1,229 @@
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
-import { serve } from 'https://deno.land/std@0.177.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1'
+const supabaseUrl = Deno.env.get('SUPABASE_URL')!
+const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+interface VerifyCertificateRequest {
+  certificate_uid: string
+  ip_address?: string
+  user_agent?: string
 }
 
 serve(async (req) => {
+  const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  }
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders })
+  }
+
+  if (req.method !== 'POST') {
+    return new Response(
+      JSON.stringify({ error: 'Method not allowed' }),
+      { 
+        status: 405, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      }
+    )
   }
 
   try {
-    // Get certificate reference from URL
-    const url = new URL(req.url)
-    const referenceNumber = url.searchParams.get('reference')
+    // Initialize Supabase client with service role
+    const supabase = createClient(supabaseUrl, supabaseServiceKey)
+    
+    // Parse request body
+    const body: VerifyCertificateRequest = await req.json()
+    const { certificate_uid, ip_address, user_agent } = body
 
-    if (!referenceNumber) {
-      return new Response(
-        JSON.stringify({ error: 'Certificate reference number is required' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
-      )
+    if (!certificate_uid) {
+      throw new Error('Missing required field: certificate_uid')
     }
 
-    // Create a Supabase client
-    const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-    const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY') || ''
-    const supabase = createClient(supabaseUrl, supabaseKey)
-
-    // First call the function to log this verification attempt
-    await supabase.rpc(
-      'log_certificate_verification',
-      { 
-        ref_number: referenceNumber,
-        ip_address: req.headers.get('x-real-ip') || 'unknown',
-        user_agent: req.headers.get('user-agent') || 'unknown'
-      }
-    );
-
-    // Check if certificate is valid using our new function
-    const { data: isValid, error: validityError } = await supabase.rpc(
-      'is_certificate_valid',
-      { ref_number: referenceNumber }
-    );
-
-    if (validityError) {
-      console.error('Error checking certificate validity:', validityError);
-      return new Response(
-        JSON.stringify({ error: 'Error checking certificate validity', details: validityError.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
-      );
-    }
-
-    if (!isValid) {
+    // Clean and validate certificate UID format
+    const cleanUid = certificate_uid.trim().toUpperCase()
+    if (!cleanUid.match(/^CERT-\d+-[A-Z0-9]+$/)) {
+      // Don't reveal the exact format to prevent enumeration
       return new Response(
         JSON.stringify({ 
-          error: 'Certificate not found or invalid', 
-          valid: false,
-          details: 'The certificate may be expired, revoked, or does not exist' 
+          success: false, 
+          error: 'Invalid certificate ID format' 
         }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
-      );
-    }
-
-    // Fetch certificate data
-    const { data, error } = await supabase
-      .from('certificates')
-      .select('*')
-      .eq('reference_number', referenceNumber)
-      .single()
-
-    if (error) {
-      console.error('Error fetching certificate:', error)
-      return new Response(
-        JSON.stringify({ error: 'Certificate not found', details: error.message }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
       )
     }
 
-    // Fetch promoter name separately to avoid join issues
-    const { data: promoterData, error: promoterError } = await supabase
-      .from('profiles')
-      .select('full_name')
-      .eq('id', data.user_id)
+    // Fetch certificate (using public RLS policy)
+    const { data: certificate, error: fetchError } = await supabase
+      .from('certificates')
+      .select(`
+        id,
+        certificate_uid,
+        user_id,
+        tenant_id,
+        period_start,
+        period_end,
+        total_hours,
+        total_earnings,
+        status,
+        is_revoked,
+        created_at,
+        verification_logs,
+        user:profiles!user_id(full_name, nationality),
+        tenant:tenants!tenant_id(name)
+      `)
+      .eq('certificate_uid', cleanUid)
       .single()
 
-    // Format the response data
-    const formattedData = {
-      reference_number: data.reference_number,
-      promoter_name: promoterError ? 'Promoter' : promoterData.full_name,
-      issue_date: data.issue_date,
-      issued_date: data.issued_date,
-      time_period: data.time_period,
-      total_hours: data.total_hours,
-      verified: true,
-      status: data.status || 'approved',
-      position_title: data.position_title || 'Brand Promoter',
-      skills_gained: data.skills_gained || ['Communication', 'Customer Service', 'Sales'],
-      performance_rating: data.performance_rating || 5,
-      expiration_date: data.expiration_date
+    let certificateExists = true
+    if (fetchError) {
+      if (fetchError.code === 'PGRST116') {
+        certificateExists = false
+      } else {
+        throw new Error('Database query failed')
+      }
     }
 
+    // Log the verification attempt (regardless of whether certificate exists)
+    const verificationRecord = {
+      timestamp: new Date().toISOString(),
+      ip_address: ip_address || req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+      user_agent: user_agent || req.headers.get('user-agent') || 'unknown',
+      result: certificateExists ? 'found' : 'not_found',
+      certificate_uid: cleanUid,
+    }
+
+    if (certificateExists && certificate) {
+      // Update verification logs in the certificate record
+      const currentLogs = certificate.verification_logs || []
+      const updatedLogs = [verificationRecord, ...currentLogs.slice(0, 99)] // Keep last 100 verification attempts
+
+      await supabase
+        .from('certificates')
+        .update({
+          verification_logs: updatedLogs,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('certificate_uid', cleanUid)
+
+      // Also log in audit_logs table
+      await supabase
+        .from('audit_logs')
+        .insert({
+          tenant_id: certificate.tenant_id,
+          user_id: null, // Public verification
+          action: 'verify',
+          resource_type: 'certificate',
+          resource_id: certificate.id,
+          new_values: verificationRecord,
+          ip_address: verificationRecord.ip_address,
+          user_agent: verificationRecord.user_agent,
+        })
+    } else {
+      // Log failed verification attempt in audit_logs
+      await supabase
+        .from('audit_logs')
+        .insert({
+          tenant_id: null,
+          user_id: null,
+          action: 'verify',
+          resource_type: 'certificate',
+          resource_id: null,
+          new_values: {
+            ...verificationRecord,
+            error: 'certificate_not_found',
+          },
+          ip_address: verificationRecord.ip_address,
+          user_agent: verificationRecord.user_agent,
+        })
+    }
+
+    // Return result
+    if (!certificateExists) {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Certificate not found',
+          verified: false,
+        }),
+        {
+          status: 404,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      )
+    }
+
+    // Determine if certificate is valid
+    const isValid = certificate.status === 'approved' && !certificate.is_revoked
+    
+    return new Response(
+      JSON.stringify({
+        success: true,
+        verified: isValid,
+        certificate: {
+          id: certificate.certificate_uid,
+          holder_name: certificate.user?.full_name || 'Unknown',
+          organization: certificate.tenant?.name || 'Unknown',
+          period_start: certificate.period_start,
+          period_end: certificate.period_end,
+          total_hours: certificate.total_hours,
+          total_earnings: certificate.total_earnings,
+          issued_date: certificate.created_at,
+          status: certificate.status,
+          is_revoked: certificate.is_revoked,
+          verification_count: (certificate.verification_logs?.length || 0) + 1,
+        },
+        verification_id: verificationRecord.timestamp,
+      }),
+      {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
+    )
+
+  } catch (error) {
+    console.error('Error in certificate verification:', error)
+    
+    // Log the error attempt
+    try {
+      const supabase = createClient(supabaseUrl, supabaseServiceKey)
+      await supabase
+        .from('audit_logs')
+        .insert({
+          tenant_id: null,
+          user_id: null,
+          action: 'verify',
+          resource_type: 'certificate',
+          resource_id: null,
+          new_values: {
+            error: error instanceof Error ? error.message : 'Unknown error',
+            certificate_uid: (await req.clone().json())?.certificate_uid || 'unknown',
+          },
+          ip_address: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown',
+          user_agent: req.headers.get('user-agent') || 'unknown',
+        })
+    } catch (logError) {
+      console.error('Failed to log error:', logError)
+    }
+    
+    const message = error instanceof Error ? error.message : 'Internal server error'
     return new Response(
       JSON.stringify({ 
-        certificate: formattedData,
-        valid: true
+        success: false,
+        error: message,
+        code: 'VERIFICATION_ERROR'
       }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    )
-  } catch (error) {
-    console.error('Unexpected error:', error)
-    return new Response(
-      JSON.stringify({ error: 'Internal server error', details: error.message }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+      {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      }
     )
   }
 })

@@ -33,6 +33,7 @@ import Credits from "./pages/Credits";
 import Training from "./pages/Training";
 import Referrals from "./pages/Referrals";
 import VerifyCertificatePage from "./pages/VerifyCertificatePage";
+import CertificatePaymentSuccess from "./pages/CertificatePaymentSuccess";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CompanyProfile from "./pages/CompanyProfile";
@@ -53,6 +54,8 @@ function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-certificate" element={<VerifyCertificatePage />} />
+            <Route path="/certificates/payment/success" element={<CertificatePaymentSuccess />} />
+            <Route path="/certificates/payment/cancelled" element={<CertificatePaymentSuccess />} />
             
             {/* Protected routes */}
             <Route element={<ProtectedRoute />}>
@@ -71,6 +74,7 @@ function App() {
               <Route path="/messages" element={<Messages />} />
               <Route path="/data-purge" element={<DataPurge />} />
               <Route path="/certificates" element={<Certificates />} />
+              <Route path="/certificates/request" element={<Certificates />} />
               <Route path="/subscription" element={<Subscription />} />
               <Route path="/revenue" element={<Revenue />} />
               

@@ -1,11 +1,12 @@
 
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
-import EnhancedWorkCertificateGenerator from "@/components/certificates/EnhancedWorkCertificateGenerator";
-import MyCertificates from "@/components/certificates/MyCertificates";
+import CertificateRequestFlow from "@/components/certificates/CertificateRequestFlow";
+import MyCertificateRequests from "@/components/certificates/MyCertificateRequests";
+import CertificateVerification from "@/components/certificates/CertificateVerification";
 import { useAuth } from "@/context/AuthContext";
 import { Award, FileText, HelpCircle, Shield, BookOpen, Medal } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -131,11 +132,11 @@ export default function Certificates() {
           </TabsList>
           
           <TabsContent value="generator" className="focus-visible:outline-none focus-visible:ring-0">
-            <EnhancedWorkCertificateGenerator />
+            <CertificateRequestFlow />
           </TabsContent>
           
           <TabsContent value="my-certificates" className="focus-visible:outline-none focus-visible:ring-0">
-            <MyCertificates />
+            <MyCertificateRequests />
           </TabsContent>
         </Tabs>
       </div>
