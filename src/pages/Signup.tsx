@@ -2,23 +2,25 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import SignupForm from "@/components/auth/SignupForm";
 
 const Signup = () => {
   const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect if already authenticated
+  // Redirect if already authenticated or redirect to home with signup modal
   useEffect(() => {
     if (isAuthenticated) {
       navigate("/dashboard");
+    } else {
+      // Redirect to home page - the signup modal will be opened via URL parameters
+      navigate("/?signup=true");
     }
   }, [isAuthenticated, navigate]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
-      <div className="w-full max-w-3xl">
-        <SignupForm />
+      <div className="text-center">
+        <p>Redirecting to signup...</p>
       </div>
     </div>
   );

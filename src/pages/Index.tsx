@@ -1,7 +1,9 @@
 
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
+import { SignupModal } from "@/components/auth/SignupModal";
 import { 
   Calendar, 
   Clock, 
@@ -13,6 +15,20 @@ import {
 } from "lucide-react";
 
 const Index = () => {
+  const [isSignupModalOpen, setIsSignupModalOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Check URL parameters to auto-open signup modal
+  useEffect(() => {
+    if (searchParams.get('signup') === 'true') {
+      setIsSignupModalOpen(true);
+      // Clean up URL parameter
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete('signup');
+      setSearchParams(newParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
+
   // Animation variants
   const container = {
     hidden: { opacity: 0 },
@@ -59,12 +75,14 @@ const Index = () => {
                 <span className="hidden sm:inline">Login</span>
               </Button>
             </Link>
-            <Link to="/signup">
-              <Button size="sm" className="gap-2 hover-lift shadow-lg bg-gradient-to-r from-primary to-primary-light">
-                <UserPlus size={16} />
-                <span className="hidden sm:inline">Sign Up</span>
-              </Button>
-            </Link>
+            <Button 
+              size="sm" 
+              className="gap-2 hover-lift shadow-lg bg-gradient-to-r from-primary to-primary-light"
+              onClick={() => setIsSignupModalOpen(true)}
+            >
+              <UserPlus size={16} />
+              <span className="hidden sm:inline">Sign Up</span>
+            </Button>
           </motion.div>
         </div>
       </header>
@@ -106,13 +124,15 @@ const Index = () => {
             transition={{ delay: 0.6, duration: 0.6 }}
             className="flex flex-col sm:flex-row justify-center gap-4 mb-12"
           >
-            <Link to="/signup">
-              <Button size="lg" className="w-full sm:w-auto group hover-lift glass-card bg-gradient-to-r from-primary to-primary-light shadow-xl">
-                <UserPlus size={20} className="mr-2" />
-                Get Started Free
-                <ArrowRight size={16} className="ml-2 opacity-70 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="w-full sm:w-auto group hover-lift glass-card bg-gradient-to-r from-primary to-primary-light shadow-xl"
+              onClick={() => setIsSignupModalOpen(true)}
+            >
+              <UserPlus size={20} className="mr-2" />
+              Get Started Free
+              <ArrowRight size={16} className="ml-2 opacity-70 group-hover:translate-x-1 transition-transform" />
+            </Button>
             <Link to="/login">
               <Button size="lg" variant="outline" className="w-full sm:w-auto hover-lift glass-card">
                 <User size={20} className="mr-2" />
@@ -211,12 +231,14 @@ const Index = () => {
             Join the growing number of companies that use our smart timesheet system to streamline their operations.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/signup">
-              <Button size="lg" className="w-full sm:w-auto hover-scale">
-                <UserPlus size={18} className="mr-2" />
-                Create Account
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="w-full sm:w-auto hover-scale"
+              onClick={() => setIsSignupModalOpen(true)}
+            >
+              <UserPlus size={18} className="mr-2" />
+              Create Account
+            </Button>
             <Link to="/login">
               <Button size="lg" variant="outline" className="w-full sm:w-auto hover-scale">
                 <User size={18} className="mr-2" />
@@ -241,6 +263,12 @@ const Index = () => {
           </motion.div>
         </div>
       </footer>
+
+      {/* Signup Modal */}
+      <SignupModal 
+        isOpen={isSignupModalOpen} 
+        onClose={() => setIsSignupModalOpen(false)} 
+      />
     </div>
   );
 };

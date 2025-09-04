@@ -10,7 +10,13 @@ import { PersonalInfoStep } from "./signup/PersonalInfoStep";
 import { DocumentUploadStep } from "./signup/DocumentUploadStep";
 import { RegistrationSuccess } from "./signup/RegistrationSuccess";
 
-export default function SignupForm() {
+interface SignupFormProps {
+  onBack?: () => void;
+  onSuccess?: () => void;
+  isModal?: boolean;
+}
+
+export default function SignupForm({ onBack, onSuccess, isModal = false }: SignupFormProps) {
   const {
     formData,
     fileData,
@@ -52,9 +58,9 @@ export default function SignupForm() {
         <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
           <Clock className="text-white" size={20} />
         </div>
-        <h2 className="text-2xl font-bold tracking-tight">Create Your Account</h2>
+        <h2 className="text-2xl font-bold tracking-tight">Create Part-timer Account</h2>
         <p className="text-sm text-muted-foreground mt-2">
-          Register to start your journey as a promoter
+          Register to start tracking your shifts and hours
         </p>
       </div>
 
@@ -80,18 +86,27 @@ export default function SignupForm() {
               />
               <div className="flex justify-between mt-4">
                 <div className="flex space-x-2">
-                  <Link to="/login">
-                    <Button type="button" variant="outline">
+                  {isModal && onBack ? (
+                    <Button type="button" variant="outline" onClick={onBack}>
                       <ArrowLeft size={16} className="mr-2" />
-                      Back to Login
+                      Back to Role Selection
                     </Button>
-                  </Link>
-                  <Link to="/">
-                    <Button type="button" variant="outline">
-                      <Home size={16} className="mr-2" />
-                      Home
-                    </Button>
-                  </Link>
+                  ) : (
+                    <>
+                      <Link to="/login">
+                        <Button type="button" variant="outline">
+                          <ArrowLeft size={16} className="mr-2" />
+                          Back to Login
+                        </Button>
+                      </Link>
+                      <Link to="/">
+                        <Button type="button" variant="outline">
+                          <Home size={16} className="mr-2" />
+                          Home
+                        </Button>
+                      </Link>
+                    </>
+                  )}
                 </div>
                 <Button type="button" onClick={() => setActiveSection("personal")}>
                   Next

@@ -50,7 +50,15 @@
       "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src/**)",
       "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\pages/**)",
       "Bash(npm run build:*)",
-      "Bash(npm run lint)"
+      "Bash(npm run lint)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\pages/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\components\\auth/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\components\\auth\\signup/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\components\\auth\\signup/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\components\\auth\\signup/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\pages/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\hooks/**)",
+      "Read(/C:\\Users\\cactu\\OneDrive\\Desktop\\app\\smart-shift-tracker-main\\src\\components\\ui/**)"
     ],
     "deny": [],
     "ask": []
