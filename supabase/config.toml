@@ -1,0 +1,23 @@
+
+project_id = "szjtbvsflldyvehuydxz"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "storage"]
+
+[db]
+port = 54322
+
+[studio]
+enabled = true
+port = 54323
+
+[functions.verify-certificate]
+verify_jwt = false
+
+[functions.create-admin]
+verify_jwt = false
+
+[auth]
+enabled = true
