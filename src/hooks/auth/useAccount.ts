@@ -27,11 +27,10 @@ export const useAccount = () => {
       
       // Redirect to home page
       window.location.href = "/";
-    } catch (error: any) {
-      console.error("Account deactivation error:", error);
-      setAuthError(error.message || "Failed to deactivate account");
-      toast.error(error.message || "Failed to deactivate account");
-      throw error;
+    } catch (error) {
+      console.error("Error deactivating account:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to deactivate account";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -107,10 +106,11 @@ export const useAccount = () => {
       setTimeout(() => {
         window.location.href = "/";
       }, 2000);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Account deletion error:", error);
-      setAuthError(error.message || "Failed to delete account");
-      toast.error(error.message || "Failed to delete account");
+      const errorMessage = error instanceof Error ? error.message : "Failed to delete account";
+      setAuthError(errorMessage);
+      toast.error(errorMessage);
       throw error;
     } finally {
       setLoading(false);
@@ -128,9 +128,10 @@ export const useAccount = () => {
       if (error) {
         throw error;
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Reset password error:", error);
-      setAuthError(error.message || "Failed to send password reset email");
+      const errorMessage = error instanceof Error ? error.message : "Failed to send password reset email";
+      setAuthError(errorMessage);
       throw error;
     } finally {
       setLoading(false);
@@ -148,9 +149,10 @@ export const useAccount = () => {
       if (error) {
         throw error;
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Update password error:", error);
-      setAuthError(error.message || "Failed to update password");
+      const errorMessage = error instanceof Error ? error.message : "Failed to update password";
+      setAuthError(errorMessage);
       throw error;
     } finally {
       setLoading(false);

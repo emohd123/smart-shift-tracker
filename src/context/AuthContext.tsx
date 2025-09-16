@@ -1,4 +1,4 @@
-import React, { createContext, useContext, ReactNode, useState, useEffect } from "react";
+import React, { createContext, useContext, ReactNode, useState, useEffect, useCallback } from "react";
 import { useAuthState } from "@/hooks/useAuthState";
 import { useAuthMethods, ProfileUpdate } from "@/hooks/useAuthHooks";
 import { GenderType, VerificationStatus, UserRole } from "@/types/database";
@@ -9,25 +9,27 @@ export type User = {
   email: string;
   name: string;
   role: UserRole;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 };
 
 export type UserProfile = {
   id: string;
-  unique_code: string;
+  tenant_id?: string;
+  unique_code?: string;
   full_name: string;
-  nationality: string;
-  age: number;
-  phone_number: string;
-  gender: GenderType;
-  height: number;
-  weight: number;
-  is_student: boolean;
-  address: string;
-  bank_details?: string;
-  id_card_url?: string;
-  profile_photo_url?: string;
-  verification_status: VerificationStatus;
+  email?: string;
+  nationality?: string;
+  age?: number;
+  phone_number?: string | null;
+  gender?: GenderType;
+  height?: number;
+  weight?: number;
+  is_student?: boolean;
+  address?: string;
+  bank_details?: string | null;
+  id_card_url?: string | null;
+  profile_photo_url?: string | null;
+  verification_status?: VerificationStatus;
   role: string;
   created_at: string;
   updated_at: string;
@@ -46,7 +48,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<any>;
+  signup: (name: string, email: string, password: string, role?: 'part_timer' | 'company_admin', tenantName?: string) => Promise<User | null>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;
@@ -64,7 +66,7 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   loading: false,
   login: async () => {},
-  signup: async () => {},
+  signup: async () => null,
   logout: async () => {},
   resetPassword: async () => {},
   updatePassword: async () => {},
@@ -131,7 +133,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await deleteAccountMethod();
   };
 
-  const checkSubscription = async (): Promise<void> => {
+  const checkSubscription = useCallback(async (): Promise<void> => {
     if (!isAuthenticated) return;
     
     try {
@@ -142,7 +144,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error('Error checking subscription:', error);
       setSubscription({ subscribed: false, subscription_tier: 'free', subscription_end: null });
     }
-  };
+  }, [isAuthenticated]);
   
   useEffect(() => {
     setAuthErrorState(authError);
@@ -155,7 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } else {
       checkSubscription();
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, checkSubscription]);
 
   return (
     <AuthContext.Provider

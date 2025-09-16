@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { TimePeriod, WorkExperienceData } from "../types/certificate";
 import { useWorkExperienceData } from "./useWorkExperienceData";
-import { useUserData } from "./useShiftData";
+import { useUserData, ShiftData } from "./useShiftData";
 import { generateEnhancedWorkExperiencePDF } from "../utils/enhancedPdfGenerator";
 
 type GenerateOptions = {
@@ -22,7 +22,7 @@ export const useEnhancedCertificateGeneration = (userId: string) => {
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const [availableShifts, setAvailableShifts] = useState<any[]>([]);
+  const [availableShifts, setAvailableShifts] = useState<ShiftData[]>([]);
 
   const { fetchWorkExperienceData } = useWorkExperienceData();
   const { fetchPromoters } = useUserData();

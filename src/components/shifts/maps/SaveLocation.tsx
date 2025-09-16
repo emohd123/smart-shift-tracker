@@ -59,10 +59,11 @@ export default function SaveLocation({
       });
       
       if (onSave) onSave();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error saving location:", error);
+      const errorMessage = error instanceof Error ? error.message : "Could not save the location. Please try again.";
       toast.error("Save Error", {
-        description: error.message || "Could not save the location. Please try again."
+        description: errorMessage
       });
     } finally {
       setSaveLoading(false);

@@ -11,7 +11,7 @@ export interface CertificateRequest {
   stripe_payment_intent_id?: string;
   payment_amount_cents: number;
   currency: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   paid_at?: string;
   completed_at?: string;
   created_at: string;
@@ -31,7 +31,7 @@ export interface Payment {
   payment_method_id?: string;
   failure_reason?: string;
   refund_amount_cents: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   processed_at?: string;
   created_at: string;
   updated_at: string;
@@ -45,7 +45,7 @@ export interface WebhookEvent {
   processing_attempts: number;
   last_attempt_at?: string;
   error_message?: string;
-  event_data: Record<string, any>;
+  event_data: Record<string, unknown>;
   created_at: string;
   updated_at: string;
 }
@@ -58,7 +58,7 @@ export interface StripeCheckoutSession {
   customer?: string;
   customer_email?: string;
   expires_at: number;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   mode: 'payment' | 'setup' | 'subscription';
   payment_intent?: string;
   payment_status: 'paid' | 'unpaid' | 'no_payment_required';
@@ -75,7 +75,7 @@ export interface StripePaymentIntent {
   currency: string;
   customer?: string;
   description?: string;
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
   receipt_email?: string;
   status: 'requires_payment_method' | 'requires_confirmation' | 'requires_action' | 'processing' | 'requires_capture' | 'canceled' | 'succeeded';
   charges: {

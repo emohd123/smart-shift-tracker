@@ -82,5 +82,5 @@ export const addShiftsTable = async (
   });
   
   // Get final Y position after table
-  return (doc as any).lastAutoTable.finalY + 5;
+  return doc.lastAutoTable.finalY + 5;
 };

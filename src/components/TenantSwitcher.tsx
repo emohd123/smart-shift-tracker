@@ -10,11 +10,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Check, ChevronDown, Building2 } from 'lucide-react';
-import { useCurrentTenant } from '@/hooks/useCurrentTenant';
+import { useContext } from 'react';
+import { TenantContext } from '@/hooks/useCurrentTenant';
 import { Badge } from '@/components/ui/badge';
 
 export const TenantSwitcher: React.FC = () => {
-  const { currentTenant, userMemberships, switchTenant, isLoading } = useCurrentTenant();
+  const ctx = useContext(TenantContext);
+  if (!ctx) return null; // Provider not ready yet
+  const { currentTenant, userMemberships, switchTenant, isLoading } = ctx;
 
   if (isLoading || userMemberships.length <= 1) {
     return null; // Don't show switcher if loading or only one tenant
@@ -53,7 +56,7 @@ export const TenantSwitcher: React.FC = () => {
           <div className="flex items-center space-x-2">
             <Avatar className="h-6 w-6">
               <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                {currentTenant?.name.charAt(0).toUpperCase()}
+                {(currentTenant?.name?.charAt(0) || 'T').toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col items-start">
@@ -82,11 +85,11 @@ export const TenantSwitcher: React.FC = () => {
             className="flex items-center justify-between p-3 cursor-pointer"
           >
             <div className="flex items-center space-x-3">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
-                  {membership.tenant?.name.charAt(0).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="text-xs bg-blue-100 text-blue-700">
+                    {(membership.tenant?.name?.charAt(0) || 'T').toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
               
               <div className="flex flex-col">
                 <span className="text-sm font-medium">

@@ -1,5 +1,4 @@
-
-import { CheckIcon, Phone, User, MapPin, Hash } from "lucide-react";
+import { CheckIcon, Phone, User, MapPin, Hash, RefreshCw, AlertCircle } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -24,13 +23,17 @@ interface PromoterSelectorProps {
   selectedPromoterIds: string[];
   onSelect: (value: string) => void;
   loading: boolean;
+  error?: string | null;
+  onRetry?: () => void;
 }
 
 export default function PromoterSelector({
   promoters,
   selectedPromoterIds,
   onSelect,
-  loading
+  loading,
+  error,
+  onRetry
 }: PromoterSelectorProps) {
   // Get the names of selected promoters
   const getSelectedPromoterNames = () => {
@@ -43,16 +46,46 @@ export default function PromoterSelector({
     <div className="space-y-2">
       <Label htmlFor="promoters">Assign Promoters (Optional)</Label>
       
+      {/* Error message display */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-md p-3 flex items-start gap-2">
+          <AlertCircle className="h-4 w-4 text-red-500 mt-0.5 flex-shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm text-red-800">{error}</p>
+            {onRetry && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onRetry}
+                className="mt-2 h-7 px-2 text-xs"
+                disabled={loading}
+              >
+                <RefreshCw className={`h-3 w-3 mr-1 ${loading ? 'animate-spin' : ''}`} />
+                Retry Loading
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
+      
       <Popover>
         <PopoverTrigger asChild>
           <Button 
             variant="outline" 
             role="combobox" 
-            className="w-full justify-between"
+            className={`w-full justify-between ${error ? 'border-red-300' : ''}`}
+            disabled={loading}
           >
-            {selectedPromoterIds.length === 0 
-              ? "Select promoters..." 
-              : `${selectedPromoterIds.length} promoter${selectedPromoterIds.length > 1 ? 's' : ''} selected`}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                Loading promoters...
+              </span>
+            ) : selectedPromoterIds.length === 0 ? (
+              error ? "Failed to load promoters" : "Select promoters..."
+            ) : (
+              `${selectedPromoterIds.length} promoter${selectedPromoterIds.length > 1 ? 's' : ''} selected`
+            )}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start" side="bottom" sideOffset={4}>
@@ -60,7 +93,30 @@ export default function PromoterSelector({
             <CommandInput placeholder="Search promoters..." />
             <CommandList>
               <CommandEmpty>
-                {loading ? "Loading promoters..." : "No promoters found."}
+                {loading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <RefreshCw className="h-4 w-4 animate-spin mr-2" />
+                    Loading promoters...
+                  </div>
+                ) : error ? (
+                  <div className="py-6 text-center">
+                    <AlertCircle className="h-8 w-8 text-red-500 mx-auto mb-2" />
+                    <p className="text-sm text-red-600 mb-2">{error}</p>
+                    {onRetry && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onRetry}
+                        className="h-7 px-2 text-xs"
+                      >
+                        <RefreshCw className="h-3 w-3 mr-1" />
+                        Retry
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  "No promoters found."
+                )}
               </CommandEmpty>
               <CommandGroup>
                 <CommandItem 
@@ -74,11 +130,13 @@ export default function PromoterSelector({
                 </CommandItem>
                 
                 <ScrollArea className="h-[300px]">
-                  {promoters.length === 0 && !loading ? (
+                  {promoters.length === 0 && !loading && !error ? (
                     <div className="py-6 text-center text-sm text-muted-foreground">
-                      No approved promoters available
+                      <User className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No approved promoters available</p>
+                      <p className="text-xs mt-1">Promoters need approval before assignment</p>
                     </div>
-                  ) : (
+                  ) : promoters.length > 0 ? (
                     promoters.map((promoter) => (
                       <CommandItem
                         key={promoter.id}
@@ -116,7 +174,7 @@ export default function PromoterSelector({
                         </div>
                       </CommandItem>
                     ))
-                  )}
+                  ) : null}
                 </ScrollArea>
               </CommandGroup>
             </CommandList>

@@ -88,14 +88,14 @@ export default function CompanyProfile() {
         logo_url = await uploadLogo(file);
       }
 
-      const payload: any = {
+      const payload = {
         user_id: user.id,
         name: values.name,
         website: values.website || null,
         registration_id: values.registration_id,
         address: values.address,
+        ...(logo_url && { logo_url })
       };
-      if (logo_url) payload.logo_url = logo_url;
 
       const { error } = await supabase
         .from("company_profiles")
@@ -103,9 +103,10 @@ export default function CompanyProfile() {
 
       if (error) throw error;
       toast.success("Company profile saved");
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error(e);
-      toast.error(e?.message || "Failed to save company profile");
+      const errorMessage = e instanceof Error ? e.message : "Failed to save company profile";
+      toast.error(errorMessage);
     } finally {
       setSaving(false);
     }

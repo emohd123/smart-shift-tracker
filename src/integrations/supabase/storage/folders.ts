@@ -3,6 +3,7 @@ import { supabase } from "../client";
 import { StorageResult } from "./types";
 import { createErrorResponse, createSuccessResponse } from "./common";
 import { normalizePath, joinPaths } from "./pathUtils";
+import { FileObject } from "@supabase/supabase-js";
 
 /**
  * Create a folder in a bucket
@@ -104,7 +105,7 @@ export const folderExistsInBucket = async (
 export const listFolder = async (
   bucket: string,
   folderPath: string
-): Promise<StorageResult<any[]>> => {
+): Promise<StorageResult<FileObject[]>> => {
   try {
     // Normalize path
     const normalizedPath = normalizePath(folderPath);
@@ -114,17 +115,17 @@ export const listFolder = async (
       .list(normalizedPath);
       
     if (error) {
-      return createErrorResponse<any[]>(
+      return createErrorResponse<FileObject[]>(
         `Error listing folder in ${bucket}/${normalizedPath}: ${error.message}`,
         'FOLDER_LIST_ERROR',
         error
       );
     }
     
-    return createSuccessResponse<any[]>(data || []);
+    return createSuccessResponse<FileObject[]>(data || []);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return createErrorResponse<any[]>(
+    return createErrorResponse<FileObject[]>(
       `Unexpected error listing folder: ${errorMessage}`,
       'FOLDER_LIST_UNEXPECTED_ERROR',
       error

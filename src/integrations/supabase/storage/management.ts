@@ -48,26 +48,26 @@ export const fileExistsInBucket = async (
 export const listFilesInBucket = async (
   bucket: string,
   folder: string = ''
-): Promise<StorageResult<any[]>> => {
+): Promise<StorageResult<unknown[]>> => {
   try {
     const { data, error } = await supabase.storage
       .from(bucket)
       .list(folder);
       
     if (error) {
-      return createErrorResponse<any[]>(
+      return createErrorResponse<unknown[]>(
         `Error listing files in ${bucket}/${folder}: ${error.message}`,
-        'FILE_LIST_ERROR',
+        'LIST_FILES_ERROR',
         error
       );
     }
     
-    return createSuccessResponse<any[]>(data);
+    return createSuccessResponse<unknown[]>(data);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    return createErrorResponse<any[]>(
-      `Unexpected error listing files in ${bucket}: ${errorMessage}`,
-      'FILE_LIST_UNEXPECTED_ERROR',
+    return createErrorResponse<unknown[]>(
+      `Unexpected error listing files: ${errorMessage}`,
+      'LIST_FILES_UNEXPECTED_ERROR',
       error
     );
   }

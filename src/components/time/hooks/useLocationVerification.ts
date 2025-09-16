@@ -56,8 +56,9 @@ export function useLocationVerification() {
         }
         
         return true;
-      } catch (error: any) {
-        if (error.code === 1) { // Permission denied
+      } catch (error: unknown) {
+        const geolocationError = error as GeolocationPositionError;
+        if (geolocationError.code === 1) { // Permission denied
           setPermissionError(true);
           toast({
             title: "Location Permission Denied",

@@ -338,16 +338,26 @@ export type Database = {
           age: number
           bank_details: string | null
           created_at: string
+          email: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          experience_years: number | null
           full_name: string
           gender: Database["public"]["Enums"]["gender_type"]
           height: number
+          hourly_rate: number | null
           id: string
           id_card_url: string | null
+          is_active: boolean | null
           is_student: boolean
+          last_login_at: string | null
           nationality: string
+          onboarding_completed: boolean | null
           phone_number: string | null
           profile_photo_url: string | null
           role: string
+          skills: string[] | null
+          tenant_id: string | null
           unique_code: string
           updated_at: string
           verification_status: string
@@ -355,19 +365,29 @@ export type Database = {
         }
         Insert: {
           address: string
-          age: number
+          age?: number
           bank_details?: string | null
           created_at?: string
+          email?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          experience_years?: number | null
           full_name: string
           gender: Database["public"]["Enums"]["gender_type"]
           height: number
+          hourly_rate?: number | null
           id: string
           id_card_url?: string | null
-          is_student: boolean
-          nationality: string
+          is_active?: boolean | null
+          is_student?: boolean
+          last_login_at?: string | null
+          nationality?: string
+          onboarding_completed?: boolean | null
           phone_number?: string | null
           profile_photo_url?: string | null
           role?: string
+          skills?: string[] | null
+          tenant_id?: string | null
           unique_code?: string
           updated_at?: string
           verification_status?: string
@@ -378,16 +398,26 @@ export type Database = {
           age?: number
           bank_details?: string | null
           created_at?: string
+          email?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          experience_years?: number | null
           full_name?: string
           gender?: Database["public"]["Enums"]["gender_type"]
           height?: number
+          hourly_rate?: number | null
           id?: string
           id_card_url?: string | null
+          is_active?: boolean | null
           is_student?: boolean
+          last_login_at?: string | null
           nationality?: string
+          onboarding_completed?: boolean | null
           phone_number?: string | null
           profile_photo_url?: string | null
           role?: string
+          skills?: string[] | null
+          tenant_id?: string | null
           unique_code?: string
           updated_at?: string
           verification_status?: string
@@ -517,51 +547,93 @@ export type Database = {
       shifts: {
         Row: {
           application_deadline: string | null
+          auto_approval: boolean | null
+          break_duration: number | null
+          client_contact: string | null
+          client_name: string | null
           contact_email: string | null
           contact_person: string | null
           contact_phone: string | null
           created_at: string
+          current_participants: number | null
           date: string
           description: string | null
+          dress_code: string | null
           employer_id: string | null
           end_date: string | null
           end_time: string
+          equipment_provided: string[] | null
+          feedback_collected: boolean | null
+          hourly_rate: number | null
           id: string
           is_paid: boolean | null
           is_urgent: boolean | null
           location: string
           max_promoters: number | null
+          maximum_participants: number | null
+          meal_provided: boolean | null
+          minimum_age: number | null
+          overtime_rate: number | null
           pay_rate: number | null
           pay_rate_type: string | null
+          priority_level: string | null
+          reminder_sent: boolean | null
           requirements: string[] | null
+          shift_code: string | null
+          shift_rating: number | null
+          special_requirements: string[] | null
           start_time: string
           status: string
+          tenant_id: string | null
           title: string
+          transportation_provided: boolean | null
           updated_at: string
+          weather_dependent: boolean | null
         }
         Insert: {
           application_deadline?: string | null
+          auto_approval?: boolean | null
+          break_duration?: number | null
+          client_contact?: string | null
+          client_name?: string | null
           contact_email?: string | null
           contact_person?: string | null
           contact_phone?: string | null
           created_at?: string
+          current_participants?: number | null
           date: string
           description?: string | null
+          dress_code?: string | null
           employer_id?: string | null
           end_date?: string | null
           end_time: string
+          equipment_provided?: string[] | null
+          feedback_collected?: boolean | null
+          hourly_rate?: number | null
           id?: string
           is_paid?: boolean | null
           is_urgent?: boolean | null
           location: string
           max_promoters?: number | null
+          maximum_participants?: number | null
+          meal_provided?: boolean | null
+          minimum_age?: number | null
+          overtime_rate?: number | null
           pay_rate?: number | null
           pay_rate_type?: string | null
+          priority_level?: string | null
+          reminder_sent?: boolean | null
           requirements?: string[] | null
+          shift_code?: string | null
+          shift_rating?: number | null
+          special_requirements?: string[] | null
           start_time: string
           status: string
+          tenant_id?: string | null
           title: string
+          transportation_provided?: boolean | null
           updated_at?: string
+          weather_dependent?: boolean | null
         }
         Update: {
           application_deadline?: string | null
@@ -584,6 +656,7 @@ export type Database = {
           requirements?: string[] | null
           start_time?: string
           status?: string
+          tenant_id?: string | null
           title?: string
           updated_at?: string
         }

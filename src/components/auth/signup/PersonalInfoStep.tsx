@@ -11,14 +11,26 @@ import {
 } from "@/components/ui/select";
 import { GenderType } from "@/types/database";
 
+interface PersonalInfoData {
+  nationality: string;
+  age: string;
+  gender: GenderType;
+  height: string;
+  weight: string;
+  isStudent: boolean;
+  address: string;
+  phoneNumber: string;
+  bankDetails?: string;
+}
+
 export function PersonalInfoStep({ 
   formData, 
   handleChange, 
   setFormData 
 }: { 
-  formData: any; 
+  formData: PersonalInfoData; 
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-  setFormData: (data: any) => void; 
+  setFormData: (data: PersonalInfoData) => void; 
 }) {
   return (
     <div className="grid gap-4">
@@ -50,7 +62,7 @@ export function PersonalInfoStep({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
+          <Label htmlFor="phoneNumber">Phone Number *</Label>
           <Input
             id="phoneNumber"
             name="phoneNumber"
@@ -58,6 +70,7 @@ export function PersonalInfoStep({
             value={formData.phoneNumber || ''}
             onChange={handleChange}
             placeholder="+123 456 7890"
+            required
           />
         </div>
         
@@ -66,7 +79,7 @@ export function PersonalInfoStep({
           <Select 
             name="gender" 
             value={formData.gender} 
-            onValueChange={(value) => setFormData({ ...formData, gender: value })}
+            onValueChange={(value) => setFormData({ ...formData, gender: value as GenderType })}
           >
             <SelectTrigger id="gender">
               <SelectValue placeholder="Select gender" />

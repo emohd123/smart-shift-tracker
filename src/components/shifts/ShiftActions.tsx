@@ -85,11 +85,12 @@ export function ShiftActions({
           variant: "destructive"
         });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Error during check-in:", error);
+      const errorMessage = error instanceof Error ? error.message : "Please allow location access to check in.";
       toast({
         title: "Check-in Failed",
-        description: error.message || "Please allow location access to check in.",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {

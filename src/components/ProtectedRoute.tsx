@@ -2,28 +2,35 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { Loader2 } from "lucide-react";
-import { UserRole } from "@/types/database";
+import { useContext } from "react";
+import { TenantContext } from "@/hooks/useCurrentTenant";
+import { 
+  ROUTES,
+  ADMIN_ONLY_ROUTES,
+  COMPANY_ACCESS_ROUTES,
+  PART_TIMER_ONLY_ROUTES,
+  canAccessAdminRoutes,
+  canAccessCompanyRoutes,
+  canAccessPartTimerRoutes,
+  getDefaultDashboard
+} from "@/utils/routes";
 
 const ProtectedRoute = () => {
   const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
-  
-  // Routes requiring admin only (companies excluded)
-  const requiresAdmin = location.pathname.startsWith('/admin') || 
-                       location.pathname === '/promoters' ||
-                       location.pathname === '/reports' ||
-                       location.pathname === '/revenue' ||
-                       location.pathname === '/data-purge';
+  const currentPath = location.pathname;
+  const tenantCtx = useContext(TenantContext);
+  const tenantRole = tenantCtx?.userRole || undefined;
+  const effectiveRole = (user?.role as string | undefined) || tenantRole;
 
-  // Routes accessible by company or admin
-  const companyAccessRoute = location.pathname === '/shifts/create' || 
-                             location.pathname.startsWith('/company');
-  
-  // Routes restricted to promoters only
-  const promoterOnlyRoute = location.pathname === '/time' || 
-                            location.pathname === '/time-history';
+  // Check if current path requires specific permissions
+  const requiresAdmin = ADMIN_ONLY_ROUTES.some(route => currentPath === route || currentPath.startsWith('/admin'));
+  const requiresCompanyAccess = COMPANY_ACCESS_ROUTES.some(route => 
+    currentPath === route || currentPath.startsWith('/company')
+  );
+  const requiresPartTimerAccess = PART_TIMER_ONLY_ROUTES.some(route => currentPath === route);
 
-  // Show a loading indicator while authentication state is being determined
+  // Show loading indicator while authentication state is being determined
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -35,25 +42,29 @@ const ProtectedRoute = () => {
 
   // If not authenticated, redirect to login page
   if (!isAuthenticated) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-  
-  // If route requires admin but user is not admin
-  if (requiresAdmin && user?.role !== UserRole.Admin) {
-    return <Navigate to="/shifts" replace />;
+    return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 
-  // If route allows company or admin but user is neither
-  if (companyAccessRoute && !(user?.role === UserRole.Admin || user?.role === UserRole.Company)) {
-    return <Navigate to="/shifts" replace />;
+  // Route permission checks with better fallbacks
+  if (requiresAdmin && !canAccessAdminRoutes(effectiveRole)) {
+    console.warn(`User with role ${user?.role} attempted to access admin route: ${currentPath}`);
+    return <Navigate to={getDefaultDashboard(effectiveRole)} replace />;
   }
 
-  // Promoter-only route restriction
-  if (promoterOnlyRoute && user?.role !== UserRole.Promoter) {
-    return <Navigate to="/shifts" replace />;
+  if (requiresCompanyAccess && !canAccessCompanyRoutes(effectiveRole)) {
+    console.warn(`User with role ${user?.role} attempted to access company route: ${currentPath}`);
+    return <Navigate to={getDefaultDashboard(effectiveRole)} replace />;
   }
 
-  // If authenticated, render the child routes
+  if (requiresPartTimerAccess && !canAccessPartTimerRoutes(effectiveRole)) {
+    console.warn(`User with role ${user?.role} attempted to access part-timer route: ${currentPath}`);
+    return <Navigate to={getDefaultDashboard(effectiveRole)} replace />;
+  }
+
+  // Log successful route access for debugging
+  console.debug(`User ${user?.email} (${effectiveRole}) accessing: ${currentPath}`);
+
+  // If all checks pass, render the child routes
   return <Outlet />;
 };
 

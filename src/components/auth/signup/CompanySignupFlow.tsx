@@ -14,6 +14,9 @@ interface CompanySignupFlowProps {
   onSuccess: () => void;
 }
 
+
+import { useEffect } from "react";
+
 export function CompanySignupFlow({ onBack, onSuccess }: CompanySignupFlowProps) {
   const {
     formData,
@@ -29,6 +32,14 @@ export function CompanySignupFlow({ onBack, onSuccess }: CompanySignupFlowProps)
     activeSection,
     setActiveSection
   } = useCompanySignupForm();
+
+  // Scroll to error when formError changes
+  useEffect(() => {
+    if (formError) {
+      const anchor = document.getElementById('form-error-anchor');
+      if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [formError]);
 
   if (isSuccess) {
     return (
@@ -65,11 +76,13 @@ export function CompanySignupFlow({ onBack, onSuccess }: CompanySignupFlowProps)
         </p>
       </div>
 
-      {formError && (
-        <Alert variant="destructive" className="text-sm">
-          <AlertDescription>{formError}</AlertDescription>
-        </Alert>
-      )}
+      <div id="form-error-anchor">
+        {formError && (
+          <Alert variant="destructive" className="text-sm">
+            <AlertDescription>{formError}</AlertDescription>
+          </Alert>
+        )}
+      </div>
 
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <form onSubmit={handleSubmit} className="space-y-6">

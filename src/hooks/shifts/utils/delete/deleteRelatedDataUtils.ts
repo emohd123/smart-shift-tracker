@@ -1,12 +1,13 @@
 
 import { supabase } from "@/integrations/supabase/client";
+import { PostgrestError } from "@supabase/supabase-js";
 
 /**
  * Deletes related data from shift_assignments table for a specific shift
  * @param shiftId ID of the shift to delete assignments for
  * @returns Object containing success status and any error
  */
-export const deleteShiftAssignments = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
+export const deleteShiftAssignments = async (shiftId: string): Promise<{success: boolean; error?: PostgrestError}> => {
   console.log(`[DELETE] Starting to delete assignments for shift ${shiftId}`);
   try {
     const { error, count } = await supabase
@@ -33,7 +34,7 @@ export const deleteShiftAssignments = async (shiftId: string): Promise<{success:
  * @param shiftId ID of the shift to delete locations for
  * @returns Object containing success status and any error
  */
-export const deleteShiftLocations = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
+export const deleteShiftLocations = async (shiftId: string): Promise<{success: boolean; error?: PostgrestError}> => {
   console.log(`[DELETE] Starting to delete locations for shift ${shiftId}`);
   try {
     const { error, count } = await supabase
@@ -60,7 +61,7 @@ export const deleteShiftLocations = async (shiftId: string): Promise<{success: b
  * @param shiftId ID of the shift to delete time logs for
  * @returns Object containing success status and any error
  */
-export const deleteShiftTimeLogs = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
+export const deleteShiftTimeLogs = async (shiftId: string): Promise<{success: boolean; error?: PostgrestError}> => {
   console.log(`[DELETE] Starting to delete time logs for shift ${shiftId}`);
   try {
     const { error, count } = await supabase
@@ -87,7 +88,7 @@ export const deleteShiftTimeLogs = async (shiftId: string): Promise<{success: bo
  * @param shiftId ID of the shift to delete notifications for
  * @returns Object containing success status and any error
  */
-export const deleteShiftNotifications = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
+export const deleteShiftNotifications = async (shiftId: string): Promise<{success: boolean; error?: PostgrestError}> => {
   console.log(`[DELETE] Starting to delete notifications for shift ${shiftId}`);
   try {
     const { error, count } = await supabase
@@ -114,7 +115,7 @@ export const deleteShiftNotifications = async (shiftId: string): Promise<{succes
  * @param shiftId ID of the shift to delete
  * @returns Object containing success status and any error
  */
-export const deleteMainShiftRecord = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
+export const deleteMainShiftRecord = async (shiftId: string): Promise<{success: boolean; error?: PostgrestError}> => {
   console.log(`[DELETE] Starting to delete main shift record ${shiftId}`);
   try {
     const { error } = await supabase

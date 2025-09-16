@@ -58,9 +58,10 @@ export function useProfileData(user: User | null) {
             console.log("No profile data found for user");
             setError("No profile data found. Please contact support.");
           }
-        } catch (error: any) {
+        } catch (error: unknown) {
           console.error("Error loading profile:", error);
-          setError(error.message);
+          const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+          setError(errorMessage);
         } finally {
           setLoading(false);
         }
@@ -100,7 +101,7 @@ export function useProfileData(user: User | null) {
       const { data } = supabase.storage.from(bucketName).getPublicUrl(filePath);
       
       return data.publicUrl;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(`Error getting public URL for ${bucketName}/${filePath}:`, error);
       return null;
     }

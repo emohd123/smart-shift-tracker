@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
 import { ShiftForm } from "@/components/shifts/form/ShiftForm";
 import { useAuth } from "@/context/AuthContext";
+import { isCompanyRole } from "@/utils/routes";
 import { toast } from "sonner";
 
 const CreateShift = () => {
@@ -20,7 +21,7 @@ const CreateShift = () => {
       return;
     }
     
-    if (!(user?.role === "admin" || user?.role === "company")) {
+    if (!(user?.role === "admin" || isCompanyRole(user?.role))) {
       console.log("CreateShift - User is not admin/company, role:", user?.role);
       toast.error("Permission Denied", {
         description: "Only admin or company users can create shifts"
@@ -29,7 +30,7 @@ const CreateShift = () => {
     }
   }, [isAuthenticated, navigate, user]);
 
-  if (!isAuthenticated || !(user?.role === "admin" || user?.role === "company")) {
+  if (!isAuthenticated || !(user?.role === "admin" || isCompanyRole(user?.role))) {
     return null;
   }
 

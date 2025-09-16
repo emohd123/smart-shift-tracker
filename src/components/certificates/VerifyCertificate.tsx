@@ -12,10 +12,24 @@ import { generateEnhancedWorkExperiencePDF } from "./utils/enhancedPdfGenerator"
 
 type VerificationStatus = "verified" | "unverified" | "loading" | "not-found" | "expired";
 
+interface VerifiedCertificateData {
+  id: string;
+  holder_name: string;
+  organization: string;
+  period_start: string;
+  period_end: string;
+  total_hours: number;
+  total_earnings: number;
+  issued_date: string;
+  status: string;
+  is_revoked: boolean;
+  verification_count: number;
+}
+
 export default function VerifyCertificate() {
   const { referenceNumber } = useParams<{ referenceNumber: string }>();
   const [status, setStatus] = useState<VerificationStatus>("loading");
-  const [certificateData, setCertificateData] = useState<any>(null);
+  const [certificateData, setCertificateData] = useState<VerifiedCertificateData | null>(null);
   const navigate = useNavigate();
   
   useEffect(() => {
@@ -77,20 +91,20 @@ export default function VerifyCertificate() {
       
       // Create certificate data for PDF generation
       const pdfData = {
-        referenceNumber: certificateData.reference_number,
-        promoterName: certificateData.promoter_name || "Promoter",
+        referenceNumber: certificateData.id,
+        promoterName: certificateData.holder_name || "Promoter",
         totalHours: certificateData.total_hours,
-        positionTitle: certificateData.position_title || "Brand Promoter",
-        promotionNames: certificateData.promotion_names || [],
-        skillsGained: certificateData.skills_gained || ["Communication", "Customer Service", "Sales", "Event Promotion"],
+        positionTitle: "Brand Promoter",
+        promotionNames: [],
+        skillsGained: ["Communication", "Customer Service", "Sales", "Event Promotion"],
         shifts: [], // We don't have shift data here
-        issueDate: new Date(certificateData.issue_date).toLocaleDateString('en-US', { 
+        issueDate: new Date(certificateData.issued_date).toLocaleDateString('en-US', { 
           year: 'numeric', 
           month: 'long', 
           day: 'numeric' 
         }),
-        managerContact: certificateData.manager_contact || "555-123-4567",
-        performanceRating: certificateData.performance_rating || 5
+        managerContact: "555-123-4567",
+        performanceRating: 5
       };
       
       // Generate PDF
@@ -125,7 +139,7 @@ export default function VerifyCertificate() {
       // Create a link element
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Certificate-${certificateData.reference_number}.pdf`;
+      link.download = `Certificate-${certificateData.id}.pdf`;
       
       // Click the link to trigger the download
       document.body.appendChild(link);
@@ -268,7 +282,7 @@ export default function VerifyCertificate() {
         <div className="space-y-4">
           <div>
             <h3 className="text-sm font-medium text-muted-foreground">Certificate Reference</h3>
-            <p className="font-semibold">{certificateData.reference_number}</p>
+            <p className="font-semibold">{certificateData.id}</p>
           </div>
           
           <div className="flex flex-col gap-3 mt-4">
@@ -276,7 +290,7 @@ export default function VerifyCertificate() {
               <User className="h-4 w-4 text-primary mt-1" />
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">Issued To</h3>
-                <p className="font-semibold">{certificateData.promoter_name}</p>
+                <p className="font-semibold">{certificateData.holder_name}</p>
               </div>
             </div>
             
@@ -284,7 +298,7 @@ export default function VerifyCertificate() {
               <Briefcase className="h-4 w-4 text-primary mt-1" />
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">Position</h3>
-                <p>{certificateData.position_title || "Brand Promoter"}</p>
+                <p>Brand Promoter</p>
               </div>
             </div>
             
@@ -292,19 +306,17 @@ export default function VerifyCertificate() {
               <Calendar className="h-4 w-4 text-primary mt-1" />
               <div>
                 <h3 className="text-sm font-medium text-muted-foreground">Time Period</h3>
-                <Badge variant="outline">{certificateData.time_period}</Badge>
+                <Badge variant="outline">{certificateData.period_start} - {certificateData.period_end}</Badge>
               </div>
             </div>
             
-            {certificateData.expiration_date && (
-              <div className="flex items-start gap-2">
-                <Clock className="h-4 w-4 text-primary mt-1" />
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Valid Until</h3>
-                  <p>{new Date(certificateData.expiration_date).toLocaleDateString()}</p>
-                </div>
+            <div className="flex items-start gap-2">
+              <Clock className="h-4 w-4 text-primary mt-1" />
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground">Verification Count</h3>
+                <p>{certificateData.verification_count} verifications</p>
               </div>
-            )}
+            </div>
           </div>
           
           <div className="mt-4 p-3 bg-secondary/30 rounded-lg">
@@ -314,23 +326,17 @@ export default function VerifyCertificate() {
               <span className="font-semibold">{certificateData.total_hours} hours</span>
             </div>
             
-            {certificateData.promotion_names && certificateData.promotion_names.length > 0 && (
-              <div className="mt-2">
-                <span className="text-sm block mb-1">Promotions:</span>
-                <div className="flex flex-wrap gap-1">
-                  {certificateData.promotion_names.map((name: string, i: number) => (
-                    <Badge key={i} variant="secondary" className="text-xs">{name}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+            <div className="flex justify-between text-sm mt-1">
+              <span>Total Earnings:</span>
+              <span className="font-semibold">${certificateData.total_earnings}</span>
+            </div>
           </div>
         </div>
       </CardContent>
       
       <CardFooter className="flex flex-wrap gap-3 justify-between">
         <div className="text-sm text-muted-foreground">
-          Issued on: {new Date(certificateData.issued_date || certificateData.issue_date).toLocaleDateString()}
+          Issued on: {new Date(certificateData.issued_date).toLocaleDateString()}
         </div>
         
         <div className="flex gap-2">

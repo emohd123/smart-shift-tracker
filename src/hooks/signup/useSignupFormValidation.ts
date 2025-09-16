@@ -65,9 +65,10 @@ export const useSignupFormValidation = (
       !formData.gender ||
       !formData.height ||
       !formData.weight ||
-      !formData.address
+      !formData.address ||
+      !formData.phoneNumber
     ) {
-      setFormError("All required fields must be filled");
+      setFormError("All required fields must be filled (including phone number)");
       return false;
     }
     
@@ -105,13 +106,11 @@ export const useSignupFormValidation = (
       return false;
     }
     
-    // Validate phone number if provided
-    if (sanitizedPhoneNumber) {
-      const phoneValidation = validateInput(sanitizedPhoneNumber, phoneSchema);
-      if (!phoneValidation.isValid) {
-        setFormError(phoneValidation.error || "Invalid phone number format");
-        return false;
-      }
+    // Validate phone number (now required)
+    const phoneValidation = validateInput(sanitizedPhoneNumber, phoneSchema);
+    if (!phoneValidation.isValid) {
+      setFormError(phoneValidation.error || "Invalid phone number format");
+      return false;
     }
     
     // Basic validation for address length
@@ -126,8 +125,13 @@ export const useSignupFormValidation = (
   const validateDocuments = () => {
     setFormError(null);
     
-    // Documents are now optional - always return true
-    // Users can upload documents later from their profile
+    // Profile photo is now required
+    if (!fileData.profilePhoto && !fileData.profilePhotoPreview) {
+      setFormError("Profile photo is required");
+      return false;
+    }
+    
+    // ID card remains optional
     return true;
   };
   
@@ -148,7 +152,8 @@ export const useSignupFormValidation = (
     // Validate required sections before submitting
     if (!validateAccountInfo()) return false;
     if (!validatePersonalInfo()) return false;
-    // Documents are optional, so we don't need to validate them
+    // Profile photo is now required
+    if (!validateDocuments()) return false;
     
     return true;
   };

@@ -88,17 +88,43 @@ export const useSignupForm = () => {
         console.log("Profile updated successfully");
         
         setIsSuccess(true);
+        
+        // Determine role-specific message and navigation
+        const userRole = formattedData.role || 'part_timer';
+        const isPromoter = userRole === 'part_timer';
+        
         toast({
           title: "Registration successful",
-          description: "Welcome to SmartShift! Redirecting to your dashboard.",
+          description: isPromoter 
+            ? "Welcome to SmartShift, Promoter! Your unique code is ready." 
+            : "Welcome to SmartShift! Setting up your dashboard.",
         });
         
-        // Auto sign-in and redirect to dashboard
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 1000);
-      } catch (profileError: any) {
+        // Auto login the user after successful registration
+        try {
+          const { fullName, email, password } = formattedData;
+          await login(email, password);
+          
+          // Navigate to dashboard after login
+          setTimeout(() => {
+            navigate("/dashboard");
+          }, 2000); // Longer delay to show success message and unique code
+          
+        } catch (loginError) {
+          console.error("Auto-login failed:", loginError);
+          // If auto-login fails, still show success but redirect to login
+          setTimeout(() => {
+            navigate("/login", { 
+              state: { 
+                message: "Registration successful! Please log in with your new account.",
+                email: formattedData.email 
+              }
+            });
+          }, 2000);
+        }
+      } catch (profileError: unknown) {
         console.error("Profile creation error:", profileError);
+        const errorMessage = profileError instanceof Error ? profileError.message : "Unknown error occurred";
         
         // Even if profile update fails, the user has been created and should have a basic profile
         // Show success but with a warning
@@ -109,13 +135,22 @@ export const useSignupForm = () => {
           variant: "destructive",
         });
         
+        // Try to auto-login even if profile creation had issues
+        try {
+          const { fullName, email, password } = formattedData;
+          await login(email, password);
+        } catch (loginError) {
+          console.error("Auto-login failed after partial registration:", loginError);
+        }
+        
         setTimeout(() => {
           navigate("/dashboard");
-        }, 2000);
+        }, 2500);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Registration error:", error);
-      setFormError(error.message || "Registration failed. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "Registration failed. Please try again.";
+      setFormError(errorMessage);
       toast({
         title: "Registration failed",
         description: error.message || "Could not create account",

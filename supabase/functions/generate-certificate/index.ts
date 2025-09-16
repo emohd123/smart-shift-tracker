@@ -63,7 +63,7 @@ serve(async (req) => {
     }
 
     // Generate unique certificate UID if not exists
-    let certificateUid = `CERT-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+    const certificateUid = `CERT-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
     
     // Create the PDF certificate
     const pdfBytes = await generateCertificatePDF({

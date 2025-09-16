@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import AppLayout from "@/components/layout/AppLayout";
@@ -19,7 +19,14 @@ const TimeTracking = () => {
   const navigate = useNavigate();
   const [activeShift, setActiveShift] = useState<Shift | null>(null);
   const [loading, setLoading] = useState(true);
-  const [timeLogHistory, setTimeLogHistory] = useState<any[]>([]);
+  const [timeLogHistory, setTimeLogHistory] = useState<{
+    id: string;
+    shift_id: string;
+    check_in_time: string;
+    check_out_time: string | null;
+    total_hours?: number;
+    earnings?: number;
+  }[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(true);
 
   useEffect(() => {

@@ -7,7 +7,10 @@ import { User } from "@/context/AuthContext";
 type UseActiveTimeLogCheckProps = {
   shift?: Shift;
   user: User | null;
-  checkExistingTimeLog: (shiftId: string, userId: string) => Promise<any>;
+  checkExistingTimeLog: (shiftId: string, userId: string) => Promise<{
+    id: string;
+    check_in_time: string;
+  } | null>;
   setTimeLogId: (id: string | null) => void;
   setStartTime: (time: Date | null) => void;
   setIsTracking: (tracking: boolean) => void;

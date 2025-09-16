@@ -52,9 +52,10 @@ export default function AccountRemovalForm() {
         await deleteAccount();
         // No need to show toast or redirect as it's handled in the hook
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Account removal error:", error);
-      setError(error.message || "Failed to process your request");
+      const errorMessage = error instanceof Error ? error.message : "Failed to process your request";
+      setError(errorMessage);
       setLoading(false);
     }
   };

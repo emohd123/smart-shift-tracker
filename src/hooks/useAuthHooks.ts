@@ -8,10 +8,22 @@ import { GenderType, VerificationStatus } from "@/types/database";
 
 export { formatUser } from "./auth/userFormat";
 
-export interface ProfileUpdate extends Partial<UserProfile> {
-  // Any additional fields specific to profile updates can be added here
+export interface ProfileUpdate {
+  full_name?: string;
+  email?: string;
+  nationality?: string;
+  age?: number;
+  phone_number?: string | null;
   gender?: GenderType;
+  height?: number;
+  weight?: number;
+  is_student?: boolean;
+  address?: string;
+  bank_details?: string | null;
+  id_card_url?: string | null;
+  profile_photo_url?: string | null;
   verification_status?: VerificationStatus;
+  role?: string;
 }
 
 export const useAuthMethods = () => {

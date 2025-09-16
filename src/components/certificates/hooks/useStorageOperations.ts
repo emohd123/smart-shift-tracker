@@ -1,7 +1,9 @@
 
 import { useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { PostgrestError } from "@supabase/supabase-js";
 import { toast } from "sonner";
+import { Certificate } from "../types/certificate";
 import { 
   uploadFileToBucket, 
   getFileFromBucket, 
@@ -136,7 +138,7 @@ export const useStorageOperations = () => {
     userId: string,
     referenceNumber: string | null = null,
     timePeriod: string | null = null
-  ): Promise<{ exists: boolean; error?: any; data?: any }> => {
+  ): Promise<{ exists: boolean; error?: PostgrestError; data?: unknown }> => {
     try {
       let query = supabase
         .from("certificates")

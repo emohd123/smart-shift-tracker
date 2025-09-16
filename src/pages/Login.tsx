@@ -2,21 +2,23 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { getRedirectAfterLogin } from "@/utils/routes";
 import LoginForm from "@/components/auth/LoginForm";
 import { toast } from "sonner";
 
 const Login = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const [pageError, setPageError] = useState<string | null>(null);
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       toast.info("Already signed in");
-      navigate("/shifts", { replace: true });
+      const redirectPath = getRedirectAfterLogin(user.role);
+      navigate(redirectPath, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   // Show a simpler error message if there's a page-level error
   if (pageError) {
@@ -38,7 +40,7 @@ const Login = () => {
 
   // If the user is already authenticated, show a loading state while redirecting
   // This will only appear briefly before the useEffect redirect takes place
-  if (isAuthenticated) {
+  if (isAuthenticated && user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background px-4">
         <div className="w-full max-w-md text-center">

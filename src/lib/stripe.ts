@@ -1,4 +1,4 @@
-import { loadStripe, Stripe } from '@stripe/stripe-js';
+import { loadStripe, Stripe, StripeElements } from '@stripe/stripe-js';
 
 // Stripe client instance
 let stripePromise: Promise<Stripe | null>;
@@ -76,7 +76,7 @@ export const createPaymentElement = async (clientSecret: string) => {
 // Confirm payment
 export const confirmPayment = async (
   stripe: Stripe,
-  elements: any,
+  elements: StripeElements,
   returnUrl: string
 ) => {
   const { error, paymentIntent } = await stripe.confirmPayment({
@@ -99,7 +99,7 @@ export const validateWebhookSignature = (
   payload: string | Buffer,
   signature: string,
   secret: string
-): any => {
+): unknown => {
   // This would typically be used in a server-side function
   // For client-side, we'll just return a basic validation
   if (!signature || !secret) {

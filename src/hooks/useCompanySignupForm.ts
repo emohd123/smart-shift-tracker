@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import { CompanyFormData, CompanyFileData } from "@/components/auth/signup/companyTypes";
 
 const initialFormData: CompanyFormData = {
@@ -26,11 +27,11 @@ export function useCompanySignupForm() {
   const [formData, setFormData] = useState<CompanyFormData>(initialFormData);
   const [fileData, setFileData] = useState<CompanyFileData>(initialFileData);
   const [formError, setFormError] = useState<string>("");
-  const [loading, setLoading] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [activeSection, setActiveSection] = useState("account");
   const navigate = useNavigate();
+  const { signup, loading } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -103,46 +104,40 @@ export function useCompanySignupForm() {
     
     if (!validateForm()) return;
 
-    setLoading(true);
     setUploadingFiles(true);
     
     try {
-      // Create user account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            role: 'company_admin',
-            company_name: formData.companyName,
-          }
-        }
-      });
+      setFormError("");
+      
+      // Use the updated signup method with tenant creation
+      const userData = await signup(
+        formData.contactPerson || formData.companyName, 
+        formData.email, 
+        formData.password, 
+        'company_admin',
+        formData.companyName
+      );
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user account');
+      if (!userData) throw new Error('Failed to create user account');
 
       let companyLogoUrl = null;
       let businessDocumentUrl = null;
 
       // Upload files if provided
       if (fileData.companyLogo) {
-        const logoPath = `companies/${authData.user.id}/logo-${Date.now()}.${fileData.companyLogo.name.split('.').pop()}`;
+        const logoPath = `companies/${userData.id}/logo-${Date.now()}.${fileData.companyLogo.name.split('.').pop()}`;
         companyLogoUrl = await uploadFile(fileData.companyLogo, 'company-assets', logoPath);
       }
 
       if (fileData.businessDocument) {
-        const docPath = `companies/${authData.user.id}/business-doc-${Date.now()}.${fileData.businessDocument.name.split('.').pop()}`;
+        const docPath = `companies/${userData.id}/business-doc-${Date.now()}.${fileData.businessDocument.name.split('.').pop()}`;
         businessDocumentUrl = await uploadFile(fileData.businessDocument, 'company-assets', docPath);
       }
 
-      // Create tenant (company) record
-      const { error: tenantError } = await supabase
+      // Update tenant with additional company details
+      const { error: tenantUpdateError } = await supabase
         .from('tenants')
-        .insert({
-          id: authData.user.id, // Use user ID as tenant ID for companies
-          name: formData.companyName,
-          type: 'company',
+        .update({
           settings: {
             business_address: formData.businessAddress,
             business_country: formData.businessCountry,
@@ -152,55 +147,39 @@ export function useCompanySignupForm() {
             company_logo_url: companyLogoUrl,
             business_document_url: businessDocumentUrl,
           }
-        });
+        })
+        .eq('name', formData.companyName);
 
-      if (tenantError) throw tenantError;
+      if (tenantUpdateError) {
+        console.warn('Failed to update tenant with company details:', tenantUpdateError);
+        // Don't fail the entire signup for this
+      }
 
-      // Create profile record
-      const { error: profileError } = await supabase
+      // Update user profile with additional details
+      const { error: profileUpdateError } = await supabase
         .from('profiles')
-        .insert({
-          id: authData.user.id,
+        .update({
           full_name: formData.contactPerson || formData.companyName,
-          email: formData.email,
-          role: 'company_admin',
           phone_number: formData.phoneNumber,
-        });
+        })
+        .eq('id', userData.id);
 
-      if (profileError) throw profileError;
-
-      // Create tenant membership
-      const { error: membershipError } = await supabase
-        .from('tenant_memberships')
-        .insert({
-          user_id: authData.user.id,
-          tenant_id: authData.user.id,
-          role: 'company_admin',
-          status: 'active'
-        });
-
-      if (membershipError) throw membershipError;
-
-      // Automatically sign in the user
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password
-      });
-
-      if (signInError) throw signInError;
+      if (profileUpdateError) {
+        console.warn('Failed to update profile with additional details:', profileUpdateError);
+        // Don't fail the entire signup for this
+      }
 
       setIsSuccess(true);
       
       // Navigate to company dashboard after a short delay
       setTimeout(() => {
         navigate("/company");
-      }, 1000);
+      }, 2000);
       
     } catch (error) {
       console.error('Company signup error:', error);
       setFormError(error instanceof Error ? error.message : 'Registration failed. Please try again.');
     } finally {
-      setLoading(false);
       setUploadingFiles(false);
     }
   };

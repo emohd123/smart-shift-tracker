@@ -28,15 +28,21 @@ export enum UserRole {
   CompanyManager = "company_manager"
 }
 
+// Legacy role mappings for backward compatibility
+export const LEGACY_ROLE_MAPPINGS = {
+  Company: UserRole.CompanyAdmin,
+  Promoter: UserRole.PartTimer
+} as const;
+
 // Type guards for runtime type checking
-export const isValidGender = (value: any): value is GenderType => 
+export const isValidGender = (value: unknown): value is GenderType => 
   Object.values(GenderType).includes(value as GenderType);
 
-export const isValidVerificationStatus = (value: any): value is VerificationStatus => 
+export const isValidVerificationStatus = (value: unknown): value is VerificationStatus => 
   Object.values(VerificationStatus).includes(value as VerificationStatus);
 
-export const isValidShiftStatus = (value: any): value is ShiftStatus => 
+export const isValidShiftStatus = (value: unknown): value is ShiftStatus => 
   Object.values(ShiftStatus).includes(value as ShiftStatus);
 
-export const isValidUserRole = (value: any): value is UserRole => 
+export const isValidUserRole = (value: unknown): value is UserRole => 
   Object.values(UserRole).includes(value as UserRole);

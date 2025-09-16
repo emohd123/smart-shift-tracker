@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 
 // Debounce hook for performance optimization
-export const useDebounce = <T extends (...args: any[]) => any>(
+export const useDebounce = <T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number
 ): T => {
@@ -22,7 +22,7 @@ export const useDebounce = <T extends (...args: any[]) => any>(
 };
 
 // Throttle hook for performance optimization
-export const useThrottle = <T extends (...args: any[]) => any>(
+export const useThrottle = <T extends (...args: unknown[]) => unknown>(
   callback: T,
   delay: number
 ): T => {
@@ -103,7 +103,7 @@ export const usePerformanceMonitor = (componentName: string) => {
 // Optimized list rendering hook
 export const useOptimizedList = <T>(
   items: T[],
-  dependencies: any[] = []
+  ...dependencies: unknown[]
 ) => {
-  return useMemo(() => items, dependencies);
+  return useMemo(() => items, [items, ...dependencies]);
 };

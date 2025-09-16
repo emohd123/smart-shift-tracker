@@ -10,7 +10,12 @@ type UseTimeTrackingActionsProps = {
   shift?: Shift;
   user: User | null;
   verifyLocation: (shiftId: string) => Promise<boolean | null>;
-  createTimeLog: (checkInTime: Date) => Promise<any>;
+  createTimeLog: (checkInTime: Date) => Promise<{
+    id: string;
+    user_id: string;
+    shift_id: string;
+    check_in_time: string;
+  } | null>;
   logTimeEntry: (shiftId: string, timeLogId: string | null, isTracking: boolean, startTime: Date | null, elapsedTime: number) => void;
   setIsTracking: (tracking: boolean) => void;
   setStartTime: (time: Date | null) => void;

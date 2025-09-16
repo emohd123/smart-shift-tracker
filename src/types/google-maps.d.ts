@@ -9,7 +9,7 @@ declare namespace google {
       panTo(latLng: LatLng | LatLngLiteral): void;
       getCenter(): LatLng;
       getZoom(): number;
-      addListener(eventName: string, handler: Function): MapsEventListener;
+      addListener(eventName: string, handler: () => void): MapsEventListener;
     }
     
     class Marker {
@@ -17,7 +17,7 @@ declare namespace google {
       setPosition(latLng: LatLng | LatLngLiteral): void;
       getPosition(): LatLng;
       setMap(map: Map | null): void;
-      addListener(eventName: string, handler: Function): MapsEventListener;
+      addListener(eventName: string, handler: () => void): MapsEventListener;
     }
     
     class Circle {

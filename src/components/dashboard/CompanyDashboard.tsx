@@ -1,6 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import AppLayout from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Building2, FileEdit } from "lucide-react";
@@ -13,7 +12,12 @@ export default function CompanyDashboard() {
   }, []);
 
   return (
-    <AppLayout title="Company Dashboard">
+    <div className="space-y-8">
+      <div className="space-y-2">
+        <h1 className="text-3xl font-bold">Company Dashboard</h1>
+        <p className="text-muted-foreground">Manage your shifts and company profile</p>
+      </div>
+
       <section className="grid gap-6 md:grid-cols-2">
         <Card className="p-6">
           <div className="flex items-start justify-between">
@@ -51,6 +55,6 @@ export default function CompanyDashboard() {
           </Button>
         </Card>
       </section>
-    </AppLayout>
+    </div>
   );
 }

@@ -7,7 +7,7 @@ type TimeDisplayProps = {
   elapsedTime: number;
   earnings: number;
   isTracking: boolean;
-  shift?: any;
+  shift?: unknown;
 };
 
 export const formatTime = (seconds: number) => {

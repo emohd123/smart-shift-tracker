@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
+import { getRedirectAfterLogin } from "@/utils/routes";
 import { LoginFormAlert } from "./LoginFormAlert";
 import { LoginCredentials } from "./LoginCredentials";
 import { LoginActions } from "./LoginActions";
@@ -18,7 +19,7 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ onError }: LoginFormProps) {
-  const { login, loading, authError, isAuthenticated } = useAuth();
+  const { login, loading, authError, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { addError } = useError();
   const { csrfToken, rateLimit } = useSecurity();
@@ -41,17 +42,18 @@ export default function LoginForm({ onError }: LoginFormProps) {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/shifts");
+    if (isAuthenticated && user) {
+      const redirectPath = getRedirectAfterLogin(user.role);
+      navigate(redirectPath);
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user, navigate]);
 
   // Clear form error when inputs change
   useEffect(() => {
     if (formError) {
       setFormError(null);
     }
-  }, [email, password]);
+  }, [email, password, formError]);
 
   // Update parent component if there's an error
   useEffect(() => {

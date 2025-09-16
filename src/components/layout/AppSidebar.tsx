@@ -1,6 +1,6 @@
 
 import { Link } from "react-router-dom";
-import { ChevronLeft, Clock, Settings, LogOut, User, Home, Calendar, BarChart, Users, Award, MessageSquare, Clock4, History, UserCog } from "lucide-react";
+import { ChevronLeft, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NavigationLinks } from "./NavigationLinks";
 import { User as UserType } from "@/context/AuthContext";
@@ -8,6 +8,7 @@ import UserProfile from "./UserProfile";
 import { useAuth } from "@/context/AuthContext";
 import UnreadMessagesBadge from "@/components/notifications/UnreadMessagesBadge";
 import { TenantSwitcher } from "@/components/TenantSwitcher";
+import { getDefaultDashboard } from "@/utils/routes";
 
 interface AppSidebarProps {
   user: UserType | null;
@@ -45,7 +46,7 @@ export function AppSidebar({
     >
       {/* Logo */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-border">
-        <Link to="/dashboard" className="flex items-center gap-2">
+  <Link to={getDefaultDashboard(user?.role)} className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
             <Clock className="text-white" size={18} />
           </div>
@@ -55,6 +56,8 @@ export function AppSidebar({
           <button 
             onClick={() => setSidebarOpen(false)}
             className="p-1 rounded-md hover:bg-secondary text-muted-foreground"
+            aria-label="Close sidebar"
+            title="Close sidebar"
           >
             <ChevronLeft size={20} />
           </button>

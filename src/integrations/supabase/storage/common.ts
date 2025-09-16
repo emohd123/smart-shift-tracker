@@ -7,7 +7,7 @@ import { StorageError, StorageResult } from "./types";
 export const createErrorResponse = <T>(
   errorMessage: string, 
   errorCode: string,
-  originalError?: any
+  originalError?: unknown
 ): StorageResult<T> => {
   console.error(`Storage error (${errorCode}):`, originalError || errorMessage);
   return {

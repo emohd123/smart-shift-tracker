@@ -1,5 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { createClient, SupabaseClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import Stripe from 'https://esm.sh/stripe@12.9.0'
 
 const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
@@ -111,7 +111,7 @@ serve(async (req) => {
   }
 })
 
-async function handleCheckoutCompleted(event: Stripe.Event, supabase: any) {
+async function handleCheckoutCompleted(event: Stripe.Event, supabase: SupabaseClient) {
   const session = event.data.object as Stripe.Checkout.Session
   
   const certificateRequestId = session.metadata?.certificate_request_id
@@ -163,7 +163,7 @@ async function handleCheckoutCompleted(event: Stripe.Event, supabase: any) {
   }
 }
 
-async function handlePaymentSucceeded(event: Stripe.Event, supabase: any) {
+async function handlePaymentSucceeded(event: Stripe.Event, supabase: SupabaseClient) {
   const paymentIntent = event.data.object as Stripe.PaymentIntent
   
   const certificateRequestId = paymentIntent.metadata?.certificate_request_id
@@ -203,7 +203,7 @@ async function handlePaymentSucceeded(event: Stripe.Event, supabase: any) {
   }
 }
 
-async function handlePaymentFailed(event: Stripe.Event, supabase: any) {
+async function handlePaymentFailed(event: Stripe.Event, supabase: SupabaseClient) {
   const paymentIntent = event.data.object as Stripe.PaymentIntent
   
   const certificateRequestId = paymentIntent.metadata?.certificate_request_id
@@ -240,13 +240,13 @@ async function handlePaymentFailed(event: Stripe.Event, supabase: any) {
   }
 }
 
-async function handleInvoicePaymentSucceeded(event: Stripe.Event, supabase: any) {
+async function handleInvoicePaymentSucceeded(event: Stripe.Event, supabase: SupabaseClient) {
   // This would handle subscription-based payments in the future
   // For now, just acknowledge the event
   return { success: true, error: null }
 }
 
-async function triggerCertificateGeneration(certificateRequestId: string, supabase: any) {
+async function triggerCertificateGeneration(certificateRequestId: string, supabase: SupabaseClient) {
   try {
     // Update status to processing
     await supabase

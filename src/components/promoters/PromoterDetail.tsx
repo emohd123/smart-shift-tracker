@@ -23,7 +23,14 @@ export function PromoterDetail({ promoterId, onClose, promoterData }: PromoterDe
   const [open, setOpen] = useState(true);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [shiftHistory, setShiftHistory] = useState<any[]>([]);
+  const [shiftHistory, setShiftHistory] = useState<{
+    id: string;
+    check_in_time: string;
+    check_out_time: string;
+    total_hours: number;
+    earnings: number;
+    shift_id: string;
+  }[]>([]);
 
   useEffect(() => {
     const fetchPromoterDetails = async () => {

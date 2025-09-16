@@ -1,4 +1,10 @@
 
+export interface VerificationLog {
+  timestamp: string;
+  ip_address: string;
+  user_agent: string;
+}
+
 export type Certificate = {
   id: string;
   reference_number: string;
@@ -12,11 +18,7 @@ export type Certificate = {
   issued_by?: string;
   issued_date?: string;
   expiration_date?: string;
-  verification_logs?: Array<{
-    timestamp: string;
-    ip_address: string;
-    user_agent: string;
-  }> | any; // Use 'any' to handle JSONB from database
+  verification_logs?: VerificationLog[];
 };
 
 export type TimePeriod = "3months" | "6months" | "1year" | "all";

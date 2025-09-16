@@ -1,6 +1,7 @@
 
 import { supabase } from "../client";
 import { StorageError, StorageResult } from "./types";
+import { Bucket } from "@supabase/supabase-js";
 
 /**
  * Creates a bucket if it doesn't exist
@@ -65,7 +66,7 @@ export const createBucketIfNotExists = async (
 /**
  * List all buckets in storage
  */
-export const listBuckets = async (): Promise<StorageResult<any[]>> => {
+export const listBuckets = async (): Promise<StorageResult<unknown[]>> => {
   try {
     const { data, error } = await supabase.storage.listBuckets();
     

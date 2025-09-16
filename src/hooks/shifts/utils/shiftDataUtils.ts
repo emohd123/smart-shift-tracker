@@ -2,10 +2,27 @@
 import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { ShiftStatus } from "@/types/database";
 
+interface DatabaseShift {
+  id: string;
+  title: string;
+  date: string;
+  end_date?: string;
+  start_time: string;
+  end_time: string;
+  location?: string;
+  status: string;
+  pay_rate?: number;
+  pay_rate_type?: string;
+  is_paid?: boolean;
+  is_assigned?: boolean;
+  assigned_promoters?: number;
+  created_at: string;
+}
+
 /**
  * Format database shifts to match our frontend Shift type
  */
-export const formatDatabaseShifts = (dbShifts: any[]): Shift[] => {
+export const formatDatabaseShifts = (dbShifts: DatabaseShift[]): Shift[] => {
   return dbShifts.map(shift => ({
     id: shift.id,
     title: shift.title,

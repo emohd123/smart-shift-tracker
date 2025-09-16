@@ -23,7 +23,7 @@ export const useAdminValidation = () => {
     return true;
   }, [isAdmin, user, logUnauthorizedAccess, logAdminAction]);
 
-  const withAdminCheck = useCallback(<T extends (...args: any[]) => any>(
+  const withAdminCheck = useCallback(<T extends (...args: unknown[]) => unknown>(
     fn: T,
     action?: string
   ): T => {

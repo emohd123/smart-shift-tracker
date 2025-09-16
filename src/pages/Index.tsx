@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
+import { motion, Variants } from "framer-motion";
 import { SignupModal } from "@/components/auth/SignupModal";
 import { 
   Calendar, 
@@ -278,7 +278,7 @@ const FeatureCard = ({ icon, title, description, variants, gradient }: {
   icon: React.ReactNode; 
   title: string; 
   description: string;
-  variants?: any;
+  variants?: Variants;
   gradient?: string;
 }) => {
   return (

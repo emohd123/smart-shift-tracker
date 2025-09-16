@@ -25,6 +25,8 @@ export function ShiftForm({ onExternalSubmit }: ShiftFormProps) {
     loading,
     loadingPromoters,
     promoters,
+    promotersError,
+    refetchPromoters,
     handleInputChange,
     handleDateRangeChange,
     handlePayRateTypeChange,
@@ -113,6 +115,8 @@ export function ShiftForm({ onExternalSubmit }: ShiftFormProps) {
             selectedPromoterIds={formData.selectedPromoterIds}
             onSelect={handlePromoterSelect}
             loading={loadingPromoters}
+            error={promotersError}
+            onRetry={refetchPromoters}
           />
           
           <LocationMapToggle />

@@ -26,7 +26,7 @@ export default function EnhancedWorkCertificateGenerator() {
   const [includeDescription, setIncludeDescription] = useState(true);
   const [includeMetrics, setIncludeMetrics] = useState(true);
   const [customMessage, setCustomMessage] = useState("");
-  const [promoters, setPromoters] = useState<any[]>([]);
+  const [promoters, setPromoters] = useState<{ id: string; full_name: string }[]>([]);
   const [loadingPromoters, setLoadingPromoters] = useState(false);
   
   const {

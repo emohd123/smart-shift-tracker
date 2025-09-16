@@ -27,15 +27,15 @@ export default function ProfileUpdateForm() {
       full_name: "",
       nationality: "",
       age: 18,
-      phone_number: null as string | null,
+      phone_number: "",
       gender: GenderType.Male,
       height: 0,
       weight: 0,
       is_student: false,
       address: "",
       bank_details: "",
-      id_card_url: null as string | null,
-      profile_photo_url: null as string | null,
+      id_card_url: "",
+      profile_photo_url: "",
     }
   });
   
@@ -55,13 +55,33 @@ export default function ProfileUpdateForm() {
     };
     
     loadUserProfile();
-  }, [user, form]);
+  }, [user, form, getUserProfile]);
   
-  const handleSubmit = async (data: any) => {
+  const handleSubmit = async (data: ProfileUpdate) => {
     if (!user?.id) return;
     
     try {
       setSaving(true);
+      
+      // Handle file uploads first
+  const updatedIdCardUrl = data.id_card_url;
+  const updatedProfilePhotoUrl = data.profile_photo_url;
+      
+      // Upload new ID card if provided
+      if (idCardFile) {
+        const formData = new FormData();
+        formData.append('file', idCardFile);
+        // You would implement the file upload logic here
+        // For now, we'll skip the actual upload
+      }
+      
+      // Upload new profile photo if provided
+      if (profilePhotoFile) {
+        const formData = new FormData();
+        formData.append('file', profilePhotoFile);
+        // You would implement the file upload logic here
+        // For now, we'll skip the actual upload
+      }
       
       // Format data for update
       const updateData: ProfileUpdate = {
@@ -74,7 +94,9 @@ export default function ProfileUpdateForm() {
         weight: data.weight || 0,
         is_student: Boolean(data.is_student),
         address: data.address || "",
-        bank_details: data.bank_details || "",
+        bank_details: data.bank_details || null,
+        id_card_url: updatedIdCardUrl,
+        profile_photo_url: updatedProfilePhotoUrl,
       };
       
       // Handle file uploads here if needed
@@ -86,8 +108,9 @@ export default function ProfileUpdateForm() {
       logProfileUpdate(user.id, updatedFields);
       
       toast.success("Profile updated successfully");
-    } catch (err: any) {
-      toast.error("Failed to update profile: " + (err.message || "Unknown error"));
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      toast.error("Failed to update profile: " + errorMessage);
     } finally {
       setSaving(false);
     }

@@ -3,7 +3,7 @@ export interface Tenant {
   name: string;
   slug: string;
   domain?: string;
-  settings: Record<string, any>;
+  settings: Record<string, unknown>;
   subscription_tier: 'starter' | 'professional' | 'enterprise';
   subscription_status: 'active' | 'suspended' | 'cancelled';
   max_users: number;
@@ -58,8 +58,8 @@ export interface AuditLog {
   action: 'create' | 'update' | 'delete' | 'login' | 'logout' | 'invite' | 'approve' | 'reject';
   resource_type: 'shift' | 'certificate' | 'timesheet' | 'assignment' | 'user' | 'tenant';
   resource_id?: string;
-  old_values?: Record<string, any>;
-  new_values?: Record<string, any>;
+  old_values?: Record<string, unknown>;
+  new_values?: Record<string, unknown>;
   ip_address?: string;
   user_agent?: string;
   created_at: string;

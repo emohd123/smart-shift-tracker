@@ -20,15 +20,31 @@ import {
   FormMessage 
 } from "@/components/ui/form";
 
+interface ProfileFormData {
+  unique_code: string;
+  full_name: string;
+  nationality: string;
+  age: number;
+  phone_number: string;
+  gender: GenderType;
+  height: number;
+  weight: number;
+  is_student: boolean;
+  address: string;
+  bank_details: string;
+  id_card_url: string;
+  profile_photo_url: string;
+}
+
 export interface ProfileFormFieldsProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<ProfileFormData>;
   readOnly?: boolean;
 }
 
 // Alternative props interface for backward compatibility
 export interface LegacyProfileFormFieldsProps {
-  formData: any;
-  setFormData: (data: any) => void;
+  formData: ProfileFormData;
+  setFormData: (data: ProfileFormData) => void;
   readOnly: boolean;
 }
 

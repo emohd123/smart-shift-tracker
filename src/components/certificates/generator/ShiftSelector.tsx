@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
@@ -6,14 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Clock, MapPin, Calendar, Check, X } from "lucide-react";
 import { TimePeriod } from "../types/certificate";
-import { useShiftData } from "../hooks/useShiftData";
+import { useShiftData, ShiftData } from "../hooks/useShiftData";
 
 type ShiftSelectorProps = {
   userId: string;
   timePeriod: TimePeriod;
   selectedShifts: string[];
   setSelectedShifts: (shifts: string[]) => void;
-  availableShifts?: any[];
+  availableShifts?: ShiftData[];
 };
 
 export function ShiftSelector({ 
@@ -23,17 +23,11 @@ export function ShiftSelector({
   setSelectedShifts,
   availableShifts = []
 }: ShiftSelectorProps) {
-  const [shifts, setShifts] = useState<any[]>([]);
+  const [shifts, setShifts] = useState<ShiftData[]>([]);
   const [loading, setLoading] = useState(false);
   const { fetchCompletedShifts } = useShiftData();
 
-  useEffect(() => {
-    if (userId && timePeriod) {
-      loadShifts();
-    }
-  }, [userId, timePeriod]);
-
-  const loadShifts = async () => {
+  const loadShifts = useCallback(async () => {
     setLoading(true);
     try {
       const { shifts: fetchedShifts } = await fetchCompletedShifts(userId, timePeriod);
@@ -43,7 +37,13 @@ export function ShiftSelector({
     } finally {
       setLoading(false);
     }
-  };
+  }, [userId, timePeriod, fetchCompletedShifts]);
+
+  useEffect(() => {
+    if (userId && timePeriod) {
+      loadShifts();
+    }
+  }, [userId, timePeriod, loadShifts]);
 
   const toggleShift = (shiftId: string) => {
     setSelectedShifts(
@@ -54,7 +54,7 @@ export function ShiftSelector({
   };
 
   const selectAll = () => {
-    setSelectedShifts(shifts.map(shift => shift.id || shift.date));
+    setSelectedShifts(shifts.map(shift => shift.date));
   };
 
   const clearAll = () => {
@@ -62,7 +62,7 @@ export function ShiftSelector({
   };
 
   const totalSelectedHours = shifts
-    .filter(shift => selectedShifts.includes(shift.id || shift.date))
+    .filter(shift => selectedShifts.includes(shift.date))
     .reduce((sum, shift) => sum + (shift.hours || 0), 0);
 
   if (loading) {
@@ -138,7 +138,7 @@ export function ShiftSelector({
         ) : (
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {shifts.map((shift, index) => {
-              const shiftId = shift.id || shift.date;
+              const shiftId = shift.date;
               const isSelected = selectedShifts.includes(shiftId);
               
               return (
@@ -189,12 +189,6 @@ export function ShiftSelector({
                           {shift.hours || 0}h
                         </Badge>
                       </div>
-                      
-                      {shift.description && (
-                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                          {shift.description}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </div>

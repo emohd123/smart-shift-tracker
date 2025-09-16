@@ -6,7 +6,7 @@ interface SecurityEvent {
   user_id?: string;
   ip_address?: string;
   user_agent?: string;
-  details?: Record<string, any>;
+  details?: Record<string, unknown>;
   severity?: 'low' | 'medium' | 'high' | 'critical';
 }
 

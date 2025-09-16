@@ -94,7 +94,7 @@ export const usePerformanceMonitor = (componentName: string) => {
 
   const getMemoryUsage = useCallback(() => {
     if ('memory' in performance) {
-      const memory = (performance as any).memory;
+      const memory = (performance as { memory: { usedJSHeapSize: number; totalJSHeapSize: number; jsHeapSizeLimit: number } }).memory;
       return {
         used: Math.round(memory.usedJSHeapSize / 1048576), // MB
         total: Math.round(memory.totalJSHeapSize / 1048576), // MB
@@ -233,7 +233,7 @@ export const useRealUserMonitoring = () => {
         const entries = list.getEntries();
         entries.forEach((entry) => {
           if (entry.entryType === 'first-input') {
-            const fidEntry = entry as any; // Type assertion for FID properties
+            const fidEntry = entry as PerformanceEntry & { processingStart: number; startTime: number };
             const fid = fidEntry.processingStart - fidEntry.startTime;
             setVitals(prev => ({ ...prev, FID: fid }));
           }
@@ -245,8 +245,9 @@ export const useRealUserMonitoring = () => {
       let clsValue = 0;
       const clsObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
-          if (!(entry as any).hadRecentInput) {
-            clsValue += (entry as any).value;
+          const layoutShiftEntry = entry as PerformanceEntry & { hadRecentInput?: boolean; value?: number };
+          if (!layoutShiftEntry.hadRecentInput) {
+            clsValue += layoutShiftEntry.value || 0;
           }
         }
         setVitals(prev => ({ ...prev, CLS: clsValue }));

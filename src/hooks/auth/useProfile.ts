@@ -36,10 +36,11 @@ export const useProfile = () => {
       console.log("No profile data found for user");
       toast.error("No profile data found. Please contact support.");
       return null;
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error fetching user profile:", error);
-      setError(error.message);
-      toast.error("Failed to load profile data: " + error.message);
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      setError(errorMessage);
+      toast.error("Failed to load profile data: " + errorMessage);
       throw error;
     } finally {
       setLoading(false);
@@ -80,9 +81,10 @@ export const useProfile = () => {
       }
       
       toast.success("Profile updated successfully");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Update profile error:", error);
-      setError(error.message || "Failed to update profile");
+      const errorMessage = error instanceof Error ? error.message : "Failed to update profile";
+      setError(errorMessage);
       throw error;
     } finally {
       setLoading(false);

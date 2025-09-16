@@ -16,7 +16,7 @@ export default function useShiftForm(onExternalSubmit?: (data: ShiftFormData) =>
     selectedPromoterIds: []
   });
 
-  const { promoters, loadingPromoters } = usePromoters();
+  const { promoters, loadingPromoters, error: promotersError, refetch: refetchPromoters } = usePromoters();
   const { submitShift, loading } = useShiftSubmission();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -66,6 +66,8 @@ export default function useShiftForm(onExternalSubmit?: (data: ShiftFormData) =>
     loading,
     loadingPromoters,
     promoters,
+    promotersError,
+    refetchPromoters,
     handleInputChange,
     handleDateRangeChange,
     handlePayRateTypeChange,

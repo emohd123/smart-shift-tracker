@@ -125,7 +125,7 @@ export const AccessibilitySettings: React.FC = () => {
 
   const [announcements, setAnnouncements] = useState('');
 
-  const updateSetting = (key: keyof typeof settings, value: any) => {
+  const updateSetting = (key: keyof typeof settings, value: boolean | number) => {
     setSettings(prev => ({ ...prev, [key]: value }));
     setAnnouncements(`${key} ${value ? 'enabled' : 'disabled'}`);
     

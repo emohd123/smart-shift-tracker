@@ -6,7 +6,10 @@ import QRCode from "qrcode";
 // Extend jsPDF type to include autoTable
 declare module "jspdf" {
   interface jsPDF {
-    autoTable: (options: any) => jsPDF;
+    autoTable: (options: Record<string, unknown>) => jsPDF;
+    lastAutoTable: {
+      finalY: number;
+    };
   }
 }
 

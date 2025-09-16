@@ -53,12 +53,12 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
         });
       }
       
-      // Navigate to time tracking with Ctrl+T
-      if (e.ctrlKey && e.key === 't') {
+      // Navigate to certificates with Ctrl+C
+      if (e.ctrlKey && e.key === 'c') {
         e.preventDefault();
-        navigate('/time');
-        toast.success("Navigated to Time Tracking", {
-          description: "Keyboard shortcut: Ctrl+T"
+        navigate('/certificates');
+        toast.success("Navigated to Certificates", {
+          description: "Keyboard shortcut: Ctrl+C"
         });
       }
     };

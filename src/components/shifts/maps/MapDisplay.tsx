@@ -217,7 +217,7 @@ declare global {
     initMap: () => void;
     gm_authFailure: () => void;
     google?: {
-      maps: any;
+      maps: typeof google.maps;
     };
   }
 }

@@ -34,13 +34,16 @@ export function AccountInfoStep({ formData, handleChange }: AccountInfoStepProps
           id="email"
           name="email"
           type="email"
-          placeholder="yourname@example.com"
+          placeholder="yourname@gmail.com"
           value={formData.email}
           onChange={handleChange}
           required
           autoComplete="email"
           className="h-11"
         />
+        <p className="text-xs text-muted-foreground">
+          Use a valid email from Gmail, Yahoo, Outlook, or other recognized providers
+        </p>
       </div>
 
 

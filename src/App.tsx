@@ -1,97 +1,259 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { ErrorProvider } from "./context/ErrorContext";
 import { AuthProvider } from "./context/AuthContext";
 import { TenantProvider } from "./context/TenantProvider";
 import { SecurityProvider } from "./components/security/SecurityProvider";
 import { Toaster } from "./components/ui/sonner";
 import DevToolsPanel from "./components/devtools/DevToolsPanel";
+import ErrorBoundary, { RouteErrorBoundary } from "./components/ErrorBoundary";
+import { ROUTES } from "./utils/routes";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { Loader2 } from "lucide-react";
 
-// Pages
+// Core pages (loaded immediately)
 import Index from "./pages/Index";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
-import Dashboard from "./pages/Dashboard";
-import Shifts from "./pages/Shifts";
-import CreateShift from "./pages/CreateShift";
-import ShiftDetails from "./pages/ShiftDetails";
-import ForgotPassword from "./pages/ForgotPassword";
-import ResetPassword from "./pages/ResetPassword";
-import AccountSettings from "./pages/AccountSettings";
-import Promoters from "./pages/Promoters";
-import TimeTracking from "./pages/TimeTracking";
-import TimeHistory from "./pages/TimeHistory";
 import NotFound from "./pages/NotFound";
-import Reports from "./pages/Reports";
-import Messages from "./pages/Messages";
-import DataPurge from "./pages/DataPurge";
-import Profile from "./pages/Profile";
-import Certificates from "./pages/Certificates";
-import Subscription from "./pages/Subscription";
-import Revenue from "./pages/Revenue";
 
-import Credits from "./pages/Credits";
-import Training from "./pages/Training";
-import Referrals from "./pages/Referrals";
-import VerifyCertificatePage from "./pages/VerifyCertificatePage";
-import CertificatePaymentSuccess from "./pages/CertificatePaymentSuccess";
-import ProtectedRoute from "./components/ProtectedRoute";
-import CompanyDashboard from "./pages/CompanyDashboard";
-import CompanyProfile from "./pages/CompanyProfile";
+// Lazy-loaded pages for better performance
+const UnifiedDashboard = lazy(() => import("./components/dashboard/UnifiedDashboard"));
+const Shifts = lazy(() => import("./pages/Shifts"));
+const CreateShift = lazy(() => import("./pages/CreateShift"));
+const ShiftDetails = lazy(() => import("./pages/ShiftDetails"));
+const ForgotPassword = lazy(() => import("./pages/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
+const AccountSettings = lazy(() => import("./pages/AccountSettings"));
+const Profile = lazy(() => import("./pages/Profile"));
+const CompanyProfile = lazy(() => import("./pages/CompanyProfile"));
+// Removed TimeTracking and TimeHistory - business model restructured
+const Messages = lazy(() => import("./pages/Messages"));
+const Certificates = lazy(() => import("./pages/Certificates"));
+const VerifyCertificatePage = lazy(() => import("./pages/VerifyCertificatePage"));
+const CertificatePaymentSuccess = lazy(() => import("./pages/CertificatePaymentSuccess"));
+
+// Admin-only pages
+const Promoters = lazy(() => import("./pages/Promoters"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Revenue = lazy(() => import("./pages/Revenue"));
+const DataPurge = lazy(() => import("./pages/DataPurge"));
+
+// Business model restructured - removed Training, Credits, Subscription, Referrals
+
+// Development-only pages (conditionally loaded)
+const DebugSupabase = process.env.NODE_ENV === 'development' 
+  ? lazy(() => import("./pages/DebugSupabase"))
+  : null;
+
+// Loading component
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center">
+    <div className="flex flex-col items-center gap-4">
+      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <p className="text-sm text-muted-foreground">Loading...</p>
+    </div>
+  </div>
+);
 
 // Root component
 function App() {
   return (
-    <ErrorProvider>
-      <SecurityProvider>
-        <AuthProvider>
-          <TenantProvider>
-            <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/verify-certificate" element={<VerifyCertificatePage />} />
-            <Route path="/certificates/payment/success" element={<CertificatePaymentSuccess />} />
-            <Route path="/certificates/payment/cancelled" element={<CertificatePaymentSuccess />} />
-            
-            {/* Protected routes */}
-            <Route element={<ProtectedRoute />}>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/company" element={<CompanyDashboard />} />
-              <Route path="/company/profile" element={<CompanyProfile />} />
-              <Route path="/shifts" element={<Shifts />} />
-              <Route path="/shifts/create" element={<CreateShift />} />
-              <Route path="/shifts/:id" element={<ShiftDetails />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<AccountSettings />} />
-              <Route path="/promoters" element={<Promoters />} />
-              <Route path="/time" element={<TimeTracking />} />
-              <Route path="/time-history" element={<TimeHistory />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/messages" element={<Messages />} />
-              <Route path="/data-purge" element={<DataPurge />} />
-              <Route path="/certificates" element={<Certificates />} />
-              <Route path="/certificates/request" element={<Certificates />} />
-              <Route path="/subscription" element={<Subscription />} />
-              <Route path="/revenue" element={<Revenue />} />
-              
-              <Route path="/credits" element={<Credits />} />
-              <Route path="/training" element={<Training />} />
-              <Route path="/referrals" element={<Referrals />} />
-            </Route>
-            
-            {/* Fallback route */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-            </BrowserRouter>
-            <Toaster richColors />
-          </TenantProvider>
-        </AuthProvider>
-      </SecurityProvider>
-    </ErrorProvider>
+    <ErrorBoundary showDetails={process.env.NODE_ENV === 'development'}>
+      <ErrorProvider>
+        <SecurityProvider>
+          <AuthProvider>
+            <TenantProvider>
+              <BrowserRouter>
+                <Suspense fallback={<PageLoader />}>
+                  <Routes>
+                    {/* Public routes */}
+                    <Route path={ROUTES.HOME} element={<Index />} />
+                    <Route path={ROUTES.LOGIN} element={<Login />} />
+                    <Route path={ROUTES.SIGNUP} element={<Signup />} />
+                    <Route 
+                      path={ROUTES.FORGOT_PASSWORD} 
+                      element={
+                        <RouteErrorBoundary routeName="Forgot Password">
+                          <ForgotPassword />
+                        </RouteErrorBoundary>
+                      } 
+                    />
+                    <Route 
+                      path={ROUTES.RESET_PASSWORD} 
+                      element={
+                        <RouteErrorBoundary routeName="Reset Password">
+                          <ResetPassword />
+                        </RouteErrorBoundary>
+                      } 
+                    />
+                    <Route 
+                      path={ROUTES.VERIFY_CERTIFICATE} 
+                      element={
+                        <RouteErrorBoundary routeName="Verify Certificate">
+                          <VerifyCertificatePage />
+                        </RouteErrorBoundary>
+                      } 
+                    />
+                    <Route 
+                      path={ROUTES.CERTIFICATE_PAYMENT_SUCCESS} 
+                      element={
+                        <RouteErrorBoundary routeName="Payment Success">
+                          <CertificatePaymentSuccess />
+                        </RouteErrorBoundary>
+                      } 
+                    />
+                    <Route 
+                      path={ROUTES.CERTIFICATE_PAYMENT_CANCELLED} 
+                      element={
+                        <RouteErrorBoundary routeName="Payment Cancelled">
+                          <CertificatePaymentSuccess />
+                        </RouteErrorBoundary>
+                      } 
+                    />
+                    
+                    {/* Development-only debug route - removed for streamlined business model */}
+                    
+                    {/* Protected routes */}
+                    <Route element={<ProtectedRoute />}>
+                      <Route 
+                        path={ROUTES.DASHBOARD} 
+                        element={
+                          <RouteErrorBoundary routeName="Dashboard">
+                            <UnifiedDashboard />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.COMPANY} 
+                        element={
+                          <RouteErrorBoundary routeName="Company Dashboard">
+                            <UnifiedDashboard />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.COMPANY_PROFILE} 
+                        element={
+                          <RouteErrorBoundary routeName="Company Profile">
+                            <CompanyProfile />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.SHIFTS} 
+                        element={
+                          <RouteErrorBoundary routeName="Shifts">
+                            <Shifts />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.SHIFTS_CREATE} 
+                        element={
+                          <RouteErrorBoundary routeName="Create Shift">
+                            <CreateShift />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.SHIFTS_DETAIL} 
+                        element={
+                          <RouteErrorBoundary routeName="Shift Details">
+                            <ShiftDetails />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.PROFILE} 
+                        element={
+                          <RouteErrorBoundary routeName="Profile">
+                            <Profile />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.SETTINGS} 
+                        element={
+                          <RouteErrorBoundary routeName="Settings">
+                            <AccountSettings />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.MESSAGES} 
+                        element={
+                          <RouteErrorBoundary routeName="Messages">
+                            <Messages />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.CERTIFICATES} 
+                        element={
+                          <RouteErrorBoundary routeName="Certificates">
+                            <Certificates />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.CERTIFICATES_REQUEST} 
+                        element={
+                          <RouteErrorBoundary routeName="Request Certificate">
+                            <Certificates />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      
+                      {/* Business model restructured - removed Time Tracking, Training, Credits, Subscription, Referrals */}
+                      
+                      {/* Admin routes */}
+                      <Route 
+                        path={ROUTES.PROMOTERS} 
+                        element={
+                          <RouteErrorBoundary routeName="Promoters">
+                            <Promoters />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.REPORTS} 
+                        element={
+                          <RouteErrorBoundary routeName="Reports">
+                            <Reports />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.REVENUE} 
+                        element={
+                          <RouteErrorBoundary routeName="Revenue">
+                            <Revenue />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                      <Route 
+                        path={ROUTES.DATA_PURGE} 
+                        element={
+                          <RouteErrorBoundary routeName="Data Management">
+                            <DataPurge />
+                          </RouteErrorBoundary>
+                        } 
+                      />
+                    </Route>
+                    
+                    {/* Fallback route */}
+                    <Route path={ROUTES.NOT_FOUND} element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+              <Toaster richColors />
+              {process.env.NODE_ENV === 'development' && <DevToolsPanel />}
+            </TenantProvider>
+          </AuthProvider>
+        </SecurityProvider>
+      </ErrorProvider>
+    </ErrorBoundary>
   );
 }
 

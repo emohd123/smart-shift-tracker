@@ -4,7 +4,10 @@ import { WorkExperienceData } from '../types/certificate';
 
 declare module 'jspdf' {
   interface jsPDF {
-    autoTable: (options: any) => jsPDF;
+    autoTable: (options: Record<string, unknown>) => jsPDF;
+    lastAutoTable: {
+      finalY: number;
+    };
   }
 }
 
@@ -143,7 +146,7 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   });
 
   // Get Y position after table
-  yPosition = (doc as any).lastAutoTable.finalY + 20;
+  yPosition = doc.lastAutoTable.finalY + 20;
 
   // Enhanced Company Information & Verification Section
   doc.setFillColor(52, 152, 219);

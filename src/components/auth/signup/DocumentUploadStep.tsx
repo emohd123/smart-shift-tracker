@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Upload, FileIcon, XCircle } from "lucide-react";
 import { FileData } from "./types";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface DocumentUploadStepProps {
   fileData: FileData;
@@ -30,6 +30,18 @@ export function DocumentUploadStep({
   const isPDF = idCard?.type === 'application/pdf';
   const maxFileSize = 5 * 1024 * 1024; // 5MB
 
+  // Cleanup object URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (idCardPreview && typeof idCardPreview === 'string' && idCardPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(idCardPreview);
+      }
+      if (profilePhotoPreview && typeof profilePhotoPreview === 'string' && profilePhotoPreview.startsWith('blob:')) {
+        URL.revokeObjectURL(profilePhotoPreview);
+      }
+    };
+  }, [idCardPreview, profilePhotoPreview]);
+
   const handleIdCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setIdCardError(null);
     const file = e.target.files?.[0];
@@ -41,6 +53,33 @@ export function DocumentUploadStep({
 
   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setProfilePhotoError(null);
+    const file = e.target.files?.[0];
+    
+    if (file) {
+      // Validate file type and size
+      const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+      if (!validTypes.includes(file.type)) {
+        setProfilePhotoError('Please select a JPEG or PNG image file');
+        return;
+      }
+      
+      if (file.size > maxFileSize) {
+        setProfilePhotoError('File size must be less than 5MB');
+        return;
+      }
+      
+      // Create preview URL safely
+      try {
+        const previewUrl = URL.createObjectURL(file);
+        setProfilePhoto(file);
+        setProfilePhotoPreview(previewUrl);
+      } catch (error) {
+        setProfilePhotoError('Failed to create image preview');
+        console.error('Error creating preview:', error);
+      }
+    }
+    
+    // Also call the original handler
     handleFileChange(e, 'profilePhoto');
   };
 
@@ -134,7 +173,7 @@ export function DocumentUploadStep({
       </div>
 
       <div className="space-y-4">
-        <Label htmlFor="profilePhoto">Profile Photo (Optional)</Label>
+        <Label htmlFor="profilePhoto">Profile Photo *</Label>
         <div className={`border-2 border-dashed rounded-lg p-4 md:p-6 text-center ${profilePhotoError ? 'border-destructive bg-destructive/5' : 'border-gray-300'}`}>
           {profilePhotoError && (
             <div className="flex items-center justify-center text-destructive mb-2 text-sm">
@@ -149,8 +188,15 @@ export function DocumentUploadStep({
                 <img
                   src={profilePhotoPreview}
                   alt="Profile Photo Preview"
-                  className="h-48 md:h-60 mx-auto object-contain"
-                  onError={() => setProfilePhotoError("Failed to load preview")}
+                  className="h-48 md:h-60 mx-auto object-contain rounded-lg border"
+                  onError={(e) => {
+                    console.error('Image failed to load:', e);
+                    setProfilePhotoError("Failed to load preview. Please try a different image.");
+                  }}
+                  onLoad={() => {
+                    // Clear any previous errors when image loads successfully
+                    setProfilePhotoError(null);
+                  }}
                 />
               </div>
               <div className="flex justify-center space-x-2">
@@ -159,6 +205,10 @@ export function DocumentUploadStep({
                   variant="outline"
                   size="sm"
                   onClick={() => {
+                    // Clean up the object URL to prevent memory leaks
+                    if (profilePhotoPreview) {
+                      URL.revokeObjectURL(profilePhotoPreview);
+                    }
                     setProfilePhoto(null);
                     setProfilePhotoPreview(null);
                     setProfilePhotoError(null);

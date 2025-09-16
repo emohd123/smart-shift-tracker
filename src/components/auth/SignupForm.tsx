@@ -1,6 +1,6 @@
 
 import { useSignupForm } from "@/hooks/useSignupForm";
-import { Clock, ArrowLeft, Home, Save } from "lucide-react";
+import { Clock, ArrowLeft, Home, Save, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -36,21 +36,33 @@ export default function SignupForm({ onBack, onSuccess, isModal = false }: Signu
   } = useSignupForm();
 
   if (isSuccess) {
+    // Determine role-specific content
+    const userRole = formData.role || 'part_timer';
+    const isPromoter = userRole === 'part_timer';
+    
     return (
       <div className="w-full max-w-2xl space-y-6 animate-fade-in">
         <div className="text-center">
-          <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
-            <Clock className="text-white" size={20} />
+          <div className={`mx-auto w-12 h-12 rounded-xl ${isPromoter ? 'bg-green-500' : 'bg-blue-500'} flex items-center justify-center mb-3`}>
+            {isPromoter ? <Clock className="text-white" size={20} /> : <Building2 className="text-white" size={20} />}
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Welcome to SmartShift!</h2>
+          <h2 className="text-2xl font-bold tracking-tight">
+            {isPromoter ? 'Welcome to SmartShift, Promoter!' : 'Welcome to SmartShift!'}
+          </h2>
           <p className="text-sm text-muted-foreground mt-2">
-            Your part-timer account has been created successfully
+            {isPromoter 
+              ? 'Your part-timer account has been created successfully' 
+              : 'Your company account has been created successfully'
+            }
           </p>
         </div>
         <RegistrationSuccess />
         <div className="text-center mt-4">
           <p className="text-sm text-muted-foreground">
-            Redirecting to your dashboard...
+            {isPromoter 
+              ? 'Logging you in and redirecting to your promoter dashboard...' 
+              : 'Redirecting to your dashboard...'
+            }
           </p>
         </div>
       </div>

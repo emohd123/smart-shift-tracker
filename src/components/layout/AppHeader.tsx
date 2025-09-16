@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { getProfileRoute } from "@/utils/routes";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -21,6 +23,7 @@ export function AppHeader({
   isMobile 
 }: AppHeaderProps) {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <motion.header 
@@ -75,7 +78,7 @@ export function AppHeader({
             variant="ghost" 
             size="icon"
             className="rounded-full hover:bg-secondary"
-            onClick={() => navigate("/profile")}
+            onClick={() => navigate(getProfileRoute(user?.role))}
             aria-label="User profile"
           >
             <User size={20} />

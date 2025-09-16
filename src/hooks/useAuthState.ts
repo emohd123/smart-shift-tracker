@@ -24,36 +24,12 @@ export const useAuthState = () => {
           // Get the base user first
           const formattedUser = formatUser(session.user);
           
-          // Special check for admin email
           if (formattedUser) {
-            // Set admin role if email matches
             if (formattedUser.email.toLowerCase() === 'emohd123@gmail.com') {
               formattedUser.role = UserRole.Admin;
-              console.log("Admin user detected:", formattedUser.email);
             }
-            
-            try {
-              const { data: profileData, error } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', formattedUser.id)
-                .single();
-              
-              if (error) {
-                console.error("Error fetching user profile:", error);
-              }
-              
-              // Only update role from profile if not already set as admin
-              if (profileData && formattedUser.role !== UserRole.Admin) {
-                formattedUser.role = profileData.role as UserRole;
-              }
-              
-              setUser(formattedUser);
-              console.log("Auth state initialized with user:", formattedUser);
-            } catch (error) {
-              console.error("Error fetching user profile:", error);
-              setUser(formattedUser);
-            }
+            setUser(formattedUser);
+            console.log("Auth state initialized with user:", formattedUser);
           }
         } else {
           console.log("No active session found");
@@ -81,33 +57,10 @@ export const useAuthState = () => {
           // Get the base user first
           const formattedUser = formatUser(session.user);
           
-          // Special check for admin email
           if (formattedUser) {
-            // Set admin role if email matches
             if (formattedUser.email.toLowerCase() === 'emohd123@gmail.com') {
               formattedUser.role = UserRole.Admin;
-              console.log("Admin user detected:", formattedUser.email);
-            } else {
-              try {
-                const { data: profileData, error } = await supabase
-                  .from('profiles')
-                  .select('role')
-                  .eq('id', formattedUser.id)
-                  .single();
-                
-                if (error) {
-                  console.error("Error fetching user profile on auth change:", error);
-                }
-                
-                if (profileData) {
-                  // Update user with role from profile (if not admin)
-                  formattedUser.role = profileData.role as UserRole;
-                }
-              } catch (error) {
-                console.error("Error fetching user profile:", error);
-              }
             }
-            
             setUser(formattedUser);
             console.log("User set after auth state change:", formattedUser);
           }

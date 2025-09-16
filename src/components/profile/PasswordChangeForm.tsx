@@ -36,9 +36,10 @@ export default function PasswordChangeForm() {
       });
       setNewPassword("");
       setConfirmPassword("");
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Password update error:", error);
-      setError(error.message || "Failed to update password");
+      const errorMessage = error instanceof Error ? error.message : "Failed to update password";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
