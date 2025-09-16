@@ -13,7 +13,7 @@ export const passwordSchema = z.string()
   .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
 
 export const phoneSchema = z.string()
-  .regex(/^\+?[\d\s\-\(\)]+$/, 'Invalid phone number format')
+  .regex(/^\+?[\d\s\-()]+$/, 'Invalid phone number format')
   .min(10, 'Phone number must be at least 10 digits');
 
 export const nameSchema = z.string()
@@ -145,7 +145,7 @@ export const useInputValidation = () => {
     }
   };
 
-  const validateForm = (data: Record<string, any>, schema: z.ZodSchema) => {
+  const validateForm = (data: Record<string, unknown>, schema: z.ZodSchema) => {
     try {
       schema.parse(data);
       return { isValid: true, errors: {} };

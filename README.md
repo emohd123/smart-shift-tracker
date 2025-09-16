@@ -1,69 +1,122 @@
-# Welcome to your Lovable project
+# Smart Shift Tracker
 
-## Project info
+An intelligent shift management and tracking system built with React, TypeScript, and Supabase.
 
-**URL**: https://lovable.dev/projects/40519eb3-740c-4168-b3f1-c76fd350524c
+## Features
 
-## How can I edit this code?
+- 🔐 **Authentication & Authorization** - Secure user management with role-based access
+- 📅 **Shift Management** - Create, track, and manage work shifts
+- 👥 **User Management** - Admin dashboard for managing promoters and companies
+- 📊 **Analytics & Reporting** - Comprehensive reports and data visualization
+- 💰 **Revenue Tracking** - Track earnings and financial metrics
+- 📜 **Certificates** - Generate and verify work certificates
+- 🕒 **Time Tracking** - Real-time shift tracking with GPS support
+- 💬 **Messaging** - Internal communication system
+- 🎓 **Training** - Training modules and certification system
 
-There are several ways of editing your application.
+## Tech Stack
 
-**Use Lovable**
+- **Frontend**: React 18, TypeScript, Tailwind CSS
+- **UI Components**: Radix UI (shadcn/ui)
+- **Backend**: Supabase (PostgreSQL, Auth, Storage)
+- **Build Tool**: Vite
+- **Charts**: Recharts
+- **PDF Generation**: jsPDF
+- **Routing**: React Router DOM
+- **State Management**: React Query (TanStack Query)
+- **Form Handling**: React Hook Form with Zod validation
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/40519eb3-740c-4168-b3f1-c76fd350524c) and start prompting.
+## Getting Started
 
-Changes made via Lovable will be committed automatically to this repo.
+### Prerequisites
 
-**Use your preferred IDE**
+- Node.js 18+ and npm
+- Supabase account and project
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### Installation
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+1. **Clone the repository**
+   ```bash
+   git clone <YOUR_GIT_URL>
+   cd smart-shift-tracker
+   ```
 
-Follow these steps:
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+3. **Environment Setup**
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Update the environment variables with your Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+4. **Start development server**
+   ```bash
+   npm run dev
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+   The application will be available at `http://localhost:8080`
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+### Building for Production
+
+```bash
+npm run build
+npm run preview
 ```
 
-**Edit a file directly in GitHub**
+## Project Structure
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```
+src/
+├── components/          # Reusable UI components
+├── pages/              # Page components
+├── context/            # React context providers
+├── hooks/              # Custom React hooks
+├── lib/                # Utility libraries
+├── types/              # TypeScript type definitions
+├── utils/              # Utility functions
+└── integrations/       # External service integrations
+```
 
-**Use GitHub Codespaces**
+## Available Scripts
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- `npm run dev` - Start development server
+- `npm run build` - Build for production
+- `npm run build:dev` - Build for development
+- `npm run preview` - Preview production build
+- `npm run lint` - Run ESLint
 
-## What technologies are used for this project?
+## Contributing
 
-This project is built with .
+1. Create a feature branch from `main`
+2. Make your changes following the existing code style
+3. Run tests and linting: `npm run lint`
+4. Submit a pull request
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Environment Variables
 
-## How can I deploy this project?
+See `.env.example` for all available environment variables.
 
-Simply open [Lovable](https://lovable.dev/projects/40519eb3-740c-4168-b3f1-c76fd350524c) and click on Share -> Publish.
+## Database Schema
 
-## I want to use a custom domain - is that possible?
+The application uses Supabase with the following main tables:
+- `profiles` - User profiles and authentication data
+- `shifts` - Shift information and scheduling
+- `companies` - Company/client information
+- `certificates` - Work certificates and verifications
+- `time_entries` - Time tracking records
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## License
+
+This project is private and proprietary.
+
+## Support
+
+For support and questions, please contact the development team.

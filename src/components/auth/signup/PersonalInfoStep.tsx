@@ -10,16 +10,19 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { GenderType } from "@/types/database";
+import { SignupFormData, FormChangeHandler, FormDataSetter } from "@/types/forms";
+
+interface PersonalInfoStepProps {
+  formData: SignupFormData;
+  handleChange: FormChangeHandler;
+  setFormData: FormDataSetter<SignupFormData>;
+}
 
 export function PersonalInfoStep({ 
   formData, 
   handleChange, 
   setFormData 
-}: { 
-  formData: any; 
-  handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
-  setFormData: (data: any) => void; 
-}) {
+}: PersonalInfoStepProps) {
   return (
     <div className="grid gap-4">
       <h3 className="text-lg font-medium">Personal Information</h3>

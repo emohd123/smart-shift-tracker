@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { GenderType } from "@/types/database";
+import { ProfileFormData } from "@/types/forms";
 import { 
   Form, 
   FormField, 
@@ -21,14 +22,14 @@ import {
 } from "@/components/ui/form";
 
 export interface ProfileFormFieldsProps {
-  form: UseFormReturn<any>;
+  form: UseFormReturn<ProfileFormData>;
   readOnly?: boolean;
 }
 
 // Alternative props interface for backward compatibility
 export interface LegacyProfileFormFieldsProps {
-  formData: any;
-  setFormData: (data: any) => void;
+  formData: ProfileFormData;
+  setFormData: (data: ProfileFormData) => void;
   readOnly: boolean;
 }
 
