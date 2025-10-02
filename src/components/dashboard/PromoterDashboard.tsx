@@ -62,7 +62,7 @@ export default function PromoterDashboard({ shifts }: PromoterDashboardProps) {
           </CardHeader>
           <CardContent>
             <p className="text-sm mb-4">
-              Create official certificates showing your completed work hours, skills gained, and performance records.
+              Create official certificates showing your completed work hours, skills demonstrated, and performance records.
               Perfect for including with job applications!
             </p>
             <Button 

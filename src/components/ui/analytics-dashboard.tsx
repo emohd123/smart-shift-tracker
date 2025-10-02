@@ -34,7 +34,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ classNam
   const [timeRange, setTimeRange] = useState<"7d" | "30d" | "90d">("30d");
   const [loading, setLoading] = useState(false);
 
-  // No mock data; initialize empty. Hook this to API when available
+  // Initialize empty arrays - connect to your analytics API here
   const analyticsData: AnalyticsData[] = [];
 
   const userEngagementData: UserEngagementData[] = [];

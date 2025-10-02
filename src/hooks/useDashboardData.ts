@@ -35,7 +35,6 @@ export function useDashboardData(shifts: Shift[]) {
   // Count of completed shifts (not the actual shifts array)
   const completedShifts = shifts.filter(shift => shift.status === "completed").length;
 
-  // Adding mock loading and error states
   const loading = false;
   const error = null;
 

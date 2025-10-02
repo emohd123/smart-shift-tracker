@@ -42,7 +42,7 @@ export default function CertificateTypeSelector({ certificateType, setCertificat
       </Select>
       <p className="text-xs text-muted-foreground mt-1">
         {certificateType === "skills" 
-          ? "Generates a certificate highlighting skills gained and performance in specific roles."
+          ? "Generates a certificate highlighting skills demonstrated and performance in specific roles."
           : "Creates a comprehensive work history certificate with detailed timesheet data and employment verification."
         }
       </p>

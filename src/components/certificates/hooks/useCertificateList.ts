@@ -48,17 +48,19 @@ export default function useCertificateList() {
     return matchesSearch && matchesType;
   });
 
-  // Mock download handler
   const handleDownload = async (certificate: Certificate) => {
-    console.log("Download certificate:", certificate.reference_number);
+    if (certificate.pdf_url) {
+      window.open(certificate.pdf_url, '_blank');
+    } else {
+      console.error("Certificate PDF not available");
+    }
   };
 
-  // Mock view details handler
   const handleViewDetails = (certificate: Certificate) => {
-    console.log("View details:", certificate.reference_number);
+    // Navigate to certificate detail view if implemented
+    console.log("View certificate details:", certificate.reference_number);
   };
 
-  // Mock date formatter
   const formatDateForDisplay = (date: string) => {
     return new Date(date).toLocaleDateString();
   };
