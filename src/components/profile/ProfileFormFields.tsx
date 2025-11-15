@@ -1,8 +1,11 @@
 
+import { useState } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -10,9 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Copy, Check } from "lucide-react";
 import { GenderType } from "@/types/database";
+import { countries } from "@/lib/countries";
+import { toast } from "sonner";
 import { 
-  Form, 
+  Form,
   FormField, 
   FormItem, 
   FormLabel, 
@@ -36,27 +42,51 @@ export default function ProfileFormFields({
   form, 
   readOnly = false 
 }: ProfileFormFieldsProps) {
+  const [copied, setCopied] = useState(false);
+  
+  const uniqueCode = form.watch("unique_code");
+  
+  const handleCopyCode = async () => {
+    if (uniqueCode) {
+      try {
+        await navigator.clipboard.writeText(uniqueCode);
+        setCopied(true);
+        toast.success("Code copied to clipboard!");
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        toast.error("Failed to copy code");
+      }
+    }
+  };
+  
   return (
     <>
-      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="unique_code">Promoter Code</Label>
-          <div className="relative">
+      {uniqueCode && (
+        <div className="space-y-2 col-span-full">
+          <Label htmlFor="unique_code">Your Unique Promoter Code</Label>
+          <div className="flex items-center gap-2">
             <Input
               id="unique_code"
               type="text"
-              value={form.watch("unique_code") || ""}
+              value={uniqueCode}
               readOnly
               disabled
-              className="bg-muted/50 font-mono text-lg tracking-wider text-center"
+              className="bg-muted/50 font-mono text-lg tracking-wider text-center flex-1"
             />
-            <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-              <span className="text-xs text-muted-foreground">ID</span>
-            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={handleCopyCode}
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+            </Button>
           </div>
-          <p className="text-xs text-muted-foreground">Your unique promoter identification code</p>
+          <p className="text-xs text-muted-foreground">This code is used by companies to assign you to shifts</p>
         </div>
-
+      )}
+      
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="full_name">Full Name</Label>
           <Input

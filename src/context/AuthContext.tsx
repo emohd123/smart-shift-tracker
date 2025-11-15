@@ -9,6 +9,7 @@ export type User = {
   email: string;
   name: string;
   role: UserRole;
+  unique_code?: string | null;
   metadata: Record<string, any>;
 };
 
