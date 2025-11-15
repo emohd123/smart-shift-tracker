@@ -113,6 +113,11 @@ export const useAuthentication = () => {
       }
 
       console.log("✓ Signup successful:", data.user.id);
+      
+      // Assign role via user_roles table (trigger should handle this, but double-check)
+      // The handle_new_user trigger creates the role automatically
+      // If for some reason it didn't work, we could add a fallback here
+      
       return data.user;
     } catch (error: any) {
       console.error("Signup error:", error);

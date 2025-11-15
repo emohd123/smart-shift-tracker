@@ -24,34 +24,22 @@ export const useAuthState = () => {
           // Get the base user first
           const formattedUser = formatUser(session.user);
           
-          // Special check for admin email
           if (formattedUser) {
-            // Set admin role if email matches
-            if (formattedUser.email.toLowerCase() === 'emohd123@gmail.com') {
-              formattedUser.role = UserRole.Admin;
-              console.log("Admin user detected:", formattedUser.email);
-            }
-            
             try {
-              const { data: profileData, error } = await supabase
-                .from('profiles')
-                .select('role')
-                .eq('id', formattedUser.id)
-                .single();
+              // Fetch role from user_roles table using security definer function
+              const { data: roleData, error: roleError } = await supabase
+                .rpc('get_user_role', { _user_id: formattedUser.id });
               
-              if (error) {
-                console.error("Error fetching user profile:", error);
-              }
-              
-              // Only update role from profile if not already set as admin
-              if (profileData && formattedUser.role !== UserRole.Admin) {
-                formattedUser.role = profileData.role as UserRole;
+              if (roleError) {
+                console.error("Error fetching user role:", roleError);
+              } else if (roleData) {
+                formattedUser.role = roleData as UserRole;
               }
               
               setUser(formattedUser);
               console.log("Auth state initialized with user:", formattedUser);
             } catch (error) {
-              console.error("Error fetching user profile:", error);
+              console.error("Error fetching user role:", error);
               setUser(formattedUser);
             }
           }
@@ -81,31 +69,19 @@ export const useAuthState = () => {
           // Get the base user first
           const formattedUser = formatUser(session.user);
           
-          // Special check for admin email
           if (formattedUser) {
-            // Set admin role if email matches
-            if (formattedUser.email.toLowerCase() === 'emohd123@gmail.com') {
-              formattedUser.role = UserRole.Admin;
-              console.log("Admin user detected:", formattedUser.email);
-            } else {
-              try {
-                const { data: profileData, error } = await supabase
-                  .from('profiles')
-                  .select('role')
-                  .eq('id', formattedUser.id)
-                  .single();
-                
-                if (error) {
-                  console.error("Error fetching user profile on auth change:", error);
-                }
-                
-                if (profileData) {
-                  // Update user with role from profile (if not admin)
-                  formattedUser.role = profileData.role as UserRole;
-                }
-              } catch (error) {
-                console.error("Error fetching user profile:", error);
+            try {
+              // Fetch role from user_roles table using security definer function
+              const { data: roleData, error: roleError } = await supabase
+                .rpc('get_user_role', { _user_id: formattedUser.id });
+              
+              if (roleError) {
+                console.error("Error fetching user role:", roleError);
+              } else if (roleData) {
+                formattedUser.role = roleData as UserRole;
               }
+            } catch (error) {
+              console.error("Error fetching user role:", error);
             }
             
             setUser(formattedUser);
