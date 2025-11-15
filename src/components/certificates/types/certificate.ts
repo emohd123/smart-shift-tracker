@@ -17,6 +17,8 @@ export type Certificate = {
     ip_address: string;
     user_agent: string;
   }> | any; // Use 'any' to handle JSONB from database
+  paid?: boolean; // Payment status
+  payment_id?: string; // Reference to certificate_payments
 };
 
 export type TimePeriod = "3months" | "6months" | "1year" | "all";

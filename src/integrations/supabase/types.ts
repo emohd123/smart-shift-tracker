@@ -70,6 +70,60 @@ export type Database = {
           },
         ]
       }
+      certificate_payments: {
+        Row: {
+          amount: number
+          certificate_id: string
+          created_at: string | null
+          currency: string
+          id: string
+          status: string
+          stripe_payment_intent_id: string | null
+          stripe_session_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number
+          certificate_id: string
+          created_at?: string | null
+          currency?: string
+          id?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          certificate_id?: string
+          created_at?: string | null
+          currency?: string
+          id?: string
+          status?: string
+          stripe_payment_intent_id?: string | null
+          stripe_session_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificate_payments_certificate_id_fkey"
+            columns: ["certificate_id"]
+            isOneToOne: true
+            referencedRelation: "certificates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificate_payments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       certificate_verifications: {
         Row: {
           id: string
@@ -101,6 +155,8 @@ export type Database = {
           id: string
           issue_date: string
           issued_by: string | null
+          paid: boolean | null
+          payment_id: string | null
           pdf_url: string | null
           position_title: string | null
           promotion_names: string[] | null
@@ -117,6 +173,8 @@ export type Database = {
           id?: string
           issue_date: string
           issued_by?: string | null
+          paid?: boolean | null
+          payment_id?: string | null
           pdf_url?: string | null
           position_title?: string | null
           promotion_names?: string[] | null
@@ -133,6 +191,8 @@ export type Database = {
           id?: string
           issue_date?: string
           issued_by?: string | null
+          paid?: boolean | null
+          payment_id?: string | null
           pdf_url?: string | null
           position_title?: string | null
           promotion_names?: string[] | null
@@ -149,6 +209,13 @@ export type Database = {
             columns: ["issued_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "certificates_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "certificate_payments"
             referencedColumns: ["id"]
           },
           {

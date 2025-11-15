@@ -24,7 +24,7 @@ export const useUnifiedCertificateGeneration = (
   const { fetchWorkExperienceData } = useWorkExperienceData();
   const { fetchPromoters } = useUserData();
 
-  const generateCertificate = async () => {
+  const generateCertificate = async (): Promise<{ certificateId: string | null } | void> => {
     if (!user) {
       toast.error("Please login to generate certificates");
       return;
@@ -38,8 +38,9 @@ export const useUnifiedCertificateGeneration = (
       const workData = await fetchWorkExperienceData(userId, timePeriod);
       if (workData) {
         setCertificateData(workData);
-        // Save certificate to database
-        await saveCertificateToDatabase(workData);
+        // Save certificate to database and get the ID
+        const certificateId = await saveCertificateToDatabase(workData);
+        return { certificateId };
       }
     } catch (error) {
       console.error('Certificate generation failed:', error);
@@ -49,9 +50,9 @@ export const useUnifiedCertificateGeneration = (
     }
   };
 
-  const saveCertificateToDatabase = async (data: WorkExperienceData) => {
+  const saveCertificateToDatabase = async (data: WorkExperienceData): Promise<string | null> => {
     try {
-      const { error } = await supabase
+      const { data: certData, error } = await supabase
         .from('certificates')
         .insert([{
           user_id: userId,
@@ -64,15 +65,22 @@ export const useUnifiedCertificateGeneration = (
           promotion_names: data.roles,
           skills_gained: ['Time Management', 'Reliability', 'Customer Service', 'Adaptability'],
           issued_by: user?.id,
-          status: 'approved'
-        }]);
+          status: 'approved',
+          paid: false
+        }])
+        .select('id')
+        .single();
 
       if (error) {
         console.error('Error saving certificate:', error);
         toast.error("Certificate generated but not saved to database");
+        return null;
       }
+      
+      return certData?.id || null;
     } catch (error) {
       console.error('Error saving certificate:', error);
+      return null;
     }
   };
 

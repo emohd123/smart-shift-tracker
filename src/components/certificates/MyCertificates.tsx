@@ -54,13 +54,13 @@ export default function MyCertificates() {
   
   return (
     <Card>
-      <CardHeader className="bg-secondary/20">
-        <CardTitle className="flex items-center gap-2">
-          <CheckCircle className="h-5 w-5 text-primary" />
+      <CardHeader className="bg-secondary/20 p-4 sm:p-6">
+        <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+          <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
           My Professional Certificates
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-6">
+      <CardContent className="p-4 sm:p-6">
         <CertificatesFilter 
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
