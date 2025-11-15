@@ -1,10 +1,23 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import { AttendanceStatusBadge } from "./AttendanceStatusBadge";
 import { TimeLog, calculatePromoterPayment, formatWorkDuration, formatBHD } from "../utils/paymentCalculations";
-import { Clock, Phone, User } from "lucide-react";
+import { Clock, Phone, User, X } from "lucide-react";
 import { format } from "date-fns";
+import { useUnassignPromoter } from "./hooks/useUnassignPromoter";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type PromoterAttendanceCardProps = {
   promoter: {
@@ -25,6 +38,8 @@ export const PromoterAttendanceCard = ({
   payRate,
   payRateType,
 }: PromoterAttendanceCardProps) => {
+  const { unassignPromoter, loading: unassigning } = useUnassignPromoter();
+  const hasTimeLogs = timeLogs.length > 0;
   const totalHours = timeLogs.reduce((sum, log) => sum + (log.total_hours || 0), 0);
   const payment = calculatePromoterPayment(timeLogs, payRate, payRateType);
   const latestLog = timeLogs.length > 0 ? timeLogs[timeLogs.length - 1] : null;
@@ -36,6 +51,15 @@ export const PromoterAttendanceCard = ({
       .join("")
       .toUpperCase()
       .slice(0, 2);
+  };
+
+  const handleUnassign = async () => {
+    await unassignPromoter(
+      promoter.id,
+      promoter.promoter_id,
+      promoter.full_name,
+      hasTimeLogs
+    );
   };
 
   return (
@@ -53,7 +77,46 @@ export const PromoterAttendanceCard = ({
               <p className="text-xs text-muted-foreground">Code: {promoter.unique_code}</p>
             </div>
           </div>
-          <AttendanceStatusBadge timeLogs={timeLogs} />
+          <div className="flex items-center gap-2">
+            <AttendanceStatusBadge timeLogs={timeLogs} />
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={unassigning}
+                  title={hasTimeLogs ? "Cannot unassign promoter with attendance records" : "Unassign promoter"}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Unassign Promoter</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    {hasTimeLogs ? (
+                      <>
+                        Cannot unassign <strong>{promoter.full_name}</strong> because they have attendance records for this shift.
+                      </>
+                    ) : (
+                      <>
+                        Are you sure you want to unassign <strong>{promoter.full_name}</strong> from this shift?
+                      </>
+                    )}
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  {!hasTimeLogs && (
+                    <AlertDialogAction onClick={handleUnassign} disabled={unassigning}>
+                      {unassigning ? "Unassigning..." : "Unassign"}
+                    </AlertDialogAction>
+                  )}
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 gap-3 text-sm">
