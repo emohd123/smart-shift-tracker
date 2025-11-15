@@ -2,3 +2,6 @@ project_id = "dokbdhfcxsihzfkhbohi"
 
 [functions.stripe-webhook]
 verify_jwt = false
+
+[functions.auto-attendance]
+verify_jwt = false
