@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Info } from "lucide-react";
 import { PromoterOption } from "../types/PromoterTypes";
+import { Shift, ShiftFormData } from "../types/ShiftTypes";
 import ShiftFormHeader from "./ShiftFormHeader";
 import BasicInfoFields from "./BasicInfoFields";
 import DateTimeFields from "./DateTimeFields";
@@ -13,13 +14,15 @@ import LocationMapToggle from "./LocationMapToggle";
 import SubmitButton from "./SubmitButton";
 import useShiftForm from "./useShiftForm";
 import ValidationErrors from "./ValidationErrors";
-import { ShiftFormData } from "../types/ShiftTypes";
 
 interface ShiftFormProps {
+  shift?: Shift;
   onExternalSubmit?: (data: ShiftFormData) => void;
 }
 
-export function ShiftForm({ onExternalSubmit }: ShiftFormProps) {
+export function ShiftForm({ shift, onExternalSubmit }: ShiftFormProps = {}) {
+  const isEditMode = !!shift;
+  
   const {
     formData,
     loading,
@@ -30,7 +33,7 @@ export function ShiftForm({ onExternalSubmit }: ShiftFormProps) {
     handlePayRateTypeChange,
     handlePromoterSelect,
     handleSubmit
-  } = useShiftForm(onExternalSubmit);
+  } = useShiftForm({ initialData: shift, onExternalSubmit });
 
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
 
@@ -71,20 +74,30 @@ export function ShiftForm({ onExternalSubmit }: ShiftFormProps) {
   return (
     <form onSubmit={onSubmit}>
       <Card>
-        <ShiftFormHeader />
+        <ShiftFormHeader title={isEditMode ? "Edit Shift" : "Create New Shift"} />
         
         <CardContent className="space-y-4">
           {validationErrors.length > 0 && (
             <ValidationErrors errors={validationErrors} />
           )}
           
-          <Alert>
-            <Info className="h-4 w-4" />
-            <AlertTitle>Info</AlertTitle>
-            <AlertDescription>
-              Fill in all required fields to create a new shift. You can assign multiple promoters and set a precise location.
-            </AlertDescription>
-          </Alert>
+          {isEditMode ? (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Editing Shift</AlertTitle>
+              <AlertDescription>
+                Update shift details below. Note: Modifying dates may affect assigned promoters.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertTitle>Info</AlertTitle>
+              <AlertDescription>
+                Fill in all required fields to create a new shift. You can assign multiple promoters and set a precise location.
+              </AlertDescription>
+            </Alert>
+          )}
 
           <BasicInfoFields
             title={formData.title}
@@ -108,17 +121,22 @@ export function ShiftForm({ onExternalSubmit }: ShiftFormProps) {
             required={false}
           />
           
-          <PromoterSelector
-            promoters={promoters}
-            selectedPromoterIds={formData.selectedPromoterIds}
-            onSelect={handlePromoterSelect}
-            loading={loadingPromoters}
-          />
+          {!isEditMode && (
+            <PromoterSelector
+              promoters={promoters}
+              selectedPromoterIds={formData.selectedPromoterIds}
+              onSelect={handlePromoterSelect}
+              loading={loadingPromoters}
+            />
+          )}
           
           <LocationMapToggle />
         </CardContent>
         
-        <SubmitButton loading={loading} />
+        <SubmitButton 
+          loading={loading}
+          label={isEditMode ? "Update Shift" : "Create Shift"}
+        />
       </Card>
     </form>
   );

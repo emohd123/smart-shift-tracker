@@ -12,6 +12,7 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import Shifts from "./pages/Shifts";
 import CreateShift from "./pages/CreateShift";
+import EditShift from "./pages/EditShift";
 import ShiftDetails from "./pages/ShiftDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -54,6 +55,7 @@ function App() {
               <Route path="/company/profile" element={<CompanyProfile />} />
               <Route path="/shifts" element={<Shifts />} />
               <Route path="/shifts/create" element={<CreateShift />} />
+              <Route path="/shifts/:id/edit" element={<EditShift />} />
               <Route path="/shifts/:id" element={<ShiftDetails />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<AccountSettings />} />

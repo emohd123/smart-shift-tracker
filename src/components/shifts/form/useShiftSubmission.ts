@@ -6,10 +6,12 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ShiftFormData } from "../types/ShiftTypes";
 
-export default function useShiftSubmission() {
+export default function useShiftSubmission(shiftId?: string) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
+  
+  const isEditMode = !!shiftId;
 
   const submitShift = async (formData: ShiftFormData, e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -43,50 +45,66 @@ export default function useShiftSubmission() {
         end_time: formData.endTime,
         pay_rate: formData.payRate ? parseFloat(formData.payRate) : null,
         pay_rate_type: formData.payRateType,
-        status: 'upcoming',
         company_id: user?.id || null
       };
       
-      console.log("Submitting shift:", shiftData);
+      let resultShiftId: string;
       
-      // Insert the shift into the database
-      const { data: shiftResult, error: shiftError } = await supabase
-        .from('shifts')
-        .insert(shiftData)
-        .select('id')
-        .single();
-      
-      if (shiftError) {
-        throw shiftError;
-      }
-      
-      const shiftId = shiftResult.id;
-      console.log("Shift created with ID:", shiftId);
-      
-      // If promoters were selected, assign them to the shift
-      if (formData.selectedPromoterIds.length > 0) {
-        const promoterAssignments = formData.selectedPromoterIds.map(promoterId => ({
-          shift_id: shiftId,
-          promoter_id: promoterId
-        }));
+      if (isEditMode) {
+        // UPDATE existing shift
+        console.log("Updating shift:", shiftId, shiftData);
         
-        console.log("Creating promoter assignments:", promoterAssignments);
+        const { data: updated, error: updateError } = await supabase
+          .from('shifts')
+          .update(shiftData)
+          .eq('id', shiftId)
+          .select('id')
+          .single();
+          
+        if (updateError) throw updateError;
+        resultShiftId = updated.id;
         
-        const { error: assignmentError } = await supabase
-          .from('shift_assignments')
-          .insert(promoterAssignments);
+        toast.success("Shift updated successfully");
+      } else {
+        // INSERT new shift
+        const insertData = { ...shiftData, status: 'upcoming' };
+        console.log("Creating shift:", insertData);
         
-        if (assignmentError) {
-          console.error("Error assigning promoters:", assignmentError);
-          toast.error("Shift created but there was an error assigning promoters");
-        } else {
-          console.log("Successfully assigned promoters to shift");
+        const { data: created, error: insertError } = await supabase
+          .from('shifts')
+          .insert(insertData)
+          .select('id')
+          .single();
+        
+        if (insertError) throw insertError;
+        resultShiftId = created.id;
+        console.log("Shift created with ID:", resultShiftId);
+        
+        // If promoters were selected, assign them to the shift
+        if (formData.selectedPromoterIds.length > 0) {
+          const promoterAssignments = formData.selectedPromoterIds.map(promoterId => ({
+            shift_id: resultShiftId,
+            promoter_id: promoterId
+          }));
+          
+          console.log("Creating promoter assignments:", promoterAssignments);
+          
+          const { error: assignmentError } = await supabase
+            .from('shift_assignments')
+            .insert(promoterAssignments);
+          
+          if (assignmentError) {
+            console.error("Error assigning promoters:", assignmentError);
+            toast.error("Shift created but there was an error assigning promoters");
+          } else {
+            console.log("Successfully assigned promoters to shift");
+          }
         }
+        
+        toast.success("Shift created successfully");
       }
       
-      // Show success message and redirect
-      toast.success("Shift created successfully");
-      navigate("/shifts");
+      navigate(`/shifts/${resultShiftId}`);
       
     } catch (error: any) {
       console.error("Error submitting shift:", error);

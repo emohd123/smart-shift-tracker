@@ -2,22 +2,44 @@ import { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import usePromoters from "./usePromoters";
 import useShiftSubmission from "./useShiftSubmission";
-import { ShiftFormData } from "../types/ShiftTypes";
+import { ShiftFormData, Shift } from "../types/ShiftTypes";
 
-export default function useShiftForm(onExternalSubmit?: (data: ShiftFormData) => void) {
-  const [formData, setFormData] = useState<ShiftFormData>({
-    title: "",
-    location: "",
-    dateRange: undefined,
-    startTime: "",
-    endTime: "",
-    payRate: "",
-    payRateType: "hourly",
-    selectedPromoterIds: []
+interface UseShiftFormProps {
+  initialData?: Shift;
+  onExternalSubmit?: (data: ShiftFormData) => void;
+}
+
+export default function useShiftForm({ initialData, onExternalSubmit }: UseShiftFormProps = {}) {
+  const [formData, setFormData] = useState<ShiftFormData>(() => {
+    if (initialData) {
+      return {
+        title: initialData.title,
+        location: initialData.location || "",
+        dateRange: {
+          from: new Date(initialData.date),
+          to: initialData.endDate ? new Date(initialData.endDate) : undefined
+        },
+        startTime: initialData.startTime,
+        endTime: initialData.endTime,
+        payRate: initialData.payRate.toString(),
+        payRateType: initialData.payRateType || "hourly",
+        selectedPromoterIds: []
+      };
+    }
+    return {
+      title: "",
+      location: "",
+      dateRange: undefined,
+      startTime: "",
+      endTime: "",
+      payRate: "",
+      payRateType: "hourly",
+      selectedPromoterIds: []
+    };
   });
 
   const { promoters, loadingPromoters } = usePromoters();
-  const { submitShift, loading } = useShiftSubmission();
+  const { submitShift, loading } = useShiftSubmission(initialData?.id);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
