@@ -43,7 +43,7 @@ export default function useShiftSubmission() {
         end_time: formData.endTime,
         pay_rate: formData.payRate ? parseFloat(formData.payRate) : null,
         pay_rate_type: formData.payRateType,
-        status: 'scheduled',
+        status: 'upcoming',
         company_id: user?.id || null
       };
       
