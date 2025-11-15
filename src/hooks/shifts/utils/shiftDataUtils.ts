@@ -20,7 +20,9 @@ export const formatDatabaseShifts = (dbShifts: any[]): Shift[] => {
     isPaid: shift.is_paid || false,
     is_assigned: shift.is_assigned || false,
     assigned_promoters: shift.assigned_promoters || 0,
-    created_at: shift.created_at
+    created_at: shift.created_at,
+    manual_status_override: shift.manual_status_override || false,
+    override_status: shift.override_status || undefined
   }));
 };
 
@@ -39,7 +41,9 @@ export const formatShiftForDatabase = (shift: Shift) => {
     status: shift.status,
     pay_rate: shift.payRate || null,
     pay_rate_type: shift.payRateType || 'hour',
-    is_paid: shift.isPaid || false
+    is_paid: shift.isPaid || false,
+    manual_status_override: shift.manual_status_override || false,
+    override_status: shift.override_status || null
   };
 };
 
