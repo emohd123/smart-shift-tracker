@@ -4,9 +4,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { AttendanceStatusBadge } from "./AttendanceStatusBadge";
 import { TimeLog, calculatePromoterPayment, formatWorkDuration, formatBHD } from "../utils/paymentCalculations";
-import { Clock, Phone, User, X } from "lucide-react";
+import { Clock, Phone, User, X, LogIn, LogOut, Timer } from "lucide-react";
 import { format } from "date-fns";
 import { useUnassignPromoter } from "./hooks/useUnassignPromoter";
+import { useCompanyCheckIn } from "./hooks/useCompanyCheckIn";
+import { EditAssignmentDialog } from "./EditAssignmentDialog";
+import { useEffect, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,10 +29,16 @@ type PromoterAttendanceCardProps = {
     full_name: string;
     unique_code: string;
     phone_number?: string;
+    scheduled_start_time?: string;
+    scheduled_end_time?: string;
+    auto_checkin_enabled?: boolean;
+    auto_checkout_enabled?: boolean;
   };
   timeLogs: TimeLog[];
   payRate: number;
   payRateType: string;
+  shiftId: string;
+  onUpdate?: () => void;
 };
 
 export const PromoterAttendanceCard = ({
@@ -37,12 +46,56 @@ export const PromoterAttendanceCard = ({
   timeLogs,
   payRate,
   payRateType,
+  shiftId,
+  onUpdate,
 }: PromoterAttendanceCardProps) => {
   const { unassignPromoter, loading: unassigning } = useUnassignPromoter();
+  const { checkIn, checkOut, loading: checkInOutLoading } = useCompanyCheckIn(shiftId, payRate, payRateType);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [estimatedEarnings, setEstimatedEarnings] = useState(0);
+  
   const hasTimeLogs = timeLogs.length > 0;
   const totalHours = timeLogs.reduce((sum, log) => sum + (log.total_hours || 0), 0);
   const payment = calculatePromoterPayment(timeLogs, payRate, payRateType);
   const latestLog = timeLogs.length > 0 ? timeLogs[timeLogs.length - 1] : null;
+  const isCheckedIn = latestLog && !latestLog.check_out_time;
+
+  // Calculate elapsed time and estimated earnings for active check-ins
+  useEffect(() => {
+    if (!isCheckedIn || !latestLog?.check_in_time) return;
+
+    const updateElapsed = () => {
+      const checkIn = new Date(latestLog.check_in_time);
+      const now = new Date();
+      const hours = (now.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
+      setElapsedTime(hours * 3600); // Convert to seconds
+      
+      // Calculate estimated earnings
+      let earnings = 0;
+      switch (payRateType) {
+        case 'hourly':
+          earnings = hours * payRate;
+          break;
+        case 'daily':
+          earnings = (hours / 8) * payRate;
+          break;
+        case 'monthly':
+          earnings = (hours / 160) * payRate;
+          break;
+        case 'fixed':
+          earnings = payRate;
+          break;
+        default:
+          earnings = hours * payRate;
+      }
+      setEstimatedEarnings(earnings);
+    };
+
+    updateElapsed();
+    const interval = setInterval(updateElapsed, 1000);
+
+    return () => clearInterval(interval);
+  }, [isCheckedIn, latestLog, payRate, payRateType]);
 
   const getInitials = (name: string) => {
     return name
@@ -60,6 +113,27 @@ export const PromoterAttendanceCard = ({
       promoter.full_name,
       hasTimeLogs
     );
+  };
+
+  const handleCheckIn = async () => {
+    const success = await checkIn(promoter.promoter_id, promoter.full_name);
+    if (success) {
+      onUpdate?.();
+    }
+  };
+
+  const handleCheckOut = async () => {
+    if (!latestLog?.check_in_time) return;
+    const success = await checkOut(latestLog.id as any, promoter.full_name, latestLog.check_in_time);
+    if (success) {
+      onUpdate?.();
+    }
+  };
+
+  const formatElapsedTime = (seconds: number) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${minutes}m`;
   };
 
   return (
@@ -119,7 +193,84 @@ export const PromoterAttendanceCard = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 text-sm">
+        {/* Scheduled Time */}
+        {promoter.scheduled_start_time && promoter.scheduled_end_time && (
+          <div className="p-2 bg-accent/30 rounded-md text-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Scheduled:</span>
+              <span className="font-medium">
+                {promoter.scheduled_start_time} - {promoter.scheduled_end_time}
+              </span>
+            </div>
+            {(promoter.auto_checkin_enabled || promoter.auto_checkout_enabled) && (
+              <div className="flex gap-2 mt-1 text-[10px] text-muted-foreground">
+                {promoter.auto_checkin_enabled && <span>• Auto check-in</span>}
+                {promoter.auto_checkout_enabled && <span>• Auto check-out</span>}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Active Check-in Status */}
+        {isCheckedIn && (
+          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-md space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-green-600 font-medium flex items-center gap-1">
+                <Timer className="h-3.5 w-3.5" />
+                Currently Working
+              </span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              <div>
+                <span className="text-muted-foreground">Elapsed:</span>
+                <p className="font-medium">{formatElapsedTime(elapsedTime)}</p>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Est. Earnings:</span>
+                <p className="font-medium text-green-600">{formatBHD(estimatedEarnings)}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Check-in/out Controls */}
+        <div className="flex gap-2">
+          {!isCheckedIn && !latestLog?.check_out_time && (
+            <Button
+              onClick={handleCheckIn}
+              disabled={checkInOutLoading}
+              size="sm"
+              className="flex-1"
+            >
+              <LogIn className="h-3.5 w-3.5 mr-1" />
+              Check In
+            </Button>
+          )}
+          {isCheckedIn && (
+            <Button
+              onClick={handleCheckOut}
+              disabled={checkInOutLoading}
+              size="sm"
+              variant="destructive"
+              className="flex-1"
+            >
+              <LogOut className="h-3.5 w-3.5 mr-1" />
+              Check Out
+            </Button>
+          )}
+          <EditAssignmentDialog
+            assignmentId={promoter.id}
+            promoterName={promoter.full_name}
+            currentStartTime={promoter.scheduled_start_time}
+            currentEndTime={promoter.scheduled_end_time}
+            currentAutoCheckIn={promoter.auto_checkin_enabled}
+            currentAutoCheckOut={promoter.auto_checkout_enabled}
+            hasTimeLogs={hasTimeLogs}
+            onUpdate={onUpdate}
+          />
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t">
           {latestLog?.check_in_time && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <Clock className="h-3.5 w-3.5" />

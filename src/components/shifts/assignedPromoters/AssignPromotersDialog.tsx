@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UserPlus, Search } from "lucide-react";
+import { UserPlus, Search, Clock } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAssignPromoters } from "./hooks/useAssignPromoters";
@@ -25,6 +26,16 @@ type AssignPromotersDialogProps = {
   currentAssignments?: string[];
   variant?: "default" | "outline";
   buttonText?: string;
+  shiftStartTime?: string;
+  shiftEndTime?: string;
+};
+
+type PromoterSchedule = {
+  promoterId: string;
+  startTime: string;
+  endTime: string;
+  autoCheckIn: boolean;
+  autoCheckOut: boolean;
 };
 
 export const AssignPromotersDialog = ({
@@ -32,6 +43,8 @@ export const AssignPromotersDialog = ({
   currentAssignments = [],
   variant = "default",
   buttonText = "Assign Promoters",
+  shiftStartTime = "09:00",
+  shiftEndTime = "17:00",
 }: AssignPromotersDialogProps) => {
   const [open, setOpen] = useState(false);
   const [promoters, setPromoters] = useState<PromoterOption[]>([]);
@@ -39,6 +52,9 @@ export const AssignPromotersDialog = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [uniqueCode, setUniqueCode] = useState("");
   const [loading, setLoading] = useState(true);
+  const [schedules, setSchedules] = useState<{ [key: string]: PromoterSchedule }>({});
+  const [bulkStartTime, setBulkStartTime] = useState(shiftStartTime);
+  const [bulkEndTime, setBulkEndTime] = useState(shiftEndTime);
   
   const { assignPromoters, loading: assigning } = useAssignPromoters(shiftId);
 
@@ -46,6 +62,7 @@ export const AssignPromotersDialog = ({
     if (open) {
       fetchPromoters();
       setSelectedIds([]);
+      setSchedules({});
     }
   }, [open]);
 
@@ -95,14 +112,69 @@ export const AssignPromotersDialog = ({
     }
 
     setSelectedIds(prev => [...prev, promoter.id]);
+    setSchedules(prev => ({
+      ...prev,
+      [promoter.id]: {
+        promoterId: promoter.id,
+        startTime: shiftStartTime,
+        endTime: shiftEndTime,
+        autoCheckIn: false,
+        autoCheckOut: false,
+      }
+    }));
     toast.success(`Added ${promoter.full_name} (${promoter.unique_code})`);
     setUniqueCode("");
   };
 
   const togglePromoter = (id: string) => {
-    setSelectedIds(prev =>
-      prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]
-    );
+    setSelectedIds(prev => {
+      const newIds = prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id];
+      
+      if (!prev.includes(id)) {
+        setSchedules(s => ({
+          ...s,
+          [id]: {
+            promoterId: id,
+            startTime: shiftStartTime,
+            endTime: shiftEndTime,
+            autoCheckIn: false,
+            autoCheckOut: false,
+          }
+        }));
+      }
+      
+      return newIds;
+    });
+  };
+
+  const updateSchedule = (promoterId: string, updates: Partial<PromoterSchedule>) => {
+    setSchedules(prev => ({
+      ...prev,
+      [promoterId]: { ...prev[promoterId], ...updates }
+    }));
+  };
+
+  const applyBulkTime = () => {
+    if (!bulkStartTime || !bulkEndTime) {
+      toast.error("Please set both start and end times");
+      return;
+    }
+
+    if (bulkStartTime >= bulkEndTime) {
+      toast.error("Start time must be before end time");
+      return;
+    }
+
+    const updates: { [key: string]: PromoterSchedule } = {};
+    selectedIds.forEach(id => {
+      updates[id] = {
+        ...schedules[id],
+        startTime: bulkStartTime,
+        endTime: bulkEndTime,
+      };
+    });
+    setSchedules(prev => ({ ...prev, ...updates }));
+    toast.success(`Applied ${bulkStartTime} - ${bulkEndTime} to ${selectedIds.length} promoter(s)`);
   };
 
   const handleSave = async () => {
@@ -115,12 +187,25 @@ export const AssignPromotersDialog = ({
       return;
     }
 
-    const success = await assignPromoters(newAssignments);
+    for (const id of newAssignments) {
+      const schedule = schedules[id];
+      if (!schedule?.startTime || !schedule?.endTime) {
+        toast.error("Please set work hours for all promoters");
+        return;
+      }
+      if (schedule.startTime >= schedule.endTime) {
+        toast.error("Start time must be before end time for all promoters");
+        return;
+      }
+    }
+
+    const success = await assignPromoters(newAssignments, schedules);
     if (success) {
       setOpen(false);
       setSelectedIds([]);
       setSearchQuery("");
       setUniqueCode("");
+      setSchedules({});
     }
   };
 
@@ -141,11 +226,11 @@ export const AssignPromotersDialog = ({
           {buttonText}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Assign Promoters</DialogTitle>
           <DialogDescription>
-            Select promoters to assign to this shift
+            Select promoters and set their work hours (Shift: {shiftStartTime} - {shiftEndTime})
           </DialogDescription>
         </DialogHeader>
 
@@ -177,6 +262,37 @@ export const AssignPromotersDialog = ({
             </div>
           </div>
 
+          {/* Bulk Time Assignment */}
+          {selectedIds.length > 0 && (
+            <div className="space-y-2 p-3 border rounded-lg bg-accent/50">
+              <Label className="text-sm font-medium">Apply Same Time to All Selected</Label>
+              <div className="flex gap-2 items-end">
+                <div className="flex-1">
+                  <Label className="text-xs">Start Time</Label>
+                  <Input
+                    type="time"
+                    value={bulkStartTime}
+                    onChange={(e) => setBulkStartTime(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+                <div className="flex-1">
+                  <Label className="text-xs">End Time</Label>
+                  <Input
+                    type="time"
+                    value={bulkEndTime}
+                    onChange={(e) => setBulkEndTime(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+                <Button onClick={applyBulkTime} size="sm" className="h-9">
+                  <Clock className="h-3.5 w-3.5 mr-1" />
+                  Apply
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Search */}
           <div className="space-y-2">
             <Label>Browse All Promoters</Label>
@@ -198,43 +314,58 @@ export const AssignPromotersDialog = ({
                 No promoters found
               </div>
             ) : (
-              <div className="p-4 space-y-2">
+              <div className="p-4 space-y-3">
                 {filteredPromoters.map((promoter) => {
                   const isAssigned = currentAssignments.includes(promoter.id);
                   const isSelected = selectedIds.includes(promoter.id);
+                  const schedule = schedules[promoter.id];
                   
                   return (
-                    <div
-                      key={promoter.id}
-                      className="flex items-start gap-3 p-3 border rounded-lg hover:bg-accent/50 transition-colors"
-                    >
-                      <Checkbox
-                        id={promoter.id}
-                        checked={isSelected || isAssigned}
-                        disabled={isAssigned}
-                        onCheckedChange={() => !isAssigned && togglePromoter(promoter.id)}
-                        className="mt-1"
-                      />
-                      <label
-                        htmlFor={promoter.id}
-                        className="flex-1 cursor-pointer space-y-1"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{promoter.full_name}</span>
-                          {isAssigned && (
-                            <Badge variant="secondary" className="text-xs">
-                              Already Assigned
-                            </Badge>
-                          )}
+                    <div key={promoter.id} className="border rounded-lg p-3 space-y-2">
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id={promoter.id}
+                          checked={isSelected || isAssigned}
+                          disabled={isAssigned}
+                          onCheckedChange={() => !isAssigned && togglePromoter(promoter.id)}
+                          className="mt-1"
+                        />
+                        <label htmlFor={promoter.id} className="flex-1 cursor-pointer">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium">{promoter.full_name}</span>
+                            {isAssigned && <Badge variant="secondary" className="text-xs">Already Assigned</Badge>}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Code: {promoter.unique_code}
+                            {promoter.nationality && ` • ${promoter.nationality}`}
+                            {promoter.age && ` • Age ${promoter.age}`}
+                          </div>
+                        </label>
+                      </div>
+                      {isSelected && schedule && (
+                        <div className="ml-8 space-y-2 pt-2 border-t">
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <Label className="text-xs">Work Start</Label>
+                              <Input type="time" value={schedule.startTime} onChange={(e) => updateSchedule(promoter.id, { startTime: e.target.value })} className="h-8 text-sm" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Work End</Label>
+                              <Input type="time" value={schedule.endTime} onChange={(e) => updateSchedule(promoter.id, { endTime: e.target.value })} className="h-8 text-sm" />
+                            </div>
+                          </div>
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <Switch checked={schedule.autoCheckIn} onCheckedChange={(checked) => updateSchedule(promoter.id, { autoCheckIn: checked })} className="scale-75" />
+                              <span>Auto check-in</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Switch checked={schedule.autoCheckOut} onCheckedChange={(checked) => updateSchedule(promoter.id, { autoCheckOut: checked })} className="scale-75" />
+                              <span>Auto check-out</span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-sm text-muted-foreground space-y-0.5">
-                          <div>Code: {promoter.unique_code}</div>
-                          {promoter.nationality && (
-                            <div>Nationality: {promoter.nationality}</div>
-                          )}
-                          {promoter.age && <div>Age: {promoter.age}</div>}
-                        </div>
-                      </label>
+                      )}
                     </div>
                   );
                 })}

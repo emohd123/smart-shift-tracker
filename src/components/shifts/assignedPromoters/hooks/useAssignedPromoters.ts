@@ -10,6 +10,10 @@ export interface AssignedPromoter {
   full_name: string;
   unique_code: string;
   phone_number?: string;
+  scheduled_start_time?: string;
+  scheduled_end_time?: string;
+  auto_checkin_enabled?: boolean;
+  auto_checkout_enabled?: boolean;
 }
 
 export const useAssignedPromoters = (shiftId: string) => {
@@ -24,6 +28,10 @@ export const useAssignedPromoters = (shiftId: string) => {
           id,
           promoter_id,
           status,
+          scheduled_start_time,
+          scheduled_end_time,
+          auto_checkin_enabled,
+          auto_checkout_enabled,
           profiles:promoter_id (
             full_name,
             unique_code,
@@ -38,6 +46,10 @@ export const useAssignedPromoters = (shiftId: string) => {
         id: assignment.id,
         promoter_id: assignment.promoter_id,
         status: assignment.status,
+        scheduled_start_time: assignment.scheduled_start_time,
+        scheduled_end_time: assignment.scheduled_end_time,
+        auto_checkin_enabled: assignment.auto_checkin_enabled,
+        auto_checkout_enabled: assignment.auto_checkout_enabled,
         full_name: assignment.profiles?.full_name || "Unknown",
         unique_code: assignment.profiles?.unique_code || "N/A",
         phone_number: assignment.profiles?.phone_number,

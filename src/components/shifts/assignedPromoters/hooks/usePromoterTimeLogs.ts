@@ -24,6 +24,7 @@ export const usePromoterTimeLogs = (shiftId: string) => {
           groupedLogs[log.user_id] = [];
         }
         groupedLogs[log.user_id].push({
+          id: log.id,
           check_in_time: log.check_in_time,
           check_out_time: log.check_out_time,
           total_hours: log.total_hours,

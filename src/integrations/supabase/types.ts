@@ -554,25 +554,37 @@ export type Database = {
       }
       shift_assignments: {
         Row: {
+          auto_checkin_enabled: boolean | null
+          auto_checkout_enabled: boolean | null
           created_at: string | null
           id: string
           promoter_id: string
+          scheduled_end_time: string | null
+          scheduled_start_time: string | null
           shift_id: string
           status: string | null
           updated_at: string | null
         }
         Insert: {
+          auto_checkin_enabled?: boolean | null
+          auto_checkout_enabled?: boolean | null
           created_at?: string | null
           id?: string
           promoter_id: string
+          scheduled_end_time?: string | null
+          scheduled_start_time?: string | null
           shift_id: string
           status?: string | null
           updated_at?: string | null
         }
         Update: {
+          auto_checkin_enabled?: boolean | null
+          auto_checkout_enabled?: boolean | null
           created_at?: string | null
           id?: string
           promoter_id?: string
+          scheduled_end_time?: string | null
+          scheduled_start_time?: string | null
           shift_id?: string
           status?: string | null
           updated_at?: string | null
