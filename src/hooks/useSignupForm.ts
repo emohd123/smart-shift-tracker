@@ -145,11 +145,11 @@ export const useSignupForm = () => {
         setIsSuccess(true);
         toast({
           title: "Registration successful! 🎉",
-          description: "Redirecting to your dashboard...",
+          description: role === 'company' ? "Redirecting to your company dashboard..." : "Redirecting to your dashboard...",
         });
         
         setTimeout(() => {
-          navigate("/dashboard");
+          navigate(role === 'company' ? "/company" : "/dashboard");
         }, 1500);
       } catch (profileError: any) {
         console.error("❌ Profile update error:", profileError);
@@ -158,12 +158,12 @@ export const useSignupForm = () => {
         setIsSuccess(true);
         toast({
           title: "Account created",
-          description: "Redirecting to dashboard. You can complete your profile later.",
+          description: role === 'company' ? "Redirecting to company dashboard. You can complete your profile later." : "Redirecting to dashboard. You can complete your profile later.",
           variant: "default",
         });
         
         setTimeout(() => {
-          navigate("/dashboard");
+          navigate(role === 'company' ? "/company" : "/dashboard");
         }, 1500);
       }
     } catch (error: any) {

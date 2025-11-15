@@ -1,8 +1,9 @@
 
-import { CheckIcon, Phone, User, MapPin, Hash } from "lucide-react";
+import { CheckIcon, Phone, User, MapPin, Hash, Search } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Command,
   CommandEmpty,
@@ -18,6 +19,8 @@ import {
 } from "@/components/ui/popover";
 import { PromoterOption } from "../types/PromoterTypes";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useState } from "react";
+import { toast } from "sonner";
 
 interface PromoterSelectorProps {
   promoters: PromoterOption[];
@@ -32,6 +35,8 @@ export default function PromoterSelector({
   onSelect,
   loading
 }: PromoterSelectorProps) {
+  const [uniqueCode, setUniqueCode] = useState("");
+
   // Get the names of selected promoters
   const getSelectedPromoterNames = () => {
     return promoters
@@ -39,9 +44,63 @@ export default function PromoterSelector({
       .map(promoter => promoter.full_name);
   };
 
+  // Handle quick add by unique code
+  const handleQuickAdd = () => {
+    if (!uniqueCode.trim()) {
+      toast.error("Please enter a unique code");
+      return;
+    }
+
+    const promoter = promoters.find(
+      p => p.unique_code?.toUpperCase() === uniqueCode.trim().toUpperCase()
+    );
+
+    if (!promoter) {
+      toast.error(`No promoter found with code: ${uniqueCode.trim()}`);
+      return;
+    }
+
+    if (selectedPromoterIds.includes(promoter.id)) {
+      toast.info(`${promoter.full_name} is already assigned`);
+      return;
+    }
+
+    onSelect(promoter.id);
+    toast.success(`Added ${promoter.full_name} (${promoter.unique_code})`);
+    setUniqueCode("");
+  };
+
   return (
-    <div className="space-y-2">
+    <div className="space-y-3">
       <Label htmlFor="promoters">Assign Promoters (Optional)</Label>
+      
+      {/* Quick Add by Code */}
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <Input
+            placeholder="Enter unique code (e.g., PROMO-ABC123)"
+            value={uniqueCode}
+            onChange={(e) => setUniqueCode(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                handleQuickAdd();
+              }
+            }}
+            className="font-mono"
+          />
+        </div>
+        <Button 
+          type="button" 
+          onClick={handleQuickAdd}
+          variant="secondary"
+          size="default"
+          className="min-w-[100px]"
+        >
+          <Search className="h-4 w-4 mr-2" />
+          Add
+        </Button>
+      </div>
       
       <Popover>
         <PopoverTrigger asChild>
@@ -51,13 +110,13 @@ export default function PromoterSelector({
             className="w-full justify-between"
           >
             {selectedPromoterIds.length === 0 
-              ? "Select promoters..." 
+              ? "Or browse all promoters..." 
               : `${selectedPromoterIds.length} promoter${selectedPromoterIds.length > 1 ? 's' : ''} selected`}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]" align="start" side="bottom" sideOffset={4}>
           <Command>
-            <CommandInput placeholder="Search promoters..." />
+            <CommandInput placeholder="Search by name, code, or nationality..." />
             <CommandList>
               <CommandEmpty>
                 {loading ? "Loading promoters..." : "No promoters found."}
@@ -82,6 +141,7 @@ export default function PromoterSelector({
                     promoters.map((promoter) => (
                       <CommandItem
                         key={promoter.id}
+                        value={`${promoter.full_name} ${promoter.unique_code} ${promoter.nationality}`}
                         onSelect={() => onSelect(promoter.id)}
                         className="flex items-start justify-between p-3 hover:bg-muted/50"
                       >
