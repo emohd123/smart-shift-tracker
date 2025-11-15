@@ -62,3 +62,37 @@ export const calculateTotalShiftPayment = (
 export const formatBHD = (amount: number): string => {
   return `BHD ${amount.toFixed(3)}`;
 };
+
+export const calculateLiveEarnings = (
+  checkInTime: string,
+  payRate: number,
+  payRateType: string
+): { elapsedHours: number; currentEarnings: number } => {
+  const checkIn = new Date(checkInTime);
+  const now = new Date();
+  const elapsedMs = now.getTime() - checkIn.getTime();
+  const elapsedHours = elapsedMs / (1000 * 60 * 60);
+
+  let earnings = 0;
+
+  switch (payRateType) {
+    case 'hourly':
+      earnings = elapsedHours * payRate;
+      break;
+    case 'daily':
+      // Assuming 8-hour day
+      earnings = (elapsedHours / 8) * payRate;
+      break;
+    case 'monthly':
+      // Assuming 160-hour month
+      earnings = (elapsedHours / 160) * payRate;
+      break;
+    case 'fixed':
+      earnings = payRate;
+      break;
+    default:
+      earnings = elapsedHours * payRate;
+  }
+
+  return { elapsedHours, currentEarnings: Math.max(0, earnings) };
+};
