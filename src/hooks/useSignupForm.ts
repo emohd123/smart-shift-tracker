@@ -126,12 +126,12 @@ export const useSignupForm = () => {
         setIsSuccess(true);
         toast({
           title: "Registration successful! 🎉",
-          description: "Your account has been created. You can now log in.",
+          description: "Redirecting to your dashboard...",
         });
         
         setTimeout(() => {
-          navigate("/login");
-        }, 2000);
+          navigate("/dashboard");
+        }, 1500);
       } catch (profileError: any) {
         console.error("❌ Profile update error:", profileError);
         
@@ -139,13 +139,13 @@ export const useSignupForm = () => {
         setIsSuccess(true);
         toast({
           title: "Account created",
-          description: "Please complete your profile after logging in.",
+          description: "Redirecting to dashboard. You can complete your profile later.",
           variant: "default",
         });
         
         setTimeout(() => {
-          navigate("/login");
-        }, 2500);
+          navigate("/dashboard");
+        }, 1500);
       }
     } catch (error: any) {
       console.error("❌ Registration error:", error);
