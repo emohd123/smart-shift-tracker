@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Copy, Check, QrCode, AlertCircle } from "lucide-react";
-import { useState } from "react";
+import { Copy, Check, QrCode, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useUniqueCodeGeneration } from "@/hooks/useUniqueCodeGeneration";
 import QRCode from "react-qr-code";
@@ -18,6 +18,20 @@ export function UniqueCodeCard({ user, onCodeGenerated }: UniqueCodeCardProps) {
   const [showQR, setShowQR] = useState(false);
   const [localCode, setLocalCode] = useState(user?.unique_code);
 
+  // Auto-generate code if missing
+  useEffect(() => {
+    if (!localCode && !generating) {
+      const autoGenerate = async () => {
+        const code = await generateCode();
+        if (code) {
+          setLocalCode(code);
+          onCodeGenerated?.(code);
+        }
+      };
+      autoGenerate();
+    }
+  }, [localCode, generating]);
+
   const handleCopy = async () => {
     if (localCode) {
       await navigator.clipboard.writeText(localCode);
@@ -27,34 +41,19 @@ export function UniqueCodeCard({ user, onCodeGenerated }: UniqueCodeCardProps) {
     }
   };
 
-  const handleGenerate = async () => {
-    const code = await generateCode();
-    if (code) {
-      setLocalCode(code);
-      onCodeGenerated?.(code);
-    }
-  };
-
-  if (!localCode) {
+  if (!localCode || generating) {
     return (
-      <Card className="mb-6 border-2 border-amber-500/20 bg-amber-500/5">
+      <Card className="mb-6 border-2 border-primary/20 bg-primary/5">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-amber-600 dark:text-amber-400">
-            <AlertCircle className="h-5 w-5" />
-            Unique Code Required
+          <CardTitle className="flex items-center gap-2">
+            <Loader2 className="h-5 w-5 animate-spin" />
+            Generating Your Unique Code
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground mb-4">
-            You need a unique promoter code for companies to assign you to shifts.
+          <p className="text-sm text-muted-foreground">
+            Please wait while we create your unique promoter code...
           </p>
-          <Button 
-            onClick={handleGenerate} 
-            disabled={generating}
-            className="w-full"
-          >
-            {generating ? "Generating..." : "Generate My Unique Code"}
-          </Button>
         </CardContent>
       </Card>
     );

@@ -6,6 +6,7 @@ import { useSignupFormState } from "./signup/useSignupFormState";
 import { useSignupFileHandling } from "./signup/useSignupFileHandling";
 import { useSignupFormValidation } from "./signup/useSignupFormValidation";
 import { useSignupFileUpload } from "./signup/useSignupFileUpload";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useSignupForm = () => {
   const { signup, loading, authError } = useAuth();
@@ -122,6 +123,24 @@ export const useSignupForm = () => {
         // Update user profile
         await updateUserProfile(userData.id, formData, idCardUrl, profilePhotoUrl, role);
         console.log("✓ Profile updated successfully");
+        
+        // Auto-generate unique code for promoters
+        if (role === 'promoter') {
+          try {
+            console.log("🔑 Generating unique code...");
+            const { data: codeData, error: codeError } = await supabase.functions.invoke('generate-unique-code');
+            
+            if (codeError) {
+              console.warn("⚠️ Could not generate unique code during signup:", codeError);
+              // Non-blocking: user can generate code later from profile
+            } else if (codeData?.success) {
+              console.log("✓ Unique code generated:", codeData.code);
+            }
+          } catch (codeGenError) {
+            console.warn("⚠️ Code generation error (non-blocking):", codeGenError);
+            // Non-blocking: user can generate code later from profile
+          }
+        }
         
         setIsSuccess(true);
         toast({
