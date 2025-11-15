@@ -67,7 +67,7 @@ const EditShift = () => {
         payRateType: data.pay_rate_type,
         isPaid: data.is_paid || false,
         manual_status_override: data.manual_status_override,
-        override_status: data.override_status
+        override_status: data.override_status as ShiftStatus | undefined
       };
       
       setShift(formattedShift);

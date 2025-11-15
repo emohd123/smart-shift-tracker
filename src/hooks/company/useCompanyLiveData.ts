@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Shift } from "@/components/shifts/types/ShiftTypes";
+import { ShiftStatus } from "@/types/database";
 import { calculateLiveEarnings } from "@/components/shifts/utils/paymentCalculations";
 
 export interface ActivePromoter {
@@ -116,7 +117,7 @@ export const useCompanyLiveData = (companyId: string | undefined) => {
           updatedAt: shift.updated_at || undefined,
           created_at: shift.created_at || undefined,
           manual_status_override: shift.manual_status_override || false,
-          override_status: shift.override_status || undefined,
+          override_status: shift.override_status as ShiftStatus | undefined,
           totalAssigned: shiftAssignments.length,
           activePromoters,
           liveEarnings,
