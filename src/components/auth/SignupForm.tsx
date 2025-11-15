@@ -1,6 +1,6 @@
 
 import { useSignupForm } from "@/hooks/useSignupForm";
-import { Clock, ArrowLeft, Home, Save } from "lucide-react";
+import { Clock, ArrowLeft, Home, Save, Building, User } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountInfoStep } from "./signup/AccountInfoStep";
 import { PersonalInfoStep } from "./signup/PersonalInfoStep";
 import { DocumentUploadStep } from "./signup/DocumentUploadStep";
+import { CompanyInfoStep } from "./signup/CompanyInfoStep";
+import { CompanyDocumentStep } from "./signup/CompanyDocumentStep";
 import { RegistrationSuccess } from "./signup/RegistrationSuccess";
 
 export default function SignupForm() {
@@ -30,15 +32,19 @@ export default function SignupForm() {
   } = useSignupForm();
 
   if (isSuccess) {
+    const isCompany = formData.role === 'company';
     return (
       <div className="w-full max-w-2xl space-y-6 animate-fade-in">
         <div className="text-center">
           <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
-            <Clock className="text-white" size={20} />
+            {isCompany ? <Building className="text-white" size={20} /> : <User className="text-white" size={20} />}
           </div>
           <h2 className="text-2xl font-bold tracking-tight">Create Your Account</h2>
           <p className="text-sm text-muted-foreground mt-2">
-            Register to start your journey as a promoter
+            {isCompany 
+              ? "Register your company and start hiring promoters"
+              : "Register to start your journey as a promoter"
+            }
           </p>
         </div>
         <RegistrationSuccess />
@@ -46,15 +52,20 @@ export default function SignupForm() {
     );
   }
 
+  const isCompany = formData.role === 'company';
+
   return (
     <div className="w-full max-w-3xl space-y-6 animate-fade-in">
       <div className="text-center">
         <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
-          <Clock className="text-white" size={20} />
+          {isCompany ? <Building className="text-white" size={20} /> : <User className="text-white" size={20} />}
         </div>
         <h2 className="text-2xl font-bold tracking-tight">Create Your Account</h2>
         <p className="text-sm text-muted-foreground mt-2">
-          Register to start your journey as a promoter
+          {isCompany 
+            ? "Register your company and start hiring promoters"
+            : "Register to start your journey as a promoter"
+          }
         </p>
       </div>
 
@@ -69,7 +80,9 @@ export default function SignupForm() {
           <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
             <TabsList className="grid grid-cols-3 mb-6">
               <TabsTrigger value="account">Account Info</TabsTrigger>
-              <TabsTrigger value="personal">Personal Details</TabsTrigger>
+              <TabsTrigger value="personal">
+                {isCompany ? "Company Details" : "Personal Details"}
+              </TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
             
@@ -100,23 +113,43 @@ export default function SignupForm() {
             </TabsContent>
             
             <TabsContent value="personal" className="space-y-4">
-              <PersonalInfoStep
-                formData={formData}
-                handleChange={handleChange}
-                setFormData={(newData) => {
-                  Object.entries(newData).forEach(([key, value]) => {
-                    const syntheticEvent = {
-                      target: {
-                        name: key,
-                        value,
-                        type: typeof value === 'boolean' ? 'checkbox' : 'text',
-                        checked: Boolean(value)
-                      }
-                    } as React.ChangeEvent<HTMLInputElement>;
-                    handleChange(syntheticEvent);
-                  });
-                }}
-              />
+              {isCompany ? (
+                <CompanyInfoStep
+                  formData={formData}
+                  handleChange={handleChange}
+                  setFormData={(newData) => {
+                    Object.entries(newData).forEach(([key, value]) => {
+                      const syntheticEvent = {
+                        target: {
+                          name: key,
+                          value,
+                          type: typeof value === 'boolean' ? 'checkbox' : 'text',
+                          checked: Boolean(value)
+                        }
+                      } as React.ChangeEvent<HTMLInputElement>;
+                      handleChange(syntheticEvent);
+                    });
+                  }}
+                />
+              ) : (
+                <PersonalInfoStep
+                  formData={formData}
+                  handleChange={handleChange}
+                  setFormData={(newData) => {
+                    Object.entries(newData).forEach(([key, value]) => {
+                      const syntheticEvent = {
+                        target: {
+                          name: key,
+                          value,
+                          type: typeof value === 'boolean' ? 'checkbox' : 'text',
+                          checked: Boolean(value)
+                        }
+                      } as React.ChangeEvent<HTMLInputElement>;
+                      handleChange(syntheticEvent);
+                    });
+                  }}
+                />
+              )}
               <div className="flex justify-between mt-4">
                 <Button type="button" variant="outline" onClick={() => setActiveSection("account")}>
                   <ArrowLeft size={16} className="mr-2" />
@@ -129,14 +162,22 @@ export default function SignupForm() {
             </TabsContent>
             
             <TabsContent value="documents" className="space-y-4">
-              <DocumentUploadStep
-                fileData={fileData}
-                handleFileChange={handleFileChange}
-                setIdCard={(file) => setFileData(prev => ({ ...prev, idCard: file }))}
-                setIdCardPreview={(preview) => setFileData(prev => ({ ...prev, idCardPreview: preview }))}
-                setProfilePhoto={(file) => setFileData(prev => ({ ...prev, profilePhoto: file }))}
-                setProfilePhotoPreview={(preview) => setFileData(prev => ({ ...prev, profilePhotoPreview: preview }))}
-              />
+              {isCompany ? (
+                <CompanyDocumentStep
+                  fileData={fileData}
+                  handleFileChange={handleFileChange}
+                  setFileData={setFileData}
+                />
+              ) : (
+                <DocumentUploadStep
+                  fileData={fileData}
+                  handleFileChange={handleFileChange}
+                  setIdCard={(file) => setFileData(prev => ({ ...prev, idCard: file }))}
+                  setIdCardPreview={(preview) => setFileData(prev => ({ ...prev, idCardPreview: preview }))}
+                  setProfilePhoto={(file) => setFileData(prev => ({ ...prev, profilePhoto: file }))}
+                  setProfilePhotoPreview={(preview) => setFileData(prev => ({ ...prev, profilePhotoPreview: preview }))}
+                />
+              )}
               <div className="flex justify-between mt-4">
                 <Button type="button" variant="outline" onClick={() => setActiveSection("personal")}>
                   <ArrowLeft size={16} className="mr-2" />

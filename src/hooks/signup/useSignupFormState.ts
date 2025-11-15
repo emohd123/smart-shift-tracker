@@ -19,6 +19,14 @@ export const useSignupFormState = () => {
     address: "",
     bankDetails: "",
     role: UserRole.Promoter,
+    
+    // Company-specific fields
+    companyName: "",
+    companyRegistrationId: "",
+    companyWebsite: "",
+    companyIndustry: "",
+    companySize: "",
+    companyDescription: "",
   });
   
   const [fileData, setFileData] = useState<FileData>({
@@ -26,6 +34,12 @@ export const useSignupFormState = () => {
     profilePhoto: null,
     idCardPreview: null,
     profilePhotoPreview: null,
+    
+    // Company-specific files
+    companyLogo: null,
+    companyLogoPreview: null,
+    businessDocument: null,
+    businessDocumentPreview: null,
   });
   
   const [step, setStep] = useState(1);

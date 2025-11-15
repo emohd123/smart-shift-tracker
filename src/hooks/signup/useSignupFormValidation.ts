@@ -56,6 +56,63 @@ export const useSignupFormValidation = (
     return true;
   };
   
+  const validateCompanyInfo = () => {
+    setFormError(null);
+    
+    if (!formData.companyName || !formData.address) {
+      setFormError("Company name and address are required");
+      return false;
+    }
+    
+    // Sanitize text inputs
+    const sanitizedCompanyName = sanitizeInput(formData.companyName.trim());
+    const sanitizedAddress = sanitizeInput(formData.address.trim());
+    const sanitizedWebsite = formData.companyWebsite ? sanitizeInput(formData.companyWebsite.trim()) : '';
+    const sanitizedPhone = formData.phoneNumber ? sanitizeInput(formData.phoneNumber.trim()) : '';
+    
+    // Check for SQL injection attempts
+    if (containsSqlInjection(sanitizedCompanyName) || 
+        containsSqlInjection(sanitizedAddress) ||
+        (sanitizedWebsite && containsSqlInjection(sanitizedWebsite)) ||
+        (sanitizedPhone && containsSqlInjection(sanitizedPhone))) {
+      setFormError("Invalid characters detected in company information");
+      return false;
+    }
+    
+    // Validate company name
+    if (sanitizedCompanyName.length < 2 || sanitizedCompanyName.length > 100) {
+      setFormError("Company name must be between 2 and 100 characters");
+      return false;
+    }
+    
+    // Validate address
+    if (sanitizedAddress.length < 10) {
+      setFormError("Please provide a complete address");
+      return false;
+    }
+    
+    // Validate website URL if provided
+    if (sanitizedWebsite) {
+      try {
+        new URL(sanitizedWebsite);
+      } catch {
+        setFormError("Please enter a valid website URL (e.g., https://example.com)");
+        return false;
+      }
+    }
+    
+    // Validate phone number if provided
+    if (sanitizedPhone) {
+      const phoneValidation = validateInput(sanitizedPhone, phoneSchema);
+      if (!phoneValidation.isValid) {
+        setFormError(phoneValidation.error || "Invalid phone number format");
+        return false;
+      }
+    }
+    
+    return true;
+  };
+  
   const validatePersonalInfo = () => {
     setFormError(null);
     
@@ -136,7 +193,7 @@ export const useSignupFormValidation = (
       case "account":
         return validateAccountInfo();
       case "personal":
-        return validatePersonalInfo();
+        return formData.role === 'company' ? validateCompanyInfo() : validatePersonalInfo();
       case "documents":
         return validateDocuments();
       default:
@@ -147,7 +204,14 @@ export const useSignupFormValidation = (
   const validateForm = () => {
     // Validate required sections before submitting
     if (!validateAccountInfo()) return false;
-    if (!validatePersonalInfo()) return false;
+    
+    // Validate role-specific information
+    if (formData.role === 'company') {
+      if (!validateCompanyInfo()) return false;
+    } else {
+      if (!validatePersonalInfo()) return false;
+    }
+    
     // Documents are optional, so we don't need to validate them
     
     return true;
