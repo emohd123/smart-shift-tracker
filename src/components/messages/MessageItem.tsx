@@ -44,7 +44,7 @@ const MessageItem = ({ message, isOwnMessage }: MessageItemProps) => {
         )}>
           <span>{timeAgo}</span>
           {isOwnMessage && (
-            message.is_read ? 
+            message.read ? 
               <CheckCheck className="h-3 w-3" /> : 
               <Check className="h-3 w-3" />
           )}

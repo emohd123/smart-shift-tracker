@@ -39,11 +39,12 @@ export default function RevenuePage() {
 
   const handleCreditsPurchaseSuccess = async (amount: number) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      
       const { error } = await supabase.rpc('add_user_credits', {
-        p_user_id: (await supabase.auth.getUser()).data.user?.id,
-        p_amount: amount,
-        p_description: `Credit purchase - ${amount} credits`,
-        p_reference_id: `purchase_${Date.now()}`
+        user_id_param: user.id,
+        credits_amount: amount
       });
 
       if (error) {

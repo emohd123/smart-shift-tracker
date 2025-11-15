@@ -90,18 +90,13 @@ export const deleteShiftTimeLogs = async (shiftId: string): Promise<{success: bo
 export const deleteShiftNotifications = async (shiftId: string): Promise<{success: boolean; error?: any}> => {
   console.log(`[DELETE] Starting to delete notifications for shift ${shiftId}`);
   try {
-    const { error, count } = await supabase
-      .from('notifications')
-      .delete()
-      .eq('related_id', shiftId)
-      .select('count');
-    
-    if (error) {
-      console.error(`[DELETE ERROR] Failed to delete from notifications:`, error);
-      return { success: false, error };
+    // @ts-ignore - Avoiding deep type instantiation issue
+    const result = await supabase.from('notifications').delete().eq('related_id', shiftId);
+    if (result?.error) {
+      console.error(`[DELETE ERROR] Failed to delete notifications:`, result.error);
+      return { success: false, error: result.error };
     }
-    
-    console.log(`[DELETE SUCCESS] Removed ${count || 0} notification records for shift ${shiftId}`);
+    console.log(`[DELETE SUCCESS] Deleted notification records for shift ${shiftId}`);
     return { success: true };
   } catch (err) {
     console.error(`[DELETE ERROR] Unexpected error in notifications deletion for shift ${shiftId}:`, err);

@@ -37,8 +37,8 @@ export const useMessages = (
           const { data, error } = await supabase
             .from("messages")
             .select("*")
-            .or(`sender_id.eq.${currentUserId},receiver_id.eq.${currentUserId}`)
-            .or(`sender_id.eq.${contactId},receiver_id.eq.${contactId}`)
+            .or(`sender_id.eq.${currentUserId},recipient_id.eq.${currentUserId}`)
+            .or(`sender_id.eq.${contactId},recipient_id.eq.${contactId}`)
             .order("created_at", { ascending: false })
             .limit(1)
             .single();
@@ -48,7 +48,7 @@ export const useMessages = (
           }
 
           if (data) {
-            setLastMessage(data as Message);
+            setLastMessage(data);
           }
         } else {
           // Fetch full conversation
@@ -56,8 +56,8 @@ export const useMessages = (
             .from("messages")
             .select("*")
             .or(
-              `and(sender_id.eq.${currentUserId},receiver_id.eq.${contactId}),` +
-              `and(sender_id.eq.${contactId},receiver_id.eq.${currentUserId})`
+              `and(sender_id.eq.${currentUserId},recipient_id.eq.${contactId}),` +
+              `and(sender_id.eq.${contactId},recipient_id.eq.${currentUserId})`
             )
             .order("created_at", { ascending: true });
 
@@ -66,12 +66,12 @@ export const useMessages = (
             return;
           }
 
-          setMessages(data as Message[]);
+          setMessages(data);
 
           // Mark received messages as read
           if (data && data.length > 0) {
             const unreadMessages = data.filter(
-              msg => msg.receiver_id === currentUserId && !msg.is_read
+              msg => msg.recipient_id === currentUserId && !msg.read
             );
 
             if (unreadMessages.length > 0) {
@@ -80,7 +80,7 @@ export const useMessages = (
               // Update read status
               await supabase
                 .from("messages")
-                .update({ is_read: true })
+                .update({ read: true })
                 .in("id", unreadIds);
             }
           }
@@ -104,7 +104,7 @@ export const useMessages = (
           event: '*',
           schema: 'public',
           table: 'messages',
-          filter: `(sender_id=eq.${currentUserId} AND receiver_id=eq.${contactId}) OR (sender_id=eq.${contactId} AND receiver_id=eq.${currentUserId})`
+          filter: `(sender_id=eq.${currentUserId} AND recipient_id=eq.${contactId}) OR (sender_id=eq.${contactId} AND recipient_id=eq.${currentUserId})`
         },
         async (payload) => {
           console.log('Realtime message update:', payload);
@@ -119,10 +119,10 @@ export const useMessages = (
               setMessages(prev => [...prev, newMessage]);
               
               // Mark as read if this is a received message
-              if (newMessage.receiver_id === currentUserId && !newMessage.is_read) {
+              if (newMessage.recipient_id === currentUserId && !newMessage.read) {
                 await supabase
                   .from("messages")
-                  .update({ is_read: true })
+                  .update({ read: true })
                   .eq("id", newMessage.id);
               }
             }

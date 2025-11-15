@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 interface UserCredits {
   credits_balance: number;
-  total_purchased: number;
+  total_credits_purchased: number;
 }
 
 interface CreditTransaction {
@@ -51,14 +51,14 @@ export default function CreditSystem() {
     try {
       const { data, error } = await supabase
         .from('user_credits')
-        .select('credits_balance, total_purchased')
+        .select('credits_balance, total_credits_purchased')
         .single();
 
       if (error && error.code !== 'PGRST116') {
         throw error;
       }
 
-      setUserCredits(data || { credits_balance: 0, total_purchased: 0 });
+      setUserCredits(data || { credits_balance: 0, total_credits_purchased: 0 });
     } catch (error) {
       console.error('Error loading credits:', error);
     }
@@ -136,7 +136,7 @@ export default function CreditSystem() {
               <p className="text-sm text-muted-foreground">Available Credits</p>
             </div>
             <div className="text-center p-4 bg-secondary/5 rounded-lg">
-              <p className="text-2xl font-bold text-secondary">{userCredits?.total_purchased || 0}</p>
+              <p className="text-2xl font-bold text-secondary">{userCredits?.total_credits_purchased || 0}</p>
               <p className="text-sm text-muted-foreground">Total Purchased</p>
             </div>
           </div>

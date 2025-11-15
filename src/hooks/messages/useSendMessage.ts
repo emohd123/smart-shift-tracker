@@ -19,7 +19,7 @@ export const useSendMessage = () => {
         .from("messages")
         .insert({
           sender_id: messageData.senderId,
-          receiver_id: messageData.receiverId,
+          recipient_id: messageData.receiverId,
           content: messageData.content,
         })
         .select()

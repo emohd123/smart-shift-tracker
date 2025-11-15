@@ -64,7 +64,7 @@ export const useCertificateData = () => {
       // Insert new record with enhanced fields
       const { error } = await supabase
         .from('certificates')
-        .insert({
+        .insert([{
           user_id: userId,
           reference_number: certificateData.referenceNumber,
           time_period: certificateData.issueDate,
@@ -72,14 +72,11 @@ export const useCertificateData = () => {
           promotion_names: certificateData.promotionNames,
           skills_gained: certificateData.skillsGained,
           position_title: certificateData.positionTitle,
-          performance_rating: certificateData.performanceRating,
-          manager_contact: certificateData.managerContact,
+          certificate_type: 'work_experience',
+          issue_date: new Date().toISOString().split('T')[0],
           status: certStatus,
-          issued_by: user?.id,
-          issued_date: new Date().toISOString(),
-          // Expiration date optional, calculated if needed
-          expiration_date: certificateData.expirationDate || null
-        });
+          issued_by: user?.id
+        }]);
         
       if (error) {
         console.error("Error saving certificate:", error);
