@@ -19,9 +19,15 @@ export const useAuthentication = () => {
     try {
       let email = emailOrUsername.trim();
       
-      // Simple email validation to check if it contains @ symbol
-      if (!email.includes('@')) {
-        // Check if it ends with @gmail.com already to avoid double appending
+      // Check if it's a valid email format (has @ and domain)
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      
+      if (!emailRegex.test(email)) {
+        // If it doesn't match email format, treat as username and append @gmail.com
+        // Remove any trailing @ symbols first
+        email = email.replace(/@+$/, '');
+        
+        // Only append if it doesn't already end with @gmail.com
         if (!email.endsWith('@gmail.com')) {
           email = `${email}@gmail.com`;
         }
