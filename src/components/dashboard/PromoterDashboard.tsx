@@ -15,9 +15,10 @@ import { toast } from "sonner";
 
 type PromoterDashboardProps = {
   shifts: Shift[];
+  loading?: boolean;
 };
 
-export default function PromoterDashboard({ shifts }: PromoterDashboardProps) {
+export default function PromoterDashboard({ shifts, loading = false }: PromoterDashboardProps) {
   const navigate = useNavigate();
   const { isMobile } = useResponsive();
   const { user } = useAuth();
@@ -48,6 +49,26 @@ export default function PromoterDashboard({ shifts }: PromoterDashboardProps) {
       }
     }
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-8 p-4 md:p-6">
+        <div className="space-y-2">
+          <div className="h-10 bg-muted animate-pulse rounded-lg w-64" />
+          <div className="h-5 bg-muted animate-pulse rounded w-48" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-32 bg-muted animate-pulse rounded-lg" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="h-64 bg-muted animate-pulse rounded-lg" />
+          <div className="h-64 bg-muted animate-pulse rounded-lg" />
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className={`space-y-8 transition-all duration-500 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>

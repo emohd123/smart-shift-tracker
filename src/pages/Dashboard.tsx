@@ -41,7 +41,7 @@ const Dashboard = () => {
 
   return (
     <AppLayout title="Promoter Dashboard">
-      <PromoterDashboard shifts={shifts} />
+      <PromoterDashboard shifts={shifts} loading={loading} />
     </AppLayout>
   );
 };
