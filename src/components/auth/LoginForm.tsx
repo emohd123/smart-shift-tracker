@@ -37,7 +37,6 @@ export default function LoginForm({ onError }: LoginFormProps) {
     localStorage.getItem('rememberMe') === 'true'
   );
   const [formError, setFormError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -87,16 +86,28 @@ export default function LoginForm({ onError }: LoginFormProps) {
     const sanitizedEmail = sanitizeInput(email.trim());
     const sanitizedPassword = password; // Don't sanitize password as it may contain special chars
     
+    // Remove trailing @ symbols
+    const cleanedEmail = sanitizedEmail.replace(/@+$/, '');
+    
     // Check for SQL injection attempts
-    if (containsSqlInjection(sanitizedEmail)) {
+    if (containsSqlInjection(cleanedEmail)) {
       setFormError("Invalid characters detected in email");
       loginRateLimit.recordAttempt(); // Count as failed attempt
       return;
     }
     
     // Validate email format if it looks like an email
-    if (sanitizedEmail.includes('@')) {
-      const emailValidation = validateInput(sanitizedEmail, emailSchema);
+    // Improved regex to catch more invalid formats
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (cleanedEmail.includes('@')) {
+      // If it contains @, it must be a valid email format
+      if (!emailRegex.test(cleanedEmail)) {
+        setFormError("Invalid email format. Please enter a complete email address.");
+        return;
+      }
+      
+      const emailValidation = validateInput(cleanedEmail, emailSchema);
       if (!emailValidation.isValid) {
         setFormError(emailValidation.error || "Invalid email format");
         return;
@@ -112,13 +123,9 @@ export default function LoginForm({ onError }: LoginFormProps) {
     try {
       console.log("Attempting secure login with CSRF token");
       
-      // Set local submitting state to true
-      setIsSubmitting(true);
-      
       // Record login attempt for rate limiting
       if (!loginRateLimit.recordAttempt()) {
         setFormError(loginRateLimit.message);
-        setIsSubmitting(false);
         return;
       }
       
@@ -137,7 +144,6 @@ export default function LoginForm({ onError }: LoginFormProps) {
       const errorMessage = error instanceof Error ? error.message : "Invalid email or password";
       
       setFormError(errorMessage);
-      setIsSubmitting(false); // Reset submitting state on error
       
       // Log to error context for tracking
       addError(errorMessage, ErrorSeverity.ERROR, error);
@@ -176,7 +182,7 @@ export default function LoginForm({ onError }: LoginFormProps) {
         />
 
         <LoginActions 
-          loading={isSubmitting} 
+          loading={loading} 
           isCreatingAdmin={false} 
         />
       </form>

@@ -40,6 +40,9 @@ export function LoginCredentials({
           autoFocus
           aria-required="true"
         />
+        <p className="text-xs text-muted-foreground">
+          Enter your email or just your username (we'll add @gmail.com)
+        </p>
       </div>
 
       <div className="space-y-2">
