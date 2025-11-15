@@ -31,15 +31,45 @@ export function DocumentUploadStep({
   const maxFileSize = 5 * 1024 * 1024; // 5MB
 
   const handleIdCardChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIdCardError(null);
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validation logic moved to the hook
+    // Validate file before processing
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+    
+    if (!allowedTypes.includes(file.type)) {
+      setIdCardError("Please upload a valid image (JPG, PNG) or PDF file");
+      return;
+    }
+    
+    if (file.size > maxSize) {
+      setIdCardError("File size must be less than 5MB");
+      return;
+    }
+
+    setIdCardError(null);
     handleFileChange(e, 'idCard');
   };
 
   const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file before processing
+    const maxSize = 2 * 1024 * 1024; // 2MB
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    
+    if (!allowedTypes.includes(file.type)) {
+      setProfilePhotoError("Please upload a valid image (JPG, PNG, WEBP)");
+      return;
+    }
+    
+    if (file.size > maxSize) {
+      setProfilePhotoError("File size must be less than 2MB");
+      return;
+    }
+
     setProfilePhotoError(null);
     handleFileChange(e, 'profilePhoto');
   };
