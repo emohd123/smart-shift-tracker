@@ -32,7 +32,7 @@ export const useSignupForm = () => {
   
   const { handleFileChange, cleanupFilePreview } = useSignupFileHandling(setFileData);
   const { validateForm, validateSection } = useSignupFormValidation(formData, fileData, setFormError);
-  const { uploadFiles, updateUserProfile } = useSignupFileUpload(setUploadingFiles);
+  const { uploadFiles, updateUserProfile, createCompanyProfile } = useSignupFileUpload(setUploadingFiles);
 
   const handleNextStep = () => {
     if (validateSection(activeSection)) {
@@ -76,13 +76,25 @@ export const useSignupForm = () => {
       // Step 2: Upload files (non-blocking)
       let idCardUrl = null;
       let profilePhotoUrl = null;
+      let companyLogoUrl = null;
+      let businessDocumentUrl = null;
       let uploadErrors: string[] = [];
       
-      if (fileData.idCard || fileData.profilePhoto) {
+      const hasPromoterFiles = fileData.idCard || fileData.profilePhoto;
+      const hasCompanyFiles = fileData.companyLogo || fileData.businessDocument;
+      
+      if (hasPromoterFiles || hasCompanyFiles) {
         console.log("📤 Uploading files...");
-        const uploadResult = await uploadFiles(userData.id, fileData);
-        idCardUrl = uploadResult.idCardUrl;
-        profilePhotoUrl = uploadResult.profilePhotoUrl;
+        const uploadResult = await uploadFiles(userData.id, fileData, role);
+        
+        if (role === 'company') {
+          companyLogoUrl = uploadResult.companyLogoUrl || null;
+          businessDocumentUrl = uploadResult.businessDocumentUrl || null;
+        } else {
+          idCardUrl = uploadResult.idCardUrl || null;
+          profilePhotoUrl = uploadResult.profilePhotoUrl || null;
+        }
+        
         uploadErrors = uploadResult.errors || [];
         
         if (uploadErrors.length > 0) {
@@ -92,15 +104,23 @@ export const useSignupForm = () => {
             description: "Some files couldn't be uploaded, but your account was created successfully.",
             variant: "default",
           });
-        } else if (idCardUrl || profilePhotoUrl) {
+        } else if (companyLogoUrl || businessDocumentUrl || idCardUrl || profilePhotoUrl) {
           console.log("✓ Files uploaded successfully");
         }
       }
       
-      // Step 3: Update profile with all data
+      // Step 3: Update profile and create company profile if needed
       try {
         console.log("💾 Updating profile...");
-        await updateUserProfile(userData.id, formData, idCardUrl, profilePhotoUrl);
+        
+        if (role === 'company') {
+          // Create company profile
+          await createCompanyProfile(userData.id, formData, companyLogoUrl);
+          console.log("✓ Company profile created");
+        }
+        
+        // Update user profile
+        await updateUserProfile(userData.id, formData, idCardUrl, profilePhotoUrl, role);
         console.log("✓ Profile updated successfully");
         
         setIsSuccess(true);

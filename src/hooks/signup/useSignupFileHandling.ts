@@ -6,32 +6,32 @@ import { FileData } from "@/components/auth/signup/types";
 export const useSignupFileHandling = (setFileData: React.Dispatch<React.SetStateAction<FileData>>) => {
   const { toast } = useToast();
 
-  const validateFile = (file: File, fileType: 'idCard' | 'profilePhoto'): { valid: boolean; error?: string } => {
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = fileType === 'idCard' 
-      ? ['image/jpeg', 'image/png', 'application/pdf'] 
-      : ['image/jpeg', 'image/png'];
+  const validateFile = (file: File, fileType: 'idCard' | 'profilePhoto' | 'companyLogo' | 'businessDocument'): { valid: boolean; error?: string } => {
+    const maxSize = (fileType === 'companyLogo' || fileType === 'profilePhoto') ? 2 * 1024 * 1024 : 5 * 1024 * 1024;
+    const allowedTypes = (fileType === 'companyLogo' || fileType === 'profilePhoto')
+      ? ['image/jpeg', 'image/png', 'image/webp'] 
+      : ['image/jpeg', 'image/png', 'application/pdf'];
     
     if (!allowedTypes.includes(file.type)) {
       return { 
         valid: false, 
-        error: fileType === 'idCard' 
-          ? "Please upload a JPEG, PNG, or PDF file" 
-          : "Please upload a JPEG or PNG file"
+        error: (fileType === 'companyLogo' || fileType === 'profilePhoto')
+          ? "Please upload a JPEG, PNG, or WEBP file" 
+          : "Please upload a JPEG, PNG, or PDF file"
       };
     }
     
     if (file.size > maxSize) {
       return { 
         valid: false, 
-        error: "Please upload a file smaller than 5MB"
+        error: `Please upload a file smaller than ${maxSize / (1024 * 1024)}MB`
       };
     }
     
     return { valid: true };
   };
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, fileType: 'idCard' | 'profilePhoto') => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>, fileType: 'idCard' | 'profilePhoto' | 'companyLogo' | 'businessDocument') => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       
@@ -39,7 +39,10 @@ export const useSignupFileHandling = (setFileData: React.Dispatch<React.SetState
       
       if (!validation.valid) {
         toast({
-          title: fileType === 'idCard' ? "Invalid ID Card" : "Invalid Profile Photo",
+          title: fileType === 'idCard' ? "Invalid ID Card" : 
+                 fileType === 'profilePhoto' ? "Invalid Profile Photo" :
+                 fileType === 'companyLogo' ? "Invalid Company Logo" :
+                 "Invalid Document",
           description: validation.error,
           variant: "destructive",
         });
@@ -57,11 +60,27 @@ export const useSignupFileHandling = (setFileData: React.Dispatch<React.SetState
             idCard: file,
             idCardPreview: preview
           }));
-        } else {
+        } else if (fileType === 'profilePhoto') {
           setFileData(prev => ({ 
             ...prev,
             profilePhoto: file,
             profilePhotoPreview: URL.createObjectURL(file)
+          }));
+        } else if (fileType === 'companyLogo') {
+          setFileData(prev => ({ 
+            ...prev,
+            companyLogo: file,
+            companyLogoPreview: URL.createObjectURL(file)
+          }));
+        } else if (fileType === 'businessDocument') {
+          const preview = file.type === 'application/pdf' 
+            ? '/placeholder.svg' 
+            : URL.createObjectURL(file);
+            
+          setFileData(prev => ({ 
+            ...prev,
+            businessDocument: file,
+            businessDocumentPreview: preview
           }));
         }
       } catch (error) {
@@ -83,6 +102,14 @@ export const useSignupFileHandling = (setFileData: React.Dispatch<React.SetState
     
     if (fileData.profilePhotoPreview) {
       URL.revokeObjectURL(fileData.profilePhotoPreview);
+    }
+    
+    if (fileData.companyLogoPreview) {
+      URL.revokeObjectURL(fileData.companyLogoPreview);
+    }
+    
+    if (fileData.businessDocumentPreview && fileData.businessDocumentPreview !== '/placeholder.svg') {
+      URL.revokeObjectURL(fileData.businessDocumentPreview);
     }
   };
 
