@@ -52,9 +52,10 @@ export default function PayRateField({
               <SelectValue placeholder="Per hour" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="hour">Per Hour</SelectItem>
-              <SelectItem value="day">Per Day</SelectItem>
-              <SelectItem value="month">Per Month</SelectItem>
+              <SelectItem value="hourly">Per Hour</SelectItem>
+              <SelectItem value="daily">Per Day</SelectItem>
+              <SelectItem value="monthly">Per Month</SelectItem>
+              <SelectItem value="fixed">Fixed Rate</SelectItem>
             </SelectContent>
           </Select>
         </div>
