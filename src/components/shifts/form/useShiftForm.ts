@@ -12,7 +12,7 @@ export default function useShiftForm(onExternalSubmit?: (data: ShiftFormData) =>
     startTime: "",
     endTime: "",
     payRate: "",
-    payRateType: "hour",
+    payRateType: "hourly",
     selectedPromoterIds: []
   });
 
