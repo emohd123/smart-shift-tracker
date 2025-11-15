@@ -2,6 +2,22 @@
 import { Shift } from "@/components/shifts/types/ShiftTypes";
 
 /**
+ * Calculate actual hours between start and end time
+ */
+function calculateShiftHours(startTime: string, endTime: string): number {
+  const [startHour, startMin] = startTime.split(':').map(Number);
+  const [endHour, endMin] = endTime.split(':').map(Number);
+  
+  const startMinutes = startHour * 60 + startMin;
+  const endMinutes = endHour * 60 + endMin;
+  
+  let diffMinutes = endMinutes - startMinutes;
+  if (diffMinutes < 0) diffMinutes += 24 * 60; // Handle overnight shifts
+  
+  return diffMinutes / 60;
+}
+
+/**
  * Custom hook to process dashboard data
  */
 export function useDashboardData(shifts: Shift[]) {
@@ -18,8 +34,7 @@ export function useDashboardData(shifts: Shift[]) {
   const totalEarned = shifts
     .filter(shift => shift.status === "completed")
     .reduce((sum, shift) => {
-      // Assuming 8 hour shifts for simplicity
-      const hours = 8;
+      const hours = calculateShiftHours(shift.startTime, shift.endTime);
       return sum + (shift.payRate * hours);
     }, 0);
   
@@ -27,8 +42,7 @@ export function useDashboardData(shifts: Shift[]) {
   const unpaidAmount = shifts
     .filter(shift => shift.status === "completed" && shift.isPaid === false)
     .reduce((sum, shift) => {
-      // Assuming 8 hour shifts for simplicity
-      const hours = 8;
+      const hours = calculateShiftHours(shift.startTime, shift.endTime);
       return sum + (shift.payRate * hours);
     }, 0);
   
