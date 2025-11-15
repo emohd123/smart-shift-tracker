@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import AppLayout from "@/components/layout/AppLayout";
 import ProfileUpdateForm from "@/components/profile/ProfileUpdateForm";
+import { UniqueCodeCard } from "@/components/profile/UniqueCodeCard";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -36,6 +37,10 @@ export default function Profile() {
     <AppLayout title="Profile">
       <div className="max-w-3xl mx-auto py-8 px-4">
         <h1 className="text-3xl font-bold tracking-tight mb-6">My Profile</h1>
+        
+        {/* Unique Code Card - Always Visible */}
+        <UniqueCodeCard user={user} />
+        
         <ProfileUpdateForm />
       </div>
     </AppLayout>
