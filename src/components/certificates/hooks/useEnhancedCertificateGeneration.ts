@@ -57,19 +57,19 @@ export const useEnhancedCertificateGeneration = (userId: string) => {
     try {
       const { error } = await supabase
         .from('certificates')
-        .insert({
+        .insert([{
           user_id: userId,
+          certificate_type: 'work_experience',
           reference_number: data.referenceNumber,
-          time_period: options.timePeriod,
+          issue_date: new Date().toISOString().split('T')[0],
           total_hours: data.totalHours,
-          performance_rating: data.performanceRating,
-          issued_by: user?.id,
-          manager_contact: data.managerContact,
-          promotion_names: data.roles,
           position_title: 'Enhanced Work Experience',
+          time_period: options.timePeriod,
+          promotion_names: data.roles,
           skills_gained: ['Enhanced Documentation', 'Professional Development', 'Comprehensive Experience'],
+          issued_by: user?.id,
           status: 'approved'
-        });
+        }]);
 
       if (error) {
         console.error('Error saving enhanced certificate:', error);

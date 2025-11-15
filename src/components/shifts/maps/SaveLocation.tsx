@@ -74,6 +74,17 @@ export default function SaveLocation({
     location: { lat: number; lng: number }, 
     radius: number
   ) => {
+    // Get company_id from the shift
+    const { data: shiftData } = await supabase
+      .from('shifts')
+      .select('company_id')
+      .eq('id', shiftId)
+      .single();
+    
+    if (!shiftData?.company_id) {
+      throw new Error('Unable to determine company for this shift');
+    }
+
     const { data: existingLocation } = await supabase
       .from('shift_locations')
       .select('id')
@@ -94,12 +105,14 @@ export default function SaveLocation({
     } else {
       result = await supabase
         .from('shift_locations')
-        .insert({
+        .insert([{
           shift_id: shiftId,
+          company_id: shiftData.company_id,
+          name: `Location for shift ${shiftId}`,
           latitude: location.lat,
           longitude: location.lng,
           radius: radius
-        });
+        }]);
     }
     
     if (result.error) {

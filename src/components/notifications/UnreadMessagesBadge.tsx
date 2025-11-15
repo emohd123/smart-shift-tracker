@@ -20,8 +20,8 @@ export default function UnreadMessagesBadge() {
         const { count, error } = await supabase
           .from("messages")
           .select("*", { count: "exact", head: true })
-          .eq("receiver_id", user.id)
-          .eq("is_read", false);
+          .eq("recipient_id", user.id)
+          .eq("read", false);
 
         if (error) {
           console.error("Error fetching unread messages:", error);
@@ -46,7 +46,7 @@ export default function UnreadMessagesBadge() {
           event: '*',
           schema: 'public',
           table: 'messages',
-          filter: `receiver_id=eq.${user.id}`
+          filter: `recipient_id=eq.${user.id}`
         },
         () => {
           // Refresh unread count when any message changes

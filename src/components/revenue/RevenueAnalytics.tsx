@@ -52,10 +52,12 @@ export default function RevenueAnalytics() {
         .select("id");
 
       // Get subscription stats
+      type SubscriberRow = { status: string; subscription_tier: string };
       const { data: subStats } = await supabase
         .from("subscribers")
-        .select("subscribed, subscription_tier")
-        .eq("subscribed", true);
+        .select("status, subscription_tier")
+        .eq("status", "active")
+        .returns<SubscriberRow[]>();
 
       setStats({
         totalCreditsUsed,

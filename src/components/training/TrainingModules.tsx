@@ -42,7 +42,16 @@ export default function TrainingModules() {
         .order("price_credits", { ascending: true });
       
       if (error) throw error;
-      setModules(data || []);
+      
+      // Map the data to ensure estimated_duration is treated as number
+      const mappedData = (data || []).map(module => ({
+        ...module,
+        estimated_duration: typeof module.estimated_duration === 'string' 
+          ? parseInt(module.estimated_duration) || 0
+          : module.estimated_duration
+      }));
+      
+      setModules(mappedData);
     } catch (error) {
       console.error("Error fetching modules:", error);
     }

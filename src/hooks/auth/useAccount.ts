@@ -56,7 +56,7 @@ export const useAccount = () => {
       
       // Use the RPC function we created with the correct parameter name
       const { error: rpcError } = await supabase.rpc('delete_user_time_logs', { 
-        user_id_param: userId 
+        target_user_id: userId 
       });
       
       if (rpcError) {
@@ -92,7 +92,7 @@ export const useAccount = () => {
       
       // Now call the delete_user RPC function
       console.log("Calling delete_user RPC for user:", userId);
-      const { error } = await supabase.rpc('delete_user', {});
+      const { error } = await supabase.rpc('delete_user', { target_user_id: userId });
       
       if (error) {
         throw error;

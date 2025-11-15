@@ -79,9 +79,13 @@ export function AdminStampConfig() {
   const saveConfig = async () => {
     setSaving(true);
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Not authenticated");
+
       const { error } = await supabase
         .from('admin_stamp_configs')
-        .upsert({
+        .upsert([{
+          admin_id: user.id,
           company_name: config.companyName,
           company_website: config.companyWebsite,
           company_email: config.companyEmail,
@@ -92,7 +96,7 @@ export function AdminStampConfig() {
           signature_position: config.signaturePosition,
           stamp_opacity: config.stampOpacity,
           updated_at: new Date().toISOString()
-        });
+        }]);
 
       if (error) throw error;
       

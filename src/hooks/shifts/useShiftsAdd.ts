@@ -33,17 +33,19 @@ export const useShiftsAdd = ({ setShifts }: UseShiftsAddProps) => {
       
       // If shift has location data, add it to the shift_locations table
       const locationData = localStorage.getItem('temp_shift_location');
-      if (locationData) {
+      if (locationData && data.company_id) {
         try {
           const locationInfo = JSON.parse(locationData);
           const { error: locationError } = await supabase
             .from('shift_locations')
-            .insert({
-              shift_id: shift.id,
+            .insert([{
+              shift_id: data.id,
+              company_id: data.company_id,
+              name: `Location for ${shift.title}`,
               latitude: locationInfo.latitude,
               longitude: locationInfo.longitude,
               radius: locationInfo.radius || 100
-            });
+            }]);
             
           if (locationError) {
             console.error('Error adding shift location:', locationError);

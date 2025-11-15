@@ -37,10 +37,11 @@ export const deletePromoterFromDatabase = async (promoterId: string): Promise<bo
 const deletePromoterRelatedData = async (promoterId: string): Promise<void> => {
   try {
     // Delete documents
-    const { error: documentsError } = await supabase
+    type DeleteResult = { error: any };
+    const { error: documentsError }: DeleteResult = await supabase
       .from('documents')
       .delete()
-      .eq('promoter_id', promoterId);
+      .eq('user_id', promoterId);
       
     if (documentsError) {
       console.error('Error deleting promoter documents:', documentsError);
@@ -57,10 +58,10 @@ const deletePromoterRelatedData = async (promoterId: string): Promise<void> => {
     }
     
     // Delete payouts
-    const { error: payoutsError } = await supabase
+    const { error: payoutsError }: DeleteResult = await supabase
       .from('payouts')
       .delete()
-      .eq('promoter_id', promoterId);
+      .eq('user_id', promoterId);
       
     if (payoutsError) {
       console.error('Error deleting promoter payouts:', payoutsError);

@@ -300,6 +300,7 @@ export type Database = {
           read: boolean | null
           recipient_id: string
           sender_id: string
+          updated_at: string | null
         }
         Insert: {
           content: string
@@ -308,6 +309,7 @@ export type Database = {
           read?: boolean | null
           recipient_id: string
           sender_id: string
+          updated_at?: string | null
         }
         Update: {
           content?: string
@@ -316,6 +318,7 @@ export type Database = {
           read?: boolean | null
           recipient_id?: string
           sender_id?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -913,6 +916,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_user_credits: {
+        Args: { credits_amount: number; user_id_param: string }
+        Returns: undefined
+      }
       delete_user: { Args: { target_user_id: string }; Returns: undefined }
       delete_user_time_logs: {
         Args: { target_user_id: string }

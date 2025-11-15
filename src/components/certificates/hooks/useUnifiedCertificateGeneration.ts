@@ -53,19 +53,19 @@ export const useUnifiedCertificateGeneration = (
     try {
       const { error } = await supabase
         .from('certificates')
-        .insert({
+        .insert([{
           user_id: userId,
+          certificate_type: 'work_experience',
           reference_number: data.referenceNumber,
-          time_period: timePeriod,
+          issue_date: new Date().toISOString().split('T')[0],
           total_hours: data.totalHours,
-          performance_rating: data.performanceRating,
-          issued_by: user?.id,
-          manager_contact: data.managerContact,
-          promotion_names: data.roles,
           position_title: 'Multiple Positions',
+          time_period: timePeriod,
+          promotion_names: data.roles,
           skills_gained: ['Time Management', 'Reliability', 'Customer Service', 'Adaptability'],
+          issued_by: user?.id,
           status: 'approved'
-        });
+        }]);
 
       if (error) {
         console.error('Error saving certificate:', error);
