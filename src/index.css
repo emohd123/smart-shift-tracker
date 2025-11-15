@@ -307,8 +307,9 @@ body {
 }
 
 /* Improve form controls */
+/* Form Controls - Enhanced mobile touch targets */
 input, select, textarea {
-  @apply focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200;
+  @apply focus:ring-2 focus:ring-primary/30 focus:border-primary/50 transition-all duration-200 min-h-[44px];
 }
 
 /* Better button feedback */
