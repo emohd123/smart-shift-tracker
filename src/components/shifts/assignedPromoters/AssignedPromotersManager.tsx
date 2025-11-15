@@ -7,6 +7,7 @@ import { PaymentSummary } from "./PaymentSummary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users } from "lucide-react";
 import { calculateTotalShiftPayment } from "../utils/paymentCalculations";
+import { AssignPromotersDialog } from "./AssignPromotersDialog";
 
 type AssignedPromotersManagerProps = {
   shiftId: string;
@@ -73,9 +74,10 @@ export const AssignedPromotersManager = ({
           <div className="text-center py-12">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
             <h3 className="text-lg font-medium mb-1">No promoters assigned</h3>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-4">
               Assign promoters to this shift to track their attendance and payments
             </p>
+            <AssignPromotersDialog shiftId={shiftId} />
           </div>
         </CardContent>
       </Card>
@@ -85,11 +87,21 @@ export const AssignedPromotersManager = ({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Assigned Promoters ({promoters.length})
-        </CardTitle>
-        <CardDescription>Track attendance and calculate payments in real-time</CardDescription>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Assigned Promoters ({promoters.length})
+            </CardTitle>
+            <CardDescription>Track attendance and calculate payments in real-time</CardDescription>
+          </div>
+          <AssignPromotersDialog 
+            shiftId={shiftId} 
+            currentAssignments={promoters.map(p => p.promoter_id)}
+            variant="outline"
+            buttonText="Add More"
+          />
+        </div>
       </CardHeader>
       <CardContent>
         <PaymentSummary
