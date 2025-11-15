@@ -12,6 +12,8 @@ export interface ProfileUpdate extends Partial<UserProfile> {
   // Any additional fields specific to profile updates can be added here
   gender?: GenderType;
   verification_status?: VerificationStatus;
+  id_card_url?: string | null;
+  profile_photo_url?: string | null;
 }
 
 export const useAuthMethods = () => {
