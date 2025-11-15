@@ -15,6 +15,9 @@ import { EnhancedCertificatePreview } from "./EnhancedCertificatePreview";
 import { AdminStampConfig } from "./generator/AdminStampConfig";
 import { TimePeriod, CertificateType, WorkExperienceData } from "./types/certificate";
 import { useUnifiedCertificateGeneration } from "./hooks/useUnifiedCertificateGeneration";
+import { useCertificatePayment } from "@/hooks/useCertificatePayment";
+import PaymentButton from "./generator/PaymentButton";
+import GenerateButton from "./generator/GenerateButton";
 
 export default function EnhancedWorkCertificateGenerator() {
   const { user, isAuthenticated } = useAuth();
@@ -28,6 +31,7 @@ export default function EnhancedWorkCertificateGenerator() {
   const [customMessage, setCustomMessage] = useState("");
   const [promoters, setPromoters] = useState<any[]>([]);
   const [loadingPromoters, setLoadingPromoters] = useState(false);
+  const [generatedCertificateId, setGeneratedCertificateId] = useState<string | null>(null);
   
   const {
     generateCertificate,
@@ -40,6 +44,12 @@ export default function EnhancedWorkCertificateGenerator() {
     handleShare,
     handleEmail
   } = useUnifiedCertificateGeneration(selectedUserId || user?.id || "", timePeriod, "work_experience");
+  
+  const {
+    isProcessing,
+    checkPaymentStatus,
+    initiateCertificatePayment,
+  } = useCertificatePayment();
   
   // Set initial user ID
   useEffect(() => {
@@ -87,13 +97,25 @@ export default function EnhancedWorkCertificateGenerator() {
     setShowPreview(false);
     
     try {
-      await generateCertificate();
+      const result = await generateCertificate();
+      if (result && result.certificateId) {
+        setGeneratedCertificateId(result.certificateId);
+      }
       setShowPreview(true);
-      toast.success("Enhanced certificate generated successfully!");
+      toast.success("Certificate generated! Please proceed with payment to download.");
     } catch (error) {
       console.error("Failed to generate certificate:", error);
       toast.error("Failed to generate certificate. Please try again.");
     }
+  };
+
+  const handlePayment = async () => {
+    if (!generatedCertificateId) {
+      toast.error("Please generate a certificate first");
+      return;
+    }
+    
+    await initiateCertificatePayment(generatedCertificateId);
   };
 
   return (
