@@ -14,17 +14,8 @@ export const uploadFileToBucket = async (
   options: { upsert?: boolean; cacheControl?: string } = {}
 ): Promise<StorageResult<string>> => {
   try {
-    // First ensure bucket exists
-    const { success, error: bucketError } = await createBucketIfNotExists(bucket);
-    
-    if (!success) {
-      console.error("Failed to ensure bucket exists:", bucketError);
-      return createErrorResponse<string>(
-        `Failed to ensure bucket ${bucket} exists: ${bucketError?.message}`,
-        "BUCKET_PREPARATION_ERROR",
-        bucketError
-      );
-    }
+    // NOTE: Buckets (id_cards, profile_photos) must already exist in Supabase
+    // They are created during initial setup with proper RLS policies
     
     // Upload the file
     console.log(`Uploading file to ${bucket}/${path}...`);
