@@ -28,9 +28,10 @@ export function EnhancedCertificatePreview({ certificateData, template }: Enhanc
   };
   
   return (
-    <Card className={`w-full max-w-4xl mx-auto border-2 ${templateStyles[template as keyof typeof templateStyles]} shadow-lg`}>
+    <div className="w-full overflow-x-auto">
+      <Card className={`w-full min-w-[320px] max-w-4xl mx-auto border-2 ${templateStyles[template as keyof typeof templateStyles]} shadow-lg`}>
       {/* Enhanced Header with Company Branding */}
-      <CardHeader className={`text-center ${headerStyles[template as keyof typeof headerStyles]} relative overflow-hidden`}>
+      <CardHeader className={`text-center ${headerStyles[template as keyof typeof headerStyles]} relative overflow-hidden py-6 sm:py-8 px-4`}>
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-4 right-4">
             <Award className="h-24 w-24" />
@@ -47,10 +48,10 @@ export function EnhancedCertificatePreview({ certificateData, template }: Enhanc
             </div>
           </div>
           
-          <CardTitle className="text-3xl font-bold mb-2">
+          <CardTitle className="text-2xl sm:text-3xl font-bold mb-2">
             COMPREHENSIVE WORK EXPERIENCE CERTIFICATE
           </CardTitle>
-          <CardDescription className="text-xl font-medium text-white/90">
+          <CardDescription className="text-lg sm:text-xl font-medium text-white/90">
             Official Employment Verification & Skills Documentation
           </CardDescription>
           
@@ -62,9 +63,9 @@ export function EnhancedCertificatePreview({ certificateData, template }: Enhanc
         </div>
       </CardHeader>
       
-      <CardContent className="p-8 space-y-8">
+      <CardContent className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
         {/* Enhanced Employee Information */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
           <Card className="border-none shadow-sm bg-white/70">
             <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
@@ -261,5 +262,6 @@ export function EnhancedCertificatePreview({ certificateData, template }: Enhanc
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 }
