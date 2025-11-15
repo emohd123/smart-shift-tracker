@@ -12,14 +12,21 @@ import ProfileLoadingError from "./ProfileLoadingError";
 import FileUploadFields from "./FileUploadFields";
 import ProfileFormFields from "./ProfileFormFields";
 import { GenderType } from "@/types/database";
+import { useFileUpload } from "./hooks/useFileUpload";
 
 export default function ProfileUpdateForm() {
   const { user } = useAuth();
   const { getUserProfile, updateProfile, loading, error } = useProfile();
   const { logProfileUpdate } = useSecurityMonitoring();
   const [saving, setSaving] = useState(false);
-  const [idCardFile, setIdCardFile] = useState<File | null>(null);
-  const [profilePhotoFile, setProfilePhotoFile] = useState<File | null>(null);
+  const { 
+    idCardFile, 
+    setIdCardFile, 
+    profilePhotoFile, 
+    setProfilePhotoFile, 
+    uploadFiles, 
+    isUploading 
+  } = useFileUpload();
   
   const form = useForm({
     defaultValues: {
@@ -63,7 +70,24 @@ export default function ProfileUpdateForm() {
     try {
       setSaving(true);
       
-      // Format data for update
+      // Step 1: Upload files first (if selected)
+      let idCardUrl = data.id_card_url;
+      let profilePhotoUrl = data.profile_photo_url;
+      
+      if (idCardFile || profilePhotoFile) {
+        toast.info("Uploading files...");
+        const uploadResults = await uploadFiles(user.id);
+        
+        // Update URLs with newly uploaded files
+        if (uploadResults.idCardUrl) {
+          idCardUrl = uploadResults.idCardUrl;
+        }
+        if (uploadResults.profilePhotoUrl) {
+          profilePhotoUrl = uploadResults.profilePhotoUrl;
+        }
+      }
+      
+      // Step 2: Format data with file URLs
       const updateData: ProfileUpdate = {
         full_name: data.full_name || "",
         nationality: data.nationality || "",
@@ -75,17 +99,24 @@ export default function ProfileUpdateForm() {
         is_student: Boolean(data.is_student),
         address: data.address || "",
         bank_details: data.bank_details || "",
+        id_card_url: idCardUrl || null,
+        profile_photo_url: profilePhotoUrl || null,
       };
       
-      // Handle file uploads here if needed
-      
+      // Step 3: Update profile
       await updateProfile(user.id, updateData);
       
-      // Log profile update for security monitoring
-      const updatedFields = Object.keys(updateData).filter(key => updateData[key as keyof ProfileUpdate] !== undefined);
+      // Clear file selections after successful upload
+      setIdCardFile(null);
+      setProfilePhotoFile(null);
+      
+      // Log and notify
+      const updatedFields = Object.keys(updateData).filter(
+        key => updateData[key as keyof ProfileUpdate] !== undefined
+      );
       logProfileUpdate(user.id, updatedFields);
       
-      toast.success("Profile updated successfully");
+      toast.success("Profile and files updated successfully!");
     } catch (err: any) {
       toast.error("Failed to update profile: " + (err.message || "Unknown error"));
     } finally {
@@ -117,18 +148,23 @@ export default function ProfileUpdateForm() {
             form={form}
             readOnly={false}
           />
-          <div className="flex justify-end">
-            <Button type="submit" disabled={saving}>
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Profile"
-              )}
-            </Button>
-          </div>
+      <div className="flex justify-end">
+        <Button type="submit" disabled={saving || isUploading}>
+          {isUploading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Uploading Files...
+            </>
+          ) : saving ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Saving...
+            </>
+          ) : (
+            "Save Profile"
+          )}
+        </Button>
+      </div>
         </form>
       </div>
     );
@@ -155,8 +191,13 @@ export default function ProfileUpdateForm() {
       </div>
       
       <div className="flex justify-end">
-        <Button type="submit" disabled={saving}>
-          {saving ? (
+        <Button type="submit" disabled={saving || isUploading}>
+          {isUploading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Uploading Files...
+            </>
+          ) : saving ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Saving...
