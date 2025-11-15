@@ -46,7 +46,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   loading: boolean;
   login: (email: string, password: string, remember?: boolean) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<any>;
+  signup: (name: string, email: string, password: string, role?: string) => Promise<any>;
   logout: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   updatePassword: (password: string) => Promise<void>;

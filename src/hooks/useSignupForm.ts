@@ -59,61 +59,76 @@ export const useSignupForm = () => {
     
     try {
       setFormError(null);
-      console.log("Form data to submit:", formData);
+      console.log("🚀 Starting signup process...");
       
-      // Always ensure phone number is null if empty
-      const formattedData = {
-        ...formData,
-        phoneNumber: formData.phoneNumber?.trim() || null
-      };
+      const { fullName, email, password, role } = formData;
       
-      const { fullName, email, password } = formattedData;
-      
-      console.log("Creating user with:", { fullName, email });
-      const userData = await signup(fullName, email, password);
+      // Step 1: Create user account
+      console.log("📝 Creating account for:", email);
+      const userData = await signup(fullName, email, password, role);
       
       if (!userData || !userData.id) {
         throw new Error("Failed to create user account");
       }
       
-      console.log("User created successfully:", userData);
+      console.log("✓ Account created:", userData.id);
       
+      // Step 2: Upload files (non-blocking)
+      let idCardUrl = null;
+      let profilePhotoUrl = null;
+      let uploadErrors: string[] = [];
+      
+      if (fileData.idCard || fileData.profilePhoto) {
+        console.log("📤 Uploading files...");
+        const uploadResult = await uploadFiles(userData.id, fileData);
+        idCardUrl = uploadResult.idCardUrl;
+        profilePhotoUrl = uploadResult.profilePhotoUrl;
+        uploadErrors = uploadResult.errors || [];
+        
+        if (uploadErrors.length > 0) {
+          console.warn("⚠️ File upload warnings:", uploadErrors);
+          toast({
+            title: "Files partially uploaded",
+            description: "Some files couldn't be uploaded, but your account was created successfully.",
+            variant: "default",
+          });
+        } else if (idCardUrl || profilePhotoUrl) {
+          console.log("✓ Files uploaded successfully");
+        }
+      }
+      
+      // Step 3: Update profile with all data
       try {
-        // Upload files
-        const { idCardUrl, profilePhotoUrl } = await uploadFiles(userData.id, fileData);
-        console.log("Files uploaded:", { idCardUrl, profilePhotoUrl });
-        
-        // Update profile
-        await updateUserProfile(userData.id, formattedData, idCardUrl || null, profilePhotoUrl || null);
-        console.log("Profile updated successfully");
+        console.log("💾 Updating profile...");
+        await updateUserProfile(userData.id, formData, idCardUrl, profilePhotoUrl);
+        console.log("✓ Profile updated successfully");
         
         setIsSuccess(true);
         toast({
-          title: "Registration successful",
-          description: "Your account is now pending verification.",
-        });
-        
-        setTimeout(() => {
-          navigate("/profile");
-        }, 2000);
-      } catch (profileError: any) {
-        console.error("Profile creation error:", profileError);
-        
-        // Even if profile update fails, the user has been created and should have a basic profile
-        // Show success but with a warning
-        setIsSuccess(true);
-        toast({
-          title: "Registration partially successful",
-          description: "Your account was created, but there was an issue with your profile. Please complete your profile after login.",
-          variant: "destructive",
+          title: "Registration successful! 🎉",
+          description: "Your account has been created. You can now log in.",
         });
         
         setTimeout(() => {
           navigate("/login");
-        }, 3000);
+        }, 2000);
+      } catch (profileError: any) {
+        console.error("❌ Profile update error:", profileError);
+        
+        // Account was created, just couldn't update extended profile
+        setIsSuccess(true);
+        toast({
+          title: "Account created",
+          description: "Please complete your profile after logging in.",
+          variant: "default",
+        });
+        
+        setTimeout(() => {
+          navigate("/login");
+        }, 2500);
       }
     } catch (error: any) {
-      console.error("Registration error:", error);
+      console.error("❌ Registration error:", error);
       setFormError(error.message || "Registration failed. Please try again.");
       toast({
         title: "Registration failed",

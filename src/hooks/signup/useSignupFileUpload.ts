@@ -9,55 +9,64 @@ import {
 
 export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetStateAction<boolean>>) => {
   const uploadFiles = async (userId: string, fileData: any) => {
+    let idCardUrl = null;
+    let profilePhotoUrl = null;
+    const errors: string[] = [];
+
     try {
       setUploadingFiles(true);
-      let idCardUrl = null;
-      let profilePhotoUrl = null;
       
-      // Create storage buckets if they don't exist using our utility function
-      await createBucketIfNotExists('id_cards', { public: true });
-      await createBucketIfNotExists('profile_photos', { public: true });
-      
-      // Upload ID card if provided
+      // Upload ID card with error handling
       if (fileData.idCard) {
         const fileExt = fileData.idCard.name.split('.').pop();
-        const fileName = `${userId}/id_card.${fileExt}`;
+        const fileName = `${userId}/id_card_${Date.now()}.${fileExt}`;
         
-        const uploadResult = await uploadFileToBucket(
-          fileData.idCard,
-          'id_cards',
-          fileName
-        );
-          
-        if (!uploadResult.success) {
-          throw new Error(`Failed to upload ID card: ${uploadResult.error?.message}`);
+        try {
+          const uploadResult = await uploadFileToBucket(
+            fileData.idCard,
+            'id_cards',
+            fileName
+          );
+            
+          if (uploadResult.success && uploadResult.data) {
+            idCardUrl = uploadResult.data;
+            console.log("✓ ID card uploaded successfully");
+          } else {
+            errors.push(`ID card: ${uploadResult.error?.message || 'Upload failed'}`);
+            console.error("ID card upload error:", uploadResult.error);
+          }
+        } catch (err) {
+          errors.push(`ID card: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          console.error("ID card upload exception:", err);
         }
-        
-        idCardUrl = uploadResult.data || fileName;
       }
       
-      // Upload profile photo if provided
+      // Upload profile photo with error handling
       if (fileData.profilePhoto) {
         const fileExt = fileData.profilePhoto.name.split('.').pop();
-        const fileName = `${userId}/profile_photo.${fileExt}`;
+        const fileName = `${userId}/profile_photo_${Date.now()}.${fileExt}`;
         
-        const uploadResult = await uploadFileToBucket(
-          fileData.profilePhoto,
-          'profile_photos',
-          fileName
-        );
-          
-        if (!uploadResult.success) {
-          throw new Error(`Failed to upload profile photo: ${uploadResult.error?.message}`);
+        try {
+          const uploadResult = await uploadFileToBucket(
+            fileData.profilePhoto,
+            'profile_photos',
+            fileName
+          );
+            
+          if (uploadResult.success && uploadResult.data) {
+            profilePhotoUrl = uploadResult.data;
+            console.log("✓ Profile photo uploaded successfully");
+          } else {
+            errors.push(`Profile photo: ${uploadResult.error?.message || 'Upload failed'}`);
+            console.error("Profile photo upload error:", uploadResult.error);
+          }
+        } catch (err) {
+          errors.push(`Profile photo: ${err instanceof Error ? err.message : 'Unknown error'}`);
+          console.error("Profile photo upload exception:", err);
         }
-        
-        profilePhotoUrl = uploadResult.data || fileName;
       }
       
-      return { idCardUrl, profilePhotoUrl };
-    } catch (error: any) {
-      console.error("Error uploading files:", error);
-      throw error;
+      return { idCardUrl, profilePhotoUrl, errors };
     } finally {
       setUploadingFiles(false);
     }
@@ -67,31 +76,25 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
     try {
       console.log("Updating profile for user ID:", userId);
       
-      // Always ensure phone number is null if empty
-      const phoneNumber = formData.phoneNumber?.trim() ? formData.phoneNumber.trim() : null;
-      
-      // Ensure all form data is properly formatted for database storage
       const profileData = {
         full_name: formData.fullName || 'New User',
         nationality: formData.nationality || '',
-        age: parseInt(formData.age) || 18,
-        phone_number: phoneNumber, // Explicitly set to null if empty
-        gender: formData.gender as GenderType || GenderType.Male,
-        height: parseInt(formData.height) || 170,
-        weight: parseInt(formData.weight) || 70,
+        age: formData.age || '18',
+        phone_number: formData.phoneNumber?.trim() || null,
+        gender: formData.gender || 'Male',
+        height: formData.height || '170',
+        weight: formData.weight || '70',
         is_student: formData.isStudent === true,
         address: formData.address || '',
         bank_details: formData.bankDetails || null,
-        id_card_url: idCardUrl || null,
-        profile_photo_url: profilePhotoUrl || null,
+        id_card_url: idCardUrl,
+        profile_photo_url: profilePhotoUrl,
         verification_status: 'pending',
-        role: (formData.role || 'promoter')
+        updated_at: new Date().toISOString(),
       };
       
       console.log("Profile data to save:", profileData);
 
-      // Instead of trying to upsert, just update the profile
-      // The trigger we created will have already made a profile on signup
       const { data, error } = await supabase
         .from('profiles')
         .update(profileData)
@@ -100,13 +103,13 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         
       if (error) {
         console.error("Error updating profile:", error);
-        throw error;
+        throw new Error(`Profile update failed: ${error.message}`);
       }
       
-      console.log("Profile updated successfully:", data);
+      console.log("✓ Profile updated successfully:", data);
       return data;
     } catch (error: any) {
-      console.error("Error updating profile:", error);
+      console.error("Exception updating profile:", error);
       throw error;
     }
   };

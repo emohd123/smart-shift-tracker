@@ -73,31 +73,35 @@ export const useAuthentication = () => {
     }
   };
 
-  const signup = async (name: string, email: string, password: string) => {
+  const signup = async (name: string, email: string, password: string, role: string = 'promoter') => {
     setLoading(true);
     setAuthError(null);
     try {
-      console.log("Signing up with:", { name, email });
+      console.log("Signing up with:", { name, email, role });
       
-      // Set full_name in the user metadata
+      const redirectUrl = `${window.location.origin}/`;
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
-            full_name: name
+            full_name: name,
+            role: role,
           },
+          emailRedirectTo: redirectUrl,
         },
       });
 
       if (error) {
         console.error("Supabase signup error:", error);
         
-        // Provide more user-friendly error messages
-        if (error.message.includes("already registered")) {
-          throw new Error("This email is already registered. Please use a different email or try logging in.");
-        } else if (error.message.includes("network")) {
-          throw new Error("Network error. Please check your connection and try again.");
+        if (error.message.includes("User already registered")) {
+          throw new Error("This email is already registered. Please login instead.");
+        } else if (error.message.includes("Invalid email")) {
+          throw new Error("Please enter a valid email address.");
+        } else if (error.message.includes("Password")) {
+          throw new Error("Password must be at least 6 characters long.");
         } else {
           throw error;
         }
@@ -108,7 +112,7 @@ export const useAuthentication = () => {
         throw new Error("Failed to create user account");
       }
 
-      console.log("Signup successful:", data.user);
+      console.log("✓ Signup successful:", data.user.id);
       return data.user;
     } catch (error: any) {
       console.error("Signup error:", error);
