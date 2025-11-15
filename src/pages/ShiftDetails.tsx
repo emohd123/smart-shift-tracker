@@ -13,13 +13,10 @@ const ShiftDetails = () => {
     isAuthenticated,
     shift,
     loading,
-    isCheckedIn,
-    isCheckingOut,
-    timeTrackerRef,
-    handleCheckIn,
-    handleCheckOut,
     handleDelete,
-    navigate
+    navigate,
+    userRole,
+    refreshShift,
   } = useShiftDetail(id);
 
   // Redirect to login if not authenticated
@@ -40,12 +37,9 @@ const ShiftDetails = () => {
       ) : shift ? (
         <ShiftDetailContent
           shift={shift}
-          timeTrackerRef={timeTrackerRef}
-          isCheckedIn={isCheckedIn}
-          onCheckIn={handleCheckIn}
-          onCheckOut={handleCheckOut}
           onDelete={handleDelete}
-          isCheckingOut={isCheckingOut}
+          onUpdate={refreshShift}
+          userRole={userRole}
         />
       ) : (
         <ShiftNotFound />

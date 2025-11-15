@@ -1,52 +1,46 @@
 
-import { useRef } from "react";
 import { Shift } from "./types/ShiftTypes";
 import ShiftDetail from "./ShiftDetail";
-import TimeTracker from "../time/TimeTracker";
+import { AssignedPromotersManager } from "./assignedPromoters/AssignedPromotersManager";
+import { ShiftStatusToggle } from "./status/ShiftStatusToggle";
 import { cn } from "@/lib/utils";
 
 type ShiftDetailContentProps = {
   shift: Shift;
-  timeTrackerRef: React.MutableRefObject<{
-    handleStartTracking: () => void;
-    handleStopTracking: () => void;
-  } | null>;
-  isCheckedIn?: boolean;
-  onCheckIn: () => void;
-  onCheckOut: () => void;
   onDelete: (id: string) => void;
-  isCheckingOut: boolean;
+  onUpdate: () => void;
+  userRole?: string;
 };
 
 export const ShiftDetailContent = ({
   shift,
-  timeTrackerRef,
-  isCheckedIn,
-  onCheckIn,
-  onCheckOut,
   onDelete,
-  isCheckingOut
+  onUpdate,
+  userRole,
 }: ShiftDetailContentProps) => {
+  const isCompany = userRole === "company" || userRole === "admin";
+
   return (
     <div className={cn(
-      "space-y-8 transition-all duration-300",
+      "space-y-6 transition-all duration-300",
       "animate-fade-in"
     )}>
       <ShiftDetail 
         shift={shift}
-        onCheckIn={onCheckIn}
-        onCheckOut={onCheckOut}
+        onCheckIn={() => {}}
+        onCheckOut={() => {}}
         onDelete={onDelete}
       />
       
-      <div className="bg-card/50 rounded-lg p-6 border border-border/40 shadow-sm">
-        <TimeTracker 
-          shift={shift}
-          ref={timeTrackerRef}
-          autoStart={false}
-          autoStop={isCheckingOut}
-        />
-      </div>
+      <AssignedPromotersManager
+        shiftId={shift.id}
+        payRate={shift.payRate}
+        payRateType={shift.payRateType || "hourly"}
+      />
+
+      {isCompany && (
+        <ShiftStatusToggle shift={shift} onUpdate={onUpdate} />
+      )}
     </div>
   );
 };

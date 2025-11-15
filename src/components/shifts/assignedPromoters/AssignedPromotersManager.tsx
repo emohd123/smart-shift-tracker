@@ -1,0 +1,116 @@
+
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAssignedPromoters } from "./hooks/useAssignedPromoters";
+import { usePromoterTimeLogs } from "./hooks/usePromoterTimeLogs";
+import { PromoterAttendanceCard } from "./PromoterAttendanceCard";
+import { PaymentSummary } from "./PaymentSummary";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Users } from "lucide-react";
+import { calculateTotalShiftPayment } from "../utils/paymentCalculations";
+
+type AssignedPromotersManagerProps = {
+  shiftId: string;
+  payRate: number;
+  payRateType: string;
+};
+
+export const AssignedPromotersManager = ({
+  shiftId,
+  payRate,
+  payRateType,
+}: AssignedPromotersManagerProps) => {
+  const { promoters, loading: promotersLoading } = useAssignedPromoters(shiftId);
+  const { timeLogs, loading: timeLogsLoading } = usePromoterTimeLogs(shiftId);
+
+  const loading = promotersLoading || timeLogsLoading;
+
+  const totalCheckedIn = promoters.filter((p) => {
+    const logs = timeLogs[p.promoter_id] || [];
+    const latestLog = logs[logs.length - 1];
+    return latestLog?.check_in_time && !latestLog?.check_out_time;
+  }).length;
+
+  const totalHours = Object.values(timeLogs).reduce((sum, logs) => {
+    return sum + logs.reduce((logSum, log) => logSum + (log.total_hours || 0), 0);
+  }, 0);
+
+  const totalPayment = calculateTotalShiftPayment(timeLogs, payRate, payRateType);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardHeader>
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <Skeleton key={i} className="h-24" />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-40" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (promoters.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Assigned Promoters
+          </CardTitle>
+          <CardDescription>Manage promoter attendance and track payments</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-12">
+            <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
+            <h3 className="text-lg font-medium mb-1">No promoters assigned</h3>
+            <p className="text-sm text-muted-foreground">
+              Assign promoters to this shift to track their attendance and payments
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Users className="h-5 w-5" />
+          Assigned Promoters ({promoters.length})
+        </CardTitle>
+        <CardDescription>Track attendance and calculate payments in real-time</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <PaymentSummary
+          totalPromoters={promoters.length}
+          totalCheckedIn={totalCheckedIn}
+          totalPayment={totalPayment}
+          totalHours={totalHours}
+        />
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {promoters.map((promoter) => (
+            <PromoterAttendanceCard
+              key={promoter.id}
+              promoter={promoter}
+              timeLogs={timeLogs[promoter.promoter_id] || []}
+              payRate={payRate}
+              payRateType={payRateType}
+            />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};

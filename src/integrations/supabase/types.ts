@@ -655,6 +655,8 @@ export type Database = {
           latitude: number | null
           location: string | null
           longitude: number | null
+          manual_status_override: boolean | null
+          override_status: string | null
           pay_rate: number
           pay_rate_type: string | null
           promoter_id: string | null
@@ -675,6 +677,8 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          manual_status_override?: boolean | null
+          override_status?: string | null
           pay_rate: number
           pay_rate_type?: string | null
           promoter_id?: string | null
@@ -695,6 +699,8 @@ export type Database = {
           latitude?: number | null
           location?: string | null
           longitude?: number | null
+          manual_status_override?: boolean | null
+          override_status?: string | null
           pay_rate?: number
           pay_rate_type?: string | null
           promoter_id?: string | null

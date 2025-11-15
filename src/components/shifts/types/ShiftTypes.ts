@@ -16,6 +16,8 @@ export interface Shift {
   is_assigned?: boolean;
   assigned_promoters?: number;
   created_at?: string;
+  manual_status_override?: boolean;
+  override_status?: string;
 }
 
 export interface ShiftFormData {
