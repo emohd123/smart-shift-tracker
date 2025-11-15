@@ -34,12 +34,6 @@ export type UserProfile = {
   updated_at: string;
 };
 
-export type SubscriptionData = {
-  subscribed: boolean;
-  subscription_tier: string;
-  subscription_end: string | null;
-};
-
 export { UserRole, GenderType, VerificationStatus } from "@/types/database";
 
 interface AuthContextType {
@@ -56,8 +50,6 @@ interface AuthContextType {
   deactivateAccount: () => Promise<void>;
   deleteAccount: () => Promise<void>;
   authError: string | null;
-  subscription: SubscriptionData | null;
-  checkSubscription: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -74,8 +66,6 @@ const AuthContext = createContext<AuthContextType>({
   deactivateAccount: async () => {},
   deleteAccount: async () => {},
   authError: null,
-  subscription: null,
-  checkSubscription: async () => {},
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -95,7 +85,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   } = useAuthMethods();
   
   const [authErrorState, setAuthErrorState] = useState<string | null>(null);
-  const [subscription, setSubscription] = useState<SubscriptionData | null>(null);
   
   const login = async (email: string, password: string, remember: boolean = false): Promise<void> => {
     try {
@@ -132,19 +121,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await deleteAccountMethod();
   };
 
-  const checkSubscription = async (): Promise<void> => {
-    if (!isAuthenticated) return;
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('check-subscription');
-      if (error) throw error;
-      setSubscription(data);
-    } catch (error) {
-      console.error('Error checking subscription:', error);
-      setSubscription({ subscribed: false, subscription_tier: 'free', subscription_end: null });
-    }
-  };
-  
   useEffect(() => {
     setAuthErrorState(authError);
   }, [authError]);
@@ -152,9 +128,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (!isAuthenticated) {
       setAuthErrorState(null);
-      setSubscription(null);
-    } else {
-      checkSubscription();
     }
   }, [isAuthenticated]);
 
@@ -174,8 +147,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         deactivateAccount,
         deleteAccount,
         authError: authErrorState,
-        subscription,
-        checkSubscription,
       }}
     >
       {children}
