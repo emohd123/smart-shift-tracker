@@ -1,5 +1,6 @@
 
 export interface TimeLog {
+  id?: string;
   check_in_time: string;
   check_out_time: string | null;
   total_hours: number | null;

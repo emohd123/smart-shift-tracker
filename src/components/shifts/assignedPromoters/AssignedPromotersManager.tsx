@@ -119,6 +119,7 @@ export const AssignedPromotersManager = ({
               timeLogs={timeLogs[promoter.promoter_id] || []}
               payRate={payRate}
               payRateType={payRateType}
+              shiftId={shiftId}
             />
           ))}
         </div>
