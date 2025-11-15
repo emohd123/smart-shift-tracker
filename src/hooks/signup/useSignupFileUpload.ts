@@ -129,7 +129,20 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
 
   const updateUserProfile = async (userId: string, formData: any, idCardUrl: string | null, profilePhotoUrl: string | null, role: string) => {
     try {
-      console.log("Updating profile for user ID:", userId);
+      console.log("Updating user profile for role:", role);
+      
+      // Generate unique code for promoters
+      let uniqueCode = null;
+      if (role === 'promoter') {
+        try {
+          const { generateUniqueCode } = await import('@/utils/uniqueCodeGenerator');
+          uniqueCode = await generateUniqueCode();
+          console.log("✓ Generated unique code:", uniqueCode);
+        } catch (error) {
+          console.error("Failed to generate unique code:", error);
+          throw new Error("Failed to generate promoter code. Please try again.");
+        }
+      }
       
       if (role === 'company') {
         // Company role - only update basic profile fields
@@ -171,6 +184,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
           bank_details: formData.bankDetails || null,
           id_card_url: idCardUrl,
           profile_photo_url: profilePhotoUrl,
+          unique_code: uniqueCode, // Add generated unique code
           verification_status: 'pending',
           updated_at: new Date().toISOString(),
         };

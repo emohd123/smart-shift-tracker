@@ -9,7 +9,9 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { Button } from "../ui/button";
-import { Award } from "lucide-react";
+import { Award, Copy, Check } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "sonner";
 
 type PromoterDashboardProps = {
   shifts: Shift[];
@@ -18,8 +20,10 @@ type PromoterDashboardProps = {
 export default function PromoterDashboard({ shifts }: PromoterDashboardProps) {
   const navigate = useNavigate();
   const { isMobile } = useResponsive();
+  const { user } = useAuth();
   const { upcomingShifts, nextShift, completedShifts, totalEarned, unpaidAmount } = useDashboardData(shifts);
   const [loaded, setLoaded] = useState(false);
+  const [copied, setCopied] = useState(false);
   
   // Get completed shifts for display in the Recent Activity section
   const completedShiftsList = shifts.filter(shift => shift.status === "completed");
@@ -32,6 +36,19 @@ export default function PromoterDashboard({ shifts }: PromoterDashboardProps) {
     return () => clearTimeout(timer);
   }, []);
   
+  const handleCopyCode = async () => {
+    if (user?.unique_code) {
+      try {
+        await navigator.clipboard.writeText(user.unique_code);
+        setCopied(true);
+        toast.success("Code copied to clipboard!");
+        setTimeout(() => setCopied(false), 2000);
+      } catch (err) {
+        toast.error("Failed to copy code");
+      }
+    }
+  };
+  
   return (
     <div className={`space-y-8 transition-all duration-500 ${loaded ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
       <div className="space-y-2">
@@ -42,6 +59,37 @@ export default function PromoterDashboard({ shifts }: PromoterDashboardProps) {
       </div>
       
       <div className="grid grid-cols-1 gap-6">
+        {/* Unique Promoter Code Card */}
+        {user?.unique_code && (
+          <Card className="transition-all duration-500 shadow-md border-primary/20 hover:shadow-lg bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Award className="h-5 w-5 text-primary" />
+                Your Unique Promoter Code
+              </CardTitle>
+              <CardDescription>Use this code when companies assign you to shifts</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-3 p-4 bg-muted/50 rounded-lg border border-border/50">
+                <code className="flex-1 text-2xl font-mono font-bold text-primary tracking-wider">
+                  {user.unique_code}
+                </code>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={handleCopyCode}
+                  className="shrink-0"
+                >
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground mt-3">
+                Companies can use this code to quickly find and assign you to shifts
+              </p>
+            </CardContent>
+          </Card>
+        )}
+        
         {/* Stats cards with staggered animation */}
         <DashboardStats 
           upcomingShifts={upcomingShifts}

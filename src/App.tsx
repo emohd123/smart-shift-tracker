@@ -25,12 +25,7 @@ import Messages from "./pages/Messages";
 import DataPurge from "./pages/DataPurge";
 import Profile from "./pages/Profile";
 import Certificates from "./pages/Certificates";
-import Subscription from "./pages/Subscription";
 import Revenue from "./pages/Revenue";
-
-import Credits from "./pages/Credits";
-import Training from "./pages/Training";
-import Referrals from "./pages/Referrals";
 import VerifyCertificatePage from "./pages/VerifyCertificatePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CompanyDashboard from "./pages/CompanyDashboard";
@@ -69,12 +64,7 @@ function App() {
               <Route path="/messages" element={<Messages />} />
               <Route path="/data-purge" element={<DataPurge />} />
               <Route path="/certificates" element={<Certificates />} />
-              <Route path="/subscription" element={<Subscription />} />
               <Route path="/revenue" element={<Revenue />} />
-              
-              <Route path="/credits" element={<Credits />} />
-              <Route path="/training" element={<Training />} />
-              <Route path="/referrals" element={<Referrals />} />
             </Route>
             
             {/* Fallback route */}
