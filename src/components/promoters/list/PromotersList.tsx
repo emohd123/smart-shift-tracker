@@ -80,21 +80,44 @@ export function PromotersList({ filterStatus }: PromotersListProps) {
   };
   
   // Bulk action handlers
-  const handleBulkAction = (action: string) => {
+  const handleBulkAction = async (action: string) => {
     if (selectedPromoters.length === 0) {
       toast.warning("Please select at least one promoter");
       return;
     }
     
-    // In a real app, you would make API calls here
-    if (action === "approve") {
-      toast.success(`Approved ${selectedPromoters.length} promoters`);
-    } else if (action === "reject") {
-      toast.error(`Rejected ${selectedPromoters.length} promoters`);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      
+      if (action === "approve") {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ verification_status: 'approved' })
+          .in('id', selectedPromoters);
+        
+        if (error) throw error;
+        toast.success(`Approved ${selectedPromoters.length} promoter${selectedPromoters.length > 1 ? 's' : ''}`);
+        
+      } else if (action === "reject") {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ verification_status: 'rejected' })
+          .in('id', selectedPromoters);
+        
+        if (error) throw error;
+        toast.error(`Rejected ${selectedPromoters.length} promoter${selectedPromoters.length > 1 ? 's' : ''}`);
+      }
+      
+      // Clear selection after action
+      setSelectedPromoters([]);
+      
+      // Force re-fetch to show updated data
+      window.location.reload();
+      
+    } catch (error) {
+      console.error('Bulk action error:', error);
+      toast.error('Failed to update promoters. Please try again.');
     }
-    
-    // Clear selection after action
-    setSelectedPromoters([]);
   };
   
   // Status filter handler
