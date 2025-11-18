@@ -40,9 +40,9 @@ export const useCertificateVerification = () => {
     referenceNumber: string
   ) => {
     try {
-      // Call the RPC function to check if certificate is valid
+      // Use the secure SECURITY DEFINER function for verification
       const { data, error } = await supabase.rpc(
-        'is_certificate_valid',
+        'verify_certificate_by_reference',
         { ref_number: referenceNumber }
       );
       
@@ -51,7 +51,8 @@ export const useCertificateVerification = () => {
         return { valid: false, error };
       }
       
-      return { valid: !!data, error: null };
+      // Certificate is valid if data is returned
+      return { valid: data && data.length > 0, error: null };
     } catch (error) {
       console.error("Error in checkCertificateValidity:", error);
       return { 

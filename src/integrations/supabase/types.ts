@@ -1023,6 +1023,22 @@ export type Database = {
         Args: { ip_address: string; ref_number: string; user_agent: string }
         Returns: undefined
       }
+      verify_certificate_by_reference: {
+        Args: { ref_number: string }
+        Returns: {
+          certificate_type: string
+          id: string
+          issue_date: string
+          position_title: string
+          promotion_names: string[]
+          reference_number: string
+          skills_gained: string[]
+          status: string
+          time_period: string
+          total_hours: number
+          user_id: string
+        }[]
+      }
     }
     Enums: {
       app_role: "admin" | "company" | "promoter"
