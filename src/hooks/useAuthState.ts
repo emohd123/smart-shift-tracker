@@ -60,7 +60,7 @@ export const useAuthState = () => {
     initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         console.log("Auth state changed:", event, session?.user?.email);
         
         if (session?.user) {
@@ -70,22 +70,23 @@ export const useAuthState = () => {
           const formattedUser = formatUser(session.user);
           
           if (formattedUser) {
-            try {
-              // Fetch role from user_roles table using security definer function
-              const { data: roleData, error: roleError } = await supabase
-                .rpc('get_user_role', { _user_id: formattedUser.id });
-              
-              if (roleError) {
-                console.error("Error fetching user role:", roleError);
-              } else if (roleData) {
-                formattedUser.role = roleData as UserRole;
-              }
-            } catch (error) {
-              console.error("Error fetching user role:", error);
-            }
-            
+            // Set user immediately with basic info
             setUser(formattedUser);
             console.log("User set after auth state change:", formattedUser);
+            
+            // Defer Supabase RPC call using setTimeout to prevent deadlock
+            setTimeout(() => {
+              supabase
+                .rpc('get_user_role', { _user_id: formattedUser.id })
+                .then(({ data: roleData, error: roleError }) => {
+                  if (roleError) {
+                    console.error("Error fetching user role:", roleError);
+                  } else if (roleData) {
+                    formattedUser.role = roleData as UserRole;
+                    setUser({ ...formattedUser });
+                  }
+                });
+            }, 0);
           }
         } else {
           console.log("User signed out or session expired");

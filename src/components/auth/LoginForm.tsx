@@ -129,7 +129,13 @@ export default function LoginForm({ onError }: LoginFormProps) {
         return;
       }
       
-      await login(sanitizedEmail, sanitizedPassword, rememberMe);
+      // Add 30-second timeout to prevent indefinite hanging
+      const loginPromise = login(cleanedEmail, sanitizedPassword, rememberMe);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Login timeout. Please try again.")), 30000)
+      );
+      
+      await Promise.race([loginPromise, timeoutPromise]);
       
       // Reset rate limit on successful login
       loginRateLimit.reset();
