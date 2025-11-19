@@ -277,8 +277,13 @@ export const PromoterAttendanceCard = ({
               <div>
                 <p className="text-xs">Check In</p>
                 <p className="font-medium text-foreground">
-                  {format(new Date(latestLog.check_in_time), "HH:mm")}
+                  {format(new Date(latestLog.check_in_time), "MMM dd, HH:mm")}
                 </p>
+                {latestLog.check_out_time && 
+                 format(new Date(latestLog.check_in_time), "yyyy-MM-dd") !== 
+                 format(new Date(latestLog.check_out_time), "yyyy-MM-dd") && (
+                  <p className="text-[10px] text-orange-500 font-medium mt-0.5">Multi-day shift</p>
+                )}
               </div>
             </div>
           )}
@@ -289,7 +294,7 @@ export const PromoterAttendanceCard = ({
               <div>
                 <p className="text-xs">Check Out</p>
                 <p className="font-medium text-foreground">
-                  {format(new Date(latestLog.check_out_time), "HH:mm")}
+                  {format(new Date(latestLog.check_out_time), "MMM dd, HH:mm")}
                 </p>
               </div>
             </div>
