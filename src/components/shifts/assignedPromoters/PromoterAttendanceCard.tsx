@@ -53,6 +53,7 @@ export const PromoterAttendanceCard = ({
   const { checkIn, checkOut, loading: checkInOutLoading } = useCompanyCheckIn(shiftId, payRate, payRateType);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [estimatedEarnings, setEstimatedEarnings] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
   
   const hasTimeLogs = timeLogs.length > 0;
   const totalHours = timeLogs.reduce((sum, log) => sum + (log.total_hours || 0), 0);
@@ -327,6 +328,82 @@ export const PromoterAttendanceCard = ({
             </div>
           )}
         </div>
+
+        {/* Work Session History */}
+        {timeLogs.length > 0 && (
+          <div className="mt-3 pt-3 border-t">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowHistory(!showHistory)}
+              className="w-full h-8 text-xs"
+            >
+              <Timer className="h-3.5 w-3.5 mr-1" />
+              {showHistory ? 'Hide' : 'Show'} Work Sessions ({timeLogs.length} session{timeLogs.length > 1 ? 's' : ''})
+            </Button>
+
+            {showHistory && (
+              <div className="mt-2 space-y-2">
+                {timeLogs.map((log, index) => {
+                  const isMultiDay = log.check_out_time && 
+                    format(new Date(log.check_in_time), "yyyy-MM-dd") !== 
+                    format(new Date(log.check_out_time), "yyyy-MM-dd");
+                  
+                  return (
+                    <div key={log.id} className="p-2 bg-accent/50 rounded-md border text-xs space-y-1">
+                      <div className="flex justify-between items-center font-medium">
+                        <span className="text-muted-foreground">Session {index + 1}</span>
+                        {log.total_hours && (
+                          <span className="text-foreground">{formatWorkDuration(log.total_hours)}</span>
+                        )}
+                      </div>
+                      
+                      <div className="flex justify-between items-center text-muted-foreground">
+                        <span>{format(new Date(log.check_in_time), "MMM dd, HH:mm")}</span>
+                        <span className="text-xs">→</span>
+                        <span>
+                          {log.check_out_time 
+                            ? format(new Date(log.check_out_time), "MMM dd, HH:mm")
+                            : <span className="text-green-500 font-medium">Active</span>
+                          }
+                        </span>
+                      </div>
+
+                      {isMultiDay && (
+                        <p className="text-[10px] text-orange-500 font-medium">Multi-day session</p>
+                      )}
+
+                      {log.earnings && (
+                        <div className="text-green-600 font-medium pt-1">
+                          {formatBHD(log.earnings)}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+                
+                <div className="pt-2 border-t text-xs text-muted-foreground">
+                  <div className="flex justify-between">
+                    <span>Total Sessions:</span>
+                    <span className="font-medium text-foreground">{timeLogs.length}</span>
+                  </div>
+                  {totalHours > 0 && (
+                    <div className="flex justify-between mt-1">
+                      <span>Total Hours:</span>
+                      <span className="font-medium text-foreground">{formatWorkDuration(totalHours)}</span>
+                    </div>
+                  )}
+                  {payment > 0 && (
+                    <div className="flex justify-between mt-1">
+                      <span>Total Payment:</span>
+                      <span className="font-medium text-green-600">{formatBHD(payment)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
