@@ -9,8 +9,15 @@ import {
   BarChart,
   User,
   UserPlus,
-  ArrowRight
+  ArrowRight,
+  Building2
 } from "lucide-react";
+import HowItWorks from "@/components/landing/HowItWorks";
+import ForCompanies from "@/components/landing/ForCompanies";
+import ForPartTimers from "@/components/landing/ForPartTimers";
+import DashboardShowcase from "@/components/landing/DashboardShowcase";
+import FeatureComparison from "@/components/landing/FeatureComparison";
+import UseCases from "@/components/landing/UseCases";
 
 const Index = () => {
   // Animation variants
@@ -90,13 +97,13 @@ const Index = () => {
             className="mb-8"
           >
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-shimmer leading-tight">
-              Smart Timesheet
+              Complete Workforce Management
               <br />
-              <span className="text-gradient">System</span>
+              <span className="text-gradient">for Companies & Part-Timers</span>
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              A modern solution for tracking time, managing shifts, and processing payroll
-              for part-time promoters. Built for efficiency and simplicity.
+              Manage shifts, track time, and process payroll — all in one platform.
+              GPS-verified tracking with automatic payments and work certificates.
             </p>
           </motion.div>
           
@@ -108,15 +115,15 @@ const Index = () => {
           >
             <Link to="/signup">
               <Button size="lg" className="w-full sm:w-auto group hover-lift glass-card bg-gradient-to-r from-primary to-primary-light shadow-xl">
-                <UserPlus size={20} className="mr-2" />
-                Get Started Free
+                <Building2 size={20} className="mr-2" />
+                I'm a Company
                 <ArrowRight size={16} className="ml-2 opacity-70 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link to="/login">
+            <Link to="/signup">
               <Button size="lg" variant="outline" className="w-full sm:w-auto hover-lift glass-card">
-                <User size={20} className="mr-2" />
-                Sign In
+                <UserPlus size={20} className="mr-2" />
+                I'm a Part-Timer
               </Button>
             </Link>
           </motion.div>
@@ -129,9 +136,9 @@ const Index = () => {
             className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto"
           >
             {[
-              { number: "500+", label: "Happy Users" },
-              { number: "10k+", label: "Hours Tracked" },
-              { number: "99.9%", label: "Uptime" }
+              { number: "500+", label: "Active Part-Timers" },
+              { number: "1,000+", label: "Shifts Managed" },
+              { number: "50+", label: "Companies Trust Us" }
             ].map((stat, index) => (
               <div key={index} className="text-center">
                 <div className="text-3xl font-bold text-gradient">{stat.number}</div>
@@ -141,6 +148,24 @@ const Index = () => {
           </motion.div>
         </div>
       </motion.section>
+
+      {/* How It Works Section */}
+      <HowItWorks />
+
+      {/* For Companies Section */}
+      <ForCompanies />
+
+      {/* For Part-Timers Section */}
+      <ForPartTimers />
+
+      {/* Dashboard Showcase Section */}
+      <DashboardShowcase />
+
+      {/* Feature Comparison Section */}
+      <FeatureComparison />
+
+      {/* Use Cases Section */}
+      <UseCases />
 
       {/* Enhanced Features section with 3D cards */}
       <motion.section 
@@ -228,16 +253,61 @@ const Index = () => {
       </motion.section>
 
       {/* Footer with subtle animation */}
-      <footer className="py-10 border-t border-border bg-card/50">
-        <div className="container px-4 text-center">
+      <footer className="py-16 border-t border-border bg-card/50">
+        <div className="container px-4">
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 md:grid-cols-3 gap-12 mb-8"
           >
-            <p className="mb-2 text-primary/90 font-medium">© {new Date().getFullYear()} SmartShift Tracker. All rights reserved.</p>
-            <p className="text-sm text-muted-foreground">A modern timesheet solution for scheduling and payroll processing.</p>
+            {/* Brand */}
+            <div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-primary-light flex items-center justify-center shadow-lg">
+                  <Clock className="text-white" size={20} />
+                </div>
+                <span className="font-bold text-xl text-gradient">SmartShift</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Complete workforce management for companies and part-timers with GPS-verified tracking and automated payroll.
+              </p>
+            </div>
+
+            {/* Quick Links */}
+            <div>
+              <h4 className="font-semibold mb-4">Quick Links</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><a href="#for-companies" className="hover:text-primary transition-colors">For Companies</a></li>
+                <li><a href="#for-part-timers" className="hover:text-primary transition-colors">For Part-Timers</a></li>
+                <li><Link to="/login" className="hover:text-primary transition-colors">Sign In</Link></li>
+                <li><Link to="/signup" className="hover:text-primary transition-colors">Get Started</Link></li>
+              </ul>
+            </div>
+
+            {/* Features */}
+            <div>
+              <h4 className="font-semibold mb-4">Features</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li>GPS-Verified Time Tracking</li>
+                <li>Unique Promoter Code System</li>
+                <li>Multi-Day Shift Support</li>
+                <li>Work Certificate Generation</li>
+              </ul>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="text-center pt-8 border-t border-border/50"
+          >
+            <p className="text-sm text-muted-foreground">
+              © {new Date().getFullYear()} SmartShift Tracker. All rights reserved.
+            </p>
           </motion.div>
         </div>
       </footer>
