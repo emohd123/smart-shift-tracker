@@ -5,32 +5,18 @@ import ScreenshotCard from "./ScreenshotCard";
 const ForCompanies = () => {
   const features = [
     {
-      icon: <Activity className="w-6 h-6" />,
-      title: "Live Dashboard",
-      description: "Real-time monitoring of active shifts, working promoters, hours tracked, and live earnings calculations",
-      gradient: "from-blue-500 to-cyan-500",
-      stats: ["Active shifts counter", "Promoters currently working", "Live earnings calculation", "Total hours tracked"]
-    },
-    {
       icon: <Users className="w-6 h-6" />,
-      title: "Shift Management",
-      description: "Create and manage shifts with ease using our intuitive interface and unique promoter code system",
+      title: "Workforce Management",
+      description: "Create shifts, assign promoters instantly with unique codes, and manage your team from one dashboard",
       gradient: "from-purple-500 to-pink-500",
-      stats: ["Quick shift creation", "GPS location mapping", "Assign by unique code", "Auto check-in/out system"]
+      stats: ["Quick shift creation with GPS mapping", "Assign promoters by unique code", "Real-time shift monitoring", "Auto check-in/out system"]
     },
     {
       icon: <Clock className="w-6 h-6" />,
-      title: "Attendance & Payroll",
-      description: "Track attendance with GPS verification, multi-day shift support, and automatic payment calculations",
+      title: "Automated Tracking & Payroll",
+      description: "GPS-verified time tracking with automatic payment calculations and comprehensive reporting",
       gradient: "from-green-500 to-emerald-500",
-      stats: ["Multi-day shift tracking", "Session history breakdown", "Payment summary", "Total earnings calculation"]
-    },
-    {
-      icon: <BarChart3 className="w-6 h-6" />,
-      title: "Analytics & Reports",
-      description: "Comprehensive reporting with data visualization, export capabilities, and payroll insights",
-      gradient: "from-orange-500 to-red-500",
-      stats: ["Revenue analytics charts", "Export to CSV/PDF", "Payroll reports", "Performance metrics"]
+      stats: ["GPS-verified attendance", "Multi-day shift support", "Automatic payment calculations", "Complete work history & analytics"]
     }
   ];
 

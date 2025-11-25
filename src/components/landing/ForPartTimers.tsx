@@ -5,32 +5,49 @@ import ScreenshotCard from "./ScreenshotCard";
 const ForPartTimers = () => {
   const features = [
     {
-      icon: <QrCode className="w-6 h-6" />,
-      title: "Unique Promoter Code",
-      description: "Get your personal unique code that companies use to find and assign you to shifts instantly",
-      gradient: "from-orange-500 to-red-500",
-      stats: ["Personal unique identifier", "Easy to share", "Quick assignment", "No email lookups needed"]
+      icon: <Award className="w-6 h-6" />,
+      title: "Professional Work Certificates",
+      description: "Get verified proof of your work experience with official certificates featuring QR code authentication and complete work details",
+      gradient: "from-green-500 to-emerald-500",
+      stats: [
+        "Official certificate with QR verification",
+        "Shows total hours, dates, and company info",
+        "Perfect for resumes and job applications",
+        "Instant PDF download with company stamp",
+        "Proof of skills and experience gained"
+      ]
+    },
+    {
+      icon: <DollarSign className="w-6 h-6" />,
+      title: "Track Your Earnings",
+      description: "See exactly how much you earn in real-time with automatic calculations based on your hourly rate and hours worked",
+      gradient: "from-blue-500 to-cyan-500",
+      stats: [
+        "Real-time earnings calculator",
+        "Track every hour you work",
+        "Know your total accumulated earnings",
+        "Multi-day shift support",
+        "Complete payment history"
+      ]
     },
     {
       icon: <Clock className="w-6 h-6" />,
-      title: "Smart Time Tracking",
-      description: "GPS-verified check-in and check-out with automatic time logging and live earnings display",
-      gradient: "from-blue-500 to-cyan-500",
-      stats: ["GPS location verification", "Auto check-in/out", "Live timer during shift", "Multi-day shift support"]
-    },
-    {
-      icon: <History className="w-6 h-6" />,
-      title: "Complete Work History",
-      description: "Track all your completed shifts with detailed session breakdowns, hours worked, and payment status",
+      title: "GPS-Verified Time Tracking",
+      description: "Accurate time tracking with GPS verification ensures you get paid for every minute you work",
       gradient: "from-purple-500 to-pink-500",
-      stats: ["All completed shifts", "Total hours tracked", "Payment status tracking", "Session breakdowns"]
+      stats: [
+        "GPS location verification",
+        "Automatic check-in/out",
+        "Live timer during shifts",
+        "Complete work session history"
+      ]
     },
     {
-      icon: <Award className="w-6 h-6" />,
-      title: "Work Certificates",
-      description: "Generate professional work certificates with QR code verification for your resume and job applications",
-      gradient: "from-green-500 to-emerald-500",
-      stats: ["Professional certificates", "QR code verification", "Shows hours & skills", "PDF download"]
+      icon: <QrCode className="w-6 h-6" />,
+      title: "Your Unique Code",
+      description: "Get assigned instantly with your personal promoter code - companies find and assign you in seconds",
+      gradient: "from-orange-500 to-red-500",
+      stats: ["Personal identifier", "Quick assignment", "Easy to share"]
     }
   ];
 
@@ -65,10 +82,10 @@ const ForPartTimers = () => {
             <span className="text-accent font-semibold">For Part-Timers</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Your Complete Work <span className="text-gradient">Platform</span>
+            Get Paid. <span className="text-gradient">Get Certified.</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Track your time, monitor earnings, and build your professional portfolio with automated certificates
+            Every hour tracked. Every shift verified. Build your professional portfolio with work certificates.
           </p>
         </motion.div>
 

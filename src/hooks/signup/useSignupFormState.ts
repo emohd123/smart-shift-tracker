@@ -1,9 +1,12 @@
 
-import { useState, ChangeEvent } from "react";
+import { useState, ChangeEvent, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { FormData, FileData } from "@/components/auth/signup/types";
 import { GenderType, UserRole } from "@/types/database";
 
 export const useSignupFormState = () => {
+  const [searchParams] = useSearchParams();
+  const roleFromUrl = searchParams.get('role');
   const [formData, setFormData] = useState<FormData>({
     fullName: "",
     email: "",
@@ -18,7 +21,7 @@ export const useSignupFormState = () => {
     isStudent: false,
     address: "",
     bankDetails: "",
-    role: UserRole.Promoter,
+    role: roleFromUrl === 'company' ? UserRole.Company : UserRole.Promoter,
     
     // Company-specific fields
     companyName: "",
@@ -28,6 +31,15 @@ export const useSignupFormState = () => {
     companySize: "",
     companyDescription: "",
   });
+
+  // Update role when URL parameter changes
+  useEffect(() => {
+    if (roleFromUrl === 'company') {
+      setFormData(prev => ({ ...prev, role: UserRole.Company }));
+    } else if (roleFromUrl === 'promoter') {
+      setFormData(prev => ({ ...prev, role: UserRole.Promoter }));
+    }
+  }, [roleFromUrl]);
   
   const [fileData, setFileData] = useState<FileData>({
     idCard: null,
