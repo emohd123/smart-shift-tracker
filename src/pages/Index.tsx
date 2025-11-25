@@ -97,13 +97,13 @@ const Index = () => {
             className="mb-8"
           >
             <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-shimmer leading-tight">
-              Complete Workforce Management
-              <br />
-              <span className="text-gradient">for Companies & Part-Timers</span>
+              SmartShift
             </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              Manage shifts, track time, and process payroll — all in one platform.
-              GPS-verified tracking with automatic payments and work certificates.
+            <p className="text-2xl md:text-3xl text-gradient font-semibold mb-8">
+              Track Time. Get Certified. Get Paid.
+            </p>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Work part-time, track every hour, and get professional certificates proving your experience.
             </p>
           </motion.div>
           
@@ -113,14 +113,14 @@ const Index = () => {
             transition={{ delay: 0.6, duration: 0.6 }}
             className="flex flex-col sm:flex-row justify-center gap-4 mb-12"
           >
-            <Link to="/signup">
+            <Link to="/signup?role=company">
               <Button size="lg" className="w-full sm:w-auto group hover-lift glass-card bg-gradient-to-r from-primary to-primary-light shadow-xl">
                 <Building2 size={20} className="mr-2" />
                 I'm a Company
                 <ArrowRight size={16} className="ml-2 opacity-70 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
-            <Link to="/signup">
+            <Link to="/signup?role=promoter">
               <Button size="lg" variant="outline" className="w-full sm:w-auto hover-lift glass-card">
                 <UserPlus size={20} className="mr-2" />
                 I'm a Part-Timer
@@ -152,11 +152,11 @@ const Index = () => {
       {/* How It Works Section */}
       <HowItWorks />
 
-      {/* For Companies Section */}
-      <ForCompanies />
-
       {/* For Part-Timers Section */}
       <ForPartTimers />
+
+      {/* For Companies Section */}
+      <ForCompanies />
 
       {/* Dashboard Showcase Section */}
       <DashboardShowcase />
