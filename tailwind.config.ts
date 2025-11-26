@@ -20,7 +20,7 @@ export default {
     	extend: {
     		fontFamily: {
     			sans: [
-    				'Source Sans Pro',
+    				'Montserrat',
     				'ui-sans-serif',
     				'system-ui',
     				'-apple-system',
@@ -33,7 +33,7 @@ export default {
     				'sans-serif'
     			],
     			serif: [
-    				'Source Serif Pro',
+    				'Cormorant Garamond',
     				'ui-serif',
     				'Georgia',
     				'Cambria',
@@ -42,7 +42,7 @@ export default {
     				'serif'
     			],
     			mono: [
-    				'Source Code Pro',
+    				'IBM Plex Mono',
     				'ui-monospace',
     				'SFMono-Regular',
     				'Menlo',
@@ -344,7 +344,14 @@ export default {
     			glass: '0 8px 32px 0 rgba(31, 38, 135, 0.37)',
     			'glass-dark': '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
     			elegant: '0 10px 30px -10px rgba(0, 0, 0, 0.3)',
-    			glow: '0 0 40px rgba(59, 130, 246, 0.4)'
+    			glow: '0 0 40px rgba(59, 130, 246, 0.4)',
+    			'2xs': 'var(--shadow-2xs)',
+    			xs: 'var(--shadow-xs)',
+    			sm: 'var(--shadow-sm)',
+    			md: 'var(--shadow-md)',
+    			lg: 'var(--shadow-lg)',
+    			xl: 'var(--shadow-xl)',
+    			'2xl': 'var(--shadow-2xl)'
     		}
     	}
     },
