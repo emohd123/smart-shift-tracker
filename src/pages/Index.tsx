@@ -15,9 +15,6 @@ import {
 import HowItWorks from "@/components/landing/HowItWorks";
 import ForCompanies from "@/components/landing/ForCompanies";
 import ForPartTimers from "@/components/landing/ForPartTimers";
-import DashboardShowcase from "@/components/landing/DashboardShowcase";
-import FeatureComparison from "@/components/landing/FeatureComparison";
-import UseCases from "@/components/landing/UseCases";
 
 const Index = () => {
   // Animation variants
@@ -83,10 +80,26 @@ const Index = () => {
         transition={{ duration: 0.8, ease: "easeOut" }}
         className="container mx-auto px-4 py-24 md:py-32 relative overflow-hidden"
       >
-        {/* Background decoration */}
+        {/* Background decoration with floating orbs */}
         <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-float"></div>
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/10 rounded-full blur-3xl animate-float" style={{ animationDelay: '2s' }}></div>
+          <motion.div 
+            animate={{ 
+              x: [0, 50, 0],
+              y: [0, -30, 0],
+              scale: [1, 1.1, 1]
+            }}
+            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+            className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl"
+          />
+          <motion.div 
+            animate={{ 
+              x: [0, -50, 0],
+              y: [0, 30, 0],
+              scale: [1, 1.2, 1]
+            }}
+            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
+            className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
+          />
         </div>
 
         <div className="max-w-4xl mx-auto text-center relative z-10">
@@ -96,9 +109,22 @@ const Index = () => {
             transition={{ delay: 0.2, duration: 0.6 }}
             className="mb-8"
           >
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6 text-shimmer leading-tight">
+            <motion.h1 
+              className="text-5xl md:text-7xl font-bold tracking-tight mb-6 leading-tight"
+              animate={{ 
+                backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"]
+              }}
+              transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+              style={{
+                background: "linear-gradient(90deg, hsl(var(--foreground)), hsl(var(--primary)), hsl(var(--accent)), hsl(var(--foreground)))",
+                backgroundSize: "200% 100%",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text"
+              }}
+            >
               SmartShift
-            </h1>
+            </motion.h1>
             <p className="text-2xl md:text-3xl text-gradient font-semibold mb-8">
               Track Time. Get Certified. Get Paid.
             </p>
@@ -113,19 +139,23 @@ const Index = () => {
             transition={{ delay: 0.6, duration: 0.6 }}
             className="flex flex-col sm:flex-row justify-center gap-4 mb-12"
           >
-            <Link to="/signup?role=company">
-              <Button size="lg" className="w-full sm:w-auto group hover-lift glass-card bg-gradient-to-r from-primary to-primary-light shadow-xl">
-                <Building2 size={20} className="mr-2" />
-                I'm a Company
-                <ArrowRight size={16} className="ml-2 opacity-70 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link to="/signup?role=promoter">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto hover-lift glass-card">
-                <UserPlus size={20} className="mr-2" />
-                I'm a Part-Timer
-              </Button>
-            </Link>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link to="/signup?role=promoter">
+                <Button size="lg" className="w-full sm:w-auto group hover-lift glass-card bg-gradient-to-r from-accent to-accent/80 shadow-xl">
+                  <UserPlus size={20} className="mr-2" />
+                  I'm a Part-Timer
+                  <ArrowRight size={16} className="ml-2 opacity-70 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Link to="/signup?role=company">
+                <Button size="lg" variant="outline" className="w-full sm:w-auto hover-lift glass-card">
+                  <Building2 size={20} className="mr-2" />
+                  I'm a Company
+                </Button>
+              </Link>
+            </motion.div>
           </motion.div>
 
           {/* Stats or features preview */}
@@ -157,70 +187,6 @@ const Index = () => {
 
       {/* For Companies Section */}
       <ForCompanies />
-
-      {/* Dashboard Showcase Section */}
-      <DashboardShowcase />
-
-      {/* Feature Comparison Section */}
-      <FeatureComparison />
-
-      {/* Use Cases Section */}
-      <UseCases />
-
-      {/* Enhanced Features section with 3D cards */}
-      <motion.section 
-        variants={container}
-        initial="hidden"
-        whileInView="show"
-        viewport={{ once: true, amount: 0.2 }}
-        className="py-24 glass-card border-y border-border/30 relative"
-      >
-        <div className="container px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gradient">Powerful Features</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Everything you need to manage your workforce efficiently and professionally
-            </p>
-          </motion.div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <FeatureCard 
-              variants={item}
-              icon={<Clock size={28} />} 
-              title="Smart Time Tracking" 
-              description="GPS-verified clock-in/out with location accuracy and automatic break detection"
-              gradient="from-blue-500 to-blue-600"
-            />
-            <FeatureCard
-              variants={item}
-              icon={<Calendar size={28} />} 
-              title="Shift Management" 
-              description="Intelligent scheduling system with drag-and-drop interface and conflict detection"
-              gradient="from-green-500 to-green-600"
-            />
-            <FeatureCard
-              variants={item}
-              icon={<Users size={28} />} 
-              title="Role-Based Access" 
-              description="Secure multi-level permissions with customizable user roles and permissions"
-              gradient="from-purple-500 to-purple-600"
-            />
-            <FeatureCard
-              variants={item}
-              icon={<BarChart size={28} />} 
-              title="Advanced Analytics" 
-              description="Real-time reporting with data visualization and export capabilities"
-              gradient="from-orange-500 to-orange-600"
-            />
-          </div>
-        </div>
-      </motion.section>
 
       {/* CTA Section with hover effects */}
       <motion.section 
