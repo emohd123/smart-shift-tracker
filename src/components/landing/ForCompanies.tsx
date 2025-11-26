@@ -1,42 +1,12 @@
 import { motion } from "framer-motion";
-import { Activity, Users, MapPin, BarChart3, Clock, FileCheck, Download, Shield } from "lucide-react";
-import ScreenshotCard from "./ScreenshotCard";
+import { Building2, Users, Clock, BarChart3 } from "lucide-react";
 
 const ForCompanies = () => {
-  const features = [
-    {
-      icon: <Users className="w-6 h-6" />,
-      title: "Workforce Management",
-      description: "Create shifts, assign promoters instantly with unique codes, and manage your team from one dashboard",
-      gradient: "from-purple-500 to-pink-500",
-      stats: ["Quick shift creation with GPS mapping", "Assign promoters by unique code", "Real-time shift monitoring", "Auto check-in/out system"]
-    },
-    {
-      icon: <Clock className="w-6 h-6" />,
-      title: "Automated Tracking & Payroll",
-      description: "GPS-verified time tracking with automatic payment calculations and comprehensive reporting",
-      gradient: "from-green-500 to-emerald-500",
-      stats: ["GPS-verified attendance", "Multi-day shift support", "Automatic payment calculations", "Complete work history & analytics"]
-    }
-  ];
-
-  const keyFeatures = [
-    { icon: <MapPin className="w-5 h-5" />, text: "GPS-Verified Time Tracking" },
-    { icon: <Clock className="w-5 h-5" />, text: "Multi-Day Shift Support" },
-    { icon: <BarChart3 className="w-5 h-5" />, text: "Automatic Payment Calculation" },
-    { icon: <Users className="w-5 h-5" />, text: "Unique Promoter Code System" },
-    { icon: <Activity className="w-5 h-5" />, text: "Real-Time Attendance Monitoring" },
-    { icon: <FileCheck className="w-5 h-5" />, text: "Work History & Session Breakdown" },
-    { icon: <Download className="w-5 h-5" />, text: "Export Reports (CSV/PDF)" },
-    { icon: <Shield className="w-5 h-5" />, text: "Certificate Generation for Promoters" }
-  ];
-
   return (
-    <section id="for-companies" className="py-24 bg-gradient-to-b from-background to-secondary/10 relative overflow-hidden">
+    <section id="for-companies" className="py-16 bg-gradient-to-b from-background to-secondary/10 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -45,80 +15,86 @@ const ForCompanies = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
-          className="text-center mb-20"
+          className="max-w-4xl mx-auto"
         >
-          <div className="inline-block px-4 py-2 bg-primary/10 rounded-full mb-6">
-            <span className="text-primary font-semibold">For Companies</span>
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="inline-block px-4 py-2 bg-primary/10 rounded-full mb-4">
+              <span className="text-primary font-semibold">For Companies</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Manage Your <span className="text-gradient">Workforce</span>
+            </h2>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">
-            Manage Your Workforce <span className="text-gradient">Effortlessly</span>
-          </h2>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Complete workforce management platform with real-time tracking, GPS verification, and automated payroll
-          </p>
-        </motion.div>
 
-        {/* Main Features Grid */}
-        <div className="space-y-24 mb-20">
-          {features.map((feature, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className={`flex flex-col ${index % 2 === 0 ? 'lg:flex-row' : 'lg:flex-row-reverse'} gap-12 items-center`}
-            >
-              {/* Screenshot */}
-              <div className="w-full lg:w-1/2">
-                <ScreenshotCard
-                  title={feature.title}
-                  gradient={feature.gradient}
-                  type="company"
-                />
-              </div>
+          {/* Compact Card */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            viewport={{ once: true }}
+            whileHover={{ y: -5 }}
+            className="glass-card rounded-2xl border border-border/50 p-8 md:p-10 hover:shadow-2xl transition-all duration-500"
+          >
+            {/* Icon Grid */}
+            <div className="flex justify-center gap-4 mb-6">
+              {[
+                { icon: <Building2 />, gradient: "from-blue-500 to-cyan-500" },
+                { icon: <Users />, gradient: "from-purple-500 to-pink-500" },
+                { icon: <Clock />, gradient: "from-green-500 to-emerald-500" },
+                { icon: <BarChart3 />, gradient: "from-orange-500 to-red-500" }
+              ].map((item, i) => (
+                <motion.div
+                  key={i}
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, delay: i * 0.2 }}
+                  className={`w-12 h-12 rounded-xl bg-gradient-to-r ${item.gradient} flex items-center justify-center text-white shadow-lg`}
+                >
+                  {item.icon}
+                </motion.div>
+              ))}
+            </div>
 
-              {/* Content */}
-              <div className="w-full lg:w-1/2 space-y-6">
-                <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${feature.gradient} flex items-center justify-center text-white shadow-lg`}>
-                  {feature.icon}
-                </div>
-                <h3 className="text-3xl font-bold">{feature.title}</h3>
-                <p className="text-lg text-muted-foreground leading-relaxed">
-                  {feature.description}
-                </p>
-                <ul className="space-y-3">
-                  {feature.stats.map((stat, i) => (
-                    <li key={i} className="flex items-center gap-3">
-                      <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                      <span className="text-foreground">{stat}</span>
-                    </li>
-                  ))}
-                </ul>
+            <h3 className="text-2xl font-bold text-center mb-6">Simple Workforce Management</h3>
+            
+            {/* 3-Step Flow */}
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-6">
+              <div className="text-center">
+                <div className="text-sm font-semibold text-primary mb-1">1. Create Shifts</div>
+                <div className="text-xs text-muted-foreground">Set location, time & pay rate</div>
               </div>
-            </motion.div>
-          ))}
-        </div>
+              <div className="hidden md:block text-primary">→</div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-primary mb-1">2. Assign by Code</div>
+                <div className="text-xs text-muted-foreground">Use unique promoter codes</div>
+              </div>
+              <div className="hidden md:block text-primary">→</div>
+              <div className="text-center">
+                <div className="text-sm font-semibold text-primary mb-1">3. Auto-Track & Pay</div>
+                <div className="text-xs text-muted-foreground">GPS tracking & calculations</div>
+              </div>
+            </div>
 
-        {/* Key Features Grid */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
-          className="glass-card rounded-3xl border border-border/50 p-12"
-        >
-          <h3 className="text-2xl font-bold text-center mb-10">Complete Feature Set</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {keyFeatures.map((feature, index) => (
-              <div key={index} className="flex items-start gap-3 p-4 rounded-xl hover:bg-primary/5 transition-colors">
-                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-primary flex-shrink-0">
-                  {feature.icon}
-                </div>
-                <span className="text-sm font-medium">{feature.text}</span>
-              </div>
-            ))}
-          </div>
+            {/* Feature Pills */}
+            <div className="flex flex-wrap justify-center gap-2">
+              {[
+                "GPS Verification",
+                "Real-Time Monitoring",
+                "Auto Calculations",
+                "Certificate Generation"
+              ].map((feature, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20"
+                >
+                  {feature}
+                </motion.div>
+              ))}
+            </div>
+          </motion.div>
         </motion.div>
       </div>
     </section>
