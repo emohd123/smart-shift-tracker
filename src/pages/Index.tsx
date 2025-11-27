@@ -10,7 +10,12 @@ import {
   User,
   UserPlus,
   ArrowRight,
-  Building2
+  Building2,
+  Award,
+  DollarSign,
+  MapPin,
+  CheckCircle,
+  FileCheck
 } from "lucide-react";
 import HowItWorks from "@/components/landing/HowItWorks";
 import ForCompanies from "@/components/landing/ForCompanies";
@@ -132,6 +137,32 @@ const Index = () => {
               Work part-time, track every hour, and get professional certificates proving your experience.
             </p>
           </motion.div>
+
+          {/* Benefit Pills */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="flex flex-wrap justify-center gap-3 mb-8"
+          >
+            {[
+              { icon: Award, label: "Work Certificates", gradient: "from-primary to-primary-light" },
+              { icon: DollarSign, label: "Track Earnings", gradient: "from-accent to-accent/80" },
+              { icon: MapPin, label: "GPS Verified", gradient: "from-primary to-accent" },
+              { icon: CheckCircle, label: "Build Your Resume", gradient: "from-primary-light to-primary" }
+            ].map((benefit, index) => (
+              <motion.div
+                key={benefit.label}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.5 + index * 0.1, duration: 0.4 }}
+                className={`flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r ${benefit.gradient} text-white shadow-lg hover:shadow-xl transition-all hover:scale-105`}
+              >
+                <benefit.icon size={16} />
+                <span className="text-sm font-medium">{benefit.label}</span>
+              </motion.div>
+            ))}
+          </motion.div>
           
           <motion.div 
             initial={{ opacity: 0, y: 30 }}
@@ -141,7 +172,7 @@ const Index = () => {
           >
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link to="/signup?role=promoter">
-                <Button size="lg" className="w-full sm:w-auto group hover-lift glass-card bg-gradient-to-r from-accent to-accent/80 shadow-xl">
+                <Button size="lg" className="w-full sm:w-auto group hover-lift bg-gradient-to-r from-primary to-accent text-white border-0 shadow-xl hover:shadow-2xl">
                   <UserPlus size={20} className="mr-2" />
                   I'm a Part-Timer
                   <ArrowRight size={16} className="ml-2 opacity-70 group-hover:translate-x-1 transition-transform" />
@@ -158,22 +189,56 @@ const Index = () => {
             </motion.div>
           </motion.div>
 
-          {/* Stats or features preview */}
+          {/* Mini Feature Preview */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.6 }}
+            transition={{ delay: 0.7, duration: 0.6 }}
+            className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto mb-12"
+          >
+            {[
+              { icon: FileCheck, label: "Get Certified", description: "Professional work certificates" },
+              { icon: Clock, label: "Track Hours", description: "Every minute counts" },
+              { icon: DollarSign, label: "Know Earnings", description: "Real-time pay tracking" }
+            ].map((feature, index) => (
+              <motion.div
+                key={feature.label}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.8 + index * 0.1, duration: 0.5 }}
+                className="flex flex-col items-center text-center p-4 glass-card rounded-xl hover:shadow-lg transition-all hover:-translate-y-1"
+              >
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center text-white mb-3 shadow-md">
+                  <feature.icon size={24} />
+                </div>
+                <h4 className="font-semibold mb-1">{feature.label}</h4>
+                <p className="text-sm text-muted-foreground">{feature.description}</p>
+              </motion.div>
+            ))}
+          </motion.div>
+
+          {/* Part-Timer Focused Stats */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.9, duration: 0.6 }}
             className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-2xl mx-auto"
           >
             {[
-              { number: "500+", label: "Active Part-Timers" },
-              { number: "1,000+", label: "Shifts Managed" },
-              { number: "50+", label: "Companies Trust Us" }
+              { number: "2,000+", label: "Certificates Generated" },
+              { number: "50,000+", label: "Hours Tracked" },
+              { number: "₪500K+", label: "Paid to Part-Timers" }
             ].map((stat, index) => (
-              <div key={index} className="text-center">
+              <motion.div 
+                key={index} 
+                className="text-center"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 1 + index * 0.1, duration: 0.5, type: "spring" }}
+              >
                 <div className="text-3xl font-bold text-gradient">{stat.number}</div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
-              </div>
+              </motion.div>
             ))}
           </motion.div>
         </div>
