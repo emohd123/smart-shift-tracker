@@ -133,39 +133,12 @@ export const ShiftsContent = ({
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">{title}</h1>
-        
-        <div className="flex gap-4">
-          {refreshShifts && (
-            <Button 
-              variant="outline" 
-              onClick={handleRefresh}
-              className="gap-2"
-            >
-              <RefreshCw className="h-4 w-4" />
-              Refresh
-            </Button>
-          )}
-          
-          {isAdmin && deleteAllShifts && (
-            <Button 
-              variant="destructive" 
-              onClick={handleDeleteAll}
-              className="gap-2"
-            >
-              <Trash2 className="h-4 w-4" />
-              Delete All Shifts
-            </Button>
-          )}
-        </div>
-      </div>
-      
       <ShiftList 
         shifts={shifts} 
         title={title}
         deleteShift={deleteShift}
         refreshShifts={refreshShifts}
+        deleteAllShifts={isAdmin ? deleteAllShifts : undefined}
       />
     </motion.div>
   );

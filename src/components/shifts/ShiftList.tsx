@@ -13,9 +13,10 @@ interface ShiftListProps {
   title?: string;
   deleteShift?: (id: string) => void;
   refreshShifts?: () => void;
+  deleteAllShifts?: () => Promise<void>;
 }
 
-const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: ShiftListProps) => {
+const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, deleteAllShifts }: ShiftListProps) => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedShifts, setSelectedShifts] = useState<string[]>([]);
@@ -123,6 +124,7 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts }: Shi
         isRefreshing={isRefreshing}
         handleRefresh={handleRefresh}
         refreshShifts={refreshShifts}
+        deleteAllShifts={deleteAllShifts}
       />
       
       <div className="flex gap-4 items-center">
