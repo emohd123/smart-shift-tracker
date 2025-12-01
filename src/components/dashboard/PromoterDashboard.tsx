@@ -45,71 +45,107 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
   }, []);
 
   // Fetch approved shifts count and recent time logs
-  useEffect(() => {
-    const fetchApprovedShifts = async () => {
-      if (!user?.id) return;
-      
+  const fetchApprovedShifts = async () => {
+    if (!user?.id) return;
+    
+    try {
       const { data, error } = await supabase
         .from('shift_assignments')
         .select('id, shift_id')
         .eq('promoter_id', user.id)
         .eq('certificate_approved', true);
 
-      if (!error && data) {
-        setApprovedShiftsCount(data.length);
-        setApprovedShiftIds(new Set(data.map(a => a.shift_id)));
-      }
-    };
-
-    const fetchRecentTimeLogs = async () => {
-      if (!user?.id) return;
+      if (error) throw error;
       
-      try {
-        const { data, error } = await supabase
-          .from('time_logs')
-          .select(`
-            id,
-            shift_id,
-            check_in_time,
-            total_hours,
-            earnings
-          `)
-          .eq('user_id', user.id)
-          .not('check_out_time', 'is', null)
-          .order('check_in_time', { ascending: false })
-          .limit(3);
-        
-        if (error) throw error;
-        
-        // Get shift details
-        const shiftIds = [...new Set(data?.map(log => log.shift_id) || [])];
-        const { data: shiftsData } = await supabase
-          .from('shift_assignments')
-          .select(`
-            shift_id,
-            shifts!inner (
-              id,
-              title
-            )
-          `)
-          .eq('promoter_id', user.id)
-          .in('shift_id', shiftIds);
-        
-        const shiftMap = new Map(shiftsData?.map(s => [s.shift_id, s.shifts]) || []);
-        
-        const logsWithDetails = data?.map(log => ({
-          ...log,
-          shift_title: shiftMap.get(log.shift_id)?.title || 'Unknown Shift'
-        })) || [];
-        
-        setRecentTimeLogs(logsWithDetails);
-      } catch (error) {
-        console.error('Error fetching recent time logs:', error);
-      }
-    };
+      setApprovedShiftsCount(data?.length || 0);
+      setApprovedShiftIds(new Set(data?.map(a => a.shift_id) || []));
+    } catch (error) {
+      console.error('Error fetching approved shifts:', error);
+    }
+  };
 
+  const fetchRecentTimeLogs = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('time_logs')
+        .select(`
+          id,
+          shift_id,
+          check_in_time,
+          total_hours,
+          earnings
+        `)
+        .eq('user_id', user.id)
+        .not('check_out_time', 'is', null)
+        .order('check_in_time', { ascending: false })
+        .limit(3);
+      
+      if (error) throw error;
+      
+      // Get shift details
+      const shiftIds = [...new Set(data?.map(log => log.shift_id) || [])];
+      const { data: shiftsData } = await supabase
+        .from('shift_assignments')
+        .select(`
+          shift_id,
+          shifts!inner (
+            id,
+            title
+          )
+        `)
+        .eq('promoter_id', user.id)
+        .in('shift_id', shiftIds);
+      
+      const shiftMap = new Map(shiftsData?.map(s => [s.shift_id, s.shifts]) || []);
+      
+      const logsWithDetails = data?.map(log => ({
+        ...log,
+        shift_title: shiftMap.get(log.shift_id)?.title || 'Unknown Shift'
+      })) || [];
+      
+      setRecentTimeLogs(logsWithDetails);
+    } catch (error) {
+      console.error('Error fetching recent time logs:', error);
+    }
+  };
+
+  useEffect(() => {
     fetchApprovedShifts();
     fetchRecentTimeLogs();
+  }, [user?.id]);
+
+  // Add real-time subscriptions for approvals and time logs
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('promoter-dashboard-updates')
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'shift_assignments',
+        filter: `promoter_id=eq.${user.id}`
+      }, (payload) => {
+        if (payload.new.certificate_approved) {
+          fetchApprovedShifts();
+          fetchRecentTimeLogs();
+        }
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'time_logs',
+        filter: `user_id=eq.${user.id}`
+      }, () => {
+        fetchRecentTimeLogs();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user?.id]);
   
   const handleCopyCode = async () => {

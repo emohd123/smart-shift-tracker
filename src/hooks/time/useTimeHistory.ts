@@ -19,6 +19,11 @@ export const useTimeHistory = (userId: string | undefined) => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [totalEarnings, setTotalEarnings] = useState<number>(0);
+  const [dateFrom, setDateFrom] = useState<Date | null>(null);
+  const [dateTo, setDateTo] = useState<Date | null>(null);
+  const [selectedShiftId, setSelectedShiftId] = useState<string>('');
+  const [minEarnings, setMinEarnings] = useState<number>(0);
+  const [uniqueShifts, setUniqueShifts] = useState<Array<{ id: string; title: string }>>([]);
 
   useEffect(() => {
     const fetchTimeLogs = async () => {
@@ -77,6 +82,12 @@ export const useTimeHistory = (userId: string | undefined) => {
         }));
         
         setTimeLogs(logsWithShiftDetails);
+        
+        // Extract unique shifts for filter dropdown
+        const uniqueShiftsArray = Array.from(shiftMap.values())
+          .filter((shift): shift is { id: string; title: string; location: string } => shift !== null)
+          .map(shift => ({ id: shift.id, title: shift.title }));
+        setUniqueShifts(uniqueShiftsArray);
       } catch (error) {
         console.error("Error retrieving time logs:", error);
         toast.error("Error loading time tracking history");
@@ -106,12 +117,30 @@ export const useTimeHistory = (userId: string | undefined) => {
 
   const filteredLogs = timeLogs.filter(log => {
     const searchTermLower = searchTerm.toLowerCase();
-    return (
+    const matchesSearch = (
       (log.shift_title?.toLowerCase().includes(searchTermLower) || false) ||
       (log.shift_location?.toLowerCase().includes(searchTermLower) || false) ||
       formatDate(log.check_in_time).toLowerCase().includes(searchTermLower)
     );
+    
+    const checkInDate = new Date(log.check_in_time);
+    const matchesDateRange = (
+      (!dateFrom || checkInDate >= dateFrom) &&
+      (!dateTo || checkInDate <= dateTo)
+    );
+    
+    const matchesShift = !selectedShiftId || selectedShiftId === 'all' || log.shift_id === selectedShiftId;
+    const matchesMinEarnings = !minEarnings || (log.earnings || 0) >= minEarnings;
+    
+    return matchesSearch && matchesDateRange && matchesShift && matchesMinEarnings;
   });
+
+  const clearFilters = () => {
+    setDateFrom(null);
+    setDateTo(null);
+    setSelectedShiftId('');
+    setMinEarnings(0);
+  };
 
   return {
     timeLogs,
@@ -122,6 +151,16 @@ export const useTimeHistory = (userId: string | undefined) => {
     totalEarnings,
     formatTime,
     formatDate,
-    formatDuration
+    formatDuration,
+    dateFrom,
+    setDateFrom,
+    dateTo,
+    setDateTo,
+    selectedShiftId,
+    setSelectedShiftId,
+    minEarnings,
+    setMinEarnings,
+    uniqueShifts,
+    clearFilters
   };
 };
