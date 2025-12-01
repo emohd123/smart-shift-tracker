@@ -12,9 +12,27 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   const doc = new jsPDF();
   let yPosition = 20;
 
+  // Use company info or defaults
+  const companyName = data.companyInfo?.name || 'Professional Certification Authority';
+  const companyWebsite = data.companyInfo?.website || 'https://yourcompany.com';
+  const companyEmail = data.companyInfo?.email || 'certificates@yourcompany.com';
+  const companyPhone = data.companyInfo?.phone || data.managerContact;
+  const companyAddress = data.companyInfo?.address;
+  const companyRegId = data.companyInfo?.registration_id;
+
   // Enhanced Header with Company Branding
   doc.setFillColor(41, 128, 185); // Professional blue
   doc.rect(0, 0, 210, 50, 'F');
+  
+  // Add company logo if available
+  if (data.companyInfo?.logo_url) {
+    try {
+      // Logo would be added here - simplified for now
+      // doc.addImage(data.companyInfo.logo_url, 'PNG', 15, 10, 30, 30);
+    } catch (error) {
+      console.error('Error adding logo:', error);
+    }
+  }
   
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(24);
@@ -25,9 +43,10 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   doc.setFont('helvetica', 'normal');
   doc.text('Official Employment Verification & Skills Documentation', 105, 35, { align: 'center' });
   
-  // Company website and contact info
+  // Dynamic company contact info
   doc.setFontSize(10);
-  doc.text('Website: https://yourcompany.com | Email: certificates@yourcompany.com', 105, 45, { align: 'center' });
+  const contactLine = `${companyWebsite}${companyEmail ? ' | ' + companyEmail : ''}`;
+  doc.text(contactLine, 105, 45, { align: 'center' });
 
   yPosition = 65;
   doc.setTextColor(0, 0, 0);
@@ -158,20 +177,22 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
 
-  const companyInfo = [
-    'Issuing Company: Professional Certification Authority',
-    'Website: https://yourcompany.com',
-    'Email: certificates@yourcompany.com',
-    `Manager Contact: ${data.managerContact}`,
+  const companyInfoLines = [
+    `Issuing Company: ${companyName}`,
+    companyRegId ? `Registration ID: ${companyRegId}` : '',
+    companyWebsite ? `Website: ${companyWebsite}` : '',
+    companyEmail ? `Email: ${companyEmail}` : '',
+    companyPhone ? `Contact: ${companyPhone}` : '',
+    companyAddress ? `Address: ${companyAddress}` : '',
     '',
     'DIGITAL VERIFICATION:',
     '✓ This certificate is digitally signed and authenticated',
     '✓ Verification available online using reference number',
     '✓ All employment data verified and accurate',
     `✓ Generated on: ${new Date().toLocaleDateString()}`
-  ];
+  ].filter(line => line !== ''); // Remove empty lines
 
-  companyInfo.forEach(line => {
+  companyInfoLines.forEach(line => {
     if (line.startsWith('DIGITAL VERIFICATION:')) {
       doc.setFont('helvetica', 'bold');
     } else if (line.startsWith('✓')) {

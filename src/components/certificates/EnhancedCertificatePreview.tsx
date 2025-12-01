@@ -212,19 +212,43 @@ export function EnhancedCertificatePreview({ certificateData, template }: Enhanc
                   Issuing Authority
                 </h3>
                 <div className="space-y-2 text-sm">
-                  <p><strong>Company:</strong> Professional Certification Authority</p>
-                  <p className="flex items-center gap-1">
-                    <Globe className="h-3 w-3" />
-                    <strong>Website:</strong> <span className="text-primary">https://yourcompany.com</span>
-                  </p>
-                  <p className="flex items-center gap-1">
-                    <Mail className="h-3 w-3" />
-                    <strong>Email:</strong> certificates@yourcompany.com
-                  </p>
-                  <p className="flex items-center gap-1">
-                    <Phone className="h-3 w-3" />
-                    <strong>Contact:</strong> {data.managerContact}
-                  </p>
+                  {data.companyInfo?.logo_url && (
+                    <div className="mb-3">
+                      <img 
+                        src={data.companyInfo.logo_url} 
+                        alt="Company Logo" 
+                        className="h-16 w-auto object-contain"
+                      />
+                    </div>
+                  )}
+                  <p><strong>Company:</strong> {data.companyInfo?.name || 'Professional Certification Authority'}</p>
+                  {data.companyInfo?.registration_id && (
+                    <p><strong>Registration ID:</strong> {data.companyInfo.registration_id}</p>
+                  )}
+                  {data.companyInfo?.website && (
+                    <p className="flex items-center gap-1">
+                      <Globe className="h-3 w-3" />
+                      <strong>Website:</strong> <span className="text-primary">{data.companyInfo.website}</span>
+                    </p>
+                  )}
+                  {data.companyInfo?.email && (
+                    <p className="flex items-center gap-1">
+                      <Mail className="h-3 w-3" />
+                      <strong>Email:</strong> {data.companyInfo.email}
+                    </p>
+                  )}
+                  {(data.companyInfo?.phone || data.managerContact) && (
+                    <p className="flex items-center gap-1">
+                      <Phone className="h-3 w-3" />
+                      <strong>Contact:</strong> {data.companyInfo?.phone || data.managerContact}
+                    </p>
+                  )}
+                  {data.companyInfo?.address && (
+                    <p className="flex items-center gap-1">
+                      <MapPin className="h-3 w-3" />
+                      <strong>Address:</strong> {data.companyInfo.address}
+                    </p>
+                  )}
                 </div>
               </div>
               

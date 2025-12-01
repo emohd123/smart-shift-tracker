@@ -227,6 +227,50 @@ export type Database = {
           },
         ]
       }
+      company_certificate_configs: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          custom_footer_text: string | null
+          enable_digital_signature: boolean | null
+          id: string
+          signature_position: string | null
+          stamp_message: string | null
+          stamp_opacity: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          custom_footer_text?: string | null
+          enable_digital_signature?: boolean | null
+          id?: string
+          signature_position?: string | null
+          stamp_message?: string | null
+          stamp_opacity?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          custom_footer_text?: string | null
+          enable_digital_signature?: boolean | null
+          id?: string
+          signature_position?: string | null
+          stamp_message?: string | null
+          stamp_opacity?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_certificate_configs_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: true
+            referencedRelation: "company_profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
+      }
       company_profiles: {
         Row: {
           address: string | null

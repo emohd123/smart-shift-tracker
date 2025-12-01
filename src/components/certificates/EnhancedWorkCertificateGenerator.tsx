@@ -13,6 +13,7 @@ import { ShiftSelector } from "./generator/ShiftSelector";
 import { CertificateCustomizer } from "./generator/CertificateCustomizer";
 import { EnhancedCertificatePreview } from "./EnhancedCertificatePreview";
 import { AdminStampConfig } from "./generator/AdminStampConfig";
+import { CompanyStampConfig } from "./generator/CompanyStampConfig";
 import { TimePeriod, CertificateType, WorkExperienceData } from "./types/certificate";
 import { useUnifiedCertificateGeneration } from "./hooks/useUnifiedCertificateGeneration";
 import { useCertificatePayment } from "@/hooks/useCertificatePayment";
@@ -153,8 +154,10 @@ export default function EnhancedWorkCertificateGenerator() {
             <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="generate">Generate Certificate</TabsTrigger>
               <TabsTrigger value="customize">Customize Design</TabsTrigger>
-              {user?.role === 'admin' && (
-                <TabsTrigger value="admin">Admin Settings</TabsTrigger>
+              {(user?.role === 'admin' || user?.role === 'company') && (
+                <TabsTrigger value="settings">
+                  {user?.role === 'admin' ? 'Admin Settings' : 'Company Settings'}
+                </TabsTrigger>
               )}
             </TabsList>
             
@@ -217,8 +220,14 @@ export default function EnhancedWorkCertificateGenerator() {
             </TabsContent>
             
             {user?.role === 'admin' && (
-              <TabsContent value="admin" className="space-y-6">
+              <TabsContent value="settings" className="space-y-6">
                 <AdminStampConfig />
+              </TabsContent>
+            )}
+
+            {user?.role === 'company' && (
+              <TabsContent value="settings" className="space-y-6">
+                <CompanyStampConfig />
               </TabsContent>
             )}
           </Tabs>
