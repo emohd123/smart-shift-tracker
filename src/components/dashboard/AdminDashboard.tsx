@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { formatBHD } from "../shifts/utils/currencyUtils";
 import { LoadingState } from "@/components/ui/enhanced-loading";
 import { ErrorBoundary } from "@/components/ui/error-boundary";
+import { getEffectiveStatus } from "../shifts/utils/statusCalculations";
 
 type AdminDashboardProps = {
   shifts: Shift[];
@@ -32,8 +33,8 @@ const AdminDashboard = React.memo(({ shifts, loading = false }: AdminDashboardPr
     const today = new Date().toISOString().split('T')[0];
     
     const todaysShifts = shifts.filter(shift => shift.date === today);
-    const ongoingShifts = shifts.filter(shift => shift.status === "ongoing");
-    const completedShifts = shifts.filter(shift => shift.status === "completed");
+    const ongoingShifts = shifts.filter(shift => getEffectiveStatus(shift) === "ongoing");
+    const completedShifts = shifts.filter(shift => getEffectiveStatus(shift) === "completed");
     
     // Calculate earnings (this would come from API in real app)
     const totalPayable = completedShifts.reduce((sum, shift) => {

@@ -2,6 +2,7 @@
 import { useCallback } from "react";
 import { Shift } from "../../shifts/types/ShiftTypes";
 import { useAuth } from "@/context/AuthContext";
+import { getEffectiveStatus } from "../../shifts/utils/statusCalculations";
 import { useTimeTrackingState } from "./useTimeTrackingState";
 import { useActiveTimeLogCheck } from "./useActiveTimeLogCheck";
 import { useLocalStoragePersistence } from "./useLocalStoragePersistence";
@@ -50,8 +51,9 @@ export function useTimeTracking(shift?: Shift, onCheckIn?: () => void, onCheckOu
   // Time logs operations
   const { checkExistingTimeLog, createTimeLog, logTimeEntry } = useTimeLogs(shift);
   
-  // Check if shift is not active
-  const isNotActiveShift = shift ? (shift.status === "completed" || shift.status === "cancelled") : false;
+  // Check if shift is not active (considering manual override)
+  const effectiveStatus = shift ? getEffectiveStatus(shift) : null;
+  const isNotActiveShift = shift ? (effectiveStatus === "completed" || effectiveStatus === "cancelled") : false;
   
   // Check for active time logs when component mounts
   useActiveTimeLogCheck({
