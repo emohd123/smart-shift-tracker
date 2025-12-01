@@ -49,26 +49,31 @@ export const useTimeHistory = (userId: string | undefined) => {
         const total = data?.reduce((sum, log) => sum + (log.earnings || 0), 0) || 0;
         setTotalEarnings(total);
         
-        const logsWithShiftDetails = await Promise.all((data || []).map(async (log) => {
-          try {
-            const { data: shiftData } = await supabase
-              .from('shifts')
-              .select('title, location')
-              .eq('id', log.shift_id)
-              .maybeSingle();
-              
-            return {
-              ...log,
-              shift_title: shiftData?.title || 'Unknown Shift',
-              shift_location: shiftData?.location || 'Unknown Location'
-            };
-          } catch (error) {
-            return {
-              ...log,
-              shift_title: 'Unknown Shift',
-              shift_location: 'Unknown Location'
-            };
-          }
+        // Get all unique shift IDs
+        const shiftIds = [...new Set(data?.map(log => log.shift_id) || [])];
+        
+        // Fetch all shifts in one query through shift_assignments
+        const { data: shiftsData } = await supabase
+          .from('shift_assignments')
+          .select(`
+            shift_id,
+            shifts!inner (
+              id,
+              title,
+              location
+            )
+          `)
+          .eq('promoter_id', userId)
+          .in('shift_id', shiftIds);
+        
+        // Create a map for quick lookup
+        const shiftMap = new Map(shiftsData?.map(s => [s.shift_id, s.shifts]) || []);
+        
+        // Map time logs with shift details
+        const logsWithShiftDetails = data.map(log => ({
+          ...log,
+          shift_title: shiftMap.get(log.shift_id)?.title || 'Unknown Shift',
+          shift_location: shiftMap.get(log.shift_id)?.location || 'Unknown Location'
         }));
         
         setTimeLogs(logsWithShiftDetails);

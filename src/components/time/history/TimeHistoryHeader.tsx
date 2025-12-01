@@ -23,7 +23,7 @@ const TimeHistoryHeader = ({ totalEarnings }: TimeHistoryHeaderProps) => {
         <Button 
           variant="ghost" 
           size="sm"
-          onClick={() => navigate('/time-tracking')}
+          onClick={() => navigate('/time')}
           className="group"
         >
           <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" />
