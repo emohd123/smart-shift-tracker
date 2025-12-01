@@ -14,6 +14,7 @@ import { useCertificatePayment } from "@/hooks/useCertificatePayment";
 import { Badge } from "@/components/ui/badge";
 import { generateMultiCompanyPDF } from "../utils/multiCompanyPdfGenerator";
 import { uploadFileToBucket } from "@/integrations/supabase/storage";
+import CertificateDateFilter from "./CertificateDateFilter";
 
 export default function PromoterCertificatesPage() {
   const [approvedWork, setApprovedWork] = useState<CompanyWorkEntry[]>([]);
@@ -21,6 +22,9 @@ export default function PromoterCertificatesPage() {
   const [generating, setGenerating] = useState(false);
   const [certificateData, setCertificateData] = useState<MultiCompanyCertificate | null>(null);
   const [generatedCertificateId, setGeneratedCertificateId] = useState<string | null>(null);
+  const [dateFrom, setDateFrom] = useState<Date | null>(null);
+  const [dateTo, setDateTo] = useState<Date | null>(null);
+  const [profile, setProfile] = useState<{ full_name: string } | null>(null);
   const { isProcessing, initiateCertificatePayment } = useCertificatePayment();
 
   useEffect(() => {
@@ -32,41 +36,49 @@ export default function PromoterCertificatesPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch all approved shift assignments for this promoter
-      const { data: assignments, error } = await supabase
+      // Fetch user profile
+      const { data: userProfile } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', user.id)
+        .single();
+      
+      setProfile(userProfile);
+
+      // Fetch approved shift assignments
+      const { data: assignments, error: assignmentsError } = await supabase
         .from('shift_assignments')
-        .select(`
-          id,
-          shift_id,
-          promoter_id,
-          certificate_approved,
-          approved_at,
-          shifts!inner (
-            id,
-            title,
-            date,
-            start_time,
-            end_time,
-            location,
-            company_id,
-            company_profiles:company_id (
-              name,
-              logo_url,
-              website,
-              email,
-              phone
-            )
-          )
-        `)
+        .select('id, shift_id, promoter_id, certificate_approved, approved_at')
         .eq('promoter_id', user.id)
         .eq('certificate_approved', true)
         .order('approved_at', { ascending: false });
 
-      if (error) throw error;
+      if (assignmentsError) throw assignmentsError;
+      if (!assignments || assignments.length === 0) {
+        setApprovedWork([]);
+        setLoading(false);
+        return;
+      }
+
+      // Fetch shift details separately
+      const shiftIds = assignments.map(a => a.shift_id);
+      const { data: shifts, error: shiftsError } = await supabase
+        .from('shifts')
+        .select('id, title, date, start_time, end_time, location, company_id')
+        .in('id', shiftIds);
+
+      if (shiftsError) throw shiftsError;
+
+      // Fetch company profiles separately
+      const companyIds = [...new Set(shifts?.map(s => s.company_id) || [])];
+      const { data: companies, error: companiesError } = await supabase
+        .from('company_profiles')
+        .select('user_id, name, logo_url, website')
+        .in('user_id', companyIds);
+
+      if (companiesError) throw companiesError;
 
       // Fetch time_logs separately for each shift (no direct FK relationship)
-      const shiftIds = [...new Set(assignments?.map(a => a.shift_id) || [])];
-      
       const { data: timeLogs } = await supabase
         .from('time_logs')
         .select('shift_id, total_hours, check_in_time, check_out_time')
@@ -80,30 +92,33 @@ export default function PromoterCertificatesPage() {
         timeLogMap.set(log.shift_id, current + (log.total_hours || 0));
       });
 
-      // Group by company
-      const companyMap = new Map<string, CompanyWorkEntry>();
+      // Create lookup maps
+      const shiftMap = new Map(shifts?.map(s => [s.id, s]));
+      const companyMap = new Map(companies?.map(c => [c.user_id, c]));
+      const workMap = new Map<string, CompanyWorkEntry>();
 
-      assignments?.forEach((assignment: any) => {
-        const shift = assignment.shifts;
-        const company = shift.company_profiles;
-        const companyId = shift.company_id;
+      // Build work entries
+      assignments.forEach((assignment) => {
+        const shift = shiftMap.get(assignment.shift_id);
+        if (!shift) return;
 
-        if (!companyMap.has(companyId)) {
-          companyMap.set(companyId, {
+        const company = companyMap.get(shift.company_id);
+        if (!company) return;
+
+        if (!workMap.has(shift.company_id)) {
+          workMap.set(shift.company_id, {
             company: {
-              id: companyId,
-              name: company?.name || 'Unknown Company',
-              logo_url: company?.logo_url || null,
-              website: company?.website,
-              email: company?.email,
-              phone: company?.phone
+              id: shift.company_id,
+              name: company.name,
+              logo_url: company.logo_url,
+              website: company.website
             },
             shifts: [],
             totalHours: 0
           });
         }
 
-        const entry = companyMap.get(companyId)!;
+        const entry = workMap.get(shift.company_id)!;
         const totalHours = timeLogMap.get(shift.id) || 0;
 
         entry.shifts.push({
@@ -121,7 +136,7 @@ export default function PromoterCertificatesPage() {
         entry.totalHours += totalHours;
       });
 
-      setApprovedWork(Array.from(companyMap.values()));
+      setApprovedWork(Array.from(workMap.values()));
     } catch (error) {
       console.error('Error fetching approved work:', error);
       toast.error('Failed to load approved work');
@@ -131,8 +146,10 @@ export default function PromoterCertificatesPage() {
   };
 
   const handleGenerateCertificate = async () => {
-    if (approvedWork.length === 0) {
-      toast.error('No approved work found');
+    const filteredWork = getFilteredWork();
+    
+    if (filteredWork.length === 0) {
+      toast.error('No approved work found in selected date range');
       return;
     }
 
@@ -141,21 +158,14 @@ export default function PromoterCertificatesPage() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Fetch user profile for promoter name
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('full_name')
-        .eq('id', user.id)
-        .single();
-
       const referenceNumber = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
-      const grandTotalHours = approvedWork.reduce((sum, company) => sum + company.totalHours, 0);
+      const grandTotalHours = filteredWork.reduce((sum, company) => sum + company.totalHours, 0);
 
       const certData: MultiCompanyCertificate = {
         referenceNumber,
         promoterName: profile?.full_name || 'Unknown',
         issueDate: new Date().toISOString(),
-        companies: approvedWork,
+        companies: filteredWork,
         grandTotalHours
       };
 
@@ -205,6 +215,21 @@ export default function PromoterCertificatesPage() {
     await initiateCertificatePayment(generatedCertificateId);
   };
 
+  const getFilteredWork = () => {
+    return approvedWork.map(company => ({
+      ...company,
+      shifts: company.shifts.filter(shift => {
+        const shiftDate = new Date(shift.dateFrom);
+        if (dateFrom && shiftDate < dateFrom) return false;
+        if (dateTo && shiftDate > dateTo) return false;
+        return true;
+      })
+    })).filter(company => company.shifts.length > 0);
+  };
+
+  const filteredWork = getFilteredWork();
+  const totalFilteredHours = filteredWork.reduce((sum, c) => sum + c.shifts.reduce((s, shift) => s + shift.totalHours, 0), 0);
+
   if (loading) {
     return (
       <Card>
@@ -249,53 +274,87 @@ export default function PromoterCertificatesPage() {
             </Card>
           ) : (
             <>
-              {/* Approved Work Summary */}
-              <Card className="bg-gradient-to-r from-primary/10 to-secondary/10">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Award className="h-5 w-5 text-primary" />
-                    Your Approved Work
-                  </CardTitle>
-                  <CardDescription>
-                    Work from {approvedWork.length} {approvedWork.length === 1 ? 'company' : 'companies'} ready for certification
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-2xl font-bold text-primary">
-                        {approvedWork.reduce((sum, c) => sum + c.totalHours, 0)}h
-                      </p>
-                      <p className="text-xs text-muted-foreground">Total Hours</p>
+              {/* Date Filter */}
+              {!certificateData && (
+                <CertificateDateFilter
+                  dateFrom={dateFrom}
+                  dateTo={dateTo}
+                  onDateFromChange={setDateFrom}
+                  onDateToChange={setDateTo}
+                  onClearFilters={() => {
+                    setDateFrom(null);
+                    setDateTo(null);
+                  }}
+                />
+              )}
+
+              {/* Preview Section */}
+              {!certificateData && filteredWork.length > 0 && profile && (
+                <Card className="border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="h-5 w-5 text-primary" />
+                      Certificate Preview
+                    </CardTitle>
+                    <CardDescription>
+                      This is how your certificate will look. Review before generating.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <MultiCompanyCertificatePreview 
+                      data={{
+                        referenceNumber: 'PREVIEW',
+                        promoterName: profile.full_name,
+                        issueDate: new Date().toISOString(),
+                        companies: filteredWork,
+                        grandTotalHours: totalFilteredHours
+                      }} 
+                    />
+                    <div className="mt-6 p-4 bg-background rounded-lg border">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                          <p className="text-2xl font-bold text-primary">{totalFilteredHours}h</p>
+                          <p className="text-xs text-muted-foreground">Total Hours</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-primary">{filteredWork.length}</p>
+                          <p className="text-xs text-muted-foreground">Companies</p>
+                        </div>
+                        <div>
+                          <p className="text-2xl font-bold text-primary">
+                            {filteredWork.reduce((sum, c) => sum + c.shifts.length, 0)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">Shifts</p>
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={handleGenerateCertificate}
+                        disabled={generating}
+                        className="w-full"
+                        size="lg"
+                      >
+                        {generating ? (
+                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
+                        ) : (
+                          <><Award className="h-4 w-4 mr-2" /> Generate Certificate ($4.99)</>
+                        )}
+                      </Button>
                     </div>
-                    <div>
-                      <p className="text-2xl font-bold text-primary">{approvedWork.length}</p>
-                      <p className="text-xs text-muted-foreground">Companies</p>
-                    </div>
-                    <div>
-                      <p className="text-2xl font-bold text-primary">
-                        {approvedWork.reduce((sum, c) => sum + c.shifts.length, 0)}
-                      </p>
-                      <p className="text-xs text-muted-foreground">Shifts</p>
-                    </div>
-                  </div>
-                  
-                  {!certificateData && (
-                    <Button 
-                      onClick={handleGenerateCertificate}
-                      disabled={generating}
-                      className="w-full mt-4"
-                      size="lg"
-                    >
-                      {generating ? (
-                        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
-                      ) : (
-                        <><Award className="h-4 w-4 mr-2" /> Generate Certificate</>
-                      )}
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              )}
+
+              {filteredWork.length === 0 && !certificateData && (
+                <Card>
+                  <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                    <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">No Work in Selected Date Range</h3>
+                    <p className="text-sm text-muted-foreground max-w-md">
+                      Try adjusting your date filters to include more approved shifts.
+                    </p>
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Certificate Preview */}
               {certificateData && (
