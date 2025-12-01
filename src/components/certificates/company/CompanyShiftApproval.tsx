@@ -116,6 +116,21 @@ export default function CompanyShiftApproval() {
 
       if (error) throw error;
 
+      // Create notifications for each promoter
+      const notificationPromises = shift.promoters
+        .filter(p => !p.approved)
+        .map(promoter => 
+          supabase.from('notifications').insert({
+            user_id: promoter.promoterId,
+            title: 'Shift Approved for Certificate',
+            message: `Your work on "${shift.title}" (${format(new Date(shift.date), 'MMM dd, yyyy')}) has been approved. You can now generate a work certificate.`,
+            type: 'certificate_approval',
+            read: false
+          })
+        );
+      
+      await Promise.all(notificationPromises);
+
       toast.success(`Approved ${shift.promoters.length} promoter(s) for certificates`);
       fetchCompletedShifts();
     } catch (error) {
