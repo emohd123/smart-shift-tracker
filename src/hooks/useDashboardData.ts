@@ -1,5 +1,6 @@
 
 import { Shift } from "@/components/shifts/types/ShiftTypes";
+import { getEffectiveStatus } from "@/components/shifts/utils/statusCalculations";
 
 /**
  * Calculate actual hours between start and end time
@@ -21,33 +22,33 @@ function calculateShiftHours(startTime: string, endTime: string): number {
  * Custom hook to process dashboard data
  */
 export function useDashboardData(shifts: Shift[]) {
-  // Get upcoming shifts
-  const upcomingShifts = shifts.filter(shift => shift.status === "upcoming").slice(0, 3);
+  // Get upcoming shifts (considering manual override)
+  const upcomingShifts = shifts.filter(shift => getEffectiveStatus(shift) === "upcoming").slice(0, 3);
   
   // Get next shift
   const nextShift = upcomingShifts[0];
   
-  // Get current shift
-  const currentShift = shifts.find(shift => shift.status === "ongoing") || null;
+  // Get current shift (considering manual override)
+  const currentShift = shifts.find(shift => getEffectiveStatus(shift) === "ongoing") || null;
   
-  // Calculate earnings
+  // Calculate earnings (considering manual override)
   const totalEarned = shifts
-    .filter(shift => shift.status === "completed")
+    .filter(shift => getEffectiveStatus(shift) === "completed")
     .reduce((sum, shift) => {
       const hours = calculateShiftHours(shift.startTime, shift.endTime);
       return sum + (shift.payRate * hours);
     }, 0);
   
-  // Calculate unpaid amount
+  // Calculate unpaid amount (considering manual override)
   const unpaidAmount = shifts
-    .filter(shift => shift.status === "completed" && shift.isPaid === false)
+    .filter(shift => getEffectiveStatus(shift) === "completed" && shift.isPaid === false)
     .reduce((sum, shift) => {
       const hours = calculateShiftHours(shift.startTime, shift.endTime);
       return sum + (shift.payRate * hours);
     }, 0);
   
-  // Count of completed shifts (not the actual shifts array)
-  const completedShifts = shifts.filter(shift => shift.status === "completed").length;
+  // Count of completed shifts (considering manual override)
+  const completedShifts = shifts.filter(shift => getEffectiveStatus(shift) === "completed").length;
 
   const loading = false;
   const error = null;
