@@ -9,7 +9,8 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { Button } from "../ui/button";
-import { Award, Copy, Check, CheckCircle } from "lucide-react";
+import { Award, Copy, Check, CheckCircle, Clock } from "lucide-react";
+import { formatBHD } from "../shifts/utils/currencyUtils";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getEffectiveStatus } from "../shifts/utils/statusCalculations";
@@ -30,6 +31,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
   const [copied, setCopied] = useState(false);
   const [approvedShiftsCount, setApprovedShiftsCount] = useState(0);
   const [approvedShiftIds, setApprovedShiftIds] = useState<Set<string>>(new Set());
+  const [recentTimeLogs, setRecentTimeLogs] = useState<any[]>([]);
   
   // Get completed shifts for display in the Recent Activity section
   const completedShiftsList = shifts.filter(shift => getEffectiveStatus(shift) === "completed");
@@ -42,7 +44,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
     return () => clearTimeout(timer);
   }, []);
 
-  // Fetch approved shifts count
+  // Fetch approved shifts count and recent time logs
   useEffect(() => {
     const fetchApprovedShifts = async () => {
       if (!user?.id) return;
@@ -59,7 +61,55 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
       }
     };
 
+    const fetchRecentTimeLogs = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('time_logs')
+          .select(`
+            id,
+            shift_id,
+            check_in_time,
+            total_hours,
+            earnings
+          `)
+          .eq('user_id', user.id)
+          .not('check_out_time', 'is', null)
+          .order('check_in_time', { ascending: false })
+          .limit(3);
+        
+        if (error) throw error;
+        
+        // Get shift details
+        const shiftIds = [...new Set(data?.map(log => log.shift_id) || [])];
+        const { data: shiftsData } = await supabase
+          .from('shift_assignments')
+          .select(`
+            shift_id,
+            shifts!inner (
+              id,
+              title
+            )
+          `)
+          .eq('promoter_id', user.id)
+          .in('shift_id', shiftIds);
+        
+        const shiftMap = new Map(shiftsData?.map(s => [s.shift_id, s.shifts]) || []);
+        
+        const logsWithDetails = data?.map(log => ({
+          ...log,
+          shift_title: shiftMap.get(log.shift_id)?.title || 'Unknown Shift'
+        })) || [];
+        
+        setRecentTimeLogs(logsWithDetails);
+      } catch (error) {
+        console.error('Error fetching recent time logs:', error);
+      }
+    };
+
     fetchApprovedShifts();
+    fetchRecentTimeLogs();
   }, [user?.id]);
   
   const handleCopyCode = async () => {
@@ -161,6 +211,43 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
               <Button onClick={() => navigate("/certificates")} className="w-full md:w-auto">
                 <Award className="mr-2 h-4 w-4" />
                 Generate Certificate
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+        
+        {/* Recent Time Logs Section */}
+        {recentTimeLogs.length > 0 && (
+          <Card className="shadow-sm border-border/50 hover:shadow-md transition-shadow">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg font-semibold flex items-center gap-2">
+                <Clock className="h-5 w-5 text-primary" />
+                Recent Time Logs
+              </CardTitle>
+              <CardDescription>Your latest tracked work sessions</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentTimeLogs.map((log) => (
+                  <div key={log.id} className="flex items-center justify-between p-3 rounded-md bg-secondary/50">
+                    <div>
+                      <h3 className="font-medium text-sm">{log.shift_title}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(log.check_in_time).toLocaleDateString()} • {log.total_hours?.toFixed(1)}h
+                      </p>
+                    </div>
+                    <div className="text-sm font-semibold text-green-600">
+                      {formatBHD(log.earnings || 0)}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Button 
+                variant="outline" 
+                className="w-full mt-4"
+                onClick={() => navigate('/time-history')}
+              >
+                View All History
               </Button>
             </CardContent>
           </Card>
