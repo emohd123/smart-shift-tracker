@@ -41,7 +41,7 @@ const HowItWorks = () => {
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
-        <div className="absolute top-1/4 right-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+        <div className="absolute top-1/4 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
@@ -78,13 +78,13 @@ const HowItWorks = () => {
                 <div className="relative group">
                   {/* Connector line (desktop only) */}
                   {index < partTimerSteps.length - 1 && (
-                    <div className="hidden md:block absolute top-16 left-1/2 w-full h-0.5 bg-gradient-to-r from-border via-accent/30 to-border z-0" />
+                    <div className="hidden md:block absolute top-16 left-1/2 w-full h-0.5 bg-gradient-to-r from-border via-primary/30 to-border z-0" />
                   )}
 
-                  <div className="glass-card rounded-2xl border border-border/50 p-8 hover:shadow-2xl transition-all duration-500 hover:border-accent/30 relative z-10 bg-background">
+                  <div className="glass-card rounded-2xl border border-border/50 p-8 hover:shadow-2xl transition-all duration-500 hover:border-primary/30 relative z-10 bg-background">
                     <div className="flex flex-col items-center text-center">
                       {/* Step number */}
-                      <div className="text-5xl font-bold text-accent/20 mb-4">
+                      <div className="text-5xl font-bold text-primary/20 mb-4">
                         {String(index + 1).padStart(2, '0')}
                       </div>
 

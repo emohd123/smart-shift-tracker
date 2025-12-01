@@ -8,7 +8,7 @@ const ForPartTimers = () => {
       icon: <Award className="w-8 h-8" />,
       title: "Work Certificates",
       description: "Official certificates with QR verification proving every hour you worked",
-      gradient: "from-accent to-accent/80",
+      gradient: "from-violet-500 to-purple-500",
       features: ["QR code authentication", "Company stamp included", "Perfect for job applications"]
     },
     {
@@ -31,7 +31,7 @@ const ForPartTimers = () => {
     <section id="for-part-timers" className="py-24 relative overflow-hidden">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl" />
+        <div className="absolute top-0 left-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
       </div>
 
@@ -48,9 +48,9 @@ const ForPartTimers = () => {
             initial={{ scale: 0 }}
             whileInView={{ scale: 1 }}
             viewport={{ once: true }}
-            className="inline-block px-4 py-2 bg-accent/10 rounded-full mb-6"
+            className="inline-block px-4 py-2 bg-primary/10 rounded-full mb-6"
           >
-            <span className="text-accent font-semibold">For Part-Timers</span>
+            <span className="text-primary font-semibold">For Part-Timers</span>
           </motion.div>
           <h2 className="text-4xl md:text-5xl font-bold mb-6">
             Get Paid. <span className="text-gradient">Get Certified.</span>
@@ -72,13 +72,13 @@ const ForPartTimers = () => {
           viewport={{ once: true }}
           className="text-center mb-20"
         >
-          <div className="glass-card inline-block rounded-2xl border border-accent/30 p-8 shadow-xl">
+          <div className="glass-card inline-block rounded-2xl border border-primary/30 p-8 shadow-xl">
             <p className="text-muted-foreground mb-2">Example Journey</p>
             <div className="flex items-center gap-4 text-2xl md:text-3xl font-bold">
               <motion.span
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 2, repeat: Infinity }}
-                className="text-accent"
+                className="text-primary"
               >
                 127 hours
               </motion.span>
@@ -105,7 +105,7 @@ const ForPartTimers = () => {
               viewport={{ once: true }}
               transition={{ duration: 0.6, delay: index * 0.1 }}
               whileHover={{ y: -8 }}
-              className="glass-card rounded-2xl border border-border/50 p-8 hover:shadow-2xl transition-all duration-500 hover:border-accent/30"
+              className="glass-card rounded-2xl border border-border/50 p-8 hover:shadow-2xl transition-all duration-500 hover:border-primary/30"
             >
               {/* Animated Icon */}
               <motion.div
@@ -128,7 +128,7 @@ const ForPartTimers = () => {
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
                     transition={{ delay: 0.3 + i * 0.1 }}
-                    className="text-xs px-3 py-1 rounded-full bg-accent/10 text-accent border border-accent/20"
+                    className="text-xs px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20"
                   >
                     {feature}
                   </motion.div>
@@ -159,9 +159,9 @@ const ForPartTimers = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
                 whileHover={{ scale: 1.05 }}
-                className="flex items-center gap-2 glass-card px-4 py-2 rounded-full border border-border/50 hover:border-accent/30 transition-colors"
+                className="flex items-center gap-2 glass-card px-4 py-2 rounded-full border border-border/50 hover:border-primary/30 transition-colors"
               >
-                <div className="w-5 h-5 text-accent">{item.icon}</div>
+                <div className="w-5 h-5 text-primary">{item.icon}</div>
                 <span className="text-sm font-medium">{item.text}</span>
               </motion.div>
             ))}

@@ -147,9 +147,7 @@ const Index = () => {
           >
             {[
               { icon: Award, label: "Work Certificates", gradient: "from-primary to-primary-light" },
-              { icon: DollarSign, label: "Track Earnings", gradient: "from-accent to-accent/80" },
-              { icon: MapPin, label: "GPS Verified", gradient: "from-primary to-accent" },
-              { icon: CheckCircle, label: "Build Your Resume", gradient: "from-primary-light to-primary" }
+              { icon: DollarSign, label: "Track Earnings", gradient: "from-violet-500 to-purple-500" }
             ].map((benefit, index) => (
               <motion.div
                 key={benefit.label}
