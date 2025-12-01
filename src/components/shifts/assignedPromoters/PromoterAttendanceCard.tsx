@@ -9,6 +9,9 @@ import { format } from "date-fns";
 import { useUnassignPromoter } from "./hooks/useUnassignPromoter";
 import { useCompanyCheckIn } from "./hooks/useCompanyCheckIn";
 import { EditAssignmentDialog } from "./EditAssignmentDialog";
+import { EditTimeLogDialog } from "./EditTimeLogDialog";
+import { ManualCheckInDialog } from "./ManualCheckInDialog";
+import { PromoterWorkHistory } from "./PromoterWorkHistory";
 import { useEffect, useState } from "react";
 import {
   AlertDialog,
@@ -52,7 +55,7 @@ export const PromoterAttendanceCard = ({
   userRole,
 }: PromoterAttendanceCardProps) => {
   const { unassignPromoter, loading: unassigning } = useUnassignPromoter();
-  const { checkIn, checkOut, loading: checkInOutLoading } = useCompanyCheckIn(shiftId, payRate, payRateType);
+  const { checkIn, checkOut, manualCheckIn, loading: checkInOutLoading } = useCompanyCheckIn(shiftId, payRate, payRateType);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [estimatedEarnings, setEstimatedEarnings] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
@@ -130,6 +133,13 @@ export const PromoterAttendanceCard = ({
   const handleCheckOut = async () => {
     if (!latestLog?.check_in_time) return;
     const success = await checkOut(latestLog.id as any, promoter.full_name, latestLog.check_in_time);
+    if (success) {
+      onUpdate?.();
+    }
+  };
+
+  const handleManualCheckIn = async (customTime?: Date) => {
+    const success = await manualCheckIn(promoter.promoter_id, promoter.full_name, customTime);
     if (success) {
       onUpdate?.();
     }
@@ -242,40 +252,44 @@ export const PromoterAttendanceCard = ({
 
         {/* Check-in/out Controls */}
         {isCompany && (
-          <div className="flex gap-2">
-            {!isCheckedIn && !latestLog?.check_out_time && (
-              <Button
-                onClick={handleCheckIn}
-                disabled={checkInOutLoading}
-                size="sm"
-                className="flex-1"
-              >
-                <LogIn className="h-3.5 w-3.5 mr-1" />
-                Check In
-              </Button>
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              {isCheckedIn && (
+                <Button
+                  onClick={handleCheckOut}
+                  disabled={checkInOutLoading}
+                  size="sm"
+                  variant="destructive"
+                  className="flex-1"
+                >
+                  <LogOut className="h-3.5 w-3.5 mr-1" />
+                  Check Out
+                </Button>
+              )}
+              <EditAssignmentDialog
+                assignmentId={promoter.id}
+                promoterName={promoter.full_name}
+                currentStartTime={promoter.scheduled_start_time}
+                currentEndTime={promoter.scheduled_end_time}
+                currentAutoCheckIn={promoter.auto_checkin_enabled}
+                currentAutoCheckOut={promoter.auto_checkout_enabled}
+                hasTimeLogs={hasTimeLogs}
+                onUpdate={onUpdate}
+              />
+            </div>
+            
+            {!isCheckedIn && (
+              <div className="flex gap-2">
+                <ManualCheckInDialog 
+                  onCheckIn={handleManualCheckIn}
+                  loading={checkInOutLoading}
+                />
+                <PromoterWorkHistory 
+                  promoterId={promoter.promoter_id}
+                  promoterName={promoter.full_name}
+                />
+              </div>
             )}
-            {isCheckedIn && (
-              <Button
-                onClick={handleCheckOut}
-                disabled={checkInOutLoading}
-                size="sm"
-                variant="destructive"
-                className="flex-1"
-              >
-                <LogOut className="h-3.5 w-3.5 mr-1" />
-                Check Out
-              </Button>
-            )}
-            <EditAssignmentDialog
-              assignmentId={promoter.id}
-              promoterName={promoter.full_name}
-              currentStartTime={promoter.scheduled_start_time}
-              currentEndTime={promoter.scheduled_end_time}
-              currentAutoCheckIn={promoter.auto_checkin_enabled}
-              currentAutoCheckOut={promoter.auto_checkout_enabled}
-              hasTimeLogs={hasTimeLogs}
-              onUpdate={onUpdate}
-            />
           </div>
         )}
 
@@ -361,10 +375,22 @@ export const PromoterAttendanceCard = ({
                     <div key={log.id} className="p-2 bg-accent/50 rounded-md border text-xs space-y-1">
                       <div className="flex justify-between items-center font-medium">
                         <span className="text-muted-foreground">Session {index + 1}</span>
-                      {log.total_hours && (
-                        <span className="text-foreground">{formatWorkDuration(log.total_hours)}</span>
-                      )}
-                    </div>
+                        <div className="flex items-center gap-1">
+                          {log.total_hours && (
+                            <span className="text-foreground">{formatWorkDuration(log.total_hours)}</span>
+                          )}
+                          {isCompany && log.check_out_time && (
+                            <EditTimeLogDialog
+                              timeLogId={log.id as any}
+                              checkInTime={log.check_in_time}
+                              checkOutTime={log.check_out_time}
+                              payRate={payRate}
+                              payRateType={payRateType}
+                              onUpdate={() => onUpdate?.()}
+                            />
+                          )}
+                        </div>
+                      </div>
                     
                     <div className="flex justify-between items-center text-muted-foreground">
                       <span>{format(new Date(log.check_in_time), "MMM dd, HH:mm")}</span>
