@@ -1070,6 +1070,7 @@ export type Database = {
         Args: { target_user_id: string }
         Returns: undefined
       }
+      get_shift_company_id: { Args: { shift_id: string }; Returns: string }
       get_user_role: { Args: { _user_id: string }; Returns: string }
       has_role: {
         Args: {
