@@ -103,7 +103,7 @@ const Index = () => {
               scale: [1, 1.2, 1]
             }}
             transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 2 }}
-            className="absolute -bottom-40 -left-40 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
+            className="absolute -bottom-40 -left-40 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl"
           />
         </div>
 
@@ -121,7 +121,7 @@ const Index = () => {
               }}
               transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
               style={{
-                background: "linear-gradient(90deg, hsl(var(--foreground)), hsl(var(--primary)), hsl(var(--accent)), hsl(var(--foreground)))",
+                background: "linear-gradient(90deg, hsl(var(--foreground)), hsl(var(--primary)), hsl(var(--primary-light)), hsl(var(--foreground)))",
                 backgroundSize: "200% 100%",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
@@ -170,7 +170,7 @@ const Index = () => {
           >
             <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
               <Link to="/signup?role=promoter">
-                <Button size="lg" className="w-full sm:w-auto group hover-lift bg-gradient-to-r from-primary to-accent text-white border-0 shadow-xl hover:shadow-2xl">
+                <Button size="lg" className="w-full sm:w-auto group hover-lift bg-gradient-to-r from-primary to-primary-light text-white border-0 shadow-xl hover:shadow-2xl">
                   <UserPlus size={20} className="mr-2" />
                   I'm a Part-Timer
                   <ArrowRight size={16} className="ml-2 opacity-70 group-hover:translate-x-1 transition-transform" />
@@ -206,7 +206,7 @@ const Index = () => {
                 transition={{ delay: 0.8 + index * 0.1, duration: 0.5 }}
                 className="flex flex-col items-center text-center p-4 glass-card rounded-xl hover:shadow-lg transition-all hover:-translate-y-1"
               >
-                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center text-white mb-3 shadow-md">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-r from-primary to-primary-light flex items-center justify-center text-white mb-3 shadow-md">
                   <feature.icon size={24} />
                 </div>
                 <h4 className="font-semibold mb-1">{feature.label}</h4>
