@@ -8,6 +8,7 @@ type PaymentSummaryProps = {
   totalCheckedIn: number;
   totalPayment: number;
   totalHours: number;
+  userRole?: string;
 };
 
 export const PaymentSummary = ({
@@ -15,9 +16,11 @@ export const PaymentSummary = ({
   totalCheckedIn,
   totalPayment,
   totalHours,
+  userRole,
 }: PaymentSummaryProps) => {
+  const isCompany = userRole === "company" || userRole === "admin";
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div className={`grid grid-cols-1 ${isCompany ? 'md:grid-cols-4' : 'md:grid-cols-2'} gap-4 mb-6`}>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Total Assigned</CardTitle>
@@ -40,27 +43,31 @@ export const PaymentSummary = ({
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
-          <Clock className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{totalHours.toFixed(1)}h</div>
-          <p className="text-xs text-muted-foreground">Worked</p>
-        </CardContent>
-      </Card>
+      {isCompany && (
+        <>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalHours.toFixed(1)}h</div>
+              <p className="text-xs text-muted-foreground">Worked</p>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Payment</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{formatBHD(totalPayment)}</div>
-          <p className="text-xs text-muted-foreground">Labor cost</p>
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Payment</CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{formatBHD(totalPayment)}</div>
+              <p className="text-xs text-muted-foreground">Labor cost</p>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   );
 };

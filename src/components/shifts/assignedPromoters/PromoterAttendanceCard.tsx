@@ -39,6 +39,7 @@ type PromoterAttendanceCardProps = {
   payRateType: string;
   shiftId: string;
   onUpdate?: () => void;
+  userRole?: string;
 };
 
 export const PromoterAttendanceCard = ({
@@ -48,6 +49,7 @@ export const PromoterAttendanceCard = ({
   payRateType,
   shiftId,
   onUpdate,
+  userRole,
 }: PromoterAttendanceCardProps) => {
   const { unassignPromoter, loading: unassigning } = useUnassignPromoter();
   const { checkIn, checkOut, loading: checkInOutLoading } = useCompanyCheckIn(shiftId, payRate, payRateType);
@@ -60,6 +62,8 @@ export const PromoterAttendanceCard = ({
   const payment = calculatePromoterPayment(timeLogs, payRate, payRateType);
   const latestLog = timeLogs.length > 0 ? timeLogs[timeLogs.length - 1] : null;
   const isCheckedIn = latestLog && !latestLog.check_out_time;
+  
+  const isCompany = userRole === "company" || userRole === "admin";
 
   // Calculate elapsed time and estimated earnings for active check-ins
   useEffect(() => {
@@ -154,43 +158,45 @@ export const PromoterAttendanceCard = ({
           </div>
           <div className="flex items-center gap-2">
             <AttendanceStatusBadge timeLogs={timeLogs} />
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  disabled={unassigning}
-                  title={hasTimeLogs ? "Cannot unassign promoter with attendance records" : "Unassign promoter"}
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Unassign Promoter</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {hasTimeLogs ? (
-                      <>
-                        Cannot unassign <strong>{promoter.full_name}</strong> because they have attendance records for this shift.
-                      </>
-                    ) : (
-                      <>
-                        Are you sure you want to unassign <strong>{promoter.full_name}</strong> from this shift?
-                      </>
+            {isCompany && (
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    disabled={unassigning}
+                    title={hasTimeLogs ? "Cannot unassign promoter with attendance records" : "Unassign promoter"}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Unassign Promoter</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      {hasTimeLogs ? (
+                        <>
+                          Cannot unassign <strong>{promoter.full_name}</strong> because they have attendance records for this shift.
+                        </>
+                      ) : (
+                        <>
+                          Are you sure you want to unassign <strong>{promoter.full_name}</strong> from this shift?
+                        </>
+                      )}
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    {!hasTimeLogs && (
+                      <AlertDialogAction onClick={handleUnassign} disabled={unassigning}>
+                        {unassigning ? "Unassigning..." : "Unassign"}
+                      </AlertDialogAction>
                     )}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  {!hasTimeLogs && (
-                    <AlertDialogAction onClick={handleUnassign} disabled={unassigning}>
-                      {unassigning ? "Unassigning..." : "Unassign"}
-                    </AlertDialogAction>
-                  )}
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </div>
 
@@ -213,7 +219,7 @@ export const PromoterAttendanceCard = ({
         )}
 
         {/* Active Check-in Status */}
-        {isCheckedIn && (
+        {isCheckedIn && isCompany && (
           <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-md space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-green-600 font-medium flex items-center gap-1">
@@ -235,41 +241,43 @@ export const PromoterAttendanceCard = ({
         )}
 
         {/* Check-in/out Controls */}
-        <div className="flex gap-2">
-          {!isCheckedIn && !latestLog?.check_out_time && (
-            <Button
-              onClick={handleCheckIn}
-              disabled={checkInOutLoading}
-              size="sm"
-              className="flex-1"
-            >
-              <LogIn className="h-3.5 w-3.5 mr-1" />
-              Check In
-            </Button>
-          )}
-          {isCheckedIn && (
-            <Button
-              onClick={handleCheckOut}
-              disabled={checkInOutLoading}
-              size="sm"
-              variant="destructive"
-              className="flex-1"
-            >
-              <LogOut className="h-3.5 w-3.5 mr-1" />
-              Check Out
-            </Button>
-          )}
-          <EditAssignmentDialog
-            assignmentId={promoter.id}
-            promoterName={promoter.full_name}
-            currentStartTime={promoter.scheduled_start_time}
-            currentEndTime={promoter.scheduled_end_time}
-            currentAutoCheckIn={promoter.auto_checkin_enabled}
-            currentAutoCheckOut={promoter.auto_checkout_enabled}
-            hasTimeLogs={hasTimeLogs}
-            onUpdate={onUpdate}
-          />
-        </div>
+        {isCompany && (
+          <div className="flex gap-2">
+            {!isCheckedIn && !latestLog?.check_out_time && (
+              <Button
+                onClick={handleCheckIn}
+                disabled={checkInOutLoading}
+                size="sm"
+                className="flex-1"
+              >
+                <LogIn className="h-3.5 w-3.5 mr-1" />
+                Check In
+              </Button>
+            )}
+            {isCheckedIn && (
+              <Button
+                onClick={handleCheckOut}
+                disabled={checkInOutLoading}
+                size="sm"
+                variant="destructive"
+                className="flex-1"
+              >
+                <LogOut className="h-3.5 w-3.5 mr-1" />
+                Check Out
+              </Button>
+            )}
+            <EditAssignmentDialog
+              assignmentId={promoter.id}
+              promoterName={promoter.full_name}
+              currentStartTime={promoter.scheduled_start_time}
+              currentEndTime={promoter.scheduled_end_time}
+              currentAutoCheckIn={promoter.auto_checkin_enabled}
+              currentAutoCheckOut={promoter.auto_checkout_enabled}
+              hasTimeLogs={hasTimeLogs}
+              onUpdate={onUpdate}
+            />
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t">
           {latestLog?.check_in_time && (
@@ -311,7 +319,7 @@ export const PromoterAttendanceCard = ({
             </div>
           )}
 
-          {payment > 0 && (
+          {isCompany && payment > 0 && (
             <div className="flex items-center gap-2 text-muted-foreground">
               <div className="h-3.5 w-3.5 text-green-600">BHD</div>
               <div>
@@ -353,31 +361,31 @@ export const PromoterAttendanceCard = ({
                     <div key={log.id} className="p-2 bg-accent/50 rounded-md border text-xs space-y-1">
                       <div className="flex justify-between items-center font-medium">
                         <span className="text-muted-foreground">Session {index + 1}</span>
-                        {log.total_hours && (
-                          <span className="text-foreground">{formatWorkDuration(log.total_hours)}</span>
-                        )}
-                      </div>
-                      
-                      <div className="flex justify-between items-center text-muted-foreground">
-                        <span>{format(new Date(log.check_in_time), "MMM dd, HH:mm")}</span>
-                        <span className="text-xs">→</span>
-                        <span>
-                          {log.check_out_time 
-                            ? format(new Date(log.check_out_time), "MMM dd, HH:mm")
-                            : <span className="text-green-500 font-medium">Active</span>
-                          }
-                        </span>
-                      </div>
-
-                      {isMultiDay && (
-                        <p className="text-[10px] text-orange-500 font-medium">Multi-day session</p>
+                      {log.total_hours && (
+                        <span className="text-foreground">{formatWorkDuration(log.total_hours)}</span>
                       )}
+                    </div>
+                    
+                    <div className="flex justify-between items-center text-muted-foreground">
+                      <span>{format(new Date(log.check_in_time), "MMM dd, HH:mm")}</span>
+                      <span className="text-xs">→</span>
+                      <span>
+                        {log.check_out_time 
+                          ? format(new Date(log.check_out_time), "MMM dd, HH:mm")
+                          : <span className="text-green-500 font-medium">Active</span>
+                        }
+                      </span>
+                    </div>
 
-                      {log.earnings && (
-                        <div className="text-green-600 font-medium pt-1">
-                          {formatBHD(log.earnings)}
-                        </div>
-                      )}
+                    {isMultiDay && (
+                      <p className="text-[10px] text-orange-500 font-medium">Multi-day session</p>
+                    )}
+
+                    {isCompany && log.earnings && (
+                      <div className="text-green-600 font-medium pt-1">
+                        {formatBHD(log.earnings)}
+                      </div>
+                    )}
                     </div>
                   );
                 })}
@@ -393,7 +401,7 @@ export const PromoterAttendanceCard = ({
                       <span className="font-medium text-foreground">{formatWorkDuration(totalHours)}</span>
                     </div>
                   )}
-                  {payment > 0 && (
+                  {isCompany && payment > 0 && (
                     <div className="flex justify-between mt-1">
                       <span>Total Payment:</span>
                       <span className="font-medium text-green-600">{formatBHD(payment)}</span>
