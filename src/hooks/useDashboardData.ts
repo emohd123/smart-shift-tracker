@@ -20,8 +20,10 @@ function calculateShiftHours(startTime: string, endTime: string): number {
 
 /**
  * Custom hook to process dashboard data
+ * @param shifts - Array of shifts
+ * @param actualEarnings - Optional actual earnings from time_logs (prioritized over calculated)
  */
-export function useDashboardData(shifts: Shift[]) {
+export function useDashboardData(shifts: Shift[], actualEarnings?: { total: number; unpaid: number }) {
   // Get upcoming shifts (considering manual override)
   const upcomingShifts = shifts.filter(shift => getEffectiveStatus(shift) === "upcoming").slice(0, 3);
   
@@ -32,19 +34,20 @@ export function useDashboardData(shifts: Shift[]) {
   const currentShift = shifts.find(shift => getEffectiveStatus(shift) === "ongoing") || null;
   
   // Calculate earnings (considering manual override)
-  const totalEarned = shifts
+  // Use actual earnings from time_logs if provided, otherwise calculate from shifts
+  const totalEarned = actualEarnings?.total ?? shifts
     .filter(shift => getEffectiveStatus(shift) === "completed")
     .reduce((sum, shift) => {
       const hours = calculateShiftHours(shift.startTime, shift.endTime);
-      return sum + (shift.payRate * hours);
+      return sum + ((shift.payRate || 0) * hours);
     }, 0);
   
   // Calculate unpaid amount (considering manual override)
-  const unpaidAmount = shifts
+  const unpaidAmount = actualEarnings?.unpaid ?? shifts
     .filter(shift => getEffectiveStatus(shift) === "completed" && shift.isPaid === false)
     .reduce((sum, shift) => {
       const hours = calculateShiftHours(shift.startTime, shift.endTime);
-      return sum + (shift.payRate * hours);
+      return sum + ((shift.payRate || 0) * hours);
     }, 0);
   
   // Count of completed shifts (considering manual override)

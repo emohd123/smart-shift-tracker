@@ -10,7 +10,7 @@ import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { Button } from "../ui/button";
 import { Award, Copy, Check, CheckCircle, Clock } from "lucide-react";
-import { formatBHD } from "../shifts/utils/currencyUtils";
+import { useCurrency } from "@/hooks/useCurrency";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getEffectiveStatus } from "../shifts/utils/statusCalculations";
@@ -26,12 +26,16 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
   const navigate = useNavigate();
   const { isMobile } = useResponsive();
   const { user } = useAuth();
-  const { upcomingShifts, nextShift, completedShifts, totalEarned, unpaidAmount } = useDashboardData(shifts);
+  const { format } = useCurrency();
   const [loaded, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
   const [approvedShiftsCount, setApprovedShiftsCount] = useState(0);
   const [approvedShiftIds, setApprovedShiftIds] = useState<Set<string>>(new Set());
   const [recentTimeLogs, setRecentTimeLogs] = useState<any[]>([]);
+  const [actualEarnings, setActualEarnings] = useState<{ total: number; unpaid: number }>({ total: 0, unpaid: 0 });
+  const [shiftEarnings, setShiftEarnings] = useState<Map<string, number>>(new Map());
+  
+  const { upcomingShifts, nextShift, completedShifts, totalEarned, unpaidAmount } = useDashboardData(shifts, actualEarnings);
   
   // Get completed shifts for display in the Recent Activity section
   const completedShiftsList = shifts.filter(shift => getEffectiveStatus(shift) === "completed");
@@ -111,9 +115,48 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
     }
   };
 
+  // Fetch actual earnings from time_logs for accurate dashboard stats
+  const fetchActualEarnings = async () => {
+    if (!user?.id) return;
+    
+    try {
+      const { data: allTimeLogs } = await supabase
+        .from('time_logs')
+        .select('shift_id, earnings')
+        .eq('user_id', user.id)
+        .not('check_out_time', 'is', null);
+      
+      // Calculate total and unpaid earnings
+      const total = allTimeLogs?.reduce((sum, log) => sum + (log.earnings || 0), 0) || 0;
+      
+      // Get unpaid shifts
+      const { data: unpaidShifts } = await supabase
+        .from('shifts')
+        .select('id')
+        .eq('is_paid', false);
+      
+      const unpaidShiftIds = new Set(unpaidShifts?.map(s => s.id) || []);
+      const unpaid = allTimeLogs?.filter(log => unpaidShiftIds.has(log.shift_id))
+        .reduce((sum, log) => sum + (log.earnings || 0), 0) || 0;
+      
+      setActualEarnings({ total, unpaid });
+      
+      // Build earnings map for Recent Activity section
+      const earningsMap = new Map<string, number>();
+      allTimeLogs?.forEach(log => {
+        const current = earningsMap.get(log.shift_id) || 0;
+        earningsMap.set(log.shift_id, current + (log.earnings || 0));
+      });
+      setShiftEarnings(earningsMap);
+    } catch (error) {
+      console.error('Error fetching actual earnings:', error);
+    }
+  };
+
   useEffect(() => {
     fetchApprovedShifts();
     fetchRecentTimeLogs();
+    fetchActualEarnings();
   }, [user?.id]);
 
   // Add real-time subscriptions for approvals and time logs
@@ -140,6 +183,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
         filter: `user_id=eq.${user.id}`
       }, () => {
         fetchRecentTimeLogs();
+        fetchActualEarnings();
       })
       .subscribe();
 
@@ -269,11 +313,11 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
                     <div>
                       <h3 className="font-medium text-sm">{log.shift_title}</h3>
                       <p className="text-xs text-muted-foreground">
-                        {new Date(log.check_in_time).toLocaleDateString()} • {log.total_hours?.toFixed(1)}h
+                        {new Date(log.check_in_time).toLocaleDateString()} • {Math.round(log.total_hours || 0)}h
                       </p>
                     </div>
                     <div className="text-sm font-semibold text-green-600">
-                      {formatBHD(log.earnings || 0)}
+                      {format(log.earnings || 0)}
                     </div>
                   </div>
                 ))}
@@ -362,7 +406,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
                       <p className="text-xs text-muted-foreground">{shift.date} • {shift.startTime} - {shift.endTime}</p>
                     </div>
                     <div className="text-sm font-semibold text-green-600 dark:text-green-400">
-                      ${(shift.payRate * 8).toFixed(2)}
+                      {format(shiftEarnings.get(shift.id) || 0)}
                     </div>
                   </div>
                 ))}

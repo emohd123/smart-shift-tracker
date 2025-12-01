@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, CheckCircle, DollarSign, Wallet } from "lucide-react";
 import { Shift } from "../../shifts/types/ShiftTypes";
-import { formatBHD } from "../../shifts/utils/currencyUtils";
+import { useCurrency } from "@/hooks/useCurrency";
 
 type DashboardStatsProps = {
   upcomingShifts: Shift[];
@@ -19,6 +19,8 @@ export default function DashboardStats({
   totalEarned,
   unpaidAmount
 }: DashboardStatsProps) {
+  const { format } = useCurrency();
+  
   return (
     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
       <Card>
@@ -59,7 +61,7 @@ export default function DashboardStats({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatBHD(totalEarned)}</div>
+          <div className="text-2xl font-bold">{format(totalEarned)}</div>
           <p className="text-xs text-muted-foreground mt-1">
             Total earned this month
           </p>
@@ -74,7 +76,7 @@ export default function DashboardStats({
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{formatBHD(unpaidAmount)}</div>
+          <div className="text-2xl font-bold">{format(unpaidAmount)}</div>
           <p className="text-xs text-muted-foreground mt-1">
             Pending payment
           </p>
