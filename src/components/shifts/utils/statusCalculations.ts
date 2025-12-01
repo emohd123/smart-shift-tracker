@@ -50,6 +50,15 @@ export const getStatusColor = (status: ShiftStatus): string => {
   }
 };
 
+export const getEffectiveStatus = (shift: Shift): ShiftStatus => {
+  // If manual override is enabled, use override status
+  if (shift.manual_status_override && shift.override_status) {
+    return shift.override_status as ShiftStatus;
+  }
+  // Otherwise use the calculated status
+  return shift.status as ShiftStatus;
+};
+
 export const getStatusLabel = (status: ShiftStatus): string => {
   switch (status) {
     case ShiftStatus.Upcoming:

@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { ShiftStatus } from "@/types/database";
 import { calculateLiveEarnings } from "@/components/shifts/utils/paymentCalculations";
+import { getEffectiveStatus } from "@/components/shifts/utils/statusCalculations";
 
 export interface ActivePromoter {
   id: string;
@@ -28,16 +29,25 @@ export const useCompanyLiveData = (companyId: string | undefined) => {
     if (!companyId) return;
 
     try {
-      // Fetch ongoing shifts
-      const { data: shifts, error: shiftsError } = await supabase
+      // Fetch ongoing shifts (including manually overridden ones)
+      const { data: allShifts, error: shiftsError } = await supabase
         .from("shifts")
         .select("*")
         .eq("company_id", companyId)
-        .eq("status", "ongoing")
+        .in("status", ["ongoing", "upcoming", "completed"]) // Get all to filter client-side
         .order("date", { ascending: true });
 
       if (shiftsError) throw shiftsError;
-      if (!shifts || shifts.length === 0) {
+      
+      // Filter for effectively ongoing shifts
+      const shifts = allShifts?.filter((shift) => {
+        const effectiveStatus = shift.manual_status_override && shift.override_status
+          ? shift.override_status
+          : shift.status;
+        return effectiveStatus === "ongoing";
+      }) || [];
+
+      if (shifts.length === 0) {
         setOngoingShifts([]);
         setTotalActivePromoters(0);
         setTotalLiveEarnings(0);
