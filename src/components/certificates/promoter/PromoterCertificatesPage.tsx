@@ -32,7 +32,7 @@ export default function PromoterCertificatesPage() {
     fetchApprovedWork();
   }, []);
 
-  // Payment success handler
+  // Payment success handler - Generate PDF after payment
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     const success = searchParams.get('success');
@@ -40,14 +40,90 @@ export default function PromoterCertificatesPage() {
     const sessionId = searchParams.get('session_id');
     
     if (success === 'true' && sessionId) {
-      setActiveTab('my-certificates');
-      toast.success('Payment successful! Your certificate is ready.');
-      window.history.replaceState({}, '', '/certificates');
+      handlePostPaymentPDFGeneration();
     } else if (canceled === 'true') {
       toast.info('Payment was canceled. You can try again when ready.');
       window.history.replaceState({}, '', '/certificates');
     }
   }, []);
+
+  const handlePostPaymentPDFGeneration = async () => {
+    const loadingToast = toast.loading('Generating your certificate...');
+    
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.dismiss(loadingToast);
+        return;
+      }
+
+      // Find the certificate that was just paid for (most recent pending one that's now paid)
+      const { data: certificate, error: certError } = await supabase
+        .from('certificates')
+        .select('*')
+        .eq('user_id', user.id)
+        .eq('paid', true)
+        .is('pdf_url', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (certError || !certificate) {
+        console.log('No certificate found to generate PDF for');
+        toast.dismiss(loadingToast);
+        setActiveTab('my-certificates');
+        toast.success('Payment successful! Your certificate is ready.');
+        window.history.replaceState({}, '', '/certificates');
+        return;
+      }
+
+      // Parse stored data from time_period field
+      const storedData = certificate.time_period ? JSON.parse(certificate.time_period) : null;
+      
+      if (!storedData) {
+        throw new Error('Certificate data not found');
+      }
+
+      // Generate PDF from stored data
+      const certData: MultiCompanyCertificate = {
+        referenceNumber: certificate.reference_number,
+        promoterName: storedData.promoterName,
+        issueDate: certificate.issue_date,
+        companies: storedData.companies,
+        grandTotalHours: certificate.total_hours
+      };
+
+      const pdfBlob = await generateMultiCompanyPDF(certData);
+      const pdfFile = new File([pdfBlob], `certificate-${certificate.reference_number}.pdf`, { type: 'application/pdf' });
+
+      // Upload PDF to storage
+      const pdfPath = `certificates/${user.id}/${certificate.reference_number}.pdf`;
+      const uploadResult = await uploadFileToBucket(pdfFile, 'certificates', pdfPath);
+
+      if (uploadResult.success) {
+        // Update certificate with PDF URL and active status
+        await supabase
+          .from('certificates')
+          .update({ 
+            pdf_url: uploadResult.data, 
+            status: 'active' 
+          })
+          .eq('id', certificate.id);
+      }
+
+      toast.dismiss(loadingToast);
+      setActiveTab('my-certificates');
+      toast.success('Payment successful! Your certificate is ready.');
+      window.history.replaceState({}, '', '/certificates');
+      
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.dismiss(loadingToast);
+      setActiveTab('my-certificates');
+      toast.success('Payment successful! Certificate processing...');
+      window.history.replaceState({}, '', '/certificates');
+    }
+  };
 
   const fetchApprovedWork = async () => {
     try {
@@ -189,27 +265,8 @@ export default function PromoterCertificatesPage() {
       const referenceNumber = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       const grandTotalHours = filteredWork.reduce((sum, company) => sum + company.totalHours, 0);
 
-      const certData: MultiCompanyCertificate = {
-        referenceNumber,
-        promoterName: profile?.full_name || 'Unknown',
-        issueDate: new Date().toISOString(),
-        companies: filteredWork,
-        grandTotalHours
-      };
-
-      // Generate PDF
-      const pdfBlob = await generateMultiCompanyPDF(certData);
-      const pdfFile = new File([pdfBlob], `certificate-${referenceNumber}.pdf`, { type: 'application/pdf' });
-
-      // Upload PDF to storage
-      const pdfPath = `certificates/${user.id}/${referenceNumber}.pdf`;
-      const uploadResult = await uploadFileToBucket(pdfFile, 'certificates', pdfPath);
-
-      if (!uploadResult.success) {
-        throw new Error('Failed to upload PDF');
-      }
-
-      // Save certificate to database with PDF URL
+      // Create PENDING certificate record (NO PDF yet)
+      // Store certificate data as JSON in time_period field for later PDF generation
       const { data: certificate, error: certError } = await supabase
         .from('certificates')
         .insert({
@@ -220,24 +277,31 @@ export default function PromoterCertificatesPage() {
           total_hours: grandTotalHours,
           status: 'pending',
           paid: false,
-          pdf_url: uploadResult.data
+          // Store data needed for PDF generation as JSON
+          time_period: JSON.stringify({
+            promoterName: profile?.full_name || 'Unknown',
+            companies: filteredWork,
+          })
         })
         .select()
         .single();
 
-      if (certError) throw certError;
+      if (certError) {
+        console.error('Certificate creation error:', certError);
+        throw new Error(`Failed to create certificate: ${certError.message}`);
+      }
 
       toast.dismiss(loadingToast);
       toast.loading('Redirecting to payment...', {
         description: 'Please complete the payment on Stripe'
       });
 
-      // Redirect to payment immediately
+      // Redirect to payment immediately - PDF will be generated after successful payment
       await initiateCertificatePayment(certificate.id);
-    } catch (error) {
+    } catch (error: any) {
       toast.dismiss(loadingToast);
       console.error('Error:', error);
-      toast.error('Failed to process. Please try again.');
+      toast.error(error.message || 'Failed to process. Please try again.');
       setGenerating(false);
     }
   };
