@@ -91,5 +91,46 @@ export const useCompanyCheckIn = (shiftId: string, payRate: number, payRateType:
     }
   };
 
-  return { checkIn, checkOut, loading };
+  const manualCheckIn = async (promoterId: string, promoterName: string, customTime?: Date) => {
+    setLoading(true);
+    try {
+      // Check if already checked in
+      const { data: existingLog } = await supabase
+        .from("time_logs")
+        .select("id")
+        .eq("user_id", promoterId)
+        .eq("shift_id", shiftId)
+        .is("check_out_time", null)
+        .maybeSingle();
+
+      if (existingLog) {
+        toast.error(`${promoterName} is already checked in`);
+        return false;
+      }
+
+      const checkInTime = customTime || new Date();
+
+      // Create time log
+      const { error } = await supabase
+        .from("time_logs")
+        .insert({
+          user_id: promoterId,
+          shift_id: shiftId,
+          check_in_time: checkInTime.toISOString(),
+        });
+
+      if (error) throw error;
+
+      toast.success(`${promoterName} checked in at ${checkInTime.toLocaleTimeString()}`);
+      return true;
+    } catch (error: any) {
+      console.error("Error checking in:", error);
+      toast.error("Failed to check in promoter");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { checkIn, checkOut, manualCheckIn, loading };
 };
