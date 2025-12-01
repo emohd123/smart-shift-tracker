@@ -259,3 +259,5 @@ export function CompanyStampConfig() {
     </div>
   );
 }
+
+export default CompanyStampConfig;

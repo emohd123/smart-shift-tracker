@@ -84,3 +84,35 @@ export interface WorkExperienceData {
   certificateType: CertificateType;
   companyInfo?: CompanyInfo;
 }
+
+// Multi-company certificate types
+export interface CompanyWorkEntry {
+  company: {
+    id: string;
+    name: string;
+    logo_url: string | null;
+    website?: string;
+    email?: string;
+    phone?: string;
+  };
+  shifts: {
+    id: string;
+    title: string;
+    dateFrom: string;
+    dateTo: string;
+    timeFrom: string;
+    timeTo: string;
+    totalHours: number;
+    location?: string;
+    approvedAt: string;
+  }[];
+  totalHours: number;
+}
+
+export interface MultiCompanyCertificate {
+  referenceNumber: string;
+  promoterName: string;
+  issueDate: string;
+  companies: CompanyWorkEntry[];
+  grandTotalHours: number;
+}
