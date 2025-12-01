@@ -8,6 +8,13 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
 
 type PayRateFieldProps = {
   payRate: string;
@@ -26,7 +33,21 @@ export default function PayRateField({
 }: PayRateFieldProps) {
   return (
     <div className="space-y-2">
-      <Label htmlFor="payRate">Pay Rate {required ? "" : "(Optional)"}</Label>
+      <div className="flex items-center gap-2">
+        <Label htmlFor="payRate">Pay Rate {required ? "" : "(Optional)"}</Label>
+        {!required && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                <p>Leave blank if the pay rate is not yet determined. You can set it later before processing payments. Shifts without pay rates will need to be updated before promoters can be paid.</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="flex items-center col-span-2">
           <span className="mr-2">BHD</span>
