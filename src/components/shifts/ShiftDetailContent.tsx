@@ -66,6 +66,7 @@ export const ShiftDetailContent = ({
         shiftId={shift.id}
         payRate={shift.payRate}
         payRateType={shift.payRateType || "hourly"}
+        userRole={userRole}
       />
     </div>
   );

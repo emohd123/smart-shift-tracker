@@ -13,12 +13,14 @@ type AssignedPromotersManagerProps = {
   shiftId: string;
   payRate: number;
   payRateType: string;
+  userRole?: string;
 };
 
 export const AssignedPromotersManager = ({
   shiftId,
   payRate,
   payRateType,
+  userRole,
 }: AssignedPromotersManagerProps) => {
   const { promoters, loading: promotersLoading } = useAssignedPromoters(shiftId);
   const { timeLogs, loading: timeLogsLoading } = usePromoterTimeLogs(shiftId);
@@ -60,6 +62,8 @@ export const AssignedPromotersManager = ({
     );
   }
 
+  const isCompany = userRole === "company" || userRole === "admin";
+
   if (promoters.length === 0) {
     return (
       <Card>
@@ -68,16 +72,24 @@ export const AssignedPromotersManager = ({
             <Users className="h-5 w-5" />
             Assigned Promoters
           </CardTitle>
-          <CardDescription>Manage promoter attendance and track payments</CardDescription>
+          <CardDescription>
+            {isCompany 
+              ? "Manage promoter attendance and track payments"
+              : "View assigned promoters for this shift"
+            }
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="text-center py-12">
             <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
             <h3 className="text-lg font-medium mb-1">No promoters assigned</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Assign promoters to this shift to track their attendance and payments
+              {isCompany 
+                ? "Assign promoters to this shift to track their attendance and payments"
+                : "No promoters have been assigned to this shift yet"
+              }
             </p>
-            <AssignPromotersDialog shiftId={shiftId} />
+            {isCompany && <AssignPromotersDialog shiftId={shiftId} />}
           </div>
         </CardContent>
       </Card>
@@ -93,14 +105,21 @@ export const AssignedPromotersManager = ({
               <Users className="h-5 w-5" />
               Assigned Promoters ({promoters.length})
             </CardTitle>
-            <CardDescription>Track attendance and calculate payments in real-time</CardDescription>
+            <CardDescription>
+              {isCompany 
+                ? "Track attendance and calculate payments in real-time"
+                : "View assigned promoters and attendance status"
+              }
+            </CardDescription>
           </div>
-          <AssignPromotersDialog 
-            shiftId={shiftId} 
-            currentAssignments={promoters.map(p => p.promoter_id)}
-            variant="outline"
-            buttonText="Add More"
-          />
+          {isCompany && (
+            <AssignPromotersDialog 
+              shiftId={shiftId} 
+              currentAssignments={promoters.map(p => p.promoter_id)}
+              variant="outline"
+              buttonText="Add More"
+            />
+          )}
         </div>
       </CardHeader>
       <CardContent>
@@ -109,6 +128,7 @@ export const AssignedPromotersManager = ({
           totalCheckedIn={totalCheckedIn}
           totalPayment={totalPayment}
           totalHours={totalHours}
+          userRole={userRole}
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -120,6 +140,7 @@ export const AssignedPromotersManager = ({
               payRate={payRate}
               payRateType={payRateType}
               shiftId={shiftId}
+              userRole={userRole}
             />
           ))}
         </div>
