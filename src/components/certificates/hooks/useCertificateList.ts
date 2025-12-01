@@ -23,6 +23,7 @@ export default function useCertificateList() {
         .from('certificates')
         .select('*')
         .eq('user_id', user.id)
+        .eq('paid', true)
         .order('issue_date', { ascending: false });
 
       if (error) throw error;
