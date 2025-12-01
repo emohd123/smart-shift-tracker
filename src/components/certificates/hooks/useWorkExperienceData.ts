@@ -51,16 +51,52 @@ export const useWorkExperienceData = () => {
         console.error('Error fetching time logs:', timeLogsError);
       }
 
-      // Fetch shifts for additional context
+      // Fetch shifts for additional context with company_id
       const { data: shifts, error: shiftsError } = await supabase
         .from('shifts')
-        .select('*')
+        .select('*, company_id')
         .gte('date', startDate.toISOString().split('T')[0])
         .lte('date', endDate.toISOString().split('T')[0])
         .order('date', { ascending: true });
 
       if (shiftsError) {
         console.error('Error fetching shifts:', shiftsError);
+      }
+
+      // Fetch company information from the first shift
+      let companyInfo = undefined;
+      if (shifts && shifts.length > 0 && shifts[0].company_id) {
+        const { data: companyData, error: companyError } = await supabase
+          .from('company_profiles')
+          .select('*')
+          .eq('user_id', shifts[0].company_id)
+          .single();
+
+        if (companyError) {
+          console.error('Error fetching company info:', companyError);
+        } else if (companyData) {
+          companyInfo = {
+            name: companyData.name,
+            website: companyData.website || undefined,
+            email: companyData.user_id ? undefined : undefined, // We'll need to get email from profiles
+            phone: undefined, // Not in company_profiles
+            address: companyData.address || undefined,
+            logo_url: companyData.logo_url || undefined,
+            registration_id: companyData.registration_id || undefined
+          };
+
+          // Fetch company contact email from profiles
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('email, phone_number')
+            .eq('id', shifts[0].company_id)
+            .single();
+
+          if (profileData) {
+            companyInfo.email = profileData.email || undefined;
+            companyInfo.phone = profileData.phone_number || undefined;
+          }
+        }
       }
 
       // Process and combine data
@@ -150,9 +186,10 @@ export const useWorkExperienceData = () => {
           mostProductiveDay
         },
         issueDate: new Date().toLocaleDateString(),
-        managerContact: "555-123-4567",
+        managerContact: companyInfo?.phone || companyInfo?.email || "Contact via website",
         performanceRating: Math.min(5, Math.max(3, Math.round((totalTrackedHours / (processedShifts.length * 8)) * 5))),
-        certificateType: "work_experience"
+        certificateType: "work_experience",
+        companyInfo
       };
 
       return workExperienceData;

@@ -41,6 +41,16 @@ export interface CertificateData {
   certificateType?: CertificateType; // Type of certificate
 }
 
+export interface CompanyInfo {
+  name: string;
+  website?: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  logo_url?: string;
+  registration_id?: string;
+}
+
 export interface WorkExperienceData {
   referenceNumber: string;
   promoterName: string;
@@ -72,4 +82,5 @@ export interface WorkExperienceData {
   managerContact: string;
   performanceRating: number;
   certificateType: CertificateType;
+  companyInfo?: CompanyInfo;
 }
