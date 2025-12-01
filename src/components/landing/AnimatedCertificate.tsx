@@ -11,7 +11,7 @@ const AnimatedCertificate = () => {
       className="relative w-full max-w-2xl mx-auto"
     >
       {/* Floating glow effect */}
-      <div className="absolute inset-0 bg-gradient-to-r from-accent/20 to-primary/20 blur-3xl animate-pulse-soft" />
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-primary/20 blur-3xl animate-pulse-soft" />
       
       {/* Certificate Card */}
       <div className="relative glass-card rounded-2xl border-2 border-border/50 p-8 md:p-12 bg-background/95 backdrop-blur-xl shadow-2xl">
@@ -21,7 +21,7 @@ const AnimatedCertificate = () => {
             <motion.div
               animate={{ rotate: [0, 5, -5, 0] }}
               transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-              className="w-14 h-14 rounded-xl bg-gradient-to-r from-accent to-accent/80 flex items-center justify-center shadow-lg"
+              className="w-14 h-14 rounded-xl bg-gradient-to-r from-violet-500 to-purple-600 flex items-center justify-center shadow-lg"
             >
               <Award className="w-8 h-8 text-white" />
             </motion.div>
@@ -37,15 +37,15 @@ const AnimatedCertificate = () => {
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
             className="relative"
           >
-            <div className="w-20 h-20 bg-background rounded-lg border-2 border-accent/30 flex items-center justify-center">
-              <QrCode className="w-12 h-12 text-accent" />
+            <div className="w-20 h-20 bg-background rounded-lg border-2 border-primary/30 flex items-center justify-center">
+              <QrCode className="w-12 h-12 text-primary" />
             </div>
             {/* Scanning line effect */}
             <motion.div
               initial={{ top: 0 }}
               animate={{ top: ["0%", "100%", "0%"] }}
               transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              className="absolute left-0 right-0 h-0.5 bg-accent/50"
+              className="absolute left-0 right-0 h-0.5 bg-primary/50"
             />
           </motion.div>
         </div>
@@ -66,7 +66,7 @@ const AnimatedCertificate = () => {
             <Clock className="w-4 h-4 text-muted-foreground" />
             <span className="text-muted-foreground">Total Hours:</span>
             <motion.span 
-              className="font-bold text-accent text-lg"
+              className="font-bold text-primary text-lg"
               animate={{ scale: [1, 1.1, 1] }}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
@@ -81,15 +81,15 @@ const AnimatedCertificate = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.3 }}
-          className="flex items-center gap-2 bg-accent/10 rounded-lg p-3 border border-accent/20"
+          className="flex items-center gap-2 bg-primary/10 rounded-lg p-3 border border-primary/20"
         >
           <motion.div
             animate={{ scale: [1, 1.2, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-            <CheckCircle className="w-5 h-5 text-accent" />
+            <CheckCircle className="w-5 h-5 text-primary" />
           </motion.div>
-          <span className="text-sm font-medium text-accent">Verified Certificate</span>
+          <span className="text-sm font-medium text-primary">Verified Certificate</span>
         </motion.div>
 
         {/* Floating badges */}
@@ -102,7 +102,7 @@ const AnimatedCertificate = () => {
           <motion.div
             animate={{ y: [0, -5, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="bg-accent text-white text-xs px-3 py-1 rounded-full shadow-lg font-semibold"
+            className="bg-violet-500 text-white text-xs px-3 py-1 rounded-full shadow-lg font-semibold"
           >
             Official
           </motion.div>
