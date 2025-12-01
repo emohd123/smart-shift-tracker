@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Award, FileText, Loader2, AlertCircle } from "lucide-react";
+import { Award, FileText, Loader2, AlertCircle, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import MultiCompanyCertificatePreview, { CompanyWorkEntry } from "./MultiCompanyCertificatePreview";
@@ -25,10 +25,28 @@ export default function PromoterCertificatesPage() {
   const [dateFrom, setDateFrom] = useState<Date | null>(null);
   const [dateTo, setDateTo] = useState<Date | null>(null);
   const [profile, setProfile] = useState<{ full_name: string } | null>(null);
+  const [activeTab, setActiveTab] = useState("generate");
   const { isProcessing, initiateCertificatePayment } = useCertificatePayment();
 
   useEffect(() => {
     fetchApprovedWork();
+  }, []);
+
+  // Payment success handler
+  useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+    const sessionId = searchParams.get('session_id');
+    
+    if (success === 'true' && sessionId) {
+      setActiveTab('my-certificates');
+      toast.success('Payment successful! Your certificate is ready.');
+      window.history.replaceState({}, '', '/certificates');
+    } else if (canceled === 'true') {
+      toast.info('Payment was canceled. You can try again when ready.');
+      window.history.replaceState({}, '', '/certificates');
+    }
   }, []);
 
   const fetchApprovedWork = async () => {
@@ -154,9 +172,19 @@ export default function PromoterCertificatesPage() {
     }
 
     setGenerating(true);
+    
+    const loadingToast = toast.loading('Preparing your certificate...', {
+      description: 'You will be redirected to payment shortly'
+    });
+
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      if (!user) {
+        toast.dismiss(loadingToast);
+        toast.error('Please log in to continue');
+        setGenerating(false);
+        return;
+      }
 
       const referenceNumber = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       const grandTotalHours = filteredWork.reduce((sum, company) => sum + company.totalHours, 0);
@@ -199,9 +227,15 @@ export default function PromoterCertificatesPage() {
 
       if (certError) throw certError;
 
+      toast.dismiss(loadingToast);
+      toast.loading('Redirecting to payment...', {
+        description: 'Please complete the payment on Stripe'
+      });
+
       // Redirect to payment immediately
       await initiateCertificatePayment(certificate.id);
     } catch (error) {
+      toast.dismiss(loadingToast);
       console.error('Error:', error);
       toast.error('Failed to process. Please try again.');
       setGenerating(false);
@@ -240,7 +274,7 @@ export default function PromoterCertificatesPage() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="generate" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid grid-cols-2 w-full max-w-md mx-auto bg-secondary/50 p-1.5">
           <TabsTrigger value="generate" className="flex items-center gap-2">
             <Award className="h-4 w-4" />
@@ -304,20 +338,26 @@ export default function PromoterCertificatesPage() {
                         grandTotalHours: totalFilteredHours
                       }} 
                     />
-                    <div className="mt-6 flex justify-center">
-                      <Button 
-                        onClick={handlePayAndGenerate}
-                        disabled={generating || isProcessing}
-                        className="w-full max-w-md"
-                        size="lg"
-                      >
-                        {generating || isProcessing ? (
-                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
-                        ) : (
-                          <><Award className="h-4 w-4 mr-2" /> Pay $4.99 & Generate Certificate</>
-                        )}
-                      </Button>
-                    </div>
+              <div className="mt-6 flex justify-center">
+                <Button 
+                  onClick={handlePayAndGenerate}
+                  disabled={generating || isProcessing}
+                  className="w-full max-w-md bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-500"
+                  size="lg"
+                >
+                  {generating || isProcessing ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" /> 
+                      {generating ? 'Preparing...' : 'Redirecting...'}
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4 mr-2" /> 
+                      Pay $4.99 & Generate Certificate
+                    </>
+                  )}
+                </Button>
+              </div>
                   </CardContent>
                 </Card>
               )}
