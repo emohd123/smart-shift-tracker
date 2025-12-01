@@ -9,10 +9,12 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { Button } from "../ui/button";
-import { Award, Copy, Check } from "lucide-react";
+import { Award, Copy, Check, CheckCircle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getEffectiveStatus } from "../shifts/utils/statusCalculations";
+import { Badge } from "../ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 
 type PromoterDashboardProps = {
   shifts: Shift[];
@@ -26,6 +28,8 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
   const { upcomingShifts, nextShift, completedShifts, totalEarned, unpaidAmount } = useDashboardData(shifts);
   const [loaded, setLoaded] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [approvedShiftsCount, setApprovedShiftsCount] = useState(0);
+  const [approvedShiftIds, setApprovedShiftIds] = useState<Set<string>>(new Set());
   
   // Get completed shifts for display in the Recent Activity section
   const completedShiftsList = shifts.filter(shift => getEffectiveStatus(shift) === "completed");
@@ -37,6 +41,26 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
     
     return () => clearTimeout(timer);
   }, []);
+
+  // Fetch approved shifts count
+  useEffect(() => {
+    const fetchApprovedShifts = async () => {
+      if (!user?.id) return;
+      
+      const { data, error } = await supabase
+        .from('shift_assignments')
+        .select('id, shift_id')
+        .eq('promoter_id', user.id)
+        .eq('certificate_approved', true);
+
+      if (!error && data) {
+        setApprovedShiftsCount(data.length);
+        setApprovedShiftIds(new Set(data.map(a => a.shift_id)));
+      }
+    };
+
+    fetchApprovedShifts();
+  }, [user?.id]);
   
   const handleCopyCode = async () => {
     if (user?.unique_code) {
@@ -121,6 +145,27 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
           unpaidAmount={unpaidAmount}
         />
         
+        {/* Approved Work Section - Ready for Certificates */}
+        {approvedShiftsCount > 0 && (
+          <Card className="bg-gradient-to-r from-green-500/10 to-primary/10 border-green-500/20">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <CheckCircle className="h-5 w-5 text-green-500" />
+                Approved Work
+              </CardTitle>
+              <CardDescription>
+                You have {approvedShiftsCount} approved shift{approvedShiftsCount !== 1 ? 's' : ''} ready for certification
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={() => navigate("/certificates")} className="w-full md:w-auto">
+                <Award className="mr-2 h-4 w-4" />
+                Generate Certificate
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+        
         {/* Certificate generation card */}
         <Card className="transition-all duration-500 delay-50 shadow-sm border-border/50 hover:shadow-md bg-gradient-to-r from-secondary/20 to-background">
           <CardHeader className="pb-2">
@@ -181,8 +226,16 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
                     className="flex items-center justify-between p-3 rounded-md bg-secondary/50 hover:bg-secondary cursor-pointer"
                     onClick={() => navigate(`/shifts/${shift.id}`)}
                   >
-                    <div>
-                      <h3 className="font-medium text-sm">{shift.title}</h3>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-medium text-sm">{shift.title}</h3>
+                        {approvedShiftIds.has(shift.id) && (
+                          <Badge variant="outline" className="text-xs bg-green-500/10 text-green-600 border-green-500/20">
+                            <CheckCircle className="h-2.5 w-2.5 mr-1" />
+                            Approved
+                          </Badge>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">{shift.date} • {shift.startTime} - {shift.endTime}</p>
                     </div>
                     <div className="text-sm font-semibold text-green-600 dark:text-green-400">
