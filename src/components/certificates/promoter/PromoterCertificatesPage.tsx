@@ -154,7 +154,7 @@ export default function PromoterCertificatesPage() {
 
       // Upload PDF to storage
       const pdfPath = `certificates/${user.id}/${referenceNumber}.pdf`;
-      const uploadResult = await uploadFileToBucket('certificates', pdfPath, pdfFile);
+      const uploadResult = await uploadFileToBucket(pdfFile, 'certificates', pdfPath);
 
       if (!uploadResult.success) {
         throw new Error('Failed to upload PDF');
