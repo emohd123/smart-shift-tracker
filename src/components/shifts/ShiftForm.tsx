@@ -63,6 +63,10 @@ export function ShiftForm({ shift, onExternalSubmit }: ShiftFormProps = {}) {
       errors.push("End time is required");
     }
 
+    if (formData.payRate && parseFloat(formData.payRate) < 0) {
+      errors.push("Pay rate cannot be negative");
+    }
+
     setValidationErrors(errors);
     return errors.length === 0;
   };
