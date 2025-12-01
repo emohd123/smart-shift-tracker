@@ -598,8 +598,11 @@ export type Database = {
       }
       shift_assignments: {
         Row: {
+          approved_at: string | null
+          approved_by: string | null
           auto_checkin_enabled: boolean | null
           auto_checkout_enabled: boolean | null
+          certificate_approved: boolean | null
           created_at: string | null
           id: string
           promoter_id: string
@@ -610,8 +613,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
           auto_checkin_enabled?: boolean | null
           auto_checkout_enabled?: boolean | null
+          certificate_approved?: boolean | null
           created_at?: string | null
           id?: string
           promoter_id: string
@@ -622,8 +628,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          approved_at?: string | null
+          approved_by?: string | null
           auto_checkin_enabled?: boolean | null
           auto_checkout_enabled?: boolean | null
+          certificate_approved?: boolean | null
           created_at?: string | null
           id?: string
           promoter_id?: string
@@ -634,6 +643,13 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "shift_assignments_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "shift_assignments_promoter_id_fkey"
             columns: ["promoter_id"]

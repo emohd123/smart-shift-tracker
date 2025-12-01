@@ -82,38 +82,44 @@ export const useShiftData = () => {
 
   const fetchCompletedShifts = useCallback(async (targetUserId: string, timePeriod: TimePeriod) => {
     try {
-      const { data: timeLogs, error } = await supabase
-        .from('time_logs')
+      // Fetch approved shift assignments with time logs
+      const { data: assignments, error } = await supabase
+        .from('shift_assignments')
         .select(`
           id,
-          check_in_time,
-          check_out_time,
-          total_hours,
-          shift_id
+          shift_id,
+          certificate_approved,
+          time_logs (
+            id,
+            check_in_time,
+            check_out_time,
+            total_hours
+          ),
+          shifts!inner (
+            id,
+            title,
+            location
+          )
         `)
-        .eq('user_id', targetUserId);
+        .eq('promoter_id', targetUserId)
+        .eq('certificate_approved', true);
       
-      if (error || !timeLogs || timeLogs.length === 0) {
+      if (error || !assignments || assignments.length === 0) {
         return {
           shifts: [],
           timePeriodLabel: getTimePeriodLabel(timePeriod)
         };
       }
       
-      const processedShifts = await Promise.all(timeLogs.map(async (log) => {
-        const { data: shiftData } = await supabase
-          .from('shifts')
-          .select('title, location')
-          .eq('id', log.shift_id)
-          .single();
-          
-        return {
+      const processedShifts = assignments.flatMap((assignment: any) => {
+        const timeLogs = assignment.time_logs || [];
+        return timeLogs.map((log: any) => ({
           date: format(new Date(log.check_in_time), "yyyy-MM-dd"),
-          title: shiftData?.title || "Shift Work",
+          title: assignment.shifts?.title || "Shift Work",
           hours: log.total_hours || 0,
-          location: shiftData?.location || ""
-        };
-      }));
+          location: assignment.shifts?.location || ""
+        }));
+      });
       
       return {
         shifts: processedShifts,

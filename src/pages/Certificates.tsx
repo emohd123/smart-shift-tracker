@@ -1,34 +1,29 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, HelpCircle, Shield, Medal, BookOpen } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
-import EnhancedWorkCertificateGenerator from "@/components/certificates/EnhancedWorkCertificateGenerator";
-import MyCertificates from "@/components/certificates/MyCertificates";
 import { useAuth } from "@/context/AuthContext";
-import { Award, FileText, HelpCircle, Shield, BookOpen, Medal } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import CompanyCertificatesPage from "@/components/certificates/company/CompanyCertificatesPage";
+import PromoterCertificatesPage from "@/components/certificates/promoter/PromoterCertificatesPage";
 
 export default function Certificates() {
-  const [activeTab, setActiveTab] = useState("generator");
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   
-  // Handle Stripe success redirect
+  // Handle Stripe success redirect for promoters
   useEffect(() => {
     const success = searchParams.get('success');
     const canceled = searchParams.get('canceled');
     
     if (success === 'true') {
       toast.success("Payment successful! You can now download your certificate.");
-      setActiveTab("my-certificates");
       // Clean up URL
       window.history.replaceState({}, '', '/certificates');
     } else if (canceled === 'true') {
@@ -37,6 +32,9 @@ export default function Certificates() {
       window.history.replaceState({}, '', '/certificates');
     }
   }, [searchParams]);
+
+  const isCompany = user?.role === 'company';
+  const isPromoter = user?.role === 'promoter';
   
   return (
     <AppLayout title="Professional Certificates">
@@ -58,10 +56,13 @@ export default function Certificates() {
             </Button>
             <div>
               <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                Professional Work Certificates
+                {isCompany ? 'Certificate Management' : 'Professional Work Certificates'}
               </h1>
               <p className="text-muted-foreground mt-1 max-w-2xl">
-                Create verified certificates that showcase your professional experience
+                {isCompany 
+                  ? 'Approve completed shifts to allow promoters to generate certificates'
+                  : 'Create verified certificates that showcase your professional experience'
+                }
               </p>
             </div>
           </div>
@@ -77,13 +78,15 @@ export default function Certificates() {
                 <TooltipTrigger asChild>
                   <Button variant="outline" size="sm" className="flex items-center gap-2">
                     <HelpCircle className="h-4 w-4" />
-                    Certificate Guide
+                    Guide
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-sm p-4">
                   <p className="text-sm">
-                    Each certificate includes a unique reference number, QR verification code, 
-                    and official digital signature to ensure authenticity with potential employers.
+                    {isCompany 
+                      ? 'Approve completed shifts to enable promoters to generate professional certificates. Your company logo and details will appear on their certificates.'
+                      : 'Each certificate includes a unique reference number, QR verification code, and official digital signature to ensure authenticity with potential employers.'
+                    }
                   </p>
                 </TooltipContent>
               </Tooltip>
@@ -93,70 +96,53 @@ export default function Certificates() {
         
         <Separator className="my-4" />
         
-        {/* Feature highlights - Mobile responsive */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="p-4 sm:p-5 flex items-start gap-3 min-h-[80px]">
-              <div className="bg-primary/10 p-2.5 rounded-full flex-shrink-0">
-                <Medal className="h-5 w-5 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-semibold text-base mb-1">Verified Credentials</h3>
-                <CardDescription className="text-sm">Unique verification code</CardDescription>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-primary/5 border-primary/20">
-            <CardContent className="p-4 sm:p-5 flex items-start gap-3 min-h-[80px]">
-              <div className="bg-primary/10 p-2.5 rounded-full flex-shrink-0">
-                <Shield className="h-5 w-5 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-semibold text-base mb-1">Digital Signature</h3>
-                <CardDescription className="text-sm">Tamper-proof & secure</CardDescription>
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-primary/5 border-primary/20 sm:col-span-2 lg:col-span-1">
-            <CardContent className="p-4 sm:p-5 flex items-start gap-3 min-h-[80px]">
-              <div className="bg-primary/10 p-2.5 rounded-full flex-shrink-0">
-                <BookOpen className="h-5 w-5 text-primary" />
-              </div>
-              <div className="min-w-0">
-                <h3 className="font-semibold text-base mb-1">$4.99 Per Certificate</h3>
-                <CardDescription className="text-sm">Pay once, download forever</CardDescription>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Feature highlights - Only for promoters */}
+        {isPromoter && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="p-4 sm:p-5 flex items-start gap-3 min-h-[80px]">
+                <div className="bg-primary/10 p-2.5 rounded-full flex-shrink-0">
+                  <Medal className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-base mb-1">Verified Credentials</h3>
+                  <CardDescription className="text-sm">Unique verification code</CardDescription>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="p-4 sm:p-5 flex items-start gap-3 min-h-[80px]">
+                <div className="bg-primary/10 p-2.5 rounded-full flex-shrink-0">
+                  <Shield className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-base mb-1">Digital Signature</h3>
+                  <CardDescription className="text-sm">Tamper-proof & secure</CardDescription>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-primary/5 border-primary/20 sm:col-span-2 lg:col-span-1">
+              <CardContent className="p-4 sm:p-5 flex items-start gap-3 min-h-[80px]">
+                <div className="bg-primary/10 p-2.5 rounded-full flex-shrink-0">
+                  <BookOpen className="h-5 w-5 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="font-semibold text-base mb-1">$4.99 Per Certificate</h3>
+                  <CardDescription className="text-sm">Pay once, download forever</CardDescription>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
         
-        <Tabs 
-          defaultValue="generator" 
-          value={activeTab} 
-          onValueChange={setActiveTab}
-          className="w-full"
-        >
-          <TabsList className="mb-6 sm:mb-8 grid grid-cols-2 w-full max-w-md mx-auto bg-secondary/50 p-1.5">
-            <TabsTrigger value="generator" className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <Award className="h-4 w-4 flex-shrink-0" />
-              <span className="hidden xs:inline">Generate</span>
-            </TabsTrigger>
-            <TabsTrigger value="my-certificates" className="flex items-center gap-2 text-sm font-medium data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-              <FileText className="h-4 w-4 flex-shrink-0" />
-              <span className="hidden xs:inline">My Certificates</span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="generator" className="focus-visible:outline-none focus-visible:ring-0">
-            <EnhancedWorkCertificateGenerator />
-          </TabsContent>
-          
-          <TabsContent value="my-certificates" className="focus-visible:outline-none focus-visible:ring-0">
-            <MyCertificates />
-          </TabsContent>
-        </Tabs>
+        {/* Role-based content */}
+        {isCompany ? (
+          <CompanyCertificatesPage />
+        ) : (
+          <PromoterCertificatesPage />
+        )}
       </div>
     </AppLayout>
   );

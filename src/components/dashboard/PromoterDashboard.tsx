@@ -128,11 +128,13 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
               <Award className="h-5 w-5 text-primary" />
               Work Certificates
             </CardTitle>
-            <CardDescription>Generate professional work certificates for your job applications</CardDescription>
+            <CardDescription>
+              Generate professional work certificates from your approved shifts
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm mb-4">
-              Create official certificates showing your completed work hours, skills demonstrated, and performance records.
+              Create official certificates showing your completed work hours from all companies.
               Perfect for including with job applications!
             </p>
             <Button 
@@ -140,7 +142,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
               className="w-full md:w-auto"
             >
               <Award className="mr-2 h-4 w-4" />
-              Generate Certificate
+              View Certificates
             </Button>
           </CardContent>
         </Card>
