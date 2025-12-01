@@ -64,3 +64,10 @@ export function useDashboardData(shifts: Shift[]) {
     error
   };
 }
+
+/**
+ * Get approved shifts count for certificates
+ */
+export function useApprovedShiftsCount() {
+  return 0; // Placeholder - will be fetched from shift_assignments in component
+}

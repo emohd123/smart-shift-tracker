@@ -56,11 +56,6 @@ export default function PromoterCertificatesPage() {
               email,
               phone
             )
-          ),
-          time_logs (
-            total_hours,
-            check_in_time,
-            check_out_time
           )
         `)
         .eq('promoter_id', user.id)
@@ -68,6 +63,22 @@ export default function PromoterCertificatesPage() {
         .order('approved_at', { ascending: false });
 
       if (error) throw error;
+
+      // Fetch time_logs separately for each shift (no direct FK relationship)
+      const shiftIds = [...new Set(assignments?.map(a => a.shift_id) || [])];
+      
+      const { data: timeLogs } = await supabase
+        .from('time_logs')
+        .select('shift_id, total_hours, check_in_time, check_out_time')
+        .eq('user_id', user.id)
+        .in('shift_id', shiftIds);
+
+      // Create a map of shift_id to total hours
+      const timeLogMap = new Map<string, number>();
+      timeLogs?.forEach(log => {
+        const current = timeLogMap.get(log.shift_id) || 0;
+        timeLogMap.set(log.shift_id, current + (log.total_hours || 0));
+      });
 
       // Group by company
       const companyMap = new Map<string, CompanyWorkEntry>();
@@ -93,13 +104,13 @@ export default function PromoterCertificatesPage() {
         }
 
         const entry = companyMap.get(companyId)!;
-        const totalHours = assignment.time_logs?.reduce((sum: number, log: any) => sum + (log.total_hours || 0), 0) || 0;
+        const totalHours = timeLogMap.get(shift.id) || 0;
 
         entry.shifts.push({
           id: shift.id,
           title: shift.title,
           dateFrom: shift.date,
-          dateTo: shift.date, // Can be extended if needed
+          dateTo: shift.date,
           timeFrom: shift.start_time,
           timeTo: shift.end_time,
           totalHours,
