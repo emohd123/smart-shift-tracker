@@ -47,7 +47,7 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
     doc.setFont('helvetica', 'bold');
     doc.text(company.company.name, 25, yPos + 8);
     doc.setFontSize(9);
-    doc.text(`${company.totalHours} hours`, 185, yPos + 8, { align: 'right' });
+    doc.text(`${Math.round(company.totalHours)} hours`, 185, yPos + 8, { align: 'right' });
     yPos += 18;
 
     // Shifts Table
@@ -56,7 +56,7 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
       `${new Date(shift.dateFrom).toLocaleDateString()} - ${new Date(shift.dateTo).toLocaleDateString()}`,
       `${shift.timeFrom} - ${shift.timeTo}`,
       shift.location || 'N/A',
-      `${shift.totalHours}h`
+      `${Math.round(shift.totalHours)}h`
     ]);
 
     doc.autoTable({
@@ -80,7 +80,7 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text(`TOTAL: ${data.grandTotalHours} HOURS`, 105, yPos + 10, { align: 'center' });
+  doc.text(`TOTAL: ${Math.round(data.grandTotalHours)} HOURS`, 105, yPos + 10, { align: 'center' });
   doc.setTextColor(0, 0, 0);
   yPos += 25;
 
