@@ -7,6 +7,9 @@ import SearchBar from "./list/SearchBar";
 import ShiftListHeader from "./list/ShiftListHeader";
 import BulkDeleteButton from "./list/BulkDeleteButton";
 import EmptyShifts from "./list/EmptyShifts";
+import BulkPayRateDialog from "./list/BulkPayRateDialog";
+import { Button } from "@/components/ui/button";
+import { DollarSign } from "lucide-react";
 
 interface ShiftListProps {
   shifts: Shift[];
@@ -22,6 +25,7 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
   const [selectedShifts, setSelectedShifts] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showBulkPayRateDialog, setShowBulkPayRateDialog] = useState(false);
   
   const isAdmin = user?.role === "admin";
   
@@ -116,6 +120,13 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
     }
   };
 
+  const handleBulkPayRateSuccess = async () => {
+    setSelectedShifts([]);
+    if (refreshShifts) {
+      await refreshShifts();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <ShiftListHeader 
@@ -133,12 +144,22 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
           setSearchTerm={setSearchTerm}
         />
         
-        {isAdmin && (
-          <BulkDeleteButton
-            selectedCount={selectedShifts.length}
-            isDeleting={isDeleting}
-            onBulkDelete={handleBulkDelete}
-          />
+        {isAdmin && selectedShifts.length > 0 && (
+          <>
+            <Button
+              variant="secondary"
+              onClick={() => setShowBulkPayRateDialog(true)}
+              className="gap-2"
+            >
+              <DollarSign className="h-4 w-4" />
+              Update Pay Rates ({selectedShifts.length})
+            </Button>
+            <BulkDeleteButton
+              selectedCount={selectedShifts.length}
+              isDeleting={isDeleting}
+              onBulkDelete={handleBulkDelete}
+            />
+          </>
         )}
       </div>
       
@@ -149,6 +170,15 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
           shifts={filteredShifts} 
           selectedShifts={isAdmin ? selectedShifts : undefined}
           onSelectShift={isAdmin ? handleSelectShift : undefined}
+        />
+      )}
+
+      {isAdmin && (
+        <BulkPayRateDialog
+          open={showBulkPayRateDialog}
+          onOpenChange={setShowBulkPayRateDialog}
+          selectedShiftIds={selectedShifts}
+          onSuccess={handleBulkPayRateSuccess}
         />
       )}
     </div>
