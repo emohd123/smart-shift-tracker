@@ -3,7 +3,6 @@ import { CheckCircle, Image, BarChart3 } from "lucide-react";
 import CompanyShiftApproval from "./CompanyShiftApproval";
 import CompanyLogoUpload from "./CompanyLogoUpload";
 import CertificateAnalytics from "./CertificateAnalytics";
-import CompanyStampConfig from "../generator/CompanyStampConfig";
 
 export default function CompanyCertificatesPage() {
   return (
@@ -15,10 +14,10 @@ export default function CompanyCertificatesPage() {
             <span className="hidden sm:inline">Shift Approvals</span>
             <span className="sm:hidden">Approvals</span>
           </TabsTrigger>
-          <TabsTrigger value="branding" className="flex items-center gap-2 text-sm">
+          <TabsTrigger value="logo" className="flex items-center gap-2 text-sm">
             <Image className="h-4 w-4" />
-            <span className="hidden sm:inline">Branding</span>
-            <span className="sm:hidden">Brand</span>
+            <span className="hidden sm:inline">Company Logo</span>
+            <span className="sm:hidden">Logo</span>
           </TabsTrigger>
           <TabsTrigger value="analytics" className="flex items-center gap-2 text-sm">
             <BarChart3 className="h-4 w-4" />
@@ -31,9 +30,8 @@ export default function CompanyCertificatesPage() {
           <CompanyShiftApproval />
         </TabsContent>
 
-        <TabsContent value="branding" className="mt-6 space-y-6">
+        <TabsContent value="logo" className="mt-6">
           <CompanyLogoUpload />
-          <CompanyStampConfig />
         </TabsContent>
 
         <TabsContent value="analytics" className="mt-6">
