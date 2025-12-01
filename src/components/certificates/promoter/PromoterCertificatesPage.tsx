@@ -145,7 +145,7 @@ export default function PromoterCertificatesPage() {
     }
   };
 
-  const handleGenerateCertificate = async () => {
+  const handlePayAndGenerate = async () => {
     const filteredWork = getFilteredWork();
     
     if (filteredWork.length === 0) {
@@ -190,7 +190,7 @@ export default function PromoterCertificatesPage() {
           certificate_type: 'work_experience',
           issue_date: new Date().toISOString(),
           total_hours: grandTotalHours,
-          status: 'approved',
+          status: 'pending',
           paid: false,
           pdf_url: uploadResult.data
         })
@@ -199,20 +199,13 @@ export default function PromoterCertificatesPage() {
 
       if (certError) throw certError;
 
-      setCertificateData(certData);
-      setGeneratedCertificateId(certificate.id);
-      toast.success('Certificate generated! Please proceed to payment.');
+      // Redirect to payment immediately
+      await initiateCertificatePayment(certificate.id);
     } catch (error) {
-      console.error('Error generating certificate:', error);
-      toast.error('Failed to generate certificate');
-    } finally {
+      console.error('Error:', error);
+      toast.error('Failed to process. Please try again.');
       setGenerating(false);
     }
-  };
-
-  const handlePayment = async () => {
-    if (!generatedCertificateId) return;
-    await initiateCertificatePayment(generatedCertificateId);
   };
 
   const getFilteredWork = () => {
@@ -229,6 +222,7 @@ export default function PromoterCertificatesPage() {
 
   const filteredWork = getFilteredWork();
   const totalFilteredHours = filteredWork.reduce((sum, c) => sum + c.shifts.reduce((s, shift) => s + shift.totalHours, 0), 0);
+  const totalFilteredShifts = filteredWork.reduce((sum, c) => sum + c.shifts.length, 0);
 
   if (loading) {
     return (
@@ -310,33 +304,17 @@ export default function PromoterCertificatesPage() {
                         grandTotalHours: totalFilteredHours
                       }} 
                     />
-                    <div className="mt-6 p-4 bg-background rounded-lg border">
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
-                        <div>
-                          <p className="text-2xl font-bold text-primary">{totalFilteredHours}h</p>
-                          <p className="text-xs text-muted-foreground">Total Hours</p>
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold text-primary">{filteredWork.length}</p>
-                          <p className="text-xs text-muted-foreground">Companies</p>
-                        </div>
-                        <div>
-                          <p className="text-2xl font-bold text-primary">
-                            {filteredWork.reduce((sum, c) => sum + c.shifts.length, 0)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">Shifts</p>
-                        </div>
-                      </div>
+                    <div className="mt-6 flex justify-center">
                       <Button 
-                        onClick={handleGenerateCertificate}
-                        disabled={generating}
-                        className="w-full"
+                        onClick={handlePayAndGenerate}
+                        disabled={generating || isProcessing}
+                        className="w-full max-w-md"
                         size="lg"
                       >
-                        {generating ? (
-                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Generating...</>
+                        {generating || isProcessing ? (
+                          <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Processing...</>
                         ) : (
-                          <><Award className="h-4 w-4 mr-2" /> Generate Certificate ($4.99)</>
+                          <><Award className="h-4 w-4 mr-2" /> Pay $4.99 & Generate Certificate</>
                         )}
                       </Button>
                     </div>
@@ -356,34 +334,6 @@ export default function PromoterCertificatesPage() {
                 </Card>
               )}
 
-              {/* Certificate Preview */}
-              {certificateData && (
-                <div className="space-y-6">
-                  <MultiCompanyCertificatePreview data={certificateData} />
-                  
-                  {/* Payment Section */}
-                  <Card className="border-primary/20 bg-gradient-to-r from-primary/5 to-secondary/5">
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between">
-                        <span>Complete Your Purchase</span>
-                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20">
-                          $4.99
-                        </Badge>
-                      </CardTitle>
-                      <CardDescription>
-                        Pay once and download this certificate anytime
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <PaymentButton 
-                        onClick={handlePayment}
-                        isProcessing={isProcessing}
-                        certificateGenerated={true}
-                      />
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
             </>
           )}
         </TabsContent>

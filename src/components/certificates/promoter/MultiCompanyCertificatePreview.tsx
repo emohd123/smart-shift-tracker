@@ -4,6 +4,9 @@ import { CheckCircle, Building2, Calendar, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import QRCode from "react-qr-code";
 
+// Helper to format hours as whole numbers
+const formatHours = (hours: number) => Math.round(hours);
+
 export interface CompanyWorkEntry {
   company: {
     id: string;
@@ -34,6 +37,7 @@ interface MultiCompanyCertificatePreviewProps {
 }
 
 export default function MultiCompanyCertificatePreview({ data }: MultiCompanyCertificatePreviewProps) {
+  const isPreview = data.referenceNumber === 'PREVIEW';
   const verificationUrl = `${window.location.origin}/verify-certificate?ref=${data.referenceNumber}`;
 
   return (
@@ -91,7 +95,7 @@ export default function MultiCompanyCertificatePreview({ data }: MultiCompanyCer
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">{companyEntry.totalHours}h</p>
+                  <p className="text-2xl font-bold text-primary">{formatHours(companyEntry.totalHours)}h</p>
                   <p className="text-xs text-muted-foreground">Total Hours</p>
                 </div>
               </div>
@@ -121,7 +125,7 @@ export default function MultiCompanyCertificatePreview({ data }: MultiCompanyCer
                         </div>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold text-primary">{shift.totalHours}h</p>
+                        <p className="font-bold text-primary">{formatHours(shift.totalHours)}h</p>
                         <Badge variant="outline" className="text-xs mt-1 bg-green-500/10 text-green-600 border-green-500/20">
                           <CheckCircle className="h-2.5 w-2.5 mr-1" />
                           Approved
@@ -139,26 +143,30 @@ export default function MultiCompanyCertificatePreview({ data }: MultiCompanyCer
         <div className="border-t pt-4 flex items-center justify-between bg-primary/5 p-4 rounded-lg">
           <div>
             <p className="text-sm text-muted-foreground">Grand Total Hours</p>
-            <p className="text-3xl font-bold text-primary">{data.grandTotalHours} hours</p>
+            <p className="text-3xl font-bold text-primary">{formatHours(data.grandTotalHours)} hours</p>
             <p className="text-xs text-muted-foreground mt-1">
               Across {data.companies.length} {data.companies.length === 1 ? 'Company' : 'Companies'}
             </p>
           </div>
-          <div className="text-center">
-            <QRCode value={verificationUrl} size={80} />
-            <p className="text-xs text-muted-foreground mt-2">Scan to verify</p>
-          </div>
+          {!isPreview && (
+            <div className="text-center">
+              <QRCode value={verificationUrl} size={80} />
+              <p className="text-xs text-muted-foreground mt-2">Scan to verify</p>
+            </div>
+          )}
         </div>
 
-        {/* Footer */}
-        <div className="text-center pt-4 border-t">
-          <p className="text-xs text-muted-foreground">
-            Reference Number: <span className="font-mono font-semibold">{data.referenceNumber}</span>
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Verify at: {window.location.origin}/verify-certificate
-          </p>
-        </div>
+        {/* Footer - Only show when not preview */}
+        {!isPreview && (
+          <div className="text-center pt-4 border-t">
+            <p className="text-xs text-muted-foreground">
+              Reference Number: <span className="font-mono font-semibold">{data.referenceNumber}</span>
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Verify at: {window.location.origin}/verify-certificate
+            </p>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
