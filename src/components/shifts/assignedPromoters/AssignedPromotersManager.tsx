@@ -14,6 +14,8 @@ type AssignedPromotersManagerProps = {
   payRate: number;
   payRateType: string;
   userRole?: string;
+  shiftStartTime?: string;
+  shiftEndTime?: string;
 };
 
 export const AssignedPromotersManager = ({
@@ -21,6 +23,8 @@ export const AssignedPromotersManager = ({
   payRate,
   payRateType,
   userRole,
+  shiftStartTime,
+  shiftEndTime,
 }: AssignedPromotersManagerProps) => {
   const { promoters, loading: promotersLoading } = useAssignedPromoters(shiftId);
   const { timeLogs, loading: timeLogsLoading } = usePromoterTimeLogs(shiftId);
@@ -89,7 +93,13 @@ export const AssignedPromotersManager = ({
                 : "No promoters have been assigned to this shift yet"
               }
             </p>
-            {isCompany && <AssignPromotersDialog shiftId={shiftId} />}
+            {isCompany && (
+              <AssignPromotersDialog 
+                shiftId={shiftId}
+                shiftStartTime={shiftStartTime}
+                shiftEndTime={shiftEndTime}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
@@ -118,6 +128,8 @@ export const AssignedPromotersManager = ({
               currentAssignments={promoters.map(p => p.promoter_id)}
               variant="outline"
               buttonText="Add More"
+              shiftStartTime={shiftStartTime}
+              shiftEndTime={shiftEndTime}
             />
           )}
         </div>

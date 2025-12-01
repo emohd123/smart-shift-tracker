@@ -118,8 +118,8 @@ export const AssignPromotersDialog = ({
         promoterId: promoter.id,
         startTime: shiftStartTime,
         endTime: shiftEndTime,
-        autoCheckIn: false,
-        autoCheckOut: false,
+        autoCheckIn: true,
+        autoCheckOut: true,
       }
     }));
     toast.success(`Added ${promoter.full_name} (${promoter.unique_code})`);
@@ -137,8 +137,8 @@ export const AssignPromotersDialog = ({
             promoterId: id,
             startTime: shiftStartTime,
             endTime: shiftEndTime,
-            autoCheckIn: false,
-            autoCheckOut: false,
+            autoCheckIn: true,
+            autoCheckOut: true,
           }
         }));
       }
