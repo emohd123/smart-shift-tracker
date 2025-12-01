@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { getStatusBadge, formatDate } from "./utils/shiftUtils";
 import { formatBHD } from "./utils/currencyUtils";
 import { Shift } from "./types/ShiftTypes";
+import { getEffectiveStatus } from "./utils/statusCalculations";
 
 interface ShiftCardProps {
   shift: Shift;
@@ -14,7 +15,8 @@ interface ShiftCardProps {
 }
 
 export default function ShiftCard({ shift, selected = false }: ShiftCardProps) {
-  const statusBadge = getStatusBadge(shift.status);
+  const effectiveStatus = getEffectiveStatus(shift);
+  const statusBadge = getStatusBadge(effectiveStatus);
   
   // Create a formatted rate display
   const getRateDisplayText = () => {
@@ -48,7 +50,7 @@ export default function ShiftCard({ shift, selected = false }: ShiftCardProps) {
             <Badge className={cn("ml-2 shrink-0", statusBadge.color)}>
               <span className="flex items-center">
                 {statusBadge.icon}
-                {shift.status}
+                {effectiveStatus}
               </span>
             </Badge>
           </div>

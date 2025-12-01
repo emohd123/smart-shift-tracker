@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Edit, Trash } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getStatusBadge } from "./utils/shiftUtils";
+import { getEffectiveStatus } from "./utils/statusCalculations";
 import { 
   CardTitle, 
   CardDescription, 
@@ -31,7 +32,8 @@ type ShiftHeaderProps = {
 
 export function ShiftHeader({ shift, isAdmin, onDelete }: ShiftHeaderProps) {
   const [isDeleting, setIsDeleting] = useState(false);
-  const statusBadge = getStatusBadge(shift.status);
+  const effectiveStatus = getEffectiveStatus(shift);
+  const statusBadge = getStatusBadge(effectiveStatus);
   
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -55,7 +57,7 @@ export function ShiftHeader({ shift, isAdmin, onDelete }: ShiftHeaderProps) {
           <CardDescription className="mt-1">
             <Badge className={cn("capitalize flex w-fit items-center", statusBadge.color)}>
               {statusBadge.icon}
-              {shift.status}
+              {effectiveStatus}
             </Badge>
           </CardDescription>
         </div>

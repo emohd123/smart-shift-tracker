@@ -17,6 +17,7 @@ import { ShiftInfo } from "./ShiftInfo";
 import { ShiftActions } from "./ShiftActions";
 import MapSelector from "./MapSelector";
 import { useResponsive } from "@/hooks/useResponsive";
+import { getEffectiveStatus } from "./utils/statusCalculations";
 
 type ShiftDetailProps = {
   shift: Shift;
@@ -35,7 +36,7 @@ export default function ShiftDetail({
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isMobile } = useResponsive();
-  const [isCheckedIn, setIsCheckedIn] = useState(shift.status === "ongoing");
+  const [isCheckedIn, setIsCheckedIn] = useState(getEffectiveStatus(shift) === "ongoing");
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
   

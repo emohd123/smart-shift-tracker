@@ -7,6 +7,7 @@ import { Shift } from "./types/ShiftTypes";
 import { useToast } from "@/hooks/use-toast";
 import { getCurrentLocation, isWithinRadius } from "./utils/locationUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { getEffectiveStatus } from "./utils/statusCalculations";
 
 type ShiftActionsProps = {
   shift: Shift;
@@ -31,8 +32,9 @@ export function ShiftActions({
   const [loading, setLoading] = useState(false);
   const [showLocationError, setShowLocationError] = useState(false);
   
-  // Use the enumerated types for shift status
-  const isNotActiveShift = shift.status === "completed" || shift.status === "cancelled";
+  // Use the effective status (considering manual override)
+  const effectiveStatus = getEffectiveStatus(shift);
+  const isNotActiveShift = effectiveStatus === "completed" || effectiveStatus === "cancelled";
   
   if (!isPromoter && !isAdmin) {
     return null;

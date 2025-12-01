@@ -12,6 +12,7 @@ import { Button } from "../ui/button";
 import { Award, Copy, Check } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import { getEffectiveStatus } from "../shifts/utils/statusCalculations";
 
 type PromoterDashboardProps = {
   shifts: Shift[];
@@ -27,7 +28,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
   const [copied, setCopied] = useState(false);
   
   // Get completed shifts for display in the Recent Activity section
-  const completedShiftsList = shifts.filter(shift => shift.status === "completed");
+  const completedShiftsList = shifts.filter(shift => getEffectiveStatus(shift) === "completed");
   
   useEffect(() => {
     const timer = setTimeout(() => {
