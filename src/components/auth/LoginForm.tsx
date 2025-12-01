@@ -52,12 +52,6 @@ export default function LoginForm({ onError }: LoginFormProps) {
     }
   }, [email, password]);
 
-  // Update parent component if there's an error
-  useEffect(() => {
-    if (formError && onError) {
-      onError(formError);
-    }
-  }, [formError, onError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
