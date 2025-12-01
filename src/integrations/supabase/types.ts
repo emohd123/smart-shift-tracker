@@ -669,7 +669,7 @@ export type Database = {
           longitude: number | null
           manual_status_override: boolean | null
           override_status: string | null
-          pay_rate: number
+          pay_rate: number | null
           pay_rate_type: string | null
           promoter_id: string | null
           start_time: string
@@ -691,7 +691,7 @@ export type Database = {
           longitude?: number | null
           manual_status_override?: boolean | null
           override_status?: string | null
-          pay_rate: number
+          pay_rate?: number | null
           pay_rate_type?: string | null
           promoter_id?: string | null
           start_time: string
@@ -713,7 +713,7 @@ export type Database = {
           longitude?: number | null
           manual_status_override?: boolean | null
           override_status?: string | null
-          pay_rate?: number
+          pay_rate?: number | null
           pay_rate_type?: string | null
           promoter_id?: string | null
           start_time?: string
