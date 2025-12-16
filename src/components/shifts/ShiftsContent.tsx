@@ -30,34 +30,34 @@ interface ShiftsContentProps {
   refreshShifts?: () => Promise<void>;
 }
 
-export const ShiftsContent = ({ 
-  shifts, 
-  loading, 
-  title, 
+export const ShiftsContent = ({
+  shifts,
+  loading,
+  title,
   deleteShift,
   deleteAllShifts,
-  refreshShifts 
+  refreshShifts
 }: ShiftsContentProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user?.role === "admin";
   const isCompany = user?.role === "company";
-  
+
   // Register the deleteShift function globally, but clean up on unmount
   useEffect(() => {
-    console.log("Setting deleteShift function globally");
+
     window.deleteShift = deleteShift;
-    
+
     if (deleteAllShifts) {
       window.deleteAllShifts = deleteAllShifts;
     }
-    
+
     return () => {
       window.deleteShift = undefined;
       window.deleteAllShifts = undefined;
     };
   }, [deleteShift, deleteAllShifts]);
-  
+
   const handleRefresh = async () => {
     if (refreshShifts) {
       try {
@@ -69,7 +69,7 @@ export const ShiftsContent = ({
       }
     }
   };
-  
+
   const handleDeleteAll = async () => {
     if (deleteAllShifts) {
       try {
@@ -81,14 +81,14 @@ export const ShiftsContent = ({
       }
     }
   };
-  
+
   if (loading) {
     return <ShiftsLoading />;
   }
-  
+
   if (shifts.length === 0) {
     return (
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -103,7 +103,7 @@ export const ShiftsContent = ({
         </p>
         <div className="flex gap-4">
           {(isAdmin || isCompany) && (
-            <Button 
+            <Button
               onClick={() => navigate("/shifts/create")}
               className="gap-2"
             >
@@ -111,10 +111,10 @@ export const ShiftsContent = ({
               Create New Shift
             </Button>
           )}
-          
+
           {refreshShifts && (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={handleRefresh}
               className="gap-2"
             >
@@ -126,15 +126,15 @@ export const ShiftsContent = ({
       </motion.div>
     );
   }
-  
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      <ShiftList 
-        shifts={shifts} 
+      <ShiftList
+        shifts={shifts}
         title={title}
         deleteShift={deleteShift}
         refreshShifts={refreshShifts}

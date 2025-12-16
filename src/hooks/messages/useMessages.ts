@@ -76,7 +76,7 @@ export const useMessages = (
 
             if (unreadMessages.length > 0) {
               const unreadIds = unreadMessages.map(msg => msg.id);
-              
+
               // Update read status
               await supabase
                 .from("messages")
@@ -107,17 +107,17 @@ export const useMessages = (
           filter: `(sender_id=eq.${currentUserId} AND recipient_id=eq.${contactId}) OR (sender_id=eq.${contactId} AND recipient_id=eq.${currentUserId})`
         },
         async (payload) => {
-          console.log('Realtime message update:', payload);
-          
+
+
           // Handle different events
           if (payload.eventType === 'INSERT') {
             const newMessage = payload.new as Message;
-            
+
             if (onlyLastMessage) {
               setLastMessage(newMessage);
             } else {
               setMessages(prev => [...prev, newMessage]);
-              
+
               // Mark as read if this is a received message
               if (newMessage.recipient_id === currentUserId && !newMessage.read) {
                 await supabase
@@ -128,14 +128,14 @@ export const useMessages = (
             }
           } else if (payload.eventType === 'UPDATE') {
             const updatedMessage = payload.new as Message;
-            
+
             if (onlyLastMessage) {
               if (lastMessage?.id === updatedMessage.id) {
                 setLastMessage(updatedMessage);
               }
             } else {
-              setMessages(prev => 
-                prev.map(msg => 
+              setMessages(prev =>
+                prev.map(msg =>
                   msg.id === updatedMessage.id ? updatedMessage : msg
                 )
               );

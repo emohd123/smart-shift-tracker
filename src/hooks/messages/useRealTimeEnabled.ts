@@ -17,12 +17,12 @@ export const useRealTimeEnabled = () => {
           }, (payload) => {
             // This callback will be triggered for any change to the messages table
             // We don't need to do anything here, just establishing the channel
-            console.log('Realtime message update received');
+
           })
           .subscribe();
-          
-        console.log("Realtime subscription enabled for messages table");
-        
+
+
+
         // Return unsubscribe function
         return () => {
           supabase.removeChannel(channel);
@@ -34,7 +34,7 @@ export const useRealTimeEnabled = () => {
 
     // Call the function to enable realtime
     const unsubscribePromise = enableRealtime();
-    
+
     // Cleanup on unmount
     return () => {
       // Handle the promise properly

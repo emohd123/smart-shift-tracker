@@ -16,35 +16,35 @@ export const useAuthState = () => {
       try {
         setLoading(true);
         const { data: { session } } = await supabase.auth.getSession();
-        
+
         if (session) {
-          console.log("Found existing session:", session.user.email);
+
           setSupabaseUser(session.user);
-          
+
           // Get the base user first
           const formattedUser = formatUser(session.user);
-          
+
           if (formattedUser) {
             try {
               // Fetch role from user_roles table using security definer function
               const { data: roleData, error: roleError } = await supabase
                 .rpc('get_user_role', { _user_id: formattedUser.id });
-              
+
               if (roleError) {
                 console.error("Error fetching user role:", roleError);
               } else if (roleData) {
                 formattedUser.role = roleData as UserRole;
               }
-              
+
               setUser(formattedUser);
-              console.log("Auth state initialized with user:", formattedUser);
+
             } catch (error) {
               console.error("Error fetching user role:", error);
               setUser(formattedUser);
             }
           }
         } else {
-          console.log("No active session found");
+
           setUser(null);
           setSupabaseUser(null);
         }
@@ -61,19 +61,19 @@ export const useAuthState = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log("Auth state changed:", event, session?.user?.email);
-        
+
+
         if (session?.user) {
           setSupabaseUser(session.user);
-          
+
           // Get the base user first
           const formattedUser = formatUser(session.user);
-          
+
           if (formattedUser) {
             // Set user immediately with basic info
             setUser(formattedUser);
-            console.log("User set after auth state change:", formattedUser);
-            
+
+
             // Defer Supabase RPC call using setTimeout to prevent deadlock
             setTimeout(() => {
               supabase
@@ -89,11 +89,11 @@ export const useAuthState = () => {
             }, 0);
           }
         } else {
-          console.log("User signed out or session expired");
+
           setUser(null);
           setSupabaseUser(null);
         }
-        
+
         setLoading(false);
       }
     );

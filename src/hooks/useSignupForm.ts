@@ -12,7 +12,7 @@ export const useSignupForm = () => {
   const { signup, loading, authError } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   const {
     formData,
     setFormData,
@@ -30,7 +30,7 @@ export const useSignupForm = () => {
     activeSection,
     setActiveSection
   } = useSignupFormState();
-  
+
   const { handleFileChange, cleanupFilePreview } = useSignupFileHandling(setFileData);
   const { validateForm, validateSection } = useSignupFormValidation(formData, fileData, setFormError);
   const { uploadFiles, updateUserProfile, createCompanyProfile } = useSignupFileUpload(setUploadingFiles);
@@ -55,39 +55,39 @@ export const useSignupForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     try {
       setFormError(null);
-      console.log("🚀 Starting signup process...");
-      
+
+
       const { fullName, email, password, role } = formData;
-      
+
       // Step 1: Create user account
-      console.log("📝 Creating account for:", email);
+
       const userData = await signup(fullName, email, password, role);
-      
+
       if (!userData || !userData.id) {
         throw new Error("Failed to create user account");
       }
-      
-      console.log("✓ Account created:", userData.id);
-      
+
+
+
       // Step 2: Upload files (non-blocking)
       let idCardUrl = null;
       let profilePhotoUrl = null;
       let companyLogoUrl = null;
       let businessDocumentUrl = null;
       let uploadErrors: string[] = [];
-      
+
       const hasPromoterFiles = fileData.idCard || fileData.profilePhoto;
       const hasCompanyFiles = fileData.companyLogo || fileData.businessDocument;
-      
+
       if (hasPromoterFiles || hasCompanyFiles) {
-        console.log("📤 Uploading files...");
+
         const uploadResult = await uploadFiles(userData.id, fileData, role);
-        
+
         if (role === 'company') {
           companyLogoUrl = uploadResult.companyLogoUrl || null;
           businessDocumentUrl = uploadResult.businessDocumentUrl || null;
@@ -95,9 +95,9 @@ export const useSignupForm = () => {
           idCardUrl = uploadResult.idCardUrl || null;
           profilePhotoUrl = uploadResult.profilePhotoUrl || null;
         }
-        
+
         uploadErrors = uploadResult.errors || [];
-        
+
         if (uploadErrors.length > 0) {
           console.warn("⚠️ File upload warnings:", uploadErrors);
           toast({
@@ -106,54 +106,54 @@ export const useSignupForm = () => {
             variant: "default",
           });
         } else if (companyLogoUrl || businessDocumentUrl || idCardUrl || profilePhotoUrl) {
-          console.log("✓ Files uploaded successfully");
+
         }
       }
-      
+
       // Step 3: Update profile and create company profile if needed
       try {
-        console.log("💾 Updating profile...");
-        
+
+
         if (role === 'company') {
           // Create company profile
           await createCompanyProfile(userData.id, formData, companyLogoUrl);
-          console.log("✓ Company profile created");
+
         }
-        
+
         // Update user profile
         await updateUserProfile(userData.id, formData, idCardUrl, profilePhotoUrl, role);
-        console.log("✓ Profile updated successfully");
-        
+
+
         // Auto-generate unique code for promoters
         if (role === 'promoter') {
           try {
-            console.log("🔑 Generating unique code...");
+
             const { data: codeData, error: codeError } = await supabase.functions.invoke('generate-unique-code');
-            
+
             if (codeError) {
               console.warn("⚠️ Could not generate unique code during signup:", codeError);
               // Non-blocking: user can generate code later from profile
             } else if (codeData?.success) {
-              console.log("✓ Unique code generated:", codeData.code);
+
             }
           } catch (codeGenError) {
             console.warn("⚠️ Code generation error (non-blocking):", codeGenError);
             // Non-blocking: user can generate code later from profile
           }
         }
-        
+
         setIsSuccess(true);
         toast({
           title: "Registration successful! 🎉",
           description: role === 'company' ? "Redirecting to your company dashboard..." : "Redirecting to your dashboard...",
         });
-        
+
         setTimeout(() => {
           navigate(role === 'company' ? "/company" : "/dashboard");
         }, 1500);
       } catch (profileError: any) {
         console.error("❌ Profile update error:", profileError);
-        
+
         // Account was created, just couldn't update extended profile
         setIsSuccess(true);
         toast({
@@ -161,7 +161,7 @@ export const useSignupForm = () => {
           description: role === 'company' ? "Redirecting to company dashboard. You can complete your profile later." : "Redirecting to dashboard. You can complete your profile later.",
           variant: "default",
         });
-        
+
         setTimeout(() => {
           navigate(role === 'company' ? "/company" : "/dashboard");
         }, 1500);

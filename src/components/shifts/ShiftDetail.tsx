@@ -1,11 +1,11 @@
 
 import { useState, useEffect } from "react";
-import { Shift } from "./types/ShiftTypes"; 
-import { 
+import { Shift } from "./types/ShiftTypes";
+import {
   Card
 } from "@/components/ui/card";
-import { 
-  ArrowLeft 
+import {
+  ArrowLeft
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -26,11 +26,11 @@ type ShiftDetailProps = {
   onDelete?: (id: string) => void;
 };
 
-export default function ShiftDetail({ 
-  shift, 
-  onCheckIn, 
-  onCheckOut, 
-  onDelete 
+export default function ShiftDetail({
+  shift,
+  onCheckIn,
+  onCheckOut,
+  onDelete
 }: ShiftDetailProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -39,20 +39,20 @@ export default function ShiftDetail({
   const [isCheckedIn, setIsCheckedIn] = useState(getEffectiveStatus(shift) === "ongoing");
   const [showLocationMap, setShowLocationMap] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
-  
+
   // Leverage the role stored in user object which is protected by RLS
   const isAdmin = user?.role === "admin";
   const isPromoter = user?.role === "promoter";
-  
+
   useEffect(() => {
     // Add animation effect on load
     const timer = setTimeout(() => {
       setIsLoaded(true);
     }, 100);
-    
+
     return () => clearTimeout(timer);
   }, []);
-  
+
   const handleCheckIn = () => {
     setIsCheckedIn(true);
     toast({
@@ -61,7 +61,7 @@ export default function ShiftDetail({
     });
     if (onCheckIn) onCheckIn();
   };
-  
+
   const handleCheckOut = () => {
     setIsCheckedIn(false);
     toast({
@@ -72,8 +72,8 @@ export default function ShiftDetail({
   };
 
   const handleDelete = async (shiftId: string) => {
-    console.log("ShiftDetail - handleDelete called with ID:", shiftId);
-    
+
+
     try {
       if (onDelete) {
         await onDelete(shiftId);
@@ -112,35 +112,35 @@ export default function ShiftDetail({
   const handleSetLocation = () => {
     setShowLocationMap(!showLocationMap);
   };
-  
+
   return (
     <div className={cn(
-      "max-w-3xl mx-auto transition-all duration-500", 
+      "max-w-3xl mx-auto transition-all duration-500",
       isLoaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
     )}>
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        className="mb-4 group hover:bg-primary/10" 
+      <Button
+        variant="ghost"
+        size="sm"
+        className="mb-4 group hover:bg-primary/10"
         onClick={() => navigate(-1)}
       >
         <ArrowLeft size={16} className="mr-1 group-hover:-translate-x-1 transition-transform" />
         Back
       </Button>
-      
+
       <Card className="shadow-sm border-border/50 overflow-hidden">
-        <ShiftHeader 
-          shift={shift} 
-          isAdmin={isAdmin} 
-          onDelete={handleDelete} 
+        <ShiftHeader
+          shift={shift}
+          isAdmin={isAdmin}
+          onDelete={handleDelete}
         />
-        
-        <ShiftInfo 
-          shift={shift} 
-          isPromoter={isPromoter} 
+
+        <ShiftInfo
+          shift={shift}
+          isPromoter={isPromoter}
         />
-        
-        <ShiftActions 
+
+        <ShiftActions
           shift={shift}
           isPromoter={isPromoter}
           isAdmin={isAdmin}
@@ -150,11 +150,11 @@ export default function ShiftDetail({
           onSetLocation={handleSetLocation}
         />
       </Card>
-      
+
       {showLocationMap && isAdmin && (
         <div className="mt-6 animate-fade-in">
-          <MapSelector 
-            shiftId={shift.id} 
+          <MapSelector
+            shiftId={shift.id}
             onSave={() => setShowLocationMap(false)}
           />
         </div>

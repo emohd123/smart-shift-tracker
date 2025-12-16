@@ -7,33 +7,33 @@ import { ErrorSeverity, useError } from "@/context/ErrorContext";
 export const useAuthentication = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  
+
   const login = async (emailOrUsername: string, password: string, remember: boolean = false) => {
     // Prevent login attempt with empty fields
     if (!emailOrUsername || !password) {
       throw new Error("Email and password are required");
     }
-    
+
     setLoading(true);
     setAuthError(null);
     try {
       let email = emailOrUsername.trim();
-      
+
       // Check if it's a valid email format (has @ and domain)
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      
+
       if (!emailRegex.test(email)) {
         // If it doesn't match email format, treat as username and append @gmail.com
         // Remove any trailing @ symbols first
         email = email.replace(/@+$/, '');
-        
+
         // Only append if it doesn't already end with @gmail.com
         if (!email.endsWith('@gmail.com')) {
           email = `${email}@gmail.com`;
         }
       }
-      
-      console.log("Attempting login with:", email);
+
+
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -42,7 +42,7 @@ export const useAuthentication = () => {
 
       if (error) {
         console.error("Login error from Supabase:", error);
-        
+
         // Provide more user-friendly error messages
         if (error.message.includes("Invalid login credentials")) {
           throw new Error("Invalid email or password. Please try again.");
@@ -54,21 +54,21 @@ export const useAuthentication = () => {
           throw new Error(error.message || "Login failed. Please check your credentials.");
         }
       }
-      
+
       if (!data.user) {
         console.error("No user returned from login");
         throw new Error("Login failed. Please try again.");
       }
-      
-      console.log("Login successful:", data.user);
-      
+
+
+
       // Save auth state to localStorage if remember me is checked
       if (remember) {
         localStorage.setItem('rememberMe', 'true');
       } else {
         localStorage.removeItem('rememberMe');
       }
-      
+
       return data.user;
     } catch (error: any) {
       console.error("Login error:", error);
@@ -83,10 +83,10 @@ export const useAuthentication = () => {
     setLoading(true);
     setAuthError(null);
     try {
-      console.log("Signing up with:", { name, email, role });
-      
+
+
       const redirectUrl = `${window.location.origin}/`;
-      
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -101,7 +101,7 @@ export const useAuthentication = () => {
 
       if (error) {
         console.error("Supabase signup error:", error);
-        
+
         if (error.message.includes("User already registered")) {
           throw new Error("This email is already registered. Please login instead.");
         } else if (error.message.includes("Invalid email")) {
@@ -118,12 +118,12 @@ export const useAuthentication = () => {
         throw new Error("Failed to create user account");
       }
 
-      console.log("✓ Signup successful:", data.user.id);
-      
+
+
       // Assign role via user_roles table (trigger should handle this, but double-check)
       // The handle_new_user trigger creates the role automatically
       // If for some reason it didn't work, we could add a fallback here
-      
+
       return data.user;
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -138,15 +138,15 @@ export const useAuthentication = () => {
     setLoading(true);
     try {
       const { error } = await supabase.auth.signOut();
-      
+
       if (error) {
         throw error;
       }
-      
-      console.log("Logout successful");
+
+
       toast.success("Logged out successfully");
       setAuthError(null);
-      
+
       // Clear remember me state
       localStorage.removeItem('rememberMe');
     } catch (error: any) {

@@ -13,7 +13,7 @@ export const passwordSchema = z.string()
   .regex(/[^A-Za-z0-9]/, 'Password must contain at least one special character');
 
 export const phoneSchema = z.string()
-  .regex(/^\+?[\d\s\-\(\)]+$/, 'Invalid phone number format')
+  .regex(/^\+?[\d\s\-()]+$/, 'Invalid phone number format')
   .min(10, 'Phone number must be at least 10 digits');
 
 export const nameSchema = z.string()
@@ -38,7 +38,7 @@ export const sanitizeHtml = (input: string): string => {
     "'": '&#x27;',
     '/': '&#x2F;',
   };
-  
+
   return input.replace(/[&<>"'/]/g, (s) => map[s]);
 };
 
@@ -57,24 +57,24 @@ export const validateFileUpload = (file: File, options: {
   allowedTypes?: string[];
 }) => {
   const { maxSize = 5 * 1024 * 1024, allowedTypes = ['image/*', 'application/pdf'] } = options;
-  
+
   const errors: string[] = [];
-  
+
   if (file.size > maxSize) {
     errors.push(`File size must be less than ${maxSize / (1024 * 1024)}MB`);
   }
-  
+
   const isAllowedType = allowedTypes.some(type => {
     if (type.endsWith('/*')) {
       return file.type.startsWith(type.slice(0, -1));
     }
     return file.type === type;
   });
-  
+
   if (!isAllowedType) {
     errors.push(`File type not allowed. Allowed types: ${allowedTypes.join(', ')}`);
   }
-  
+
   return {
     isValid: errors.length === 0,
     errors
@@ -91,7 +91,7 @@ export const containsSqlInjection = (input: string): boolean => {
     /\bxp_\w+/i,
     /\bsp_\w+/i
   ];
-  
+
   return sqlPatterns.some(pattern => pattern.test(input));
 };
 

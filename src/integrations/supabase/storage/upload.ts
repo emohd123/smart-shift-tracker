@@ -16,9 +16,9 @@ export const uploadFileToBucket = async (
   try {
     // NOTE: Buckets (id_cards, profile_photos) must already exist in Supabase
     // They are created during initial setup with proper RLS policies
-    
+
     // Upload the file
-    console.log(`Uploading file to ${bucket}/${path}...`);
+
     const { error: uploadError } = await supabase.storage
       .from(bucket)
       .upload(path, file, {
@@ -39,7 +39,7 @@ export const uploadFileToBucket = async (
       .from(bucket)
       .getPublicUrl(path);
 
-    console.log(`File uploaded successfully, public URL:`, publicUrl);
+
     return createSuccessResponse<string>(publicUrl);
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

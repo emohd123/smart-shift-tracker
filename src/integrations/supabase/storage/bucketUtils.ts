@@ -12,7 +12,7 @@ export const createBucketIfNotExists = async (
   try {
     // Check if bucket exists
     const { data: buckets, error: bucketsError } = await supabase.storage.listBuckets();
-    
+
     if (bucketsError) {
       console.error("Error checking buckets:", bucketsError);
       return {
@@ -23,16 +23,16 @@ export const createBucketIfNotExists = async (
         }
       };
     }
-    
+
     const bucketExists = buckets?.some(b => b.name === bucketName);
-    
+
     if (!bucketExists) {
-      console.log(`Bucket ${bucketName} doesn't exist, creating...`);
+
       const { error } = await supabase.storage.createBucket(bucketName, {
         public: options.public ?? true,
         fileSizeLimit: options.fileSizeLimit,
       });
-      
+
       if (error) {
         console.error(`Error creating bucket ${bucketName}:`, error);
         return {
@@ -43,11 +43,11 @@ export const createBucketIfNotExists = async (
           }
         };
       }
-      console.log(`Bucket ${bucketName} created successfully`);
+
     } else {
-      console.log(`Bucket ${bucketName} already exists`);
+
     }
-    
+
     return { success: true };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -68,7 +68,7 @@ export const createBucketIfNotExists = async (
 export const listBuckets = async (): Promise<StorageResult<any[]>> => {
   try {
     const { data, error } = await supabase.storage.listBuckets();
-    
+
     if (error) {
       console.error("Error listing buckets:", error);
       return {
@@ -80,7 +80,7 @@ export const listBuckets = async (): Promise<StorageResult<any[]>> => {
         data: []
       };
     }
-    
+
     return { success: true, data };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';

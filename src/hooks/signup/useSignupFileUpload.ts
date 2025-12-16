@@ -1,8 +1,8 @@
 
 import { supabase } from "@/integrations/supabase/client";
 import { GenderType } from "@/types/database";
-import { 
-  createBucketIfNotExists, 
+import {
+  createBucketIfNotExists,
   uploadFileToBucket,
   getPublicUrl
 } from "@/integrations/supabase/storage";
@@ -17,23 +17,23 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
 
     try {
       setUploadingFiles(true);
-      
+
       if (role === 'company') {
         // Upload company logo
         if (fileData.companyLogo) {
           const fileExt = fileData.companyLogo.name.split('.').pop();
           const fileName = `${userId}/company_logo_${Date.now()}.${fileExt}`;
-          
+
           try {
             const uploadResult = await uploadFileToBucket(
               fileData.companyLogo,
               'profile_photos',
               fileName
             );
-              
+
             if (uploadResult.success && uploadResult.data) {
               companyLogoUrl = uploadResult.data;
-              console.log("✓ Company logo uploaded successfully");
+
             } else {
               errors.push(`Company logo: ${uploadResult.error?.message || 'Upload failed'}`);
               console.error("Company logo upload error:", uploadResult.error);
@@ -43,22 +43,22 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
             console.error("Company logo upload exception:", err);
           }
         }
-        
+
         // Upload business document
         if (fileData.businessDocument) {
           const fileExt = fileData.businessDocument.name.split('.').pop();
           const fileName = `${userId}/business_document_${Date.now()}.${fileExt}`;
-          
+
           try {
             const uploadResult = await uploadFileToBucket(
               fileData.businessDocument,
               'id_cards',
               fileName
             );
-              
+
             if (uploadResult.success && uploadResult.data) {
               businessDocumentUrl = uploadResult.data;
-              console.log("✓ Business document uploaded successfully");
+
             } else {
               errors.push(`Business document: ${uploadResult.error?.message || 'Upload failed'}`);
               console.error("Business document upload error:", uploadResult.error);
@@ -74,17 +74,17 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         if (fileData.idCard) {
           const fileExt = fileData.idCard.name.split('.').pop();
           const fileName = `${userId}/id_card_${Date.now()}.${fileExt}`;
-          
+
           try {
             const uploadResult = await uploadFileToBucket(
               fileData.idCard,
               'id_cards',
               fileName
             );
-              
+
             if (uploadResult.success && uploadResult.data) {
               idCardUrl = uploadResult.data;
-              console.log("✓ ID card uploaded successfully");
+
             } else {
               errors.push(`ID card: ${uploadResult.error?.message || 'Upload failed'}`);
               console.error("ID card upload error:", uploadResult.error);
@@ -94,22 +94,22 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
             console.error("ID card upload exception:", err);
           }
         }
-        
+
         // Upload profile photo with error handling
         if (fileData.profilePhoto) {
           const fileExt = fileData.profilePhoto.name.split('.').pop();
           const fileName = `${userId}/profile_photo_${Date.now()}.${fileExt}`;
-          
+
           try {
             const uploadResult = await uploadFileToBucket(
               fileData.profilePhoto,
               'profile_photos',
               fileName
             );
-              
+
             if (uploadResult.success && uploadResult.data) {
               profilePhotoUrl = uploadResult.data;
-              console.log("✓ Profile photo uploaded successfully");
+
             } else {
               errors.push(`Profile photo: ${uploadResult.error?.message || 'Upload failed'}`);
               console.error("Profile photo upload error:", uploadResult.error);
@@ -120,7 +120,7 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
           }
         }
       }
-      
+
       return { idCardUrl, profilePhotoUrl, companyLogoUrl, businessDocumentUrl, errors };
     } finally {
       setUploadingFiles(false);
@@ -129,21 +129,21 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
 
   const updateUserProfile = async (userId: string, formData: any, idCardUrl: string | null, profilePhotoUrl: string | null, role: string) => {
     try {
-      console.log("Updating user profile for role:", role);
-      
+
+
       // Generate unique code for promoters
       let uniqueCode = null;
       if (role === 'promoter') {
         try {
           const { generateUniqueCode } = await import('@/utils/uniqueCodeGenerator');
           uniqueCode = await generateUniqueCode();
-          console.log("✓ Generated unique code:", uniqueCode);
+
         } catch (error) {
           console.error("Failed to generate unique code:", error);
           throw new Error("Failed to generate promoter code. Please try again.");
         }
       }
-      
+
       if (role === 'company') {
         // Company role - only update basic profile fields
         const profileData = {
@@ -153,21 +153,21 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
           verification_status: 'pending',
           updated_at: new Date().toISOString(),
         };
-        
-        console.log("Company profile data to save:", profileData);
+
+
 
         const { data, error } = await supabase
           .from('profiles')
           .update(profileData)
           .eq('id', userId)
           .select();
-          
+
         if (error) {
           console.error("Error updating profile:", error);
           throw new Error(`Profile update failed: ${error.message}`);
         }
-        
-        console.log("✓ Company profile updated successfully:", data);
+
+
         return data;
       } else {
         // Promoter role - update with all personal details
@@ -188,21 +188,21 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
           verification_status: 'pending',
           updated_at: new Date().toISOString(),
         };
-        
-        console.log("Promoter profile data to save:", profileData);
+
+
 
         const { data, error } = await supabase
           .from('profiles')
           .update(profileData)
           .eq('id', userId)
           .select();
-          
+
         if (error) {
           console.error("Error updating profile:", error);
           throw new Error(`Profile update failed: ${error.message}`);
         }
-        
-        console.log("✓ Promoter profile updated successfully:", data);
+
+
         return data;
       }
     } catch (error: any) {
@@ -213,8 +213,8 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
 
   const createCompanyProfile = async (userId: string, formData: any, logoUrl: string | null) => {
     try {
-      console.log("Creating company profile for user ID:", userId);
-      
+
+
       const companyData = {
         user_id: userId,
         name: formData.companyName || '',
@@ -226,20 +226,20 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
         description: formData.companyDescription || null,
         logo_url: logoUrl,
       };
-      
-      console.log("Company data to save:", companyData);
+
+
 
       const { data, error } = await supabase
         .from('company_profiles')
         .insert([companyData])
         .select();
-        
+
       if (error) {
         console.error("Error creating company profile:", error);
         throw new Error(`Company profile creation failed: ${error.message}`);
       }
-      
-      console.log("✓ Company profile created successfully:", data);
+
+
       return data;
     } catch (error: any) {
       console.error("Exception creating company profile:", error);

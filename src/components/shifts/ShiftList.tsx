@@ -26,28 +26,28 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showBulkPayRateDialog, setShowBulkPayRateDialog] = useState(false);
-  
+
   const isAdmin = user?.role === "admin";
-  
-  const filteredShifts = shifts.filter(shift => 
+
+  const filteredShifts = shifts.filter(shift =>
     shift.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shift.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
     shift.date.includes(searchTerm)
   );
-  
+
   const handleSelectShift = (shiftId: string) => {
-    setSelectedShifts(prev => 
-      prev.includes(shiftId) 
+    setSelectedShifts(prev =>
+      prev.includes(shiftId)
         ? prev.filter(id => id !== shiftId)
         : [...prev, shiftId]
     );
   };
-  
+
   const handleRefresh = async () => {
     if (!refreshShifts) return;
-    
+
     setIsRefreshing(true);
-    
+
     try {
       await refreshShifts();
       toast.success("Data Refreshed", {
@@ -62,19 +62,19 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
       setIsRefreshing(false);
     }
   };
-  
+
   const handleBulkDelete = async () => {
     if (selectedShifts.length === 0) return;
-    
+
     setIsDeleting(true);
-    
+
     try {
-      console.log("Selected shifts for deletion:", selectedShifts);
-      
+
+
       const deletePromises = selectedShifts.map(async (id) => {
         try {
-          console.log("Deleting shift:", id);
-          
+
+
           if (deleteShift) {
             await deleteShift(id);
             return { id, success: true };
@@ -88,28 +88,28 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
           return { id, success: false, error };
         }
       });
-      
+
       const results = await Promise.all(deletePromises);
       const successful = results.filter(r => r.success).length;
-      
+
       if (successful > 0) {
         toast.success("Success", {
           description: `${successful} shift${successful > 1 ? 's' : ''} deleted successfully`
         });
-        
+
         if (refreshShifts) {
           await refreshShifts();
         }
       }
-      
+
       if (successful < selectedShifts.length) {
         toast.error("Warning", {
           description: `${selectedShifts.length - successful} shift(s) could not be deleted`
         });
       }
-      
+
       setSelectedShifts([]);
-      
+
     } catch (error) {
       console.error("Error in bulk delete operation:", error);
       toast.error("Error", {
@@ -129,7 +129,7 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
 
   return (
     <div className="space-y-4">
-      <ShiftListHeader 
+      <ShiftListHeader
         title={title}
         isAdmin={isAdmin}
         isRefreshing={isRefreshing}
@@ -137,13 +137,13 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
         refreshShifts={refreshShifts}
         deleteAllShifts={deleteAllShifts}
       />
-      
+
       <div className="flex gap-4 items-center">
-        <SearchBar 
+        <SearchBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />
-        
+
         {isAdmin && selectedShifts.length > 0 && (
           <>
             <Button
@@ -162,12 +162,12 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
           </>
         )}
       </div>
-      
+
       {filteredShifts.length === 0 ? (
         <EmptyShifts />
       ) : (
-        <ShiftGrid 
-          shifts={filteredShifts} 
+        <ShiftGrid
+          shifts={filteredShifts}
           selectedShifts={isAdmin ? selectedShifts : undefined}
           onSelectShift={isAdmin ? handleSelectShift : undefined}
         />
