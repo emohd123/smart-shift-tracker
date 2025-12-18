@@ -2,7 +2,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Award, FileText, Loader2, AlertCircle, Crown, Users, Download, Eye, Search, RefreshCw, Sparkles, CheckCircle2, ArrowLeft, Clock, MapPin, Building2, Calendar, ChevronRight, Checkbox } from "lucide-react";
+import { Award, FileText, Loader2, AlertCircle, Crown, Users, Search, Sparkles, CheckCircle2, ArrowLeft, Clock, MapPin, Building2, Calendar, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
@@ -39,7 +39,9 @@ interface ShiftEntry {
   company_name: string;
   company_id: string;
   company_logo_url?: string | null;
-  company_registration_id?: string | null;
+  company_registration_number?: string | null;
+  company_phone_number?: string | null;
+  company_email?: string | null;
   total_hours: number;
   status: string;
 }
@@ -74,45 +76,34 @@ export default function AdminCertificatesPage() {
     try {
       setLoading(true);
       
-      // First get all promoter user IDs from user_roles table
+      // Fetch promoter roles
       const { data: promoterRoles, error: rolesError } = await supabase
         .from('user_roles')
         .select('user_id')
         .eq('role', 'promoter');
 
-      if (rolesError) {
-        console.error('Error fetching promoter roles:', rolesError);
-        throw rolesError;
-      }
+      if (rolesError) throw rolesError;
 
       if (!promoterRoles || promoterRoles.length === 0) {
-        console.log('No promoters found in user_roles table');
         setPromoters([]);
         setLoading(false);
         return;
       }
 
       const promoterIds = promoterRoles.map(r => r.user_id);
-      console.log('Found promoter IDs:', promoterIds);
 
-      // Fetch profiles for these promoters with all needed details
+      // Fetch profiles for these promoters
       const { data, error } = await supabase
         .from('profiles')
         .select('id, full_name, unique_code, profile_photo_url, age, nationality, phone_number, email')
         .in('id', promoterIds)
         .order('full_name');
 
-      if (error) {
-        console.error('Error fetching profiles:', error);
-        throw error;
-      }
-
-      console.log('Fetched promoter profiles:', data);
+      if (error) throw error;
 
       const promoterList: PromoterOption[] = [];
       
       for (const p of data || []) {
-        // Get time logs for total hours and unique shift IDs (more reliable than shift_assignments)
         const { data: timeLogs, error: timeError } = await supabase
           .from('time_logs')
           .select('shift_id, total_hours')
@@ -122,13 +113,9 @@ export default function AdminCertificatesPage() {
           console.error('Error fetching time logs for', p.id, timeError);
         }
         
-        // Count unique shifts from time_logs
         const uniqueShiftIds = new Set(timeLogs?.map(log => log.shift_id).filter(Boolean) || []);
         const shiftCount = uniqueShiftIds.size;
-        
         const totalHours = timeLogs?.reduce((sum, log) => sum + (log.total_hours || 0), 0) || 0;
-
-        console.log(`Promoter ${p.full_name}: ${shiftCount} unique shifts from time_logs, ${totalHours} hours`);
 
         promoterList.push({
           id: p.id,
@@ -156,68 +143,74 @@ export default function AdminCertificatesPage() {
   const fetchPromoterShifts = async (promoterId: string) => {
     try {
       setLoadingShifts(true);
-      console.log('Fetching shifts for promoter:', promoterId);
-      
-      // Get shifts from time_logs first (more reliable - shows actual worked shifts)
+
       const { data: timeLogs, error: timeLogsError } = await supabase
         .from('time_logs')
         .select('shift_id, total_hours, check_in_time, check_out_time')
         .eq('user_id', promoterId);
 
-      console.log('Time logs found:', timeLogs, 'Error:', timeLogsError);
-
       if (timeLogsError) throw timeLogsError;
-      
+
       if (!timeLogs || timeLogs.length === 0) {
-        console.log('No time logs found for promoter');
         setShifts([]);
         setLoadingShifts(false);
         return;
       }
 
-      // Get unique shift IDs from time_logs
       const shiftIds = [...new Set(timeLogs.map(t => t.shift_id).filter(Boolean))];
-      console.log('Unique shift IDs from time_logs:', shiftIds);
 
       if (shiftIds.length === 0) {
-        console.log('No shift IDs found in time logs');
         setShifts([]);
         setLoadingShifts(false);
         return;
       }
-      
-      // Fetch shift details
+
       const { data: shiftsData, error: shiftsError } = await supabase
         .from('shifts')
         .select('id, title, date, start_time, end_time, location, company_id, status')
         .in('id', shiftIds)
         .order('date', { ascending: false });
 
-      console.log('Shifts data:', shiftsData, 'Error:', shiftsError);
-
       if (shiftsError) throw shiftsError;
 
-      // Get company details including logo and registration
+      // Get company details including logo, registration, phone, email
       const companyIds = [...new Set(shiftsData?.map(s => s.company_id).filter(Boolean) || [])];
-      let companyMap = new Map<string, { name: string; logo_url: string | null; registration_id: string | null }>();
+      
+      let companyMap = new Map<string, { 
+        name: string; 
+        logo_url: string | null; 
+        registration_number: string | null;
+        phone_number: string | null;
+        email: string | null;
+      }>();
       
       if (companyIds.length > 0) {
+        // Get company_profiles for name, logo, registration
         const { data: companies } = await supabase
           .from('company_profiles')
           .select('user_id, name, logo_url, registration_id')
           .in('user_id', companyIds);
 
+        // Get profiles for phone and email
+        const { data: companyUsers } = await supabase
+          .from('profiles')
+          .select('id, phone_number, email')
+          .in('id', companyIds);
+
+        const companyUserMap = new Map(companyUsers?.map(u => [u.id, u]) || []);
+
         companies?.forEach(c => {
+          const userProfile = companyUserMap.get(c.user_id);
           companyMap.set(c.user_id, {
             name: c.name,
             logo_url: c.logo_url,
-            registration_id: c.registration_id
+            registration_number: c.registration_id || null,
+            phone_number: userProfile?.phone_number || null,
+            email: userProfile?.email || null
           });
         });
-        console.log('Company map:', Object.fromEntries(companyMap));
       }
 
-      // Calculate total hours per shift from time_logs
       const timeLogMap = new Map<string, number>();
       timeLogs.forEach(log => {
         if (log.shift_id) {
@@ -226,7 +219,6 @@ export default function AdminCertificatesPage() {
         }
       });
 
-      // Also check shift_assignments for status if available
       const { data: assignments } = await supabase
         .from('shift_assignments')
         .select('shift_id, status')
@@ -239,7 +231,7 @@ export default function AdminCertificatesPage() {
         const assignmentStatus = assignmentStatusMap.get(s.id);
         const hoursWorked = timeLogMap.get(s.id) || 0;
         const companyInfo = companyMap.get(s.company_id);
-        
+
         return {
           id: s.id,
           title: s.title || 'Untitled Shift',
@@ -250,13 +242,14 @@ export default function AdminCertificatesPage() {
           company_name: companyInfo?.name || 'Unknown Company',
           company_id: s.company_id,
           company_logo_url: companyInfo?.logo_url || null,
-          company_registration_id: companyInfo?.registration_id || null,
+          company_registration_number: companyInfo?.registration_number || null,
+          company_phone_number: companyInfo?.phone_number || null,
+          company_email: companyInfo?.email || null,
           total_hours: hoursWorked,
           status: assignmentStatus || s.status || 'completed'
         };
       }) || [];
 
-      console.log('Final shift entries:', shiftEntries);
       setShifts(shiftEntries);
     } catch (error) {
       console.error('Error fetching shifts:', error);
@@ -307,7 +300,9 @@ export default function AdminCertificatesPage() {
             name: shift.company_name,
             logo_url: shift.company_logo_url || null,
             website: null,
-            registration_id: shift.company_registration_id || null,
+            registration_number: shift.company_registration_number || null,
+            phone_number: shift.company_phone_number || null,
+            email: shift.company_email || null,
             contact_person: null
           },
           shifts: [],
@@ -365,13 +360,9 @@ export default function AdminCertificatesPage() {
         }
       };
 
-      console.log('Generating PDF with data:', certData);
-      
-      // Generate the PDF blob
       const pdfBlob = await generateMultiCompanyPDF(certData);
-      console.log('PDF blob generated, size:', pdfBlob.size);
       
-      // Always trigger immediate download for admin
+      // Trigger immediate download
       const downloadUrl = URL.createObjectURL(pdfBlob);
       const downloadLink = document.createElement('a');
       downloadLink.href = downloadUrl;
@@ -381,7 +372,7 @@ export default function AdminCertificatesPage() {
       document.body.removeChild(downloadLink);
       URL.revokeObjectURL(downloadUrl);
       
-      // Try to upload to storage (optional - don't fail if it doesn't work)
+      // Try to upload to storage
       let pdfUrl = null;
       try {
         const pdfFile = new File([pdfBlob], `certificate-${referenceNumber}.pdf`, { type: 'application/pdf' });
@@ -394,7 +385,7 @@ export default function AdminCertificatesPage() {
         console.warn('Failed to upload certificate to storage:', uploadError);
       }
 
-      // Save certificate record in database
+      // Save certificate record
       const { error: certError } = await supabase
         .from('certificates')
         .insert({
