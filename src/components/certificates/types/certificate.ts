@@ -1,4 +1,4 @@
-﻿export type Certificate = {
+export type Certificate = {
   id: string;
   reference_number: string;
   issue_date: string;
@@ -104,8 +104,8 @@ export interface CompanyWorkEntry {
     logo_url: string | null;
     website?: string | null;
     email?: string | null;
-    phone?: string | null;
-    registration_id?: string | null;
+    phone_number?: string | null;
+    registration_number?: string | null;
     contact_person?: string | null;
   };
   shifts: {
@@ -129,4 +129,5 @@ export interface MultiCompanyCertificate {
   companies: CompanyWorkEntry[];
   grandTotalHours: number;
   promoter?: PromoterDetails;
+  signature?: string; // Base64 signature image
 }

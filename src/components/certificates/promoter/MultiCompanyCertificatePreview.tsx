@@ -3,34 +3,13 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Building2, Calendar, Clock, MapPin } from "lucide-react";
 import { format } from "date-fns";
 import QRCode from "react-qr-code";
+import { MultiCompanyCertificate, CompanyWorkEntry } from "../types/certificate";
 
 // Helper to format hours as whole numbers
 const formatHours = (hours: number) => Math.round(hours);
 
-export interface CompanyWorkEntry {
-  company: {
-    id: string;
-    name: string;
-    logo_url: string | null;
-    website?: string;
-    email?: string;
-    phone?: string;
-  };
-  shifts: {
-    id: string;
-    title: string;
-    dateFrom: string;
-    dateTo: string;
-    timeFrom: string;
-    timeTo: string;
-    totalHours: number;
-    location?: string;
-    approvedAt: string;
-  }[];
-  totalHours: number;
-}
-
-import { MultiCompanyCertificate } from "../types/certificate";
+// Re-export for backward compatibility
+export type { CompanyWorkEntry };
 
 interface MultiCompanyCertificatePreviewProps {
   data: MultiCompanyCertificate;
@@ -82,91 +61,90 @@ export default function MultiCompanyCertificatePreview({ data }: MultiCompanyCer
                 )}
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
-                    <Building2 className="h-5 w-5 text-primary" />
-                    <h3 className="text-lg font-semibold">{companyEntry.company.name}</h3>
+                    <Building2 className="h-4 w-4 text-primary" />
+                    <h3 className="font-semibold text-lg">{companyEntry.company.name}</h3>
                   </div>
-                  <div className="text-sm text-muted-foreground space-y-1 mt-1">
-                    {companyEntry.company.website && (
-                      <p>Website: {companyEntry.company.website}</p>
-                    )}
-                    {companyEntry.company.email && (
-                      <p>Email: {companyEntry.company.email}</p>
-                    )}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold text-primary">{formatHours(companyEntry.totalHours)}h</p>
-                  <p className="text-xs text-muted-foreground">Total Hours</p>
+                  {companyEntry.company.website && (
+                    <p className="text-xs text-muted-foreground">{companyEntry.company.website}</p>
+                  )}
+                  <Badge variant="secondary" className="mt-2">
+                    {formatHours(companyEntry.totalHours)} Hours Total
+                  </Badge>
                 </div>
               </div>
 
-              {/* Shifts List */}
-              <div className="space-y-3">
-                {companyEntry.shifts.map((shift, shiftIdx) => (
-                  <div key={shiftIdx} className="bg-background rounded-md p-3 space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-sm">{shift.title}</h4>
-                        <div className="flex flex-wrap gap-3 mt-2 text-xs text-muted-foreground">
-                          <div className="flex items-center gap-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>{format(new Date(shift.dateFrom), 'MMM dd')} - {format(new Date(shift.dateTo), 'MMM dd, yyyy')}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            <span>{shift.timeFrom} - {shift.timeTo}</span>
-                          </div>
-                          {shift.location && (
+              {/* Shifts Table */}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-muted-foreground">Work Assignments</h4>
+                <div className="rounded-md border">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50">
+                      <tr>
+                        <th className="text-left p-2 font-medium">Event/Campaign</th>
+                        <th className="text-left p-2 font-medium">Date</th>
+                        <th className="text-left p-2 font-medium">Location</th>
+                        <th className="text-right p-2 font-medium">Hours</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {companyEntry.shifts.map((shift, shiftIdx) => (
+                        <tr key={shiftIdx} className="border-t">
+                          <td className="p-2">{shift.title}</td>
+                          <td className="p-2">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {format(new Date(shift.dateFrom), 'MMM dd, yyyy')}
+                            </div>
+                          </td>
+                          <td className="p-2">
                             <div className="flex items-center gap-1">
                               <MapPin className="h-3 w-3" />
-                              <span>{shift.location}</span>
+                              {shift.location || 'On-site'}
                             </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-primary">{formatHours(shift.totalHours)}h</p>
-                        <Badge variant="outline" className="text-xs mt-1 bg-green-500/10 text-green-600 border-green-500/20">
-                          <CheckCircle className="h-2.5 w-2.5 mr-1" />
-                          Approved
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                          </td>
+                          <td className="p-2 text-right font-medium">
+                            <div className="flex items-center justify-end gap-1">
+                              <Clock className="h-3 w-3" />
+                              {formatHours(shift.totalHours)}h
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Total Summary */}
-        <div className="border-t pt-4 flex items-center justify-between bg-primary/5 p-4 rounded-lg">
+        {/* Summary */}
+        <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border border-primary/20">
           <div>
-            <p className="text-sm text-muted-foreground">Grand Total Hours</p>
-            <p className="text-3xl font-bold text-primary">{formatHours(data.grandTotalHours)} hours</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Across {data.companies.length} {data.companies.length === 1 ? 'Company' : 'Companies'}
+            <p className="text-sm text-muted-foreground">Total Work Experience</p>
+            <p className="text-2xl font-bold text-primary">{formatHours(data.grandTotalHours)} Hours</p>
+            <p className="text-xs text-muted-foreground">
+              Across {data.companies.length} organization{data.companies.length > 1 ? 's' : ''}
             </p>
           </div>
+          
           {!isPreview && (
             <div className="text-center">
-              <QRCode value={verificationUrl} size={80} />
-              <p className="text-xs text-muted-foreground mt-2">Scan to verify</p>
+              <div className="bg-white p-2 rounded border">
+                <QRCode value={verificationUrl} size={80} />
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Scan to verify</p>
             </div>
           )}
         </div>
 
-        {/* Footer - Only show when not preview */}
-        {!isPreview && (
-          <div className="text-center pt-4 border-t">
-            <p className="text-xs text-muted-foreground">
-              Reference Number: <span className="font-mono font-semibold">{data.referenceNumber}</span>
-            </p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Verify at: {window.location.origin}/verify-certificate
-            </p>
-          </div>
-        )}
+        {/* Reference */}
+        <div className="text-center text-xs text-muted-foreground border-t pt-4">
+          <p>Certificate Reference: {isPreview ? 'PREVIEW-ONLY' : data.referenceNumber}</p>
+          <p className="mt-1">
+            This certificate was generated digitally by Smart Shift Tracker.
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

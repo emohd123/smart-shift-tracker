@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { generateMultiCompanyPDF } from "../utils/multiCompanyPdfGenerator";
 import { uploadFileToBucket } from "@/integrations/supabase/storage";
 import CertificateDateFilter from "./CertificateDateFilter";
+import SignatureDialog from "../SignatureDialog";
 
 export default function PromoterCertificatesPage() {
   const [approvedWork, setApprovedWork] = useState<CompanyWorkEntry[]>([]);
@@ -26,6 +27,8 @@ export default function PromoterCertificatesPage() {
   const [dateTo, setDateTo] = useState<Date | null>(null);
   const [profile, setProfile] = useState<{ full_name: string } | null>(null);
   const [activeTab, setActiveTab] = useState("generate");
+  const [showSignatureDialog, setShowSignatureDialog] = useState(false);
+  const [pendingSignature, setPendingSignature] = useState<string | null>(null);
   const { isProcessing, initiateCertificatePayment } = useCertificatePayment();
 
   useEffect(() => {
@@ -84,13 +87,14 @@ export default function PromoterCertificatesPage() {
         throw new Error('Certificate data not found');
       }
 
-      // Generate PDF from stored data
+      // Generate PDF from stored data (including signature if present)
       const certData: MultiCompanyCertificate = {
         referenceNumber: certificate.reference_number,
         promoterName: storedData.promoterName,
         issueDate: certificate.issue_date,
         companies: storedData.companies,
-        grandTotalHours: certificate.total_hours
+        grandTotalHours: certificate.total_hours,
+        signature: storedData.signature || undefined,
       };
 
       const pdfBlob = await generateMultiCompanyPDF(certData);
@@ -163,14 +167,22 @@ export default function PromoterCertificatesPage() {
 
       if (shiftsError) throw shiftsError;
 
-      // Fetch company profiles separately
+      // Fetch company profiles separately with all needed fields
       const companyIds = [...new Set(shifts?.map(s => s.company_id) || [])];
       const { data: companies, error: companiesError } = await supabase
         .from('company_profiles')
-        .select('user_id, name, logo_url, website')
+        .select('user_id, name, logo_url, website, registration_id')
         .in('user_id', companyIds);
 
       if (companiesError) throw companiesError;
+
+      // Fetch company user profiles for phone and email
+      const { data: companyUsers } = await supabase
+        .from('profiles')
+        .select('id, phone_number, email')
+        .in('id', companyIds);
+
+      const companyUserMap = new Map(companyUsers?.map(u => [u.id, u]) || []);
 
       // Fetch time_logs separately for each shift (no direct FK relationship)
       const { data: timeLogs } = await supabase
@@ -200,12 +212,16 @@ export default function PromoterCertificatesPage() {
         if (!company) return;
 
         if (!workMap.has(shift.company_id)) {
+          const companyUser = companyUserMap.get(shift.company_id);
           workMap.set(shift.company_id, {
             company: {
               id: shift.company_id,
               name: company.name,
               logo_url: company.logo_url,
-              website: company.website
+              website: company.website,
+              registration_number: company.registration_id || null,
+              phone_number: companyUser?.phone_number || null,
+              email: companyUser?.email || null
             },
             shifts: [],
             totalHours: 0
@@ -239,7 +255,25 @@ export default function PromoterCertificatesPage() {
     }
   };
 
-  const handlePayAndGenerate = async () => {
+  // First show signature dialog before payment
+  const handleRequestSignature = () => {
+    const filteredWork = getFilteredWork();
+    
+    if (filteredWork.length === 0) {
+      toast.error('No approved work found in selected date range');
+      return;
+    }
+
+    setShowSignatureDialog(true);
+  };
+
+  // Called after signature is provided
+  const handleSignatureComplete = (signatureBase64: string) => {
+    setPendingSignature(signatureBase64);
+    handlePayAndGenerate(signatureBase64);
+  };
+
+  const handlePayAndGenerate = async (signature?: string) => {
     const filteredWork = getFilteredWork();
     
     if (filteredWork.length === 0) {
@@ -277,10 +311,11 @@ export default function PromoterCertificatesPage() {
           total_hours: grandTotalHours,
           status: 'pending',
           paid: false,
-          // Store data needed for PDF generation as JSON
+          // Store data needed for PDF generation as JSON (including signature)
           time_period: JSON.stringify({
             promoterName: profile?.full_name || 'Unknown',
             companies: filteredWork,
+            signature: signature || pendingSignature || null,
           })
         })
         .select()
@@ -404,7 +439,7 @@ export default function PromoterCertificatesPage() {
                     />
               <div className="mt-6 flex justify-center">
                 <Button 
-                  onClick={handlePayAndGenerate}
+                  onClick={handleRequestSignature}
                   disabled={generating || isProcessing}
                   className="w-full max-w-md bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-500"
                   size="lg"
@@ -417,7 +452,7 @@ export default function PromoterCertificatesPage() {
                   ) : (
                     <>
                       <CreditCard className="h-4 w-4 mr-2" /> 
-                      Pay $4.99 & Generate Certificate
+                      Sign & Pay $4.99 to Generate Certificate
                     </>
                   )}
                 </Button>
@@ -446,6 +481,14 @@ export default function PromoterCertificatesPage() {
           <MyCertificates />
         </TabsContent>
       </Tabs>
+
+      {/* Signature Dialog */}
+      <SignatureDialog
+        open={showSignatureDialog}
+        onOpenChange={setShowSignatureDialog}
+        onSignatureComplete={handleSignatureComplete}
+        promoterName={profile?.full_name || 'Part-Timer'}
+      />
     </div>
   );
 }

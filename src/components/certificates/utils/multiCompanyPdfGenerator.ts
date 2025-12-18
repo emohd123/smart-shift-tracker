@@ -34,51 +34,71 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
   let yPos = 20;
 
   const shortRef = shortenRefNumber(data.referenceNumber);
+  const promoter = data.promoter;
+  
+  // Format issue date - use current date if not provided
+  const dateToFormat = data.issueDate ? new Date(data.issueDate) : new Date();
+  const issueDisplay = dateToFormat.toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
+  
+  // Get promoter unique code
+  const partTimerIdDisplay = promoter?.unique_code || data.referenceNumber.split('-')[0] || 'PT-' + shortRef;
 
   // ===== HEADER =====
-  doc.setFillColor(99, 102, 241);
-  doc.rect(0, 0, pageWidth, 48, 'F');
+  doc.setFillColor(92, 75, 241);
+  doc.rect(0, 0, pageWidth, 55, 'F');
+  doc.setFillColor(129, 140, 248);
+  doc.rect(0, 55, pageWidth, 3, 'F');
 
-  doc.setFillColor(79, 70, 229);
-  doc.rect(0, 48, pageWidth, 2, 'F');
-
+  // Title
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
-  doc.text('WORK EXPERIENCE CERTIFICATE', pageWidth / 2, 22, { align: 'center' });
+  doc.text('WORK EXPERIENCE CERTIFICATE', pageWidth / 2, 20, { align: 'center' });
 
-  doc.setFontSize(12);
+  // Subtitle
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text('Official Documentation of Professional Employment', pageWidth / 2, 34, { align: 'center' });
+  doc.text('Official Documentation of Professional Employment', pageWidth / 2, 30, { align: 'center' });
 
+  // Left side - Issue Date and Part Timer ID
+  doc.setFontSize(8);
+  doc.setTextColor(220, 220, 255);
+  doc.text('Issue Date: ' + issueDisplay, 16, 42);
+  doc.text('Part Timer ID: ' + partTimerIdDisplay, 16, 48);
+
+  // Platform name
   doc.setFontSize(9);
   doc.setTextColor(200, 200, 255);
-  doc.text('Smart Shift Tracker - Workforce Management Platform', pageWidth / 2, 44, { align: 'center' });
+  doc.text('Smart Shift Tracker - Workforce Management Platform', pageWidth / 2, 50, { align: 'center' });
 
   doc.setTextColor(0, 0, 0);
-  yPos = 58;
+  yPos = 70;
 
   // ===== PROMOTER INFO BOX =====
-  const promoter = data.promoter;
-  const boxHeight = 58;
+  const boxHeight = 52;
 
-  doc.setFillColor(250, 250, 252);
+  doc.setFillColor(255, 255, 255);
   doc.roundedRect(12, yPos, pageWidth - 24, boxHeight, 3, 3, 'F');
   doc.setDrawColor(220, 220, 230);
-  doc.setLineWidth(0.4);
+  doc.setLineWidth(0.5);
   doc.roundedRect(12, yPos, pageWidth - 24, boxHeight, 3, 3, 'S');
 
-  let textStartX = 20;
+  let textStartX = 22;
 
+  // Profile Photo
   if (promoter?.profile_photo_url) {
     try {
       const photoBase64 = await loadImageAsBase64(promoter.profile_photo_url);
       if (photoBase64) {
         doc.setDrawColor(99, 102, 241);
-        doc.setLineWidth(1.2);
-        doc.roundedRect(17, yPos + 5, 46, 46, 2, 2, 'S');
-        doc.addImage(photoBase64, 'JPEG', 19, yPos + 7, 42, 42);
-        textStartX = 70;
+        doc.setLineWidth(1.5);
+        doc.roundedRect(18, yPos + 6, 40, 40, 2, 2, 'S');
+        doc.addImage(photoBase64, 'JPEG', 20, yPos + 8, 36, 36);
+        textStartX = 66;
       }
     } catch {
       // Continue without photo
@@ -91,41 +111,33 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
   doc.setTextColor(30, 41, 59);
   doc.text(data.promoterName, textStartX, yPos + 14);
 
-  // Badges Row - with more spacing from name
+  // Badges Row
   let badgeX = textStartX;
   const badgeY = yPos + 20;
 
+  // PART-TIMER badge
   doc.setFillColor(16, 185, 129);
-  doc.roundedRect(badgeX, badgeY, 36, 8, 2, 2, 'F');
+  doc.roundedRect(badgeX, badgeY, 38, 8, 3, 3, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
-  doc.text('PART-TIMER', badgeX + 18, badgeY + 5.5, { align: 'center' });
-  badgeX += 39;
+  doc.text('PART-TIMER', badgeX + 19, badgeY + 5.5, { align: 'center' });
+  badgeX += 42;
 
+  // VERIFIED badge
   doc.setFillColor(59, 130, 246);
-  doc.roundedRect(badgeX, badgeY, 28, 8, 2, 2, 'F');
-  doc.text('VERIFIED', badgeX + 14, badgeY + 5.5, { align: 'center' });
-  badgeX += 31;
-
-  if (promoter?.unique_code) {
-    doc.setFillColor(99, 102, 241);
-    const codeText = promoter.unique_code;
-    doc.setFontSize(7);
-    const codeWidth = doc.getTextWidth(codeText) + 8;
-    doc.roundedRect(badgeX, badgeY, codeWidth, 8, 2, 2, 'F');
-    doc.text(codeText, badgeX + codeWidth / 2, badgeY + 5.5, { align: 'center' });
-  }
+  doc.roundedRect(badgeX, badgeY, 32, 8, 3, 3, 'F');
+  doc.text('VERIFIED', badgeX + 16, badgeY + 5.5, { align: 'center' });
 
   // Details Row 1 - Nationality & Age
-  doc.setTextColor(60, 60, 70);
+  doc.setTextColor(80, 80, 90);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   let row1Parts: string[] = [];
   if (promoter?.nationality) row1Parts.push('Nationality: ' + promoter.nationality);
   if (promoter?.age) row1Parts.push('Age: ' + promoter.age + ' years');
   if (row1Parts.length > 0) {
-    doc.text(row1Parts.join('   •   '), textStartX, yPos + 38);
+    doc.text(row1Parts.join('   •   '), textStartX, yPos + 36);
   }
 
   // Details Row 2 - Contact Info
@@ -133,110 +145,107 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
   if (promoter?.phone_number) row2Parts.push('Phone: ' + promoter.phone_number);
   if (promoter?.email) row2Parts.push('Email: ' + promoter.email);
   if (row2Parts.length > 0) {
-    doc.text(row2Parts.join('   •   '), textStartX, yPos + 48);
+    doc.text(row2Parts.join('   •   '), textStartX, yPos + 45);
   }
 
-  // Right side panel - Issue Date & Cert Number
-  const rightPanelX = pageWidth - 55;
-  
-  // Issue date section
-  doc.setFillColor(240, 240, 245);
-  doc.roundedRect(rightPanelX, yPos + 5, 45, 22, 2, 2, 'F');
-  
-  doc.setTextColor(80, 80, 90);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.text('ISSUE DATE', rightPanelX + 22.5, yPos + 12, { align: 'center' });
-  
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(40, 40, 50);
-  const issueDate = new Date(data.issueDate).toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
-  });
-  doc.text(issueDate, rightPanelX + 22.5, yPos + 21, { align: 'center' });
+  yPos += boxHeight + 10;
 
-  // Certificate number section
-  doc.setFillColor(240, 240, 245);
-  doc.roundedRect(rightPanelX, yPos + 30, 45, 22, 2, 2, 'F');
-  
-  doc.setTextColor(80, 80, 90);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.text('CERT NO.', rightPanelX + 22.5, yPos + 37, { align: 'center' });
-  
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(99, 102, 241);
-  doc.text(shortRef, rightPanelX + 22.5, yPos + 47, { align: 'center' });
+  // ===== WORK EXPERIENCE SUMMARY BAR =====
+  doc.setFillColor(241, 245, 249);
+  doc.roundedRect(12, yPos, pageWidth - 24, 24, 4, 4, 'F');
+  doc.setDrawColor(203, 213, 225);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(12, yPos, pageWidth - 24, 24, 4, 4, 'S');
 
-  yPos += boxHeight + 8;
-
-  // ===== WORK EXPERIENCE SUMMARY =====
-  doc.setFillColor(30, 41, 59);
-  doc.roundedRect(12, yPos, pageWidth - 24, 22, 3, 3, 'F');
-
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(100, 116, 139);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'normal');
-  doc.text('Total Work Experience:', 20, yPos + 14);
+  doc.text('Total Work Experience:', 22, yPos + 15);
 
+  const summaryBadgeWidth = 48;
+  const summaryBadgeX = pageWidth / 2 - summaryBadgeWidth / 2;
   doc.setFillColor(16, 185, 129);
-  doc.roundedRect(82, yPos + 5, 50, 12, 2, 2, 'F');
-  doc.setFontSize(13);
+  doc.roundedRect(summaryBadgeX, yPos + 7, summaryBadgeWidth, 12, 4, 4, 'F');
+  doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.text(Math.round(data.grandTotalHours) + ' HOURS', 107, yPos + 14, { align: 'center' });
+  doc.setFontSize(10);
+  doc.text(Math.round(data.grandTotalHours) + ' HOURS', summaryBadgeX + summaryBadgeWidth / 2, yPos + 15, { align: 'center' });
 
-  doc.setFontSize(11);
+  doc.setTextColor(100, 116, 139);
   doc.setFont('helvetica', 'normal');
-  doc.text('across ' + data.companies.length + ' Organization' + (data.companies.length > 1 ? 's' : ''), pageWidth - 20, yPos + 14, { align: 'right' });
+  doc.setFontSize(10);
+  doc.text('across ' + data.companies.length + ' Organization' + (data.companies.length > 1 ? 's' : ''), pageWidth - 20, yPos + 15, { align: 'right' });
 
-  yPos += 30;
+  yPos += 34;
+  doc.setTextColor(0, 0, 0);
 
   // ===== COMPANIES SECTION =====
   for (let companyIndex = 0; companyIndex < data.companies.length; companyIndex++) {
     const company = data.companies[companyIndex];
 
-    if (yPos > pageHeight - 80) {
+    if (yPos > pageHeight - 110) {
       doc.addPage();
-      yPos = 20;
+      yPos = 24;
     }
 
-    doc.setFillColor(99, 102, 241);
-    doc.roundedRect(12, yPos, pageWidth - 24, 20, 2, 2, 'F');
+    const cardTop = yPos;
+    const cardWidth = pageWidth - 24;
+    const headerHeight = 28;
 
-    let companyNameX = 20;
+    doc.setFillColor(99, 102, 241);
+    doc.roundedRect(12, cardTop, cardWidth, headerHeight, 4, 4, 'F');
+
+    let contentX = 24;
 
     if (company.company.logo_url) {
       try {
         const logoBase64 = await loadImageAsBase64(company.company.logo_url);
         if (logoBase64) {
           doc.setFillColor(255, 255, 255);
-          doc.roundedRect(15, yPos + 3, 14, 14, 1, 1, 'F');
-          doc.addImage(logoBase64, 'PNG', 16, yPos + 4, 12, 12);
-          companyNameX = 34;
+          doc.roundedRect(18, cardTop + 6, 16, 16, 2, 2, 'F');
+          doc.addImage(logoBase64, 'PNG', 19, cardTop + 7, 14, 14);
+          contentX = 42;
         }
       } catch {
         // Continue without logo
       }
     }
 
+    const companyName = company.company.name;
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(13);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text(company.company.name, companyNameX, yPos + 13);
+    doc.text(companyName, contentX, cardTop + 12);
 
+    const regNumber = company.company.registration_number || 'Reg Number';
+    const regWidth = Math.min(doc.getTextWidth(regNumber) + 10, 46);
+    const regX = contentX + doc.getTextWidth(companyName) + 6;
+    doc.setFillColor(16, 185, 129);
+    doc.roundedRect(regX, cardTop + 6, regWidth, 10, 3, 3, 'F');
+    doc.setFontSize(8);
+    doc.text(regNumber.length > 12 ? regNumber.slice(0, 11) + '…' : regNumber, regX + regWidth / 2, cardTop + 13, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(224, 231, 255);
+    doc.setFontSize(8);
+    const phoneValue = company.company.phone_number || '—';
+    const emailValue = company.company.email || '—';
+    doc.text('Phone number: ' + phoneValue, contentX, cardTop + 20);
+    doc.text('Email: ' + emailValue, contentX + 58, cardTop + 20);
+
+    const hoursBadgeWidth = 38;
+    const cardRight = 12 + cardWidth;
+    const hoursBadgeX = cardRight - hoursBadgeWidth - 14;
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(pageWidth - 50, yPos + 5, 32, 10, 2, 2, 'F');
+    doc.roundedRect(hoursBadgeX, cardTop + 8, hoursBadgeWidth, 12, 4, 4, 'F');
+    doc.setDrawColor(129, 140, 248);
+    doc.roundedRect(hoursBadgeX, cardTop + 8, hoursBadgeWidth, 12, 4, 4, 'S');
     doc.setTextColor(99, 102, 241);
-    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text(Math.round(company.totalHours) + ' hrs', pageWidth - 34, yPos + 12, { align: 'center' });
+    doc.setFontSize(9);
+    doc.text(Math.round(company.totalHours) + ' Hours', hoursBadgeX + hoursBadgeWidth / 2, cardTop + 16, { align: 'center' });
 
-    yPos += 24;
-
+    const tableStartY = cardTop + headerHeight + 12;
     const tableData = company.shifts.map(shift => [
       shift.title,
       new Date(shift.dateFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -245,80 +254,111 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
     ]);
 
     autoTable(doc, {
-      startY: yPos,
+      startY: tableStartY,
       head: [['Event / Campaign', 'Date', 'Location', 'Hours']],
       body: tableData,
-      theme: 'striped',
+      tableWidth: cardWidth - 20,
+      margin: { left: 20, right: 20 },
+      theme: 'grid',
       headStyles: {
-        fillColor: [79, 70, 229],
+        fillColor: [59, 130, 246],
         textColor: [255, 255, 255],
         fontSize: 9,
         fontStyle: 'bold',
-        halign: 'left',
-        cellPadding: 5
+        halign: 'center',
+        cellPadding: 5,
+        lineWidth: 0.5,
+        lineColor: [37, 99, 235]
       },
       styles: {
         fontSize: 9,
         cellPadding: 5,
-        halign: 'left',
-        textColor: [40, 40, 50]
+        halign: 'center',
+        textColor: [15, 23, 42],
+        lineColor: [203, 213, 225],
+        lineWidth: 0.4
+      },
+      bodyStyles: {
+        fillColor: [255, 255, 255]
+      },
+      alternateRowStyles: {
+        fillColor: [238, 242, 255]
       },
       columnStyles: {
-        0: { cellWidth: 65 },
-        1: { cellWidth: 35, halign: 'center' },
+        0: { cellWidth: 60 },
+        1: { cellWidth: 40 },
         2: { cellWidth: 55 },
-        3: { cellWidth: 22, halign: 'center', fontStyle: 'bold' }
-      },
-      margin: { left: 12, right: 12 },
-      alternateRowStyles: {
-        fillColor: [248, 250, 252]
+        3: { cellWidth: 25, fontStyle: 'bold' }
       }
     });
 
-    yPos = (doc as any).lastAutoTable?.finalY || yPos + 30;
-    yPos += 14;
+    const tableBottom = (doc as any).lastAutoTable?.finalY || tableStartY + 24;
+    const cardBottom = tableBottom + 10;
+    doc.setDrawColor(191, 219, 254);
+    doc.setLineWidth(0.8);
+    doc.roundedRect(12, cardTop, cardWidth, cardBottom - cardTop, 4, 4, 'S');
+
+    yPos = cardBottom + 14;
+    doc.setTextColor(0, 0, 0);
   }
 
-  // ===== DECLARATION =====
-  if (yPos > pageHeight - 50) {
+  // ===== PART-TIMER ACKNOWLEDGEMENT =====
+  if (yPos > pageHeight - 70) {
     doc.addPage();
     yPos = 30;
   }
 
-  yPos += 6;
+  doc.setTextColor(60, 60, 70);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Part-Timer Acknowledgement', 12, yPos);
+  yPos += 8;
 
+  // Add signature if provided
+  if (data.signature) {
+    try {
+      doc.text('Signature:', 12, yPos);
+      doc.addImage(data.signature, 'PNG', 40, yPos - 8, 50, 20);
+      yPos += 16;
+    } catch {
+      doc.text('Signature: _______________________', 12, yPos);
+      yPos += 16;
+    }
+  } else {
+    doc.text('Signature: _______________________', 12, yPos);
+    yPos += 16;
+  }
+
+  // ===== DECLARATION BOX =====
   doc.setFillColor(240, 253, 244);
   doc.setDrawColor(34, 197, 94);
-  doc.setLineWidth(0.6);
-  doc.roundedRect(12, yPos, pageWidth - 24, 30, 2, 2, 'FD');
+  doc.setLineWidth(0.8);
+  doc.roundedRect(12, yPos, pageWidth - 24, 32, 3, 3, 'FD');
 
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(22, 101, 52);
+  doc.setTextColor(34, 197, 94);
   doc.text('DECLARATION', pageWidth / 2, yPos + 10, { align: 'center' });
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(50, 50, 60);
-  doc.text('This certificate confirms that the above-named individual has successfully completed', pageWidth / 2, yPos + 18, { align: 'center' });
-  doc.text('the stated work assignments. This document is issued for employment verification purposes.', pageWidth / 2, yPos + 25, { align: 'center' });
+  doc.setTextColor(60, 60, 70);
+  doc.text('This certificate confirms that the above-named individual has successfully completed', pageWidth / 2, yPos + 19, { align: 'center' });
+  doc.text('the stated work assignments. This document is issued for employment verification purposes.', pageWidth / 2, yPos + 26, { align: 'center' });
 
   // ===== FOOTER =====
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
 
-    doc.setDrawColor(180, 180, 190);
-    doc.setLineWidth(0.4);
-    doc.line(12, pageHeight - 16, pageWidth - 12, pageHeight - 16);
+    doc.setDrawColor(200, 200, 210);
+    doc.setLineWidth(0.3);
+    doc.line(12, pageHeight - 14, pageWidth - 12, pageHeight - 14);
 
     doc.setFontSize(8);
-    doc.setTextColor(120, 120, 130);
-    doc.text('This certificate was generated digitally by Smart Shift Tracker.', 12, pageHeight - 10);
-    doc.text('Cert: ' + shortRef, pageWidth / 2, pageHeight - 10, { align: 'center' });
-    if (pageCount > 1) {
-      doc.text('Page ' + i + ' of ' + pageCount, pageWidth - 12, pageHeight - 10, { align: 'right' });
-    }
+    doc.setTextColor(130, 130, 140);
+    doc.text('This certificate was generated digitally by Smart Shift Tracker.', 12, pageHeight - 8);
+    doc.text('Cert: ' + shortRef, pageWidth - 12, pageHeight - 8, { align: 'right' });
   }
 
   return doc.output('blob');
