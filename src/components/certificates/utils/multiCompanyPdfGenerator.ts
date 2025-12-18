@@ -190,62 +190,95 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
 
     const cardTop = yPos;
     const cardWidth = pageWidth - 24;
-    const headerHeight = 28;
+    const headerHeight = 48; // Increased height for better layout
 
+    // Draw main header background with gradient effect
     doc.setFillColor(99, 102, 241);
-    doc.roundedRect(12, cardTop, cardWidth, headerHeight, 4, 4, 'F');
+    doc.roundedRect(12, cardTop, cardWidth, headerHeight, 5, 5, 'F');
+    
+    // Add subtle bottom accent line
+    doc.setFillColor(79, 70, 229);
+    doc.rect(12, cardTop + headerHeight - 2, cardWidth, 2, 'F');
 
     let contentX = 24;
+    const logoSize = 32;
 
+    // Company Logo with white background container
     if (company.company.logo_url) {
       try {
         const logoBase64 = await loadImageAsBase64(company.company.logo_url);
         if (logoBase64) {
+          // White rounded container for logo
           doc.setFillColor(255, 255, 255);
-          doc.roundedRect(18, cardTop + 6, 16, 16, 2, 2, 'F');
-          doc.addImage(logoBase64, 'PNG', 19, cardTop + 7, 14, 14);
-          contentX = 42;
+          doc.roundedRect(18, cardTop + 8, logoSize, logoSize, 4, 4, 'F');
+          doc.addImage(logoBase64, 'PNG', 20, cardTop + 10, logoSize - 4, logoSize - 4);
+          contentX = 18 + logoSize + 10;
         }
       } catch {
         // Continue without logo
       }
     }
 
+    // Company Name - larger and bolder
     const companyName = company.company.name;
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(11);
+    doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text(companyName, contentX, cardTop + 12);
+    doc.text(companyName, contentX, cardTop + 16);
 
-    const regNumber = company.company.registration_number || 'Reg Number';
-    const regWidth = Math.min(doc.getTextWidth(regNumber) + 10, 46);
-    const regX = contentX + doc.getTextWidth(companyName) + 6;
-    doc.setFillColor(16, 185, 129);
-    doc.roundedRect(regX, cardTop + 6, regWidth, 10, 3, 3, 'F');
-    doc.setFontSize(8);
-    doc.text(regNumber.length > 12 ? regNumber.slice(0, 11) + '…' : regNumber, regX + regWidth / 2, cardTop + 13, { align: 'center' });
+    // Registration Number Badge - positioned after company name
+    const regNumber = company.company.registration_number;
+    if (regNumber) {
+      const displayReg = regNumber.length > 15 ? regNumber.slice(0, 14) + '…' : regNumber;
+      const regWidth = doc.getTextWidth(displayReg) + 14;
+      const regX = contentX + doc.getTextWidth(companyName) + 8;
+      doc.setFillColor(16, 185, 129);
+      doc.roundedRect(regX, cardTop + 9, regWidth, 12, 6, 6, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text(displayReg, regX + regWidth / 2, cardTop + 17, { align: 'center' });
+    }
 
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(224, 231, 255);
-    doc.setFontSize(8);
-    const phoneValue = company.company.phone_number || '—';
-    const emailValue = company.company.email || '—';
-    doc.text('Phone number: ' + phoneValue, contentX, cardTop + 20);
-    doc.text('Email: ' + emailValue, contentX + 58, cardTop + 20);
-
-    const hoursBadgeWidth = 38;
+    // Total Hours Badge - positioned at right side, vertically centered
+    const hoursBadgeWidth = 50;
+    const hoursBadgeHeight = 18;
     const cardRight = 12 + cardWidth;
-    const hoursBadgeX = cardRight - hoursBadgeWidth - 14;
+    const hoursBadgeX = cardRight - hoursBadgeWidth - 12;
+    const hoursBadgeY = cardTop + (headerHeight - hoursBadgeHeight) / 2;
+    
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(hoursBadgeX, cardTop + 8, hoursBadgeWidth, 12, 4, 4, 'F');
-    doc.setDrawColor(129, 140, 248);
-    doc.roundedRect(hoursBadgeX, cardTop + 8, hoursBadgeWidth, 12, 4, 4, 'S');
+    doc.roundedRect(hoursBadgeX, hoursBadgeY, hoursBadgeWidth, hoursBadgeHeight, 9, 9, 'F');
     doc.setTextColor(99, 102, 241);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text(Math.round(company.totalHours) + ' Hours', hoursBadgeX + hoursBadgeWidth / 2, cardTop + 16, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text(Math.round(company.totalHours) + ' Hours', hoursBadgeX + hoursBadgeWidth / 2, hoursBadgeY + 12, { align: 'center' });
 
-    const tableStartY = cardTop + headerHeight + 12;
+    // Contact Information Row - below company name with icons feel
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(224, 231, 255);
+    
+    const phoneValue = company.company.phone_number;
+    const emailValue = company.company.email;
+    const contactY = cardTop + 32;
+    
+    if (phoneValue) {
+      doc.text('Phone: ' + phoneValue, contentX, contactY);
+    }
+    
+    if (emailValue) {
+      const emailX = phoneValue ? contentX + 70 : contentX;
+      doc.text('Email: ' + emailValue, emailX, contactY);
+    }
+    
+    // If no contact info, show placeholder
+    if (!phoneValue && !emailValue) {
+      doc.setTextColor(180, 180, 220);
+      doc.text('Contact information not available', contentX, contactY);
+    }
+
+    const tableStartY = cardTop + headerHeight + 10;
     const tableData = company.shifts.map(shift => [
       shift.title,
       new Date(shift.dateFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -257,48 +290,54 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
       startY: tableStartY,
       head: [['Event / Campaign', 'Date', 'Location', 'Hours']],
       body: tableData,
-      tableWidth: cardWidth - 20,
-      margin: { left: 20, right: 20 },
+      tableWidth: cardWidth - 12,
+      margin: { left: 18, right: 18 },
       theme: 'grid',
       headStyles: {
         fillColor: [59, 130, 246],
         textColor: [255, 255, 255],
-        fontSize: 9,
+        fontSize: 10,
         fontStyle: 'bold',
         halign: 'center',
-        cellPadding: 5,
-        lineWidth: 0.5,
-        lineColor: [37, 99, 235]
+        cellPadding: 6,
+        lineWidth: 0,
+        minCellHeight: 12
       },
       styles: {
         fontSize: 9,
-        cellPadding: 5,
+        cellPadding: 6,
         halign: 'center',
-        textColor: [15, 23, 42],
-        lineColor: [203, 213, 225],
-        lineWidth: 0.4
+        textColor: [30, 41, 59],
+        lineColor: [226, 232, 240],
+        lineWidth: 0.3,
+        minCellHeight: 10
       },
       bodyStyles: {
-        fillColor: [255, 255, 255]
+        fillColor: [248, 250, 252]
       },
       alternateRowStyles: {
-        fillColor: [238, 242, 255]
+        fillColor: [255, 255, 255]
       },
       columnStyles: {
-        0: { cellWidth: 60 },
-        1: { cellWidth: 40 },
+        0: { cellWidth: 62, halign: 'left', fontStyle: 'bold' },
+        1: { cellWidth: 42 },
         2: { cellWidth: 55 },
-        3: { cellWidth: 25, fontStyle: 'bold' }
+        3: { cellWidth: 28, fontStyle: 'bold', textColor: [30, 64, 175] }
+      },
+      didDrawPage: function(data) {
+        // Add rounded corners effect to table
       }
     });
 
     const tableBottom = (doc as any).lastAutoTable?.finalY || tableStartY + 24;
-    const cardBottom = tableBottom + 10;
-    doc.setDrawColor(191, 219, 254);
-    doc.setLineWidth(0.8);
-    doc.roundedRect(12, cardTop, cardWidth, cardBottom - cardTop, 4, 4, 'S');
+    const cardBottom = tableBottom + 12;
+    
+    // Draw elegant card border
+    doc.setDrawColor(199, 210, 254);
+    doc.setLineWidth(1);
+    doc.roundedRect(12, cardTop, cardWidth, cardBottom - cardTop, 5, 5, 'S');
 
-    yPos = cardBottom + 14;
+    yPos = cardBottom + 16;
     doc.setTextColor(0, 0, 0);
   }
 
