@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowLeft, HelpCircle, Shield, Medal, BookOpen } from "lucide-react";
+import { ArrowLeft, HelpCircle, Shield, Medal, BookOpen, Crown, Sparkles } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import { useAuth } from "@/context/AuthContext";
 import { Separator } from "@/components/ui/separator";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import CompanyCertificatesPage from "@/components/certificates/company/CompanyCertificatesPage";
 import PromoterCertificatesPage from "@/components/certificates/promoter/PromoterCertificatesPage";
+import AdminCertificatesPage from "@/components/certificates/admin/AdminCertificatesPage";
 
 export default function Certificates() {
   const { user } = useAuth();
@@ -33,8 +34,21 @@ export default function Certificates() {
     }
   }, [searchParams]);
 
+  const isAdmin = user?.role === 'admin';
   const isCompany = user?.role === 'company';
   const isPromoter = user?.role === 'promoter';
+  
+  const getTitle = () => {
+    if (isAdmin) return 'Certificate Administration';
+    if (isCompany) return 'Certificate Management';
+    return 'Professional Work Certificates';
+  };
+  
+  const getDescription = () => {
+    if (isAdmin) return 'Full administrative access to all certificate features - Generate, manage, and verify certificates for free';
+    if (isCompany) return 'Approve completed shifts to allow promoters to generate certificates';
+    return 'Create verified certificates that showcase your professional experience';
+  };
   
   return (
     <AppLayout title="Professional Certificates">
@@ -55,19 +69,30 @@ export default function Certificates() {
               Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-                {isCompany ? 'Certificate Management' : 'Professional Work Certificates'}
-              </h1>
+              <div className="flex items-center gap-2">
+                <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+                  {getTitle()}
+                </h1>
+                {isAdmin && (
+                  <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
+                    <Crown className="h-3 w-3 mr-1" />
+                    Super Admin
+                  </Badge>
+                )}
+              </div>
               <p className="text-muted-foreground mt-1 max-w-2xl">
-                {isCompany 
-                  ? 'Approve completed shifts to allow promoters to generate certificates'
-                  : 'Create verified certificates that showcase your professional experience'
-                }
+                {getDescription()}
               </p>
             </div>
           </div>
           
           <div className="flex items-center gap-3">
+            {isAdmin && (
+              <Badge variant="outline" className="px-3 py-1 border-amber-500/30 bg-amber-500/10 text-amber-600">
+                <Sparkles className="h-3.5 w-3.5 mr-1" />
+                Free Access
+              </Badge>
+            )}
             <Badge variant="outline" className="px-3 py-1 border-primary/30 bg-primary/5">
               <Shield className="h-3.5 w-3.5 mr-1 text-primary" />
               Official Certification
@@ -83,9 +108,11 @@ export default function Certificates() {
                 </TooltipTrigger>
                 <TooltipContent className="max-w-sm p-4">
                   <p className="text-sm">
-                    {isCompany 
-                      ? 'Approve completed shifts to enable promoters to generate professional certificates. Your company logo and details will appear on their certificates.'
-                      : 'Each certificate includes a unique reference number, QR verification code, and official digital signature to ensure authenticity with potential employers.'
+                    {isAdmin 
+                      ? 'As Super Admin, you have full access to generate, manage, and verify all certificates at no cost. Use the admin panel to manage certificates for any user.'
+                      : isCompany 
+                        ? 'Approve completed shifts to enable promoters to generate professional certificates. Your company logo and details will appear on their certificates.'
+                        : 'Each certificate includes a unique reference number, QR verification code, and official digital signature to ensure authenticity with potential employers.'
                     }
                   </p>
                 </TooltipContent>
@@ -95,6 +122,46 @@ export default function Certificates() {
         </div>
         
         <Separator className="my-4" />
+        
+        {/* Admin Feature Panel */}
+        {isAdmin && (
+          <Card className="border-2 border-amber-500/30 bg-gradient-to-r from-amber-500/5 via-orange-500/5 to-amber-500/5">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-3 rounded-full">
+                  <Crown className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">Super Admin Privileges</h3>
+                  <p className="text-muted-foreground">Full control over certificate system</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+                  <Sparkles className="h-5 w-5 text-amber-500" />
+                  <div>
+                    <p className="font-medium">Free Generation</p>
+                    <p className="text-xs text-muted-foreground">No charges applied</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+                  <Shield className="h-5 w-5 text-amber-500" />
+                  <div>
+                    <p className="font-medium">Instant Verification</p>
+                    <p className="text-xs text-muted-foreground">Skip approval workflow</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-background/50 rounded-lg">
+                  <Medal className="h-5 w-5 text-amber-500" />
+                  <div>
+                    <p className="font-medium">All User Access</p>
+                    <p className="text-xs text-muted-foreground">Generate for any promoter</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
         
         {/* Feature highlights - Only for promoters */}
         {isPromoter && (
@@ -138,7 +205,9 @@ export default function Certificates() {
         )}
         
         {/* Role-based content */}
-        {isCompany ? (
+        {isAdmin ? (
+          <AdminCertificatesPage />
+        ) : isCompany ? (
           <CompanyCertificatesPage />
         ) : (
           <PromoterCertificatesPage />

@@ -1,5 +1,4 @@
-
-export type Certificate = {
+﻿export type Certificate = {
   id: string;
   reference_number: string;
   issue_date: string;
@@ -7,7 +6,7 @@ export type Certificate = {
   total_hours: number;
   pdf_url: string | null;
   promotion_names?: string[];
-  status?: 'approved' | 'pending' | 'rejected' | string; // Allow any string for backward compatibility
+  status?: 'approved' | 'pending' | 'rejected' | string;
   performance_rating?: number;
   issued_by?: string;
   issued_date?: string;
@@ -16,9 +15,9 @@ export type Certificate = {
     timestamp: string;
     ip_address: string;
     user_agent: string;
-  }> | any; // Use 'any' to handle JSONB from database
-  paid?: boolean; // Payment status
-  payment_id?: string; // Reference to certificate_payments
+  }> | any;
+  paid?: boolean;
+  payment_id?: string;
 };
 
 export type TimePeriod = "3months" | "6months" | "1year" | "all";
@@ -36,9 +35,9 @@ export interface CertificateData {
   issueDate: string;
   managerContact: string;
   performanceRating: number;
-  expirationDate?: string; // Optional expiration date
-  status?: string; // Certificate status
-  certificateType?: CertificateType; // Type of certificate
+  expirationDate?: string;
+  status?: string;
+  certificateType?: CertificateType;
 }
 
 export interface CompanyInfo {
@@ -62,10 +61,10 @@ export interface WorkExperienceData {
   };
   roles: string[];
   locations: string[];
-  shifts: { 
-    date: string; 
-    title: string; 
-    hours: number; 
+  shifts: {
+    date: string;
+    title: string;
+    hours: number;
     location?: string;
     timeLog?: {
       checkIn: string;
@@ -85,15 +84,29 @@ export interface WorkExperienceData {
   companyInfo?: CompanyInfo;
 }
 
+// Promoter details for certificate
+export interface PromoterDetails {
+  id: string;
+  full_name: string;
+  age?: number | null;
+  nationality?: string | null;
+  phone_number?: string | null;
+  email?: string | null;
+  profile_photo_url?: string | null;
+  unique_code?: string | null;
+}
+
 // Multi-company certificate types
 export interface CompanyWorkEntry {
   company: {
     id: string;
     name: string;
     logo_url: string | null;
-    website?: string;
-    email?: string;
-    phone?: string;
+    website?: string | null;
+    email?: string | null;
+    phone?: string | null;
+    registration_id?: string | null;
+    contact_person?: string | null;
   };
   shifts: {
     id: string;
@@ -115,4 +128,5 @@ export interface MultiCompanyCertificate {
   issueDate: string;
   companies: CompanyWorkEntry[];
   grandTotalHours: number;
+  promoter?: PromoterDetails;
 }
