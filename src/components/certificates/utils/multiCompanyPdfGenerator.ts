@@ -27,16 +27,28 @@ function shortenRefNumber(ref: string): string {
   return ref.slice(-8);
 }
 
+// Draw a decorative accent line
+function drawDecoLine(doc: jsPDF, x: number, y: number, width: number) {
+  doc.setDrawColor(99, 102, 241);
+  doc.setLineWidth(0.8);
+  doc.line(x, y, x + width * 0.3, y);
+  doc.setDrawColor(16, 185, 129);
+  doc.line(x + width * 0.35, y, x + width * 0.65, y);
+  doc.setDrawColor(59, 130, 246);
+  doc.line(x + width * 0.7, y, x + width, y);
+}
+
 export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Promise<Blob> {
   const doc = new jsPDF();
   const pageWidth = 210;
   const pageHeight = 297;
-  let yPos = 20;
+  const margin = 15;
+  let yPos = 0;
 
   const shortRef = shortenRefNumber(data.referenceNumber);
   const promoter = data.promoter;
   
-  // Format issue date - use current date if not provided
+  // Format issue date
   const dateToFormat = data.issueDate ? new Date(data.issueDate) : new Date();
   const issueDisplay = dateToFormat.toLocaleDateString('en-GB', {
     day: '2-digit',
@@ -44,61 +56,85 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
     year: 'numeric'
   });
   
-  // Get promoter unique code
-  const partTimerIdDisplay = promoter?.unique_code || data.referenceNumber.split('-')[0] || 'PT-' + shortRef;
+  const partTimerIdDisplay = promoter?.unique_code || 'PT-' + shortRef;
 
-  // ===== HEADER =====
-  doc.setFillColor(92, 75, 241);
-  doc.rect(0, 0, pageWidth, 55, 'F');
-  doc.setFillColor(129, 140, 248);
-  doc.rect(0, 55, pageWidth, 3, 'F');
+  // ===== HEADER SECTION =====
+  // Main gradient header background
+  doc.setFillColor(79, 70, 229); // Indigo-600
+  doc.rect(0, 0, pageWidth, 62, 'F');
+  
+  // Decorative accent bar
+  doc.setFillColor(99, 102, 241); // Indigo-500
+  doc.rect(0, 62, pageWidth, 4, 'F');
+  
+  // Corner accent triangles for modern look
+  doc.setFillColor(67, 56, 202); // Indigo-700
+  doc.triangle(0, 0, 40, 0, 0, 40, 'F');
+  doc.triangle(pageWidth, 0, pageWidth - 40, 0, pageWidth, 40, 'F');
 
-  // Title
+  // Certificate title with shadow effect
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
+  doc.setFontSize(26);
   doc.setFont('helvetica', 'bold');
-  doc.text('WORK EXPERIENCE CERTIFICATE', pageWidth / 2, 20, { align: 'center' });
+  doc.text('WORK EXPERIENCE', pageWidth / 2, 24, { align: 'center' });
+  doc.setFontSize(22);
+  doc.text('CERTIFICATE', pageWidth / 2, 36, { align: 'center' });
+
+  // Decorative line under title
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(0.5);
+  doc.line(pageWidth / 2 - 50, 42, pageWidth / 2 + 50, 42);
 
   // Subtitle
-  doc.setFontSize(11);
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text('Official Documentation of Professional Employment', pageWidth / 2, 30, { align: 'center' });
+  doc.setTextColor(224, 231, 255);
+  doc.text('Official Documentation of Professional Employment History', pageWidth / 2, 50, { align: 'center' });
 
-  // Left side - Issue Date and Part Timer ID
-  doc.setFontSize(8);
-  doc.setTextColor(220, 220, 255);
-  doc.text('Issue Date: ' + issueDisplay, 16, 42);
-  doc.text('Part Timer ID: ' + partTimerIdDisplay, 16, 48);
-
-  // Platform name
-  doc.setFontSize(9);
-  doc.setTextColor(200, 200, 255);
-  doc.text('Smart Shift Tracker - Workforce Management Platform', pageWidth / 2, 50, { align: 'center' });
-
-  doc.setTextColor(0, 0, 0);
-  yPos = 70;
-
-  // ===== PROMOTER INFO BOX =====
-  const boxHeight = 52;
-
+  // Header info badges - left side
   doc.setFillColor(255, 255, 255);
-  doc.roundedRect(12, yPos, pageWidth - 24, boxHeight, 3, 3, 'F');
-  doc.setDrawColor(220, 220, 230);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(12, yPos, pageWidth - 24, boxHeight, 3, 3, 'S');
+  doc.roundedRect(margin, 55, 58, 8, 3, 3, 'F');
+  doc.setFontSize(7);
+  doc.setTextColor(79, 70, 229);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Issue Date: ' + issueDisplay, margin + 3, 60.5);
 
-  let textStartX = 22;
+  // Header info badges - right side  
+  doc.roundedRect(pageWidth - margin - 50, 55, 50, 8, 3, 3, 'F');
+  doc.text('ID: ' + partTimerIdDisplay, pageWidth - margin - 47, 60.5);
 
-  // Profile Photo
+  yPos = 76;
+
+  // ===== PROMOTER PROFILE CARD =====
+  const cardHeight = 60;
+  
+  // Card shadow effect
+  doc.setFillColor(226, 232, 240);
+  doc.roundedRect(margin + 1, yPos + 1, pageWidth - (margin * 2), cardHeight, 6, 6, 'F');
+  
+  // Main card
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(margin, yPos, pageWidth - (margin * 2), cardHeight, 6, 6, 'F');
+  
+  // Left accent bar
+  doc.setFillColor(79, 70, 229);
+  doc.roundedRect(margin, yPos, 4, cardHeight, 6, 0, 'F');
+  doc.rect(margin + 2, yPos, 2, cardHeight, 'F');
+
+  let textStartX = margin + 14;
+
+  // Profile Photo with elegant border
   if (promoter?.profile_photo_url) {
     try {
       const photoBase64 = await loadImageAsBase64(promoter.profile_photo_url);
       if (photoBase64) {
-        doc.setDrawColor(99, 102, 241);
-        doc.setLineWidth(1.5);
-        doc.roundedRect(18, yPos + 6, 40, 40, 2, 2, 'S');
-        doc.addImage(photoBase64, 'JPEG', 20, yPos + 8, 36, 36);
-        textStartX = 66;
+        // Photo container with gradient border effect
+        doc.setFillColor(99, 102, 241);
+        doc.roundedRect(margin + 10, yPos + 7, 46, 46, 4, 4, 'F');
+        doc.setFillColor(255, 255, 255);
+        doc.roundedRect(margin + 12, yPos + 9, 42, 42, 3, 3, 'F');
+        doc.addImage(photoBase64, 'JPEG', margin + 14, yPos + 11, 38, 38);
+        textStartX = margin + 64;
       }
     } catch {
       // Continue without photo
@@ -106,179 +142,188 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
   }
 
   // Promoter Name
-  doc.setFontSize(18);
+  doc.setFontSize(20);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(30, 41, 59);
-  doc.text(data.promoterName, textStartX, yPos + 14);
+  doc.text(data.promoterName, textStartX, yPos + 18);
 
-  // Badges Row
+  // Status Badges
   let badgeX = textStartX;
-  const badgeY = yPos + 20;
+  const badgeY = yPos + 24;
 
   // PART-TIMER badge
   doc.setFillColor(16, 185, 129);
-  doc.roundedRect(badgeX, badgeY, 38, 8, 3, 3, 'F');
+  doc.roundedRect(badgeX, badgeY, 42, 10, 5, 5, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(7);
   doc.setFont('helvetica', 'bold');
-  doc.text('PART-TIMER', badgeX + 19, badgeY + 5.5, { align: 'center' });
-  badgeX += 42;
+  doc.text('PART-TIMER', badgeX + 21, badgeY + 7, { align: 'center' });
+  badgeX += 46;
 
-  // VERIFIED badge
+  // VERIFIED badge with checkmark feel
   doc.setFillColor(59, 130, 246);
-  doc.roundedRect(badgeX, badgeY, 32, 8, 3, 3, 'F');
-  doc.text('VERIFIED', badgeX + 16, badgeY + 5.5, { align: 'center' });
+  doc.roundedRect(badgeX, badgeY, 38, 10, 5, 5, 'F');
+  doc.text('VERIFIED', badgeX + 19, badgeY + 7, { align: 'center' });
 
-  // Details Row 1 - Nationality & Age
-  doc.setTextColor(80, 80, 90);
+  // Personal Details - Row 1
+  doc.setTextColor(71, 85, 105);
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  let row1Parts: string[] = [];
-  if (promoter?.nationality) row1Parts.push('Nationality: ' + promoter.nationality);
-  if (promoter?.age) row1Parts.push('Age: ' + promoter.age + ' years');
-  if (row1Parts.length > 0) {
-    doc.text(row1Parts.join('   •   '), textStartX, yPos + 36);
+  let detailY = yPos + 42;
+  let details1: string[] = [];
+  if (promoter?.nationality) details1.push('Nationality: ' + promoter.nationality);
+  if (promoter?.age) details1.push('Age: ' + promoter.age + ' years');
+  if (details1.length > 0) {
+    doc.text(details1.join('   |   '), textStartX, detailY);
   }
 
-  // Details Row 2 - Contact Info
-  let row2Parts: string[] = [];
-  if (promoter?.phone_number) row2Parts.push('Phone: ' + promoter.phone_number);
-  if (promoter?.email) row2Parts.push('Email: ' + promoter.email);
-  if (row2Parts.length > 0) {
-    doc.text(row2Parts.join('   •   '), textStartX, yPos + 45);
+  // Personal Details - Row 2
+  let details2: string[] = [];
+  if (promoter?.phone_number) details2.push('Phone: ' + promoter.phone_number);
+  if (promoter?.email) details2.push('Email: ' + promoter.email);
+  if (details2.length > 0) {
+    doc.text(details2.join('   |   '), textStartX, detailY + 10);
   }
 
-  yPos += boxHeight + 10;
+  yPos += cardHeight + 12;
 
-  // ===== WORK EXPERIENCE SUMMARY BAR =====
-  doc.setFillColor(241, 245, 249);
-  doc.roundedRect(12, yPos, pageWidth - 24, 24, 4, 4, 'F');
-  doc.setDrawColor(203, 213, 225);
-  doc.setLineWidth(0.4);
-  doc.roundedRect(12, yPos, pageWidth - 24, 24, 4, 4, 'S');
+  // ===== EXPERIENCE SUMMARY BAR =====
+  // Gradient background bar
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 28, 6, 6, 'F');
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 28, 6, 6, 'S');
 
-  doc.setTextColor(100, 116, 139);
+  // Left label
+  doc.setTextColor(71, 85, 105);
   doc.setFontSize(11);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Total Work Experience:', 22, yPos + 15);
+  doc.setFont('helvetica', 'bold');
+  doc.text('TOTAL EXPERIENCE', margin + 10, yPos + 17);
 
-  const summaryBadgeWidth = 48;
-  const summaryBadgeX = pageWidth / 2 - summaryBadgeWidth / 2;
+  // Center hours badge - prominent
+  const hoursBadgeWidth = 70;
+  const hoursBadgeX = pageWidth / 2 - hoursBadgeWidth / 2;
   doc.setFillColor(16, 185, 129);
-  doc.roundedRect(summaryBadgeX, yPos + 7, summaryBadgeWidth, 12, 4, 4, 'F');
+  doc.roundedRect(hoursBadgeX, yPos + 6, hoursBadgeWidth, 16, 8, 8, 'F');
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(10);
-  doc.text(Math.round(data.grandTotalHours) + ' HOURS', summaryBadgeX + summaryBadgeWidth / 2, yPos + 15, { align: 'center' });
+  doc.setFontSize(12);
+  doc.text(Math.round(data.grandTotalHours) + ' HOURS', hoursBadgeX + hoursBadgeWidth / 2, yPos + 17, { align: 'center' });
 
-  doc.setTextColor(100, 116, 139);
+  // Right organization count
+  doc.setTextColor(71, 85, 105);
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.text('across ' + data.companies.length + ' Organization' + (data.companies.length > 1 ? 's' : ''), pageWidth - 20, yPos + 15, { align: 'right' });
+  doc.text(data.companies.length + ' Organization' + (data.companies.length > 1 ? 's' : ''), pageWidth - margin - 10, yPos + 17, { align: 'right' });
 
-  yPos += 34;
-  doc.setTextColor(0, 0, 0);
+  yPos += 38;
+
+  // ===== SECTION TITLE =====
+  doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 41, 59);
+  doc.text('WORK HISTORY', margin, yPos);
+  drawDecoLine(doc, margin, yPos + 4, 50);
+  yPos += 14;
 
   // ===== COMPANIES SECTION =====
   for (let companyIndex = 0; companyIndex < data.companies.length; companyIndex++) {
     const company = data.companies[companyIndex];
 
-    if (yPos > pageHeight - 110) {
+    if (yPos > pageHeight - 100) {
       doc.addPage();
-      yPos = 24;
+      yPos = 25;
     }
 
     const cardTop = yPos;
-    const cardWidth = pageWidth - 24;
-    const headerHeight = 48; // Increased height for better layout
+    const cardWidth = pageWidth - (margin * 2);
+    const headerHeight = 54;
 
-    // Draw main header background with gradient effect
-    doc.setFillColor(99, 102, 241);
-    doc.roundedRect(12, cardTop, cardWidth, headerHeight, 5, 5, 'F');
-    
-    // Add subtle bottom accent line
+    // Company card shadow
+    doc.setFillColor(226, 232, 240);
+    doc.roundedRect(margin + 1, cardTop + 1, cardWidth, headerHeight, 8, 8, 'F');
+
+    // Company header with gradient
     doc.setFillColor(79, 70, 229);
-    doc.rect(12, cardTop + headerHeight - 2, cardWidth, 2, 'F');
+    doc.roundedRect(margin, cardTop, cardWidth, headerHeight, 8, 8, 'F');
+    
+    // Subtle pattern overlay - top accent
+    doc.setFillColor(99, 102, 241);
+    doc.roundedRect(margin, cardTop, cardWidth, 6, 8, 0, 'F');
+    doc.rect(margin, cardTop + 4, cardWidth, 2, 'F');
 
-    let contentX = 24;
-    const logoSize = 32;
+    let contentX = margin + 16;
+    const logoSize = 38;
 
-    // Company Logo with white background container
+    // Company Logo
     if (company.company.logo_url) {
       try {
         const logoBase64 = await loadImageAsBase64(company.company.logo_url);
         if (logoBase64) {
-          // White rounded container for logo
           doc.setFillColor(255, 255, 255);
-          doc.roundedRect(18, cardTop + 8, logoSize, logoSize, 4, 4, 'F');
-          doc.addImage(logoBase64, 'PNG', 20, cardTop + 10, logoSize - 4, logoSize - 4);
-          contentX = 18 + logoSize + 10;
+          doc.roundedRect(margin + 10, cardTop + 10, logoSize, logoSize, 5, 5, 'F');
+          doc.addImage(logoBase64, 'PNG', margin + 12, cardTop + 12, logoSize - 4, logoSize - 4);
+          contentX = margin + logoSize + 22;
         }
       } catch {
         // Continue without logo
       }
     }
 
-    // Company Name - larger and bolder
-    const companyName = company.company.name;
+    // Company Name
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(13);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text(companyName, contentX, cardTop + 16);
+    doc.text(company.company.name, contentX, cardTop + 20);
 
-    // Registration Number Badge - positioned after company name
+    // Registration Badge
     const regNumber = company.company.registration_number;
     if (regNumber) {
-      const displayReg = regNumber.length > 15 ? regNumber.slice(0, 14) + '…' : regNumber;
-      const regWidth = doc.getTextWidth(displayReg) + 14;
-      const regX = contentX + doc.getTextWidth(companyName) + 8;
+      const displayReg = regNumber.length > 16 ? regNumber.slice(0, 15) + '...' : regNumber;
+      const regWidth = doc.getTextWidth(displayReg) + 16;
+      const regX = contentX + doc.getTextWidth(company.company.name) + 10;
+      
       doc.setFillColor(16, 185, 129);
-      doc.roundedRect(regX, cardTop + 9, regWidth, 12, 6, 6, 'F');
+      doc.roundedRect(regX, cardTop + 12, regWidth, 14, 7, 7, 'F');
       doc.setTextColor(255, 255, 255);
-      doc.setFontSize(8);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'bold');
-      doc.text(displayReg, regX + regWidth / 2, cardTop + 17, { align: 'center' });
+      doc.text(displayReg, regX + regWidth / 2, cardTop + 21, { align: 'center' });
     }
 
-    // Total Hours Badge - positioned at right side, vertically centered
-    const hoursBadgeWidth = 50;
-    const hoursBadgeHeight = 18;
-    const cardRight = 12 + cardWidth;
-    const hoursBadgeX = cardRight - hoursBadgeWidth - 12;
-    const hoursBadgeY = cardTop + (headerHeight - hoursBadgeHeight) / 2;
+    // Hours Badge - right side
+    const hBadgeWidth = 60;
+    const hBadgeHeight = 22;
+    const hBadgeX = margin + cardWidth - hBadgeWidth - 12;
+    const hBadgeY = cardTop + (headerHeight - hBadgeHeight) / 2;
     
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(hoursBadgeX, hoursBadgeY, hoursBadgeWidth, hoursBadgeHeight, 9, 9, 'F');
-    doc.setTextColor(99, 102, 241);
+    doc.roundedRect(hBadgeX, hBadgeY, hBadgeWidth, hBadgeHeight, 11, 11, 'F');
+    doc.setTextColor(79, 70, 229);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.text(Math.round(company.totalHours) + ' Hours', hoursBadgeX + hoursBadgeWidth / 2, hoursBadgeY + 12, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text(Math.round(company.totalHours) + ' Hours', hBadgeX + hBadgeWidth / 2, hBadgeY + 15, { align: 'center' });
 
-    // Contact Information Row - below company name with icons feel
+    // Contact Info Row
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
     doc.setTextColor(224, 231, 255);
     
-    const phoneValue = company.company.phone_number;
-    const emailValue = company.company.email;
-    const contactY = cardTop + 32;
+    const contactY = cardTop + 40;
+    const phone = company.company.phone_number;
+    const email = company.company.email;
     
-    if (phoneValue) {
-      doc.text('Phone: ' + phoneValue, contentX, contactY);
-    }
+    let contactText = '';
+    if (phone) contactText += 'Phone: ' + phone;
+    if (phone && email) contactText += '     |     ';
+    if (email) contactText += 'Email: ' + email;
     
-    if (emailValue) {
-      const emailX = phoneValue ? contentX + 70 : contentX;
-      doc.text('Email: ' + emailValue, emailX, contactY);
-    }
-    
-    // If no contact info, show placeholder
-    if (!phoneValue && !emailValue) {
-      doc.setTextColor(180, 180, 220);
-      doc.text('Contact information not available', contentX, contactY);
+    if (contactText) {
+      doc.text(contactText, contentX, contactY);
     }
 
-    const tableStartY = cardTop + headerHeight + 10;
+    const tableStartY = cardTop + headerHeight + 8;
     const tableData = company.shifts.map(shift => [
       shift.title,
       new Date(shift.dateFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
@@ -290,114 +335,146 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
       startY: tableStartY,
       head: [['Event / Campaign', 'Date', 'Location', 'Hours']],
       body: tableData,
-      tableWidth: cardWidth - 12,
-      margin: { left: 18, right: 18 },
-      theme: 'grid',
+      tableWidth: cardWidth - 8,
+      margin: { left: margin + 4, right: margin + 4 },
+      theme: 'plain',
       headStyles: {
         fillColor: [59, 130, 246],
         textColor: [255, 255, 255],
         fontSize: 10,
         fontStyle: 'bold',
         halign: 'center',
-        cellPadding: 6,
+        cellPadding: 7,
         lineWidth: 0,
-        minCellHeight: 12
+        minCellHeight: 14
       },
       styles: {
         fontSize: 9,
-        cellPadding: 6,
+        cellPadding: 7,
         halign: 'center',
         textColor: [30, 41, 59],
-        lineColor: [226, 232, 240],
-        lineWidth: 0.3,
-        minCellHeight: 10
+        lineColor: [241, 245, 249],
+        lineWidth: 0.5,
+        minCellHeight: 12
       },
       bodyStyles: {
-        fillColor: [248, 250, 252]
-      },
-      alternateRowStyles: {
         fillColor: [255, 255, 255]
       },
-      columnStyles: {
-        0: { cellWidth: 62, halign: 'left', fontStyle: 'bold' },
-        1: { cellWidth: 42 },
-        2: { cellWidth: 55 },
-        3: { cellWidth: 28, fontStyle: 'bold', textColor: [30, 64, 175] }
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
       },
-      didDrawPage: function(data) {
-        // Add rounded corners effect to table
+      columnStyles: {
+        0: { cellWidth: 65, halign: 'left', fontStyle: 'bold' },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 55 },
+        3: { cellWidth: 30, fontStyle: 'bold', textColor: [79, 70, 229] }
       }
     });
 
-    const tableBottom = (doc as any).lastAutoTable?.finalY || tableStartY + 24;
-    const cardBottom = tableBottom + 12;
+    const tableBottom = (doc as any).lastAutoTable?.finalY || tableStartY + 30;
+    const cardBottom = tableBottom + 10;
     
-    // Draw elegant card border
+    // Elegant card border
     doc.setDrawColor(199, 210, 254);
-    doc.setLineWidth(1);
-    doc.roundedRect(12, cardTop, cardWidth, cardBottom - cardTop, 5, 5, 'S');
+    doc.setLineWidth(1.2);
+    doc.roundedRect(margin, cardTop, cardWidth, cardBottom - cardTop, 8, 8, 'S');
 
-    yPos = cardBottom + 16;
-    doc.setTextColor(0, 0, 0);
+    yPos = cardBottom + 14;
   }
 
-  // ===== PART-TIMER ACKNOWLEDGEMENT =====
-  if (yPos > pageHeight - 70) {
+  // ===== ACKNOWLEDGEMENT SECTION =====
+  if (yPos > pageHeight - 80) {
     doc.addPage();
     yPos = 30;
   }
 
-  doc.setTextColor(60, 60, 70);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Part-Timer Acknowledgement', 12, yPos);
-  yPos += 8;
+  // Section title
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(30, 41, 59);
+  doc.text('PART-TIMER ACKNOWLEDGEMENT', margin, yPos);
+  drawDecoLine(doc, margin, yPos + 4, 70);
+  yPos += 14;
 
-  // Add signature if provided
+  // Signature area
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.5);
+  doc.setFillColor(250, 250, 252);
+  doc.roundedRect(margin, yPos, 100, 28, 4, 4, 'FD');
+
   if (data.signature) {
     try {
-      doc.text('Signature:', 12, yPos);
-      doc.addImage(data.signature, 'PNG', 40, yPos - 8, 50, 20);
-      yPos += 16;
+      doc.addImage(data.signature, 'PNG', margin + 5, yPos + 2, 60, 24);
     } catch {
-      doc.text('Signature: _______________________', 12, yPos);
-      yPos += 16;
+      doc.setTextColor(180, 180, 190);
+      doc.setFontSize(9);
+      doc.text('Signature', margin + 50, yPos + 16, { align: 'center' });
     }
   } else {
-    doc.text('Signature: _______________________', 12, yPos);
-    yPos += 16;
+    doc.setTextColor(180, 180, 190);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'italic');
+    doc.text('Signature', margin + 50, yPos + 16, { align: 'center' });
   }
+
+  // Date box
+  doc.roundedRect(margin + 110, yPos, 65, 28, 4, 4, 'FD');
+  doc.setTextColor(100, 100, 110);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Date', margin + 142.5, yPos + 10, { align: 'center' });
+  doc.setFontSize(10);
+  doc.setTextColor(30, 41, 59);
+  doc.text(issueDisplay, margin + 142.5, yPos + 20, { align: 'center' });
+
+  yPos += 38;
 
   // ===== DECLARATION BOX =====
   doc.setFillColor(240, 253, 244);
   doc.setDrawColor(34, 197, 94);
-  doc.setLineWidth(0.8);
-  doc.roundedRect(12, yPos, pageWidth - 24, 32, 3, 3, 'FD');
+  doc.setLineWidth(1);
+  doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 36, 6, 6, 'FD');
 
-  doc.setFontSize(11);
+  // Green checkmark circle
+  doc.setFillColor(34, 197, 94);
+  doc.circle(margin + 14, yPos + 18, 6, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(34, 197, 94);
-  doc.text('DECLARATION', pageWidth / 2, yPos + 10, { align: 'center' });
+  doc.text('V', margin + 14, yPos + 21, { align: 'center' });
+
+  doc.setFontSize(12);
+  doc.setTextColor(22, 163, 74);
+  doc.text('OFFICIAL DECLARATION', margin + 28, yPos + 13);
 
   doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
   doc.setTextColor(60, 60, 70);
-  doc.text('This certificate confirms that the above-named individual has successfully completed', pageWidth / 2, yPos + 19, { align: 'center' });
-  doc.text('the stated work assignments. This document is issued for employment verification purposes.', pageWidth / 2, yPos + 26, { align: 'center' });
+  doc.text('This certificate confirms that the above-named individual has successfully completed the stated', margin + 28, yPos + 23);
+  doc.text('work assignments. This document is issued for employment verification purposes.', margin + 28, yPos + 31);
 
   // ===== FOOTER =====
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
 
-    doc.setDrawColor(200, 200, 210);
-    doc.setLineWidth(0.3);
-    doc.line(12, pageHeight - 14, pageWidth - 12, pageHeight - 14);
+    // Footer background
+    doc.setFillColor(248, 250, 252);
+    doc.rect(0, pageHeight - 18, pageWidth, 18, 'F');
+    
+    // Top line
+    doc.setDrawColor(226, 232, 240);
+    doc.setLineWidth(0.5);
+    doc.line(0, pageHeight - 18, pageWidth, pageHeight - 18);
 
+    // Footer content
     doc.setFontSize(8);
-    doc.setTextColor(130, 130, 140);
-    doc.text('This certificate was generated digitally by Smart Shift Tracker.', 12, pageHeight - 8);
-    doc.text('Cert: ' + shortRef, pageWidth - 12, pageHeight - 8, { align: 'right' });
+    doc.setTextColor(100, 116, 139);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Generated by Smart Shift Tracker - Workforce Management Platform', margin, pageHeight - 8);
+    
+    // Page number and ref
+    doc.text('Page ' + i + ' of ' + pageCount + '  |  Ref: ' + shortRef, pageWidth - margin, pageHeight - 8, { align: 'right' });
   }
 
   return doc.output('blob');
