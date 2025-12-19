@@ -238,7 +238,7 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
 
     const cardTop = yPos;
     const cardWidth = pageWidth - (margin * 2);
-    const headerHeight = 54;
+    const headerHeight = 60;
 
     // Company card shadow
     doc.setFillColor(226, 232, 240);
@@ -253,8 +253,8 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
     doc.roundedRect(margin, cardTop, cardWidth, 6, 8, 0, 'F');
     doc.rect(margin, cardTop + 4, cardWidth, 2, 'F');
 
-    let contentX = margin + 16;
-    const logoSize = 38;
+    let contentX = margin + 14;
+    const logoSize = 36;
 
     // Company Logo
     if (company.company.logo_url) {
@@ -262,65 +262,73 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
         const logoBase64 = await loadImageAsBase64(company.company.logo_url);
         if (logoBase64) {
           doc.setFillColor(255, 255, 255);
-          doc.roundedRect(margin + 10, cardTop + 10, logoSize, logoSize, 5, 5, 'F');
-          doc.addImage(logoBase64, 'PNG', margin + 12, cardTop + 12, logoSize - 4, logoSize - 4);
-          contentX = margin + logoSize + 22;
+          doc.roundedRect(margin + 8, cardTop + 12, logoSize, logoSize, 4, 4, 'F');
+          doc.addImage(logoBase64, 'PNG', margin + 10, cardTop + 14, logoSize - 4, logoSize - 4);
+          contentX = margin + logoSize + 16;
         }
       } catch {
         // Continue without logo
       }
     }
 
-    // Company Name
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(company.company.name, contentX, cardTop + 20);
-
-    // Registration Badge
-    const regNumber = company.company.registration_number;
-    if (regNumber) {
-      const displayReg = regNumber.length > 16 ? regNumber.slice(0, 15) + '...' : regNumber;
-      const regWidth = doc.getTextWidth(displayReg) + 16;
-      const regX = contentX + doc.getTextWidth(company.company.name) + 10;
-      
-      doc.setFillColor(16, 185, 129);
-      doc.roundedRect(regX, cardTop + 12, regWidth, 14, 7, 7, 'F');
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(9);
-      doc.setFont('helvetica', 'bold');
-      doc.text(displayReg, regX + regWidth / 2, cardTop + 21, { align: 'center' });
-    }
-
-    // Hours Badge - right side
-    const hBadgeWidth = 60;
-    const hBadgeHeight = 22;
-    const hBadgeX = margin + cardWidth - hBadgeWidth - 12;
-    const hBadgeY = cardTop + (headerHeight - hBadgeHeight) / 2;
+    // Hours Badge - positioned first at top right to reserve space
+    const hBadgeWidth = 55;
+    const hBadgeHeight = 20;
+    const hBadgeX = margin + cardWidth - hBadgeWidth - 10;
+    const hBadgeY = cardTop + 10;
     
     doc.setFillColor(255, 255, 255);
-    doc.roundedRect(hBadgeX, hBadgeY, hBadgeWidth, hBadgeHeight, 11, 11, 'F');
+    doc.roundedRect(hBadgeX, hBadgeY, hBadgeWidth, hBadgeHeight, 10, 10, 'F');
     doc.setTextColor(79, 70, 229);
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text(Math.round(company.totalHours) + ' Hours', hBadgeX + hBadgeWidth / 2, hBadgeY + 15, { align: 'center' });
+    doc.setFontSize(10);
+    doc.text(Math.round(company.totalHours) + ' Hours', hBadgeX + hBadgeWidth / 2, hBadgeY + 13, { align: 'center' });
 
-    // Contact Info Row
+    // Calculate max width for company name (leave space for hours badge)
+    const maxNameWidth = hBadgeX - contentX - 15;
+
+    // Company Name - truncate if too long
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    let displayName = company.company.name;
+    while (doc.getTextWidth(displayName) > maxNameWidth && displayName.length > 10) {
+      displayName = displayName.slice(0, -1);
+    }
+    if (displayName !== company.company.name) {
+      displayName = displayName.trim() + '...';
+    }
+    doc.text(displayName, contentX, cardTop + 20);
+
+    // Registration Badge - on second row below company name
+    const regNumber = company.company.registration_number;
+    if (regNumber) {
+      const displayReg = regNumber.length > 14 ? regNumber.slice(0, 13) + '...' : regNumber;
+      const regWidth = Math.min(doc.getTextWidth(displayReg) + 14, 70);
+      
+      doc.setFillColor(16, 185, 129);
+      doc.roundedRect(contentX, cardTop + 26, regWidth, 12, 6, 6, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.text(displayReg, contentX + regWidth / 2, cardTop + 34, { align: 'center' });
+    }
+
+    // Contact Info Row - bottom of header
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setTextColor(224, 231, 255);
     
-    const contactY = cardTop + 40;
+    const contactY = cardTop + 50;
     const phone = company.company.phone_number;
     const email = company.company.email;
     
-    let contactText = '';
-    if (phone) contactText += 'Phone: ' + phone;
-    if (phone && email) contactText += '     |     ';
-    if (email) contactText += 'Email: ' + email;
+    let contactParts: string[] = [];
+    if (phone) contactParts.push('Tel: ' + phone);
+    if (email) contactParts.push('Email: ' + email);
     
-    if (contactText) {
-      doc.text(contactText, contentX, contactY);
+    if (contactParts.length > 0) {
+      doc.text(contactParts.join('   |   '), contentX, contactY);
     }
 
     const tableStartY = cardTop + headerHeight + 8;
@@ -364,10 +372,10 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
         fillColor: [248, 250, 252]
       },
       columnStyles: {
-        0: { cellWidth: 65, halign: 'left', fontStyle: 'bold' },
-        1: { cellWidth: 45 },
-        2: { cellWidth: 55 },
-        3: { cellWidth: 30, fontStyle: 'bold', textColor: [79, 70, 229] }
+        0: { cellWidth: 58, halign: 'left', fontStyle: 'bold' },
+        1: { cellWidth: 38 },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 22, fontStyle: 'bold', textColor: [79, 70, 229] }
       }
     });
 
@@ -435,13 +443,14 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
   doc.setLineWidth(1);
   doc.roundedRect(margin, yPos, pageWidth - (margin * 2), 36, 6, 6, 'FD');
 
-  // Green checkmark circle
+  // Green checkmark circle with checkmark
   doc.setFillColor(34, 197, 94);
-  doc.circle(margin + 14, yPos + 18, 6, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text('V', margin + 14, yPos + 21, { align: 'center' });
+  doc.circle(margin + 14, yPos + 18, 7, 'F');
+  // Draw checkmark using lines
+  doc.setDrawColor(255, 255, 255);
+  doc.setLineWidth(1.5);
+  doc.line(margin + 11, yPos + 18, margin + 13.5, yPos + 21);
+  doc.line(margin + 13.5, yPos + 21, margin + 18, yPos + 15);
 
   doc.setFontSize(12);
   doc.setTextColor(22, 163, 74);
