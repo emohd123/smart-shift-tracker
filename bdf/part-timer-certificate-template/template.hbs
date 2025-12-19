@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Work Experience Certificate</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="brand">
+      {{#if brand.logoDataUri}}
+        <img class="logo" alt="{{brand.name}} logo" src="{{brand.logoDataUri}}">
+      {{else}}
+        <div class="logo-fallback">{{brand.initials}}</div>
+      {{/if}}
+      <div class="brand-text">
+        <div class="brand-name">{{brand.name}}</div>
+        <div class="brand-tagline">{{brand.tagline}}</div>
+      </div>
+    </div>
+
+    <div class="doc-title">
+      <h1>Work Experience Certificate</h1>
+      <div class="subtitle">Official documentation of professional employment</div>
+    </div>
+
+    <div class="meta">
+      <div class="meta-row"><span>Issue date</span><b>{{certificate.issueDate}}</b></div>
+      <div class="meta-row"><span>Certificate ID</span><b>{{certificate.id}}</b></div>
+      <div class="meta-row"><span>Reference</span><b>{{certificate.ref}}</b></div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Summary Row -->
+    <section class="summary">
+      <div class="person">
+        <div class="avatar">
+          {{#if partTimer.photoDataUri}}
+            <img alt="Part-timer photo" src="{{partTimer.photoDataUri}}">
+          {{else}}
+            <div class="avatar-fallback">{{partTimer.initials}}</div>
+          {{/if}}
+        </div>
+
+        <div class="person-info">
+          <div class="name">{{partTimer.fullName}}</div>
+          <div class="badges">
+            <span class="badge">{{partTimer.roleLabel}}</span>
+            {{#if certificate.verified}}
+              <span class="badge badge-verified">Verified</span>
+            {{else}}
+              <span class="badge badge-pending">Pending</span>
+            {{/if}}
+          </div>
+          <div class="small">
+            {{partTimer.nationality}} · {{partTimer.age}}y · {{partTimer.phone}} · {{partTimer.email}}
+          </div>
+        </div>
+      </div>
+
+      <div class="hours">
+        <div class="hours-label">Total hours</div>
+        <div class="hours-value">{{summary.totalHours}}</div>
+        <div class="hours-unit">hrs</div>
+      </div>
+    </section>
+
+    <!-- Employer Card -->
+    <section class="card">
+      <div class="card-header">
+        <div class="employer">
+          {{#if employer.logoDataUri}}
+            <img class="employer-logo" alt="{{employer.name}} logo" src="{{employer.logoDataUri}}">
+          {{else}}
+            <div class="employer-logo-fallback">{{employer.initials}}</div>
+          {{/if}}
+          <div class="employer-text">
+            <div class="employer-name">{{employer.name}}</div>
+            <div class="small">
+              Reg: {{employer.registration}} · Tel: {{employer.phone}} · {{employer.email}}
+            </div>
+          </div>
+        </div>
+
+        <div class="pill">
+          <span>{{summary.totalHours}}</span><span class="muted"> hrs</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:42%">Event / Campaign</th>
+              <th style="width:18%">Date</th>
+              <th style="width:24%">Location</th>
+              <th style="width:16%; text-align:right;">Hours</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each assignments}}
+              <tr>
+                <td>{{this.event}}</td>
+                <td>{{this.date}}</td>
+                <td>{{this.location}}</td>
+                <td style="text-align:right;">{{this.hours}}</td>
+              </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Signatures + Verification -->
+    <section class="bottom">
+      <div class="sig">
+        <div class="sig-title">Part-timer signature</div>
+        <div class="sig-line"></div>
+        <div class="sig-small muted">Sign above</div>
+      </div>
+
+      <div class="date-box">
+        <div class="muted">Date</div>
+        <div class="date-value">{{certificate.issueDate}}</div>
+      </div>
+
+      <div class="verify">
+        <div class="check">✓</div>
+        <div class="verify-text">
+          <div class="verify-title">Verified</div>
+          <div class="verify-desc">This certificate confirms completed work for employment verification.</div>
+          {{#if certificate.qrDataUri}}
+            <img class="qr" alt="Verification QR" src="{{certificate.qrDataUri}}">
+          {{/if}}
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>{{brand.footerLeft}}</div>
+    <div>Ref: <b>{{certificate.ref}}</b></div>
+  </footer>
+</body>
+</html>

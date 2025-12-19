@@ -1,0 +1,45 @@
+{
+  "brand": {
+    "name": "SmartShift",
+    "initials": "SS",
+    "tagline": "Track Time \u00b7 Get Certified \u00b7 Get Paid",
+    "footerLeft": "SmartShift \u2014 Workforce Management Platform",
+    "logoDataUri": ""
+  },
+  "certificate": {
+    "issueDate": "19 Dec 2025",
+    "id": "PROMO-E899KP",
+    "ref": "MAUR3X",
+    "verified": true,
+    "qrDataUri": ""
+  },
+  "partTimer": {
+    "fullName": "Ebrahim Mohamed",
+    "initials": "EM",
+    "roleLabel": "Part\u2011timer",
+    "nationality": "Bahraini",
+    "age": 36,
+    "phone": "0097336357377",
+    "email": "emohd123@gmail.com",
+    "photoDataUri": ""
+  },
+  "employer": {
+    "name": "Cactus advertising and promotions",
+    "initials": "CA",
+    "registration": "128788-1",
+    "phone": "0097336357377",
+    "email": "ebrahim@cactus.bh",
+    "logoDataUri": ""
+  },
+  "summary": {
+    "totalHours": 69
+  },
+  "assignments": [
+    {
+      "event": "City center",
+      "date": "31 Oct 2025",
+      "location": "Manama",
+      "hours": "69"
+    }
+  ]
+}

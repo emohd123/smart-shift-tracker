@@ -1,0 +1,14 @@
+{
+  "name": "smartshift-certificate-pdf",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:pdf": "node render.js sample-data.json output.pdf",
+    "build:html": "node render.js sample-data.json output.pdf --html"
+  },
+  "dependencies": {
+    "handlebars": "^4.7.8",
+    "puppeteer": "^23.5.3"
+  }
+}
