@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "seed": "tsx supabase/seed.ts"
+    "seed": "tsx supabase/seed.ts",
+    "backend:deploy": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/deploy-backend.ps1"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

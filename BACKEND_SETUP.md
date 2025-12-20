@@ -66,6 +66,23 @@ If you use payments/webhooks, set secrets in Supabase (not in frontend env files
 npx -y supabase@latest secrets set STRIPE_SECRET_KEY=YOUR_VALUE
 ```
 
+## Automated (recommended)
+
+If you want this to be one command after you set env vars:
+
+1) Set environment variables (User scope) and restart Cursor/terminal:
+
+```powershell
+[Environment]::SetEnvironmentVariable("SUPABASE_ACCESS_TOKEN","<YOUR_ACCESS_TOKEN>","User")
+[Environment]::SetEnvironmentVariable("SUPABASE_DB_PASSWORD","<YOUR_DB_PASSWORD>","User")
+```
+
+2) Run:
+
+```powershell
+npm run backend:deploy
+```
+
 ## 7) Verify Storage buckets
 
 Migrations create buckets like:
