@@ -1,6 +1,7 @@
 ﻿import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { MultiCompanyCertificate } from '../types/certificate';
+import QRCode from 'qrcode';
 
 // Helper to load image as base64
 async function loadImageAsBase64(url: string): Promise<string | null> {
@@ -45,6 +46,13 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
   });
   
   const partTimerIdDisplay = promoter?.unique_code || 'PT-' + shortRef;
+  const verifyUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(data.referenceNumber)}`;
+  let verifyQrDataUrl: string | null = null;
+  try {
+    verifyQrDataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240 });
+  } catch {
+    verifyQrDataUrl = null;
+  }
 
   // ===== COMPACT HEADER =====
   doc.setFillColor(79, 70, 229);
@@ -320,6 +328,13 @@ export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Pr
   doc.setFont('helvetica', 'normal');
   doc.text('Smart Shift Tracker™ — Workforce Management Platform', margin, 291);
   doc.text('Ref: ' + shortRef, pageWidth - margin, 291, { align: 'right' });
+
+  // Small QR near footer (optional)
+  if (verifyQrDataUrl) {
+    try {
+      doc.addImage(verifyQrDataUrl, 'PNG', pageWidth - margin - 12, 287.5, 9.5, 9.5);
+    } catch {}
+  }
 
   return doc.output('blob');
 }

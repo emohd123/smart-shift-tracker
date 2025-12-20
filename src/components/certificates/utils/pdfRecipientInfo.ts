@@ -11,12 +11,14 @@ export const addRecipientInfo = (
   positionTitle: string,
   referenceNumber: string
 ): void => {
+  const verifyUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(referenceNumber)}`;
+
   // Add certificate reference and verification
   doc.setFontSize(10);
   doc.setTextColor(80, 80, 80);
   doc.text(`Reference: ${referenceNumber}`, 148.5, 52, { align: "center" });
   doc.setFontSize(8);
-  doc.text(`Verify this certificate at: verify-certificate.smartshift.com/${referenceNumber}`, 148.5, 58, { align: "center" });
+  doc.text(`Verify online at: ${verifyUrl}`, 148.5, 58, { align: "center" });
   
   // Add main certificate content
   doc.setFontSize(12);

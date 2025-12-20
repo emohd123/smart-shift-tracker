@@ -12,6 +12,7 @@ interface CertificatePreviewProps {
 }
 
 export default function CertificatePreview({ certificateData }: CertificatePreviewProps) {
+  const verifyUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(certificateData.referenceNumber)}`;
   if (!certificateData) return null;
   
   return (
@@ -156,13 +157,13 @@ export default function CertificatePreview({ certificateData }: CertificatePrevi
                   This certificate can be verified online at:
                 </p>
                 <p className="text-sm font-medium">
-                  verify-certificate.smartshift.com/{certificateData.referenceNumber}
+                  {verifyUrl}
                 </p>
               </div>
               <div className="border border-primary/30 rounded p-2 bg-white">
                 <QRCode
                   size={96}
-                  value={`https://verify-certificate.smartshift.com/${certificateData.referenceNumber}`}
+                  value={verifyUrl}
                   level="H"
                 />
               </div>

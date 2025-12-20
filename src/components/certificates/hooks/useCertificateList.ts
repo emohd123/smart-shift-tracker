@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Certificate } from "../types/certificate";
+import { toast } from "sonner";
+import { generateMultiCompanyPDF } from "../utils/multiCompanyPdfGenerator";
+import type { MultiCompanyCertificate } from "../types/certificate";
 
 export default function useCertificateList() {
   const { user } = useAuth();
@@ -50,10 +53,54 @@ export default function useCertificateList() {
   });
 
   const handleDownload = async (certificate: Certificate) => {
-    if (certificate.pdf_url) {
-      window.open(certificate.pdf_url, '_blank');
-    } else {
-      console.error("Certificate PDF not available");
+    // Prefer regenerating the PDF from stored JSON payload so all downloads use the latest premium layout.
+    // Fallback to stored pdf_url for older certificates that don't have structured data.
+    try {
+      const maybeJson = certificate.time_period;
+      if (maybeJson && typeof maybeJson === "string" && maybeJson.trim().startsWith("{")) {
+        const stored = JSON.parse(maybeJson);
+
+        if (stored?.companies && Array.isArray(stored.companies) && stored?.promoterName) {
+          toast.loading("Preparing certificate...", { id: `dl-${certificate.id}` });
+
+          const certData: MultiCompanyCertificate = {
+            referenceNumber: certificate.reference_number,
+            promoterName: stored.promoterName,
+            issueDate: certificate.issue_date,
+            companies: stored.companies,
+            grandTotalHours: certificate.total_hours,
+            signature: stored.signature || undefined,
+          };
+
+          const pdfBlob = await generateMultiCompanyPDF(certData);
+          const url = URL.createObjectURL(pdfBlob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = `Certificate-${certificate.reference_number}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
+
+          toast.success("Certificate downloaded", { id: `dl-${certificate.id}` });
+          return;
+        }
+      }
+
+      if (certificate.pdf_url) {
+        window.open(certificate.pdf_url, "_blank");
+        return;
+      }
+
+      toast.error("Certificate PDF not available");
+    } catch (err) {
+      console.error("Certificate download failed:", err);
+      // Fallback to stored URL if regen fails
+      if (certificate.pdf_url) {
+        window.open(certificate.pdf_url, "_blank");
+        return;
+      }
+      toast.error("Failed to download certificate");
     }
   };
 

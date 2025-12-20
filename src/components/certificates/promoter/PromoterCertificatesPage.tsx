@@ -16,6 +16,7 @@ import { generateMultiCompanyPDF } from "../utils/multiCompanyPdfGenerator";
 import { uploadFileToBucket } from "@/integrations/supabase/storage";
 import CertificateDateFilter from "./CertificateDateFilter";
 import SignatureDialog from "../SignatureDialog";
+import { buildBdfCertificateDataFromMultiCompany } from "../utils/bdfCertificateData";
 
 export default function PromoterCertificatesPage() {
   const [approvedWork, setApprovedWork] = useState<CompanyWorkEntry[]>([]);
@@ -299,6 +300,15 @@ export default function PromoterCertificatesPage() {
       const referenceNumber = `CERT-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`;
       const grandTotalHours = filteredWork.reduce((sum, company) => sum + company.totalHours, 0);
 
+      const bdfData = buildBdfCertificateDataFromMultiCompany({
+        referenceNumber,
+        promoterName: profile?.full_name || 'Unknown',
+        issueDate: new Date().toISOString(),
+        companies: filteredWork,
+        grandTotalHours,
+        signature: signature || pendingSignature || undefined,
+      });
+
       // Create PENDING certificate record (NO PDF yet)
       // Store certificate data as JSON in time_period field for later PDF generation
       const { data: certificate, error: certError } = await supabase
@@ -316,6 +326,7 @@ export default function PromoterCertificatesPage() {
             promoterName: profile?.full_name || 'Unknown',
             companies: filteredWork,
             signature: signature || pendingSignature || null,
+            bdf: bdfData,
           })
         })
         .select()

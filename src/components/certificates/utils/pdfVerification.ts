@@ -14,7 +14,7 @@ export const addVerificationQRCode = async (
   startY: number
 ): Promise<void> => {
   // Generate QR Code with error handling and caching
-  const verificationUrl = `https://verify-certificate.smartshift.com/${referenceNumber}`;
+  const verificationUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(referenceNumber)}`;
   
   try {
     // Check if we have this QR code cached

@@ -1,27 +1,34 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Share2, Download, Calendar, User, Briefcase, Clock, Shield } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import QRCode from "react-qr-code";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { generateEnhancedWorkExperiencePDF } from "./utils/enhancedPdfGenerator";
 
 type VerificationStatus = "verified" | "unverified" | "loading" | "not-found" | "expired";
 
 export default function VerifyCertificate() {
   const { referenceNumber } = useParams<{ referenceNumber: string }>();
+  const [searchParams] = useSearchParams();
   const [status, setStatus] = useState<VerificationStatus>("loading");
   const [certificateData, setCertificateData] = useState<any>(null);
+  const [manualRef, setManualRef] = useState("");
   const navigate = useNavigate();
+
+  const resolvedReference =
+    referenceNumber?.trim() ||
+    searchParams.get("reference")?.trim() ||
+    "";
   
   useEffect(() => {
     const verifyCertificate = async () => {
-      if (!referenceNumber) {
-        setStatus("not-found");
+      if (!resolvedReference) {
+        setStatus("unverified");
         return;
       }
       
@@ -29,8 +36,23 @@ export default function VerifyCertificate() {
         
           
         // Call the Supabase Edge Function to verify the certificate
+        const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+        const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
+
+        if (!supabaseUrl || !supabaseAnonKey) {
+          console.error("Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY");
+          setStatus("not-found");
+          return;
+        }
+
         const res = await fetch(
-          `${window.location.origin}/functions/v1/verify-certificate?reference=${referenceNumber}`
+          `${supabaseUrl}/functions/v1/verify-certificate?reference=${encodeURIComponent(resolvedReference)}`,
+          {
+            headers: {
+              apikey: supabaseAnonKey,
+              Authorization: `Bearer ${supabaseAnonKey}`,
+            },
+          }
         );
         
         const data = await res.json();
@@ -64,7 +86,14 @@ export default function VerifyCertificate() {
     };
     
     verifyCertificate();
-  }, [referenceNumber]);
+  }, [resolvedReference]);
+
+  const handleManualVerify = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmed = manualRef.trim();
+    if (!trimmed) return;
+    navigate(`/verify-certificate/${encodeURIComponent(trimmed)}`);
+  };
   
   const handleDownload = async () => {
     if (!certificateData) {
@@ -181,6 +210,35 @@ export default function VerifyCertificate() {
       </Card>
     );
   }
+
+  if (status === "unverified") {
+    return (
+      <Card className="max-w-lg mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="h-6 w-6 text-primary" />
+            Verify a Certificate
+          </CardTitle>
+          <CardDescription>
+            Enter a certificate reference number to verify authenticity.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleManualVerify} className="space-y-3">
+            <Input
+              value={manualRef}
+              onChange={(e) => setManualRef(e.target.value)}
+              placeholder="e.g. CERT-2025-ABC123"
+              autoComplete="off"
+            />
+            <Button type="submit" className="w-full" disabled={!manualRef.trim()}>
+              Verify
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+    );
+  }
   
   if (status === "not-found") {
     return (
@@ -191,7 +249,7 @@ export default function VerifyCertificate() {
             Certificate Not Found
           </CardTitle>
           <CardDescription>
-            We couldn't verify the certificate with reference number: {referenceNumber}
+            We couldn't verify the certificate with reference number: {resolvedReference || referenceNumber}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -215,7 +273,7 @@ export default function VerifyCertificate() {
             Certificate Expired
           </CardTitle>
           <CardDescription>
-            This certificate has expired: {referenceNumber}
+            This certificate has expired: {resolvedReference || referenceNumber}
           </CardDescription>
         </CardHeader>
         <CardContent>

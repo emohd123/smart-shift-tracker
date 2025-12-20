@@ -11,7 +11,9 @@
     "id": "PROMO-E899KP",
     "ref": "MAUR3X",
     "verified": true,
-    "qrDataUri": ""
+    "verifyUrl": "http://localhost:8080/verify-certificate/MAUR3X",
+    "qrDataUri": "",
+    "signatureDataUri": ""
   },
   "partTimer": {
     "fullName": "Ebrahim Mohamed",

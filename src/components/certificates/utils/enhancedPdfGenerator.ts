@@ -9,8 +9,13 @@ declare module 'jspdf' {
 }
 
 export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData): Promise<Blob> => {
+  // Align this generator to the same visual language as the multi-company certificate:
+  // compact indigo header, clean sections, subtle footer, and canonical verify URL.
   const doc = new jsPDF();
-  let yPosition = 20;
+  let yPosition = 0;
+  const pageWidth = 210;
+  const margin = 12;
+  const verifyUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(data.referenceNumber)}`;
 
   // Use company info or defaults
   const companyName = data.companyInfo?.name || 'Professional Certification Authority';
@@ -20,9 +25,9 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   const companyAddress = data.companyInfo?.address;
   const companyRegId = data.companyInfo?.registration_id;
 
-  // Enhanced Header with Company Branding
-  doc.setFillColor(41, 128, 185); // Professional blue
-  doc.rect(0, 0, 210, 50, 'F');
+  // ===== COMPACT HEADER (matches multi-company) =====
+  doc.setFillColor(79, 70, 229);
+  doc.rect(0, 0, pageWidth, 38, 'F');
   
   // Add company logo if available
   if (data.companyInfo?.logo_url) {
@@ -35,38 +40,64 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   }
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(24);
+  doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('COMPREHENSIVE WORK EXPERIENCE CERTIFICATE', 105, 25, { align: 'center' });
+  doc.text('WORK EXPERIENCE CERTIFICATE', pageWidth / 2, 14, { align: 'center' });
   
-  doc.setFontSize(14);
+  doc.setFontSize(8);
   doc.setFont('helvetica', 'normal');
-  doc.text('Official Employment Verification & Skills Documentation', 105, 35, { align: 'center' });
+  doc.setTextColor(224, 231, 255);
+  doc.text('Official Employment Verification & Skills Documentation', pageWidth / 2, 22, { align: 'center' });
   
-  // Dynamic company contact info
-  doc.setFontSize(10);
-  const contactLine = `${companyWebsite}${companyEmail ? ' | ' + companyEmail : ''}`;
-  doc.text(contactLine, 105, 45, { align: 'center' });
+  // Info line
+  doc.setFontSize(7);
+  doc.text(
+    `Issue Date: ${new Date(data.issueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}   |   Ref: ${data.referenceNumber}`,
+    pageWidth / 2,
+    32,
+    { align: 'center' }
+  );
 
-  yPosition = 65;
+  yPosition = 46;
   doc.setTextColor(0, 0, 0);
 
-  // Reference number with enhanced styling
-  doc.setFillColor(241, 245, 249);
-  doc.rect(15, yPosition - 5, 180, 15, 'F');
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`Certificate Reference: ${data.referenceNumber}`, 105, yPosition + 5, { align: 'center' });
-  
-  yPosition += 25;
+  // ===== IDENTITY CARD =====
+  const cardHeight = 34;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.5);
+  doc.roundedRect(margin, yPosition, pageWidth - (margin * 2), cardHeight, 4, 4, 'FD');
+  doc.setFillColor(79, 70, 229);
+  doc.rect(margin, yPosition, 3, cardHeight, 'F');
 
-  // Enhanced Employee Information Section
-  doc.setFillColor(52, 152, 219);
-  doc.rect(15, yPosition, 180, 8, 'F');
-  doc.setTextColor(255, 255, 255);
+  doc.setTextColor(30, 41, 59);
   doc.setFontSize(14);
   doc.setFont('helvetica', 'bold');
-  doc.text('EMPLOYEE INFORMATION', 20, yPosition + 6);
+  doc.text(data.promoterName, margin + 10, yPosition + 13);
+
+  doc.setTextColor(71, 85, 105);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Employment Period: ${data.workPeriod.startDate} to ${data.workPeriod.endDate}`, margin + 10, yPosition + 22);
+  doc.text(`Total: ${data.totalHours} hours • ${data.totalShifts} shifts`, margin + 10, yPosition + 29);
+
+  // Total hours badge (right)
+  doc.setFillColor(16, 185, 129);
+  doc.roundedRect(pageWidth - margin - 40, yPosition + 9, 36, 16, 4, 4, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${Math.round(data.totalHours)}h`, pageWidth - margin - 22, yPosition + 20, { align: 'center' });
+
+  yPosition += cardHeight + 10;
+
+  // Enhanced Employee Information Section
+  doc.setFillColor(79, 70, 229);
+  doc.roundedRect(margin, yPosition, pageWidth - (margin * 2), 8, 3, 3, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text('DETAILS', margin + 6, yPosition + 6);
   
   yPosition += 15;
   doc.setTextColor(0, 0, 0);
@@ -93,13 +124,13 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
 
   yPosition += 10;
 
-  // Enhanced Positions & Roles Section
-  doc.setFillColor(52, 152, 219);
-  doc.rect(15, yPosition, 180, 8, 'F');
+  // Roles section
+  doc.setFillColor(79, 70, 229);
+  doc.roundedRect(margin, yPosition, pageWidth - (margin * 2), 8, 3, 3, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('POSITIONS & ROLES HELD', 20, yPosition + 6);
+  doc.text('ROLES & LOCATIONS', margin + 6, yPosition + 6);
   
   yPosition += 15;
   doc.setTextColor(0, 0, 0);
@@ -111,13 +142,13 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   
   yPosition += 15;
 
-  // Enhanced Work History Table
-  doc.setFillColor(52, 152, 219);
-  doc.rect(15, yPosition, 180, 8, 'F');
+  // Work history table header
+  doc.setFillColor(79, 70, 229);
+  doc.roundedRect(margin, yPosition, pageWidth - (margin * 2), 8, 3, 3, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
+  doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text('DETAILED WORK HISTORY', 20, yPosition + 6);
+  doc.text('WORK HISTORY', margin + 6, yPosition + 6);
   
   yPosition += 15;
 
@@ -136,7 +167,7 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
     head: [['Date', 'Position', 'Location', 'Hours', 'Time Log']],
     body: tableData,
     headStyles: {
-      fillColor: [52, 152, 219],
+      fillColor: [79, 70, 229],
       textColor: [255, 255, 255],
       fontSize: 10,
       fontStyle: 'bold'
@@ -211,27 +242,19 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
     }
   });
 
-  // Enhanced Footer with verification URL
-  yPosition = 270;
-  doc.setFillColor(245, 247, 250);
-  doc.rect(15, yPosition, 180, 20, 'F');
-  doc.setTextColor(100, 100, 100);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'italic');
-  doc.text('This is an official work experience certificate generated by our certified system.', 105, yPosition + 6, { align: 'center' });
-  doc.text('All information has been verified and is accurate as of the issue date.', 105, yPosition + 12, { align: 'center' });
-  doc.text(`Verify online at: ${window.location.origin}/verify-certificate/${data.referenceNumber}`, 105, yPosition + 18, { align: 'center' });
+  // ===== FOOTER =====
+  yPosition = 285;
+  doc.setFillColor(248, 250, 252);
+  doc.rect(0, yPosition, pageWidth, 12, 'F');
+  doc.setDrawColor(226, 232, 240);
+  doc.setLineWidth(0.3);
+  doc.line(0, yPosition, pageWidth, yPosition);
 
-  // Add digital stamp/seal
-  doc.setDrawColor(52, 152, 219);
-  doc.setLineWidth(2);
-  doc.circle(170, 240, 15);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(52, 152, 219);
-  doc.text('OFFICIAL', 170, 237, { align: 'center' });
-  doc.text('DIGITAL', 170, 242, { align: 'center' });
-  doc.text('SEAL', 170, 247, { align: 'center' });
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(6);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Smart Shift Tracker™ — Workforce Management Platform', margin, yPosition + 6);
+  doc.text(`Ref: ${data.referenceNumber}`, pageWidth - margin, yPosition + 6, { align: 'right' });
 
   return doc.output('blob');
 };

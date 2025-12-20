@@ -15,6 +15,7 @@ import { MultiCompanyCertificate } from "../types/certificate";
 import { generateMultiCompanyPDF } from "../utils/multiCompanyPdfGenerator";
 import { uploadFileToBucket } from "@/integrations/supabase/storage";
 import CertificateDateFilter from "../promoter/CertificateDateFilter";
+import { buildBdfCertificateDataFromMultiCompany } from "../utils/bdfCertificateData";
 
 interface PromoterOption {
   id: string;
@@ -360,6 +361,8 @@ export default function AdminCertificatesPage() {
         }
       };
 
+      const bdfData = buildBdfCertificateDataFromMultiCompany(certData);
+
       const pdfBlob = await generateMultiCompanyPDF(certData);
       
       // Trigger immediate download
@@ -401,7 +404,8 @@ export default function AdminCertificatesPage() {
             promoterName: selectedPromoter.full_name,
             companies: workEntries,
             generatedByAdmin: true,
-            selectedShiftIds: Array.from(selectedShifts)
+            selectedShiftIds: Array.from(selectedShifts),
+            bdf: bdfData
           })
         });
 

@@ -6,7 +6,6 @@ import { CertificateType, TimePeriod, CertificateData, WorkExperienceData } from
 // Removed dependency on useCertificateGeneration
 import { useWorkExperienceData } from "./useWorkExperienceData";
 import { generateEnhancedWorkExperiencePDF } from "../utils/enhancedPdfGenerator";
-import { generateWorkExperiencePDF } from "../utils/pdfWorkExperienceGenerator";
 import { useUserData } from "./useShiftData";
 
 export const useUnifiedCertificateGeneration = (

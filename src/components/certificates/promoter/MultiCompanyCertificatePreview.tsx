@@ -17,7 +17,7 @@ interface MultiCompanyCertificatePreviewProps {
 
 export default function MultiCompanyCertificatePreview({ data }: MultiCompanyCertificatePreviewProps) {
   const isPreview = data.referenceNumber === 'PREVIEW';
-  const verificationUrl = `${window.location.origin}/verify-certificate?ref=${data.referenceNumber}`;
+  const verificationUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(data.referenceNumber)}`;
 
   return (
     <Card className="max-w-4xl mx-auto">
