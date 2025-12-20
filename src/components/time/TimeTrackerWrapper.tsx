@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import ContractAcceptanceDialog from "@/components/contracts/ContractAcceptanceDialog";
+import { isMissingTableError } from "@/utils/supabaseErrors";
 
 type TimeTrackerProps = {
   shift?: Shift;
@@ -174,7 +175,9 @@ const TimeTrackerWrapper = forwardRef(({
       console.error(e);
       setContractLoading(false);
       // Don't block shift start if the contract tables aren't deployed yet
-      toast.error("Contract check failed", { description: "Proceeding without contract check." });
+      if (!isMissingTableError(e, "company_contract_templates") && !isMissingTableError(e, "company_contract_acceptances")) {
+        toast.error("Contract check failed", { description: "Proceeding without contract check." });
+      }
       return handleStartTracking();
     }
   };
