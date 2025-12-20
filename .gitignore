@@ -25,6 +25,10 @@ dist-ssr
 
 # Generated certificate previews / artifacts
 bdf/part-timer-certificate-template/output.*
+bdf/part-timer-certificate-template/*.png
+bdf/part-timer-certificate-template/*.jpg
+bdf/part-timer-certificate-template/*.jpeg
+bdf/part-timer-certificate-template/*.pdf
 
 # Playwright / e2e artifacts
 test-results/
