@@ -110,8 +110,9 @@ serve(async (req) => {
 
           // Calculate earnings based on pay rate type
           let earnings = 0;
-          const payRate = assignment.shifts.pay_rate;
-          const payRateType = assignment.shifts.pay_rate_type;
+          const shift = Array.isArray(assignment.shifts) ? assignment.shifts[0] : assignment.shifts;
+          const payRate = shift?.pay_rate ?? 0;
+          const payRateType = shift?.pay_rate_type ?? 'hourly';
 
           switch (payRateType) {
             case "hourly":
@@ -167,7 +168,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("[Auto-Attendance] Error:", error);
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
         status: 500,
