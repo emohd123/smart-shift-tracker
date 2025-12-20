@@ -2,6 +2,7 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { AttendanceStatusBadge } from "./AttendanceStatusBadge";
 import { TimeLog, calculatePromoterPayment, formatWorkDuration, formatBHD } from "../utils/paymentCalculations";
 import { Clock, Phone, User, X, LogIn, LogOut, Timer } from "lucide-react";
@@ -13,6 +14,8 @@ import { EditTimeLogDialog } from "./EditTimeLogDialog";
 import { ManualCheckInDialog } from "./ManualCheckInDialog";
 import { PromoterWorkHistory } from "./PromoterWorkHistory";
 import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,6 +39,9 @@ type PromoterAttendanceCardProps = {
     scheduled_end_time?: string;
     auto_checkin_enabled?: boolean;
     auto_checkout_enabled?: boolean;
+    payment_status?: "scheduled" | "paid" | null;
+    payment_scheduled_at?: string | null;
+    payment_paid_at?: string | null;
   };
   timeLogs: TimeLog[];
   payRate: number;
@@ -54,6 +60,7 @@ export const PromoterAttendanceCard = ({
   onUpdate,
   userRole,
 }: PromoterAttendanceCardProps) => {
+  const { user } = useAuth();
   const { unassignPromoter, loading: unassigning } = useUnassignPromoter();
   const { checkIn, checkOut, manualCheckIn, loading: checkInOutLoading } = useCompanyCheckIn(shiftId, payRate, payRateType);
   const [elapsedTime, setElapsedTime] = useState(0);
@@ -67,6 +74,51 @@ export const PromoterAttendanceCard = ({
   const isCheckedIn = latestLog && !latestLog.check_out_time;
   
   const isCompany = userRole === "company" || userRole === "admin";
+  const [payStatus, setPayStatus] = useState<"scheduled" | "paid" | null>(promoter.payment_status ?? null);
+  const [payUpdating, setPayUpdating] = useState(false);
+
+  useEffect(() => {
+    setPayStatus(promoter.payment_status ?? null);
+  }, [promoter.payment_status]);
+
+  const markPaymentScheduled = async () => {
+    if (!isCompany) return;
+    setPayUpdating(true);
+    try {
+      await (supabase as any)
+        .from("shift_assignment_payment_status")
+        .upsert({
+          assignment_id: promoter.id,
+          status: "scheduled",
+          scheduled_at: new Date().toISOString(),
+          updated_by: user?.id,
+        });
+      setPayStatus("scheduled");
+    } finally {
+      setPayUpdating(false);
+      onUpdate?.();
+    }
+  };
+
+  const markPaymentPaid = async () => {
+    if (!isCompany) return;
+    setPayUpdating(true);
+    try {
+      await (supabase as any)
+        .from("shift_assignment_payment_status")
+        .upsert({
+          assignment_id: promoter.id,
+          status: "paid",
+          paid_at: new Date().toISOString(),
+          scheduled_at: promoter.payment_scheduled_at ?? new Date().toISOString(),
+          updated_by: user?.id,
+        });
+      setPayStatus("paid");
+    } finally {
+      setPayUpdating(false);
+      onUpdate?.();
+    }
+  };
 
   // Calculate elapsed time and estimated earnings for active check-ins
   useEffect(() => {
@@ -168,6 +220,11 @@ export const PromoterAttendanceCard = ({
           </div>
           <div className="flex items-center gap-2">
             <AttendanceStatusBadge timeLogs={timeLogs} />
+            {(payStatus === "scheduled" || payStatus === "paid") && (
+              <Badge variant={payStatus === "paid" ? "default" : "outline"}>
+                {payStatus === "paid" ? "Paid" : "Payment Scheduled"}
+              </Badge>
+            )}
             {isCompany && (
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -253,6 +310,25 @@ export const PromoterAttendanceCard = ({
         {/* Check-in/out Controls */}
         {isCompany && (
           <div className="space-y-2">
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                className="flex-1"
+                disabled={payUpdating || payStatus === "scheduled" || payStatus === "paid"}
+                onClick={markPaymentScheduled}
+              >
+                {payStatus === "scheduled" || payStatus === "paid" ? "Scheduled" : "Schedule Payment"}
+              </Button>
+              <Button
+                size="sm"
+                className="flex-1"
+                disabled={payUpdating || payStatus === "paid"}
+                onClick={markPaymentPaid}
+              >
+                {payStatus === "paid" ? "Paid" : "Mark Paid"}
+              </Button>
+            </div>
             <div className="flex gap-2">
               {isCheckedIn && (
                 <Button

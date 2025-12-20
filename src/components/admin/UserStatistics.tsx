@@ -39,7 +39,7 @@ export default function UserStatistics() {
 
       const totalPromoters = profiles?.filter(p => p.role === 'promoter').length || 0;
       const totalCompanies = profiles?.filter(p => p.role === 'company').length || 0;
-      const totalAdmins = profiles?.filter(p => p.role === 'admin').length || 0;
+      const totalAdmins = profiles?.filter(p => p.role === 'admin' || p.role === 'super_admin').length || 0;
       const pendingVerifications = profiles?.filter(p => p.verification_status === 'pending').length || 0;
       const newThisWeek = profiles?.filter(p => 
         new Date(p.created_at) >= oneWeekAgo

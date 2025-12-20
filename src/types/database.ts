@@ -23,6 +23,7 @@ export enum ShiftStatus {
 
 export enum UserRole {
   Admin = "admin",
+  SuperAdmin = "super_admin",
   Promoter = "promoter",
   Company = "company"
 }

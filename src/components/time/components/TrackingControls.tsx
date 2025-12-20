@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 type TrackingControlsProps = {
   isTracking: boolean;
-  onStartTracking: () => void;
+  onStartTracking: () => void | Promise<void>;
   onStopTracking: () => void;
   loading: boolean;
   isShiftActive: boolean;
@@ -29,7 +29,7 @@ export default function TrackingControls({
           whileTap={{ scale: 0.98 }}
         >
           <Button 
-            onClick={onStartTracking} 
+            onClick={() => void onStartTracking()}
             className="w-full group transition-all duration-300"
             variant="default"
             disabled={loading || !isShiftActive}

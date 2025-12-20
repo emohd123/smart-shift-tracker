@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
-import AdminDashboard from "@/components/dashboard/AdminDashboard";
 import PromoterDashboard from "@/components/dashboard/PromoterDashboard";
 import { useAuth } from "@/context/AuthContext";
 import { useShiftsData } from "@/hooks/shifts/useShiftsData";
+import { UserRole } from "@/types/database";
+import AdminOverview from "./AdminOverview";
 
 const Dashboard = () => {
   const { user, isAuthenticated } = useAuth();
@@ -26,11 +27,9 @@ const Dashboard = () => {
     return null; // Don't render anything while redirecting
   }
 
-  if (user?.role === "admin") {
+  if (user?.role === UserRole.Admin || user?.role === UserRole.SuperAdmin) {
     return (
-      <AppLayout title="Admin Dashboard">
-        <AdminDashboard shifts={shifts} loading={loading} />
-      </AppLayout>
+      <AdminOverview />
     );
   }
 

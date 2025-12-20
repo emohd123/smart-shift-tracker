@@ -14,6 +14,9 @@ export interface AssignedPromoter {
   scheduled_end_time?: string;
   auto_checkin_enabled?: boolean;
   auto_checkout_enabled?: boolean;
+  payment_status?: "scheduled" | "paid" | null;
+  payment_scheduled_at?: string | null;
+  payment_paid_at?: string | null;
 }
 
 export const useAssignedPromoters = (shiftId: string) => {
@@ -42,6 +45,21 @@ export const useAssignedPromoters = (shiftId: string) => {
 
       if (error) throw error;
 
+      // Fetch payment status for these assignments (best-effort; table may not exist until migration is applied)
+      const assignmentIds = (data || []).map((a: any) => a.id).filter(Boolean);
+      let paymentMap = new Map<string, any>();
+      if (assignmentIds.length > 0) {
+        try {
+          const { data: payRows } = await (supabase as any)
+            .from("shift_assignment_payment_status")
+            .select("assignment_id, status, scheduled_at, paid_at")
+            .in("assignment_id", assignmentIds);
+          (payRows || []).forEach((p: any) => paymentMap.set(p.assignment_id, p));
+        } catch {
+          paymentMap = new Map();
+        }
+      }
+
       const formattedPromoters = data?.map((assignment: any) => ({
         id: assignment.id,
         promoter_id: assignment.promoter_id,
@@ -53,6 +71,9 @@ export const useAssignedPromoters = (shiftId: string) => {
         full_name: assignment.profiles?.full_name || "Unknown",
         unique_code: assignment.profiles?.unique_code || "N/A",
         phone_number: assignment.profiles?.phone_number,
+        payment_status: paymentMap.get(assignment.id)?.status ?? null,
+        payment_scheduled_at: paymentMap.get(assignment.id)?.scheduled_at ?? null,
+        payment_paid_at: paymentMap.get(assignment.id)?.paid_at ?? null,
       })) || [];
 
       setPromoters(formattedPromoters);

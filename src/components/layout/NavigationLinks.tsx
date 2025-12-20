@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { 
   CalendarDays, ChevronDown, 
   ClipboardList, Clock, Home, MessageCircle, 
-  Settings, UserRound, Users, FileBarChart2, Eraser, Award, LayoutDashboard, DollarSign
+  Settings, UserRound, Users, FileBarChart2, Eraser, Award, LayoutDashboard, DollarSign, FileText
 } from "lucide-react";
 import { UserRole } from "@/types/database";
 import {
@@ -38,7 +38,7 @@ export const NavigationLinks = () => {
   );
   
   // Define if user is admin/company/promoter
-  const isAdmin = user?.role === UserRole.Admin;
+  const isAdmin = user?.role === UserRole.Admin || user?.role === UserRole.SuperAdmin;
   const isCompany = user?.role === UserRole.Company;
   const isPromoter = user?.role === UserRole.Promoter;
 
@@ -61,6 +61,12 @@ export const NavigationLinks = () => {
       {isCompany && (
         <AppLink to="/shifts/create" icon={<CalendarDays className="h-4 w-4" />}>
           Create Shift
+        </AppLink>
+      )}
+
+      {isCompany && (
+        <AppLink to="/company/contract" icon={<FileText className="h-4 w-4" />}>
+          Contract Template
         </AppLink>
       )}
       
@@ -87,7 +93,7 @@ export const NavigationLinks = () => {
       {isAdmin && (
         <>
           <AppLink to="/admin" icon={<LayoutDashboard className="h-4 w-4" />}>
-            Admin Overview
+            Super Admin Dashboard
           </AppLink>
           
           <AppLink to="/promoters" icon={<Users className="h-4 w-4" />}>

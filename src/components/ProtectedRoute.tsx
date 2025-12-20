@@ -7,6 +7,8 @@ import { UserRole } from "@/types/database";
 const ProtectedRoute = () => {
   const { isAuthenticated, loading, user } = useAuth();
   const location = useLocation();
+
+  const isAdminLike = user?.role === UserRole.Admin || user?.role === UserRole.SuperAdmin;
   
   // Routes requiring admin only (companies excluded)
   const requiresAdmin = location.pathname.startsWith('/admin') || 
@@ -39,12 +41,12 @@ const ProtectedRoute = () => {
   }
   
   // If route requires admin but user is not admin
-  if (requiresAdmin && user?.role !== UserRole.Admin) {
+  if (requiresAdmin && !isAdminLike) {
     return <Navigate to="/shifts" replace />;
   }
 
   // If route allows company or admin but user is neither
-  if (companyAccessRoute && !(user?.role === UserRole.Admin || user?.role === UserRole.Company)) {
+  if (companyAccessRoute && !(isAdminLike || user?.role === UserRole.Company)) {
     return <Navigate to="/shifts" replace />;
   }
 

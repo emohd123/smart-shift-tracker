@@ -21,7 +21,7 @@ type TimeTrackerCardProps = {
   permissionDenied?: boolean;
   loading: boolean;
   isNotActiveShift: boolean;
-  handleStartTracking: () => void;
+  handleStartTracking: () => void | Promise<void>;
   handleStopTracking: () => void;
   handleDismissError?: () => void;
   autoStart?: boolean;

@@ -31,6 +31,7 @@ import VerifyCertificatePage from "./pages/VerifyCertificatePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CompanyProfile from "./pages/CompanyProfile";
+import CompanyContract from "./pages/CompanyContract";
 import AdminOverview from "./pages/AdminOverview";
 
 // Root component
@@ -54,6 +55,7 @@ function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/company" element={<CompanyDashboard />} />
               <Route path="/company/profile" element={<CompanyProfile />} />
+              <Route path="/company/contract" element={<CompanyContract />} />
               <Route path="/admin" element={<AdminOverview />} />
               <Route path="/shifts" element={<Shifts />} />
               <Route path="/shifts/create" element={<CreateShift />} />
