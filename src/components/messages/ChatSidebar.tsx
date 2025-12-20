@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useMessages } from "@/hooks/messages/useMessages";
+import { isAdminLike } from "@/utils/roleUtils";
 
 interface ChatSidebarProps {
   contacts: User[];
@@ -141,7 +142,7 @@ const ContactItem = ({ contact, isSelected, onClick, currentUserId }: ContactIte
         <Avatar className="h-10 w-10 mr-3">
           <AvatarFallback className={cn(
             "text-primary",
-            contact.role === "admin" ? "bg-primary/15" : "bg-secondary"
+            isAdminLike(contact.role) ? "bg-primary/15" : "bg-secondary"
           )}>
             {getInitials(contact.name || "User")}
           </AvatarFallback>

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { isCompanyLike } from "@/utils/roleUtils";
 
 type ShiftDetailContentProps = {
   shift: Shift;
@@ -22,7 +23,7 @@ export const ShiftDetailContent = ({
   onUpdate,
   userRole,
 }: ShiftDetailContentProps) => {
-  const isCompany = userRole === "company" || userRole === "admin";
+  const isCompany = isCompanyLike(userRole);
   const navigate = useNavigate();
 
   return (

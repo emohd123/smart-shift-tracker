@@ -9,6 +9,7 @@ import { ShiftStatus } from "@/types/database";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { isCompanyLike } from "@/utils/roleUtils";
 
 const EditShift = () => {
   const { id } = useParams<{ id: string }>();
@@ -23,7 +24,7 @@ const EditShift = () => {
       return;
     }
     
-    if (!(user?.role === "admin" || user?.role === "company")) {
+    if (!isCompanyLike(user?.role)) {
       toast.error("Permission Denied");
       navigate("/shifts");
       return;
@@ -80,7 +81,7 @@ const EditShift = () => {
     }
   };
 
-  if (!isAuthenticated || !(user?.role === "admin" || user?.role === "company")) {
+  if (!isAuthenticated || !isCompanyLike(user?.role)) {
     return null;
   }
   

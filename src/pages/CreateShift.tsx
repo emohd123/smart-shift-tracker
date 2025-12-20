@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { isCompanyLike } from "@/utils/roleUtils";
 
 const CreateShift = () => {
   const navigate = useNavigate();
@@ -24,16 +25,16 @@ const CreateShift = () => {
       return;
     }
 
-    if (!(user?.role === "admin" || user?.role === "company")) {
+    if (!isCompanyLike(user?.role)) {
 
       toast.error("Permission Denied", {
         description: "Only admin or company users can create shifts"
       });
       navigate("/shifts");
     }
-  }, [isAuthenticated, navigate, user]);
+  }, [isAuthenticated, navigate, user?.role]);
 
-  if (!isAuthenticated || !(user?.role === "admin" || user?.role === "company")) {
+  if (!isAuthenticated || !isCompanyLike(user?.role)) {
     return null;
   }
 

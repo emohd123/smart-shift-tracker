@@ -9,6 +9,7 @@ import MessageList from "./MessageList";
 import { useMessages } from "@/hooks/messages/useMessages";
 import { useSendMessage } from "@/hooks/messages/useSendMessage";
 import { cn } from "@/lib/utils";
+import { isAdminLike } from "@/utils/roleUtils";
 
 interface ChatInterfaceProps {
   currentUser: User | null;
@@ -90,7 +91,7 @@ const ChatInterface = ({ currentUser, contact, onBackToContacts }: ChatInterface
         <div>
           <h3 className="font-medium">{contact.name}</h3>
           <p className="text-xs text-muted-foreground">
-            {contact.role === "admin" ? "Administrator" : "Promoter"}
+            {isAdminLike(contact.role) ? "Administrator" : "Promoter"}
           </p>
         </div>
       </div>

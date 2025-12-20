@@ -8,6 +8,7 @@ import { Calendar, AlertCircle, RefreshCw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { isAdminLike } from "@/utils/roleUtils";
 import { toast } from "sonner";
 
 // Define global functions for TypeScript
@@ -40,7 +41,7 @@ export const ShiftsContent = ({
 }: ShiftsContentProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = isAdminLike(user?.role);
   const isCompany = user?.role === "company";
 
   // Register the deleteShift function globally, but clean up on unmount

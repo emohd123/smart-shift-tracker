@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@/context/AuthContext";
 import { useAuth } from "@/context/AuthContext";
+import { isAdminLike } from "@/utils/roleUtils";
 
 export const useMessageContacts = () => {
   const { user } = useAuth();
@@ -22,8 +23,8 @@ export const useMessageContacts = () => {
       try {
         let contactsQuery;
 
-        // Admin users can message all promoters
-        if (user.role === "admin") {
+        // Admin-like users can message all promoters
+        if (isAdminLike(user.role)) {
           // Get all promoters
           const { data: promoterUsers, error: promotersError } = await supabase
             .from("profiles")
@@ -41,11 +42,11 @@ export const useMessageContacts = () => {
             role: p.role
           }));
         } else {
-          // Promoters can only message admins
+          // Promoters can only message admins / super admins
           const { data: adminUsers, error: adminsError } = await supabase
             .from("profiles")
             .select("id, full_name, role")
-            .eq("role", "admin");
+            .in("role", ["admin", "super_admin"]);
 
           if (adminsError) {
             console.error("Error fetching admins:", adminsError);

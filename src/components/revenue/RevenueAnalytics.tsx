@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, Calendar, Clock } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { isAdminLike } from "@/utils/roleUtils";
 
 type RevenueStats = {
   totalShiftRevenue: number;
@@ -29,7 +30,7 @@ export default function RevenueAnalytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'admin') {
+    if (isAuthenticated && isAdminLike(user?.role)) {
       fetchRevenueStats();
     }
   }, [isAuthenticated, user]);

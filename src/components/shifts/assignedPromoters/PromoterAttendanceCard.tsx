@@ -16,6 +16,7 @@ import { PromoterWorkHistory } from "./PromoterWorkHistory";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { isCompanyLike } from "@/utils/roleUtils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,7 +74,7 @@ export const PromoterAttendanceCard = ({
   const latestLog = timeLogs.length > 0 ? timeLogs[timeLogs.length - 1] : null;
   const isCheckedIn = latestLog && !latestLog.check_out_time;
   
-  const isCompany = userRole === "company" || userRole === "admin";
+  const isCompany = isCompanyLike(userRole);
   const [payStatus, setPayStatus] = useState<"scheduled" | "paid" | null>(promoter.payment_status ?? null);
   const [payUpdating, setPayUpdating] = useState(false);
 

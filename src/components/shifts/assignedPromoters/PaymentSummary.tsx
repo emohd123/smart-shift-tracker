@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Users, Clock } from "lucide-react";
 import { formatBHD } from "../utils/paymentCalculations";
+import { isCompanyLike } from "@/utils/roleUtils";
 
 type PaymentSummaryProps = {
   totalPromoters: number;
@@ -18,7 +19,7 @@ export const PaymentSummary = ({
   totalHours,
   userRole,
 }: PaymentSummaryProps) => {
-  const isCompany = userRole === "company" || userRole === "admin";
+  const isCompany = isCompanyLike(userRole);
   return (
     <div className={`grid grid-cols-1 ${isCompany ? 'md:grid-cols-4' : 'md:grid-cols-2'} gap-4 mb-6`}>
       <Card>

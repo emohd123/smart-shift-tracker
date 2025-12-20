@@ -19,6 +19,7 @@ import { useUnifiedCertificateGeneration } from "./hooks/useUnifiedCertificateGe
 import { useCertificatePayment } from "@/hooks/useCertificatePayment";
 import PaymentButton from "./generator/PaymentButton";
 import GenerateButton from "./generator/GenerateButton";
+import { isAdminLike } from "@/utils/roleUtils";
 
 export default function EnhancedWorkCertificateGenerator() {
   const { user, isAuthenticated } = useAuth();
@@ -61,7 +62,7 @@ export default function EnhancedWorkCertificateGenerator() {
   
   // Fetch promoters if user is admin
   useEffect(() => {
-    if (user?.role === 'admin') {
+    if (isAdminLike(user?.role)) {
       const loadPromoters = async () => {
         setLoadingPromoters(true);
         try {
@@ -85,7 +86,7 @@ export default function EnhancedWorkCertificateGenerator() {
       return;
     }
     
-    if (!selectedUserId && user?.role === 'admin') {
+    if (!selectedUserId && isAdminLike(user?.role)) {
       toast.error("Please select a promoter");
       return;
     }
@@ -154,16 +155,16 @@ export default function EnhancedWorkCertificateGenerator() {
             <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="generate">Generate Certificate</TabsTrigger>
               <TabsTrigger value="customize">Customize Design</TabsTrigger>
-              {(user?.role === 'admin' || user?.role === 'company') && (
+              {(isAdminLike(user?.role) || user?.role === 'company') && (
                 <TabsTrigger value="settings">
-                  {user?.role === 'admin' ? 'Admin Settings' : 'Company Settings'}
+                  {isAdminLike(user?.role) ? 'Admin Settings' : 'Company Settings'}
                 </TabsTrigger>
               )}
             </TabsList>
             
             <TabsContent value="generate" className="space-y-6">
               {/* Admin can select a user */}
-              {user?.role === 'admin' && (
+              {isAdminLike(user?.role) && (
                 <AdminCertificateSelector
                   selectedUserId={selectedUserId}
                   setSelectedUserId={setSelectedUserId}
@@ -187,7 +188,7 @@ export default function EnhancedWorkCertificateGenerator() {
               <div className="flex justify-center">
                 <Button 
                   onClick={handleGenerate}
-                  disabled={loading || !user || (user.role === 'admin' && selectedUserId === "") || selectedShifts.length === 0}
+                  disabled={loading || !user || (isAdminLike(user.role) && selectedUserId === "") || selectedShifts.length === 0}
                   size="lg"
                   className="px-8 py-3 text-lg"
                 >
@@ -219,7 +220,7 @@ export default function EnhancedWorkCertificateGenerator() {
               />
             </TabsContent>
             
-            {user?.role === 'admin' && (
+            {isAdminLike(user?.role) && (
               <TabsContent value="settings" className="space-y-6">
                 <AdminStampConfig />
               </TabsContent>

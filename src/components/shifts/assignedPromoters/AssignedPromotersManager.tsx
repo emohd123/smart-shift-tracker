@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Users } from "lucide-react";
 import { calculateTotalShiftPayment } from "../utils/paymentCalculations";
 import { AssignPromotersDialog } from "./AssignPromotersDialog";
+import { isCompanyLike } from "@/utils/roleUtils";
 
 type AssignedPromotersManagerProps = {
   shiftId: string;
@@ -66,7 +67,7 @@ export const AssignedPromotersManager = ({
     );
   }
 
-  const isCompany = userRole === "company" || userRole === "admin";
+  const isCompany = isCompanyLike(userRole);
 
   if (promoters.length === 0) {
     return (

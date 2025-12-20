@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import CompanyCertificatesPage from "@/components/certificates/company/CompanyCertificatesPage";
 import PromoterCertificatesPage from "@/components/certificates/promoter/PromoterCertificatesPage";
 import AdminCertificatesPage from "@/components/certificates/admin/AdminCertificatesPage";
+import { isAdminLike } from "@/utils/roleUtils";
 
 export default function Certificates() {
   const { user } = useAuth();
@@ -34,7 +35,7 @@ export default function Certificates() {
     }
   }, [searchParams]);
 
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = isAdminLike(user?.role);
   const isCompany = user?.role === 'company';
   const isPromoter = user?.role === 'promoter';
   

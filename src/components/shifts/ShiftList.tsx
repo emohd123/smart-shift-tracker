@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
+import { isAdminLike } from "@/utils/roleUtils";
 import { Shift } from "./types/ShiftTypes";
 import { toast } from "sonner";
 import ShiftGrid from "./ShiftGrid";
@@ -27,7 +28,7 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showBulkPayRateDialog, setShowBulkPayRateDialog] = useState(false);
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = isAdminLike(user?.role);
 
   const filteredShifts = shifts.filter(shift =>
     shift.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

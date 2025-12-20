@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
+import { isAdminLike } from "@/utils/roleUtils";
 import { useToast } from "@/hooks/use-toast";
 import { ShiftHeader } from "./ShiftHeader";
 import { ShiftInfo } from "./ShiftInfo";
@@ -41,7 +42,7 @@ export default function ShiftDetail({
   const [isLoaded, setIsLoaded] = useState(false);
 
   // Leverage the role stored in user object which is protected by RLS
-  const isAdmin = user?.role === "admin";
+  const isAdmin = isAdminLike(user?.role);
   const isPromoter = user?.role === "promoter";
 
   useEffect(() => {
