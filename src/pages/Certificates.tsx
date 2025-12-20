@@ -13,6 +13,7 @@ import CompanyCertificatesPage from "@/components/certificates/company/CompanyCe
 import PromoterCertificatesPage from "@/components/certificates/promoter/PromoterCertificatesPage";
 import AdminCertificatesPage from "@/components/certificates/admin/AdminCertificatesPage";
 import { isAdminLike } from "@/utils/roleUtils";
+import { UserRole } from "@/types/database";
 
 export default function Certificates() {
   const { user } = useAuth();
@@ -36,6 +37,7 @@ export default function Certificates() {
   }, [searchParams]);
 
   const isAdmin = isAdminLike(user?.role);
+  const isSuperAdmin = user?.role === UserRole.SuperAdmin;
   const isCompany = user?.role === 'company';
   const isPromoter = user?.role === 'promoter';
   
@@ -77,7 +79,7 @@ export default function Certificates() {
                 {isAdmin && (
                   <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white border-0">
                     <Crown className="h-3 w-3 mr-1" />
-                    Super Admin
+                    {isSuperAdmin ? "Super Admin" : "Admin"}
                   </Badge>
                 )}
               </div>
@@ -110,7 +112,9 @@ export default function Certificates() {
                 <TooltipContent className="max-w-sm p-4">
                   <p className="text-sm">
                     {isAdmin 
-                      ? 'As Super Admin, you have full access to generate, manage, and verify all certificates at no cost. Use the admin panel to manage certificates for any user.'
+                      ? isSuperAdmin
+                        ? 'As Super Admin, you have full access to generate, manage, and verify all certificates at no cost. Use the admin panel to manage certificates for any user.'
+                        : 'As Admin, you have full access to generate, manage, and verify all certificates. Use the admin panel to manage certificates for any user.'
                       : isCompany 
                         ? 'Approve completed shifts to enable promoters to generate professional certificates. Your company logo and details will appear on their certificates.'
                         : 'Each certificate includes a unique reference number, QR verification code, and official digital signature to ensure authenticity with potential employers.'
