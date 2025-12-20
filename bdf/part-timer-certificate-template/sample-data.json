@@ -7,7 +7,9 @@
     "logoDataUri": ""
   },
   "certificate": {
-    "issueDate": "19 Dec 2025",
+    "issueDate": "20 Dec 2025",
+    "expiryDate": "20 Dec 2026",
+    "year": "2025",
     "id": "PROMO-E899KP",
     "ref": "MAUR3X",
     "verified": true,

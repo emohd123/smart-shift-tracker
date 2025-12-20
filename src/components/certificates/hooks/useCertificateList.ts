@@ -5,6 +5,7 @@ import { Certificate } from "../types/certificate";
 import { toast } from "sonner";
 import { generateMultiCompanyPDF } from "../utils/multiCompanyPdfGenerator";
 import type { MultiCompanyCertificate } from "../types/certificate";
+import { uploadFileToBucket } from "@/integrations/supabase/storage";
 
 export default function useCertificateList() {
   const { user } = useAuth();
@@ -73,6 +74,25 @@ export default function useCertificateList() {
           };
 
           const pdfBlob = await generateMultiCompanyPDF(certData);
+
+          // Overwrite the stored PDF so future downloads (and pdf_url) are always the latest layout.
+          if (user?.id) {
+            try {
+              const pdfFile = new File([pdfBlob], `certificate-${certificate.reference_number}.pdf`, { type: "application/pdf" });
+              const pdfPath = `certificates/${user.id}/${certificate.reference_number}.pdf`;
+              const uploadResult = await uploadFileToBucket(pdfFile, "certificates", pdfPath);
+              if (uploadResult.success) {
+                await supabase
+                  .from("certificates")
+                  .update({ pdf_url: uploadResult.data })
+                  .eq("id", certificate.id);
+              }
+            } catch (e) {
+              // Non-fatal: still proceed with local download
+              console.warn("Failed to refresh stored PDF:", e);
+            }
+          }
+
           const url = URL.createObjectURL(pdfBlob);
           const link = document.createElement("a");
           link.href = url;

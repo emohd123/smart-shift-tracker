@@ -36,11 +36,18 @@ const page = await browser.newPage();
 
 await page.setContent(html, { waitUntil: "networkidle0" });
 
+// Write a lightweight PNG preview for quick review
+const outPng = outPdf.replace(/\.pdf$/i, ".png");
+await page.setViewport({ width: 1240, height: 1754 }); // ~A4 @ 150dpi-ish
+await page.screenshot({ path: outPng, fullPage: true });
+console.log("Wrote PNG:", outPng);
+
 await page.pdf({
   path: outPdf,
   format: "A4",
   printBackground: true,
-  margin: { top: "12mm", right: "12mm", bottom: "18mm", left: "12mm" } // leave space for footer
+  preferCSSPageSize: true,
+  margin: { top: "0mm", right: "0mm", bottom: "0mm", left: "0mm" }
 });
 
 await browser.close();

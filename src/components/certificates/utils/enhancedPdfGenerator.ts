@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { WorkExperienceData } from '../types/certificate';
+import QRCode from 'qrcode';
 
 declare module 'jspdf' {
   interface jsPDF {
@@ -9,252 +10,336 @@ declare module 'jspdf' {
 }
 
 export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData): Promise<Blob> => {
-  // Align this generator to the same visual language as the multi-company certificate:
-  // compact indigo header, clean sections, subtle footer, and canonical verify URL.
   const doc = new jsPDF();
   let yPosition = 0;
   const pageWidth = 210;
+  const pageHeight = 297;
   const margin = 12;
+  const cardWidth = pageWidth - (margin * 2);
   const verifyUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(data.referenceNumber)}`;
-
-  // Use company info or defaults
-  const companyName = data.companyInfo?.name || 'Professional Certification Authority';
-  const companyWebsite = data.companyInfo?.website || 'https://yourcompany.com';
-  const companyEmail = data.companyInfo?.email || 'certificates@yourcompany.com';
-  const companyPhone = data.companyInfo?.phone || data.managerContact;
-  const companyAddress = data.companyInfo?.address;
-  const companyRegId = data.companyInfo?.registration_id;
-
-  // ===== COMPACT HEADER (matches multi-company) =====
-  doc.setFillColor(79, 70, 229);
-  doc.rect(0, 0, pageWidth, 38, 'F');
   
-  // Add company logo if available
-  if (data.companyInfo?.logo_url) {
-    try {
-      // Logo would be added here - simplified for now
-      // doc.addImage(data.companyInfo.logo_url, 'PNG', 15, 10, 30, 30);
-    } catch (error) {
-      console.error('Error adding logo:', error);
-    }
+  // Official color palette
+  const navy: [number, number, number] = [13, 33, 55];
+  const gold: [number, number, number] = [184, 134, 11];
+  const darkText: [number, number, number] = [26, 26, 46];
+  const mutedText: [number, number, number] = [74, 85, 104];
+  const lineColor: [number, number, number] = [201, 209, 220];
+  
+  // Generate QR code
+  let qrDataUrl: string | null = null;
+  try {
+    qrDataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 200 });
+  } catch {
+    qrDataUrl = null;
   }
   
+  // Use company info or defaults
+  const companyName = data.companyInfo?.name || 'Smart Shift Tracker';
+
+  // ===== SUBTLE DOCUMENT FRAME (no ornaments) =====
+  doc.setDrawColor(navy[0], navy[1], navy[2]);
+  doc.setLineWidth(0.6);
+  doc.rect(12, 12, pageWidth - 24, pageHeight - 24, 'S');
+  doc.setDrawColor(gold[0], gold[1], gold[2]);
+  doc.setLineWidth(0.25);
+  doc.rect(14, 14, pageWidth - 28, pageHeight - 28, 'S');
+
+  // ===== HEADER BANNER =====
+  yPosition = 18;
+  doc.setFillColor(navy[0], navy[1], navy[2]);
+  doc.rect(margin, yPosition, cardWidth, 28, 'F');
+  
+  // Gold accent line at bottom of header
+  doc.setFillColor(gold[0], gold[1], gold[2]);
+  doc.rect(margin, yPosition + 28, cardWidth, 1.5, 'F');
+  
+  // Title
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont('helvetica', 'bold');
-  doc.text('WORK EXPERIENCE CERTIFICATE', pageWidth / 2, 14, { align: 'center' });
+  doc.text('CERTIFICATE OF EMPLOYMENT', pageWidth / 2, yPosition + 13, { align: 'center' });
   
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(224, 231, 255);
-  doc.text('Official Employment Verification & Skills Documentation', pageWidth / 2, 22, { align: 'center' });
-  
-  // Info line
+  doc.text('Official Documentation of Professional Work Experience', pageWidth / 2, yPosition + 22, { align: 'center' });
+
+  // Official seal (right side of header)
+  const sealX = pageWidth - margin - 18;
+  const sealY = yPosition + 14;
+  doc.setDrawColor(gold[0], gold[1], gold[2]);
+  doc.setLineWidth(0.8);
+  doc.circle(sealX, sealY, 8, 'S');
+  doc.setLineWidth(0.4);
+  doc.circle(sealX, sealY, 6, 'S');
+  doc.setFontSize(5);
+  doc.setFont('helvetica', 'bold');
+  doc.text('CERTIFIED', sealX, sealY - 1, { align: 'center' });
   doc.setFontSize(7);
-  doc.text(
-    `Issue Date: ${new Date(data.issueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}   |   Ref: ${data.referenceNumber}`,
-    pageWidth / 2,
-    32,
-    { align: 'center' }
-  );
+  doc.text('✦', sealX, sealY + 3, { align: 'center' });
 
-  yPosition = 46;
-  doc.setTextColor(0, 0, 0);
+  yPosition = 52;
 
-  // ===== IDENTITY CARD =====
-  const cardHeight = 34;
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(226, 232, 240);
-  doc.setLineWidth(0.5);
-  doc.roundedRect(margin, yPosition, pageWidth - (margin * 2), cardHeight, 4, 4, 'FD');
-  doc.setFillColor(79, 70, 229);
-  doc.rect(margin, yPosition, 3, cardHeight, 'F');
-
-  doc.setTextColor(30, 41, 59);
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text(data.promoterName, margin + 10, yPosition + 13);
-
-  doc.setTextColor(71, 85, 105);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`Employment Period: ${data.workPeriod.startDate} to ${data.workPeriod.endDate}`, margin + 10, yPosition + 22);
-  doc.text(`Total: ${data.totalHours} hours • ${data.totalShifts} shifts`, margin + 10, yPosition + 29);
-
-  // Total hours badge (right)
-  doc.setFillColor(16, 185, 129);
-  doc.roundedRect(pageWidth - margin - 40, yPosition + 9, 36, 16, 4, 4, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${Math.round(data.totalHours)}h`, pageWidth - margin - 22, yPosition + 20, { align: 'center' });
-
-  yPosition += cardHeight + 10;
-
-  // Enhanced Employee Information Section
-  doc.setFillColor(79, 70, 229);
-  doc.roundedRect(margin, yPosition, pageWidth - (margin * 2), 8, 3, 3, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('DETAILS', margin + 6, yPosition + 6);
+  // ===== DOCUMENT METADATA BAR =====
+  doc.setFillColor(247, 249, 252);
+  doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
+  doc.setLineWidth(0.3);
+  doc.rect(margin, yPosition, cardWidth, 12, 'FD');
   
-  yPosition += 15;
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(11);
+  doc.setFontSize(6);
   doc.setFont('helvetica', 'normal');
+  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
   
-  const employeeInfo = [
-    [`Employee Name:`, data.promoterName],
-    [`Certificate Issue Date:`, data.issueDate],
-    [`Employment Period:`, `${data.workPeriod.startDate} to ${data.workPeriod.endDate}`],
-    [`Total Working Hours:`, `${data.totalHours} hours`],
-    [`Total Shifts Completed:`, `${data.totalShifts} shifts`],
-    [`Average Hours per Shift:`, `${data.timeLogs.averageHoursPerShift} hours`],
-    [`Performance Rating:`, `${data.performanceRating}/5 (${getPerformanceText(data.performanceRating)})`]
+  const issueDate = new Date(data.issueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const metaItems = [
+    `DOCUMENT ID: ${data.referenceNumber}`,
+    `ISSUE DATE: ${issueDate}`,
+    `REF: ${data.referenceNumber.slice(-6)}`
   ];
-
-  employeeInfo.forEach(([label, value]) => {
-    doc.setFont('helvetica', 'bold');
-    doc.text(label, 20, yPosition);
-    doc.setFont('helvetica', 'normal');
-    doc.text(value, 80, yPosition);
-    yPosition += 7;
+  
+  const metaWidth = cardWidth / 3;
+  metaItems.forEach((item, i) => {
+    doc.text(item, margin + (metaWidth * i) + metaWidth / 2, yPosition + 7.5, { align: 'center' });
   });
 
-  yPosition += 10;
+  yPosition = 70;
 
-  // Roles section
-  doc.setFillColor(79, 70, 229);
-  doc.roundedRect(margin, yPosition, pageWidth - (margin * 2), 8, 3, 3, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
-  doc.setFont('helvetica', 'bold');
-  doc.text('ROLES & LOCATIONS', margin + 6, yPosition + 6);
-  
-  yPosition += 15;
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(11);
+  // ===== CERTIFICATION STATEMENT =====
+  doc.setTextColor(darkText[0], darkText[1], darkText[2]);
+  doc.setFontSize(10);
   doc.setFont('helvetica', 'normal');
-  doc.text(`Roles: ${data.roles.join(', ')}`, 20, yPosition);
-  yPosition += 7;
-  doc.text(`Work Locations: ${data.locations.join(', ')}`, 20, yPosition);
-  
-  yPosition += 15;
+  const statement = `This is to certify that ${data.promoterName} has successfully completed the work assignments detailed herein, demonstrating professional competence and dedication.`;
+  const splitStatement = doc.splitTextToSize(statement, cardWidth - 20);
+  doc.text(splitStatement, pageWidth / 2, yPosition, { align: 'center' });
 
-  // Work history table header
-  doc.setFillColor(79, 70, 229);
-  doc.roundedRect(margin, yPosition, pageWidth - (margin * 2), 8, 3, 3, 'F');
+  yPosition += splitStatement.length * 5 + 8;
+
+  // ===== IDENTITY CARD =====
+  doc.setFillColor(255, 254, 248);
+  doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
+  doc.setLineWidth(0.5);
+  doc.rect(margin, yPosition, cardWidth, 30, 'FD');
+  
+  // Left border accent
+  doc.setFillColor(navy[0], navy[1], navy[2]);
+  doc.rect(margin, yPosition, 3, 30, 'F');
+  
+  // Name
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.setFontSize(14);
+  doc.setFont('times', 'bold');
+  doc.text(data.promoterName, margin + 10, yPosition + 12);
+  
+  // Badges
+  doc.setFillColor(navy[0], navy[1], navy[2]);
+  doc.rect(margin + 10, yPosition + 16, 22, 5, 'F');
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
+  doc.setFontSize(5);
   doc.setFont('helvetica', 'bold');
-  doc.text('WORK HISTORY', margin + 6, yPosition + 6);
+  doc.text('EMPLOYEE', margin + 21, yPosition + 19.5, { align: 'center' });
   
-  yPosition += 15;
+  doc.setFillColor(13, 92, 47);
+  doc.rect(margin + 35, yPosition + 16, 18, 5, 'F');
+  doc.text('✓ VERIFIED', margin + 44, yPosition + 19.5, { align: 'center' });
+  
+  // Period info
+  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`Employment Period: ${data.workPeriod.startDate} to ${data.workPeriod.endDate}`, margin + 10, yPosition + 27);
+  
+  // Total hours badge (right)
+  const hoursBadgeX = pageWidth - margin - 35;
+  doc.setFillColor(navy[0], navy[1], navy[2]);
+  doc.rect(hoursBadgeX, yPosition + 5, 30, 20, 'F');
+  doc.setDrawColor(gold[0], gold[1], gold[2]);
+  doc.setLineWidth(1);
+  doc.rect(hoursBadgeX, yPosition + 5, 30, 20, 'S');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(14);
+  doc.setFont('helvetica', 'bold');
+  doc.text(`${Math.round(data.totalHours)}`, hoursBadgeX + 15, yPosition + 15, { align: 'center' });
+  doc.setFontSize(6);
+  doc.text('TOTAL HOURS', hoursBadgeX + 15, yPosition + 21, { align: 'center' });
 
-  // Prepare table data
+  yPosition += 38;
+
+  // ===== SECTION HEADER - EMPLOYMENT RECORD =====
+  doc.setDrawColor(navy[0], navy[1], navy[2]);
+  doc.setLineWidth(1);
+  doc.line(margin, yPosition, margin + 60, yPosition);
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text('EMPLOYMENT RECORD', margin, yPosition - 2);
+  
+  yPosition += 8;
+
+  // ===== COMPANY INFO =====
+  doc.setFillColor(247, 249, 252);
+  doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
+  doc.setLineWidth(0.3);
+  doc.rect(margin, yPosition, cardWidth, 18, 'FD');
+  
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.setFontSize(10);
+  doc.setFont('helvetica', 'bold');
+  doc.text(companyName, margin + 6, yPosition + 8);
+  
+  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+  doc.setFontSize(7);
+  doc.setFont('helvetica', 'normal');
+  const companyDetails: string[] = [];
+  if (data.companyInfo?.registration_id) companyDetails.push(`Reg: ${data.companyInfo.registration_id}`);
+  if (data.companyInfo?.phone) companyDetails.push(`Tel: ${data.companyInfo.phone}`);
+  if (data.companyInfo?.email) companyDetails.push(data.companyInfo.email);
+  doc.text(companyDetails.join('  |  '), margin + 6, yPosition + 14);
+
+  yPosition += 22;
+
+  // ===== WORK HISTORY TABLE =====
   const tableData = data.shifts.map(shift => [
     shift.date,
     shift.title,
-    shift.location || 'Multiple Locations',
-    `${shift.hours.toFixed(1)}h`,
-    shift.timeLog ? `${shift.timeLog.checkIn} - ${shift.timeLog.checkOut}` : 'N/A'
+    shift.location || 'On-site',
+    `${shift.hours.toFixed(1)}h`
   ]);
 
-  // Enhanced table with better styling
   doc.autoTable({
     startY: yPosition,
-    head: [['Date', 'Position', 'Location', 'Hours', 'Time Log']],
+    head: [['Date', 'Position / Event', 'Location', 'Hours']],
     body: tableData,
+    tableWidth: cardWidth,
+    margin: { left: margin, right: margin },
     headStyles: {
-      fillColor: [79, 70, 229],
+      fillColor: navy,
       textColor: [255, 255, 255],
-      fontSize: 10,
-      fontStyle: 'bold'
-    },
-    bodyStyles: {
-      fontSize: 9,
+      fontSize: 7,
+      fontStyle: 'bold',
+      halign: 'center',
       cellPadding: 3
     },
+    bodyStyles: {
+      fontSize: 7,
+      cellPadding: 3,
+      textColor: darkText
+    },
     alternateRowStyles: {
-      fillColor: [245, 247, 250]
+      fillColor: [250, 251, 252]
     },
     styles: {
-      lineColor: [200, 200, 200],
-      lineWidth: 0.1
+      lineColor: lineColor,
+      lineWidth: 0.3
     },
     columnStyles: {
-      0: { cellWidth: 25 },
-      1: { cellWidth: 45 },
-      2: { cellWidth: 40 },
-      3: { cellWidth: 20 },
-      4: { cellWidth: 35 }
+      0: { cellWidth: 30, halign: 'center' },
+      1: { cellWidth: 65 },
+      2: { cellWidth: 50 },
+      3: { cellWidth: 25, halign: 'right', fontStyle: 'bold' }
     }
   });
 
-  // Get Y position after table
-  yPosition = (doc as any).lastAutoTable.finalY + 20;
+  yPosition = (doc as any).lastAutoTable.finalY + 12;
 
-  // Enhanced Company Information & Verification Section
-  doc.setFillColor(52, 152, 219);
-  doc.rect(15, yPosition, 180, 8, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(14);
-  doc.setFont('helvetica', 'bold');
-  doc.text('ISSUING AUTHORITY & VERIFICATION', 20, yPosition + 6);
+  // ===== SUMMARY STATISTICS =====
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
+  doc.rect(margin, yPosition, cardWidth, 16, 'FD');
   
-  yPosition += 15;
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(10);
-  doc.setFont('helvetica', 'normal');
-
-  const companyInfoLines = [
-    `Issuing Company: ${companyName}`,
-    companyRegId ? `Registration ID: ${companyRegId}` : '',
-    companyWebsite ? `Website: ${companyWebsite}` : '',
-    companyEmail ? `Email: ${companyEmail}` : '',
-    companyPhone ? `Contact: ${companyPhone}` : '',
-    companyAddress ? `Address: ${companyAddress}` : '',
-    '',
-    'DIGITAL VERIFICATION:',
-    '✓ This certificate is digitally signed and authenticated',
-    '✓ Verification available online using reference number',
-    '✓ All employment data verified and accurate',
-    `✓ Generated on: ${new Date().toLocaleDateString()}`
-  ].filter(line => line !== ''); // Remove empty lines
-
-  companyInfoLines.forEach(line => {
-    if (line.startsWith('DIGITAL VERIFICATION:')) {
-      doc.setFont('helvetica', 'bold');
-    } else if (line.startsWith('✓')) {
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(34, 139, 34); // Green for checkmarks
-    } else {
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(0, 0, 0);
-    }
-    
-    if (line.trim()) {
-      doc.text(line, 20, yPosition);
-      yPosition += 6;
-    } else {
-      yPosition += 3;
-    }
+  const stats = [
+    { label: 'Total Shifts', value: data.totalShifts.toString() },
+    { label: 'Total Hours', value: `${data.totalHours}h` },
+    { label: 'Avg Hours/Shift', value: `${data.timeLogs.averageHoursPerShift}h` },
+    { label: 'Performance', value: `${data.performanceRating}/5` }
+  ];
+  
+  const statWidth = cardWidth / 4;
+  stats.forEach((stat, i) => {
+    const x = margin + (statWidth * i) + statWidth / 2;
+    doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+    doc.setFontSize(5);
+    doc.setFont('helvetica', 'normal');
+    doc.text(stat.label.toUpperCase(), x, yPosition + 5, { align: 'center' });
+    doc.setTextColor(navy[0], navy[1], navy[2]);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text(stat.value, x, yPosition + 12, { align: 'center' });
   });
+
+  yPosition += 22;
+
+  // ===== BOTTOM SECTION - SIGNATURE & VERIFICATION =====
+  // Keep it near the bottom for short certificates (cleaner / more official).
+  const bottomY = Math.max(yPosition, 250);
+  
+  // Signature box
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
+  doc.setLineWidth(0.4);
+  doc.rect(margin, bottomY, 55, 22, 'FD');
+  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+  doc.setFontSize(5);
+  doc.setFont('helvetica', 'bold');
+  doc.text('AUTHORIZED SIGNATURE', margin + 27.5, bottomY + 4, { align: 'center' });
+  doc.setDrawColor(darkText[0], darkText[1], darkText[2]);
+  doc.setLineWidth(0.5);
+  doc.line(margin + 5, bottomY + 18, margin + 50, bottomY + 18);
+  
+  // Date box
+  doc.setFillColor(247, 249, 252);
+  doc.rect(margin + 58, bottomY, 35, 22, 'FD');
+  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+  doc.setFontSize(5);
+  doc.text('DATE OF ISSUE', margin + 75.5, bottomY + 4, { align: 'center' });
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'bold');
+  doc.text(issueDate, margin + 75.5, bottomY + 14, { align: 'center' });
+  
+  // Verification box
+  const verifyBoxX = margin + 96;
+  const verifyBoxW = cardWidth - 96;
+  doc.setFillColor(240, 244, 248);
+  doc.setDrawColor(navy[0], navy[1], navy[2]);
+  doc.setLineWidth(0.8);
+  doc.rect(verifyBoxX, bottomY, verifyBoxW, 22, 'FD');
+  
+  // Checkmark circle
+  doc.setFillColor(13, 92, 47);
+  doc.circle(verifyBoxX + 8, bottomY + 11, 5, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text('✓', verifyBoxX + 8, bottomY + 13, { align: 'center' });
+  
+  // Verification text
+  doc.setTextColor(navy[0], navy[1], navy[2]);
+  doc.setFontSize(8);
+  doc.setFont('helvetica', 'bold');
+  doc.text('AUTHENTICATED', verifyBoxX + 18, bottomY + 9);
+  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
+  doc.setFontSize(5);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Digitally verified certificate.', verifyBoxX + 18, bottomY + 14);
+  doc.text('Scan QR code to verify online.', verifyBoxX + 18, bottomY + 18);
+  
+  // QR Code
+  if (qrDataUrl) {
+    try {
+      doc.addImage(qrDataUrl, 'PNG', pageWidth - margin - 18, bottomY + 2, 16, 16);
+    } catch {}
+  }
 
   // ===== FOOTER =====
-  yPosition = 285;
-  doc.setFillColor(248, 250, 252);
-  doc.rect(0, yPosition, pageWidth, 12, 'F');
-  doc.setDrawColor(226, 232, 240);
+  const footerY = 280;
+  doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
   doc.setLineWidth(0.3);
-  doc.line(0, yPosition, pageWidth, yPosition);
-
-  doc.setTextColor(100, 116, 139);
+  doc.line(margin, footerY, pageWidth - margin, footerY);
+  
+  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
   doc.setFontSize(6);
   doc.setFont('helvetica', 'normal');
-  doc.text('Smart Shift Tracker™ — Workforce Management Platform', margin, yPosition + 6);
-  doc.text(`Ref: ${data.referenceNumber}`, pageWidth - margin, yPosition + 6, { align: 'right' });
+  doc.text('Smart Shift Tracker™ — Workforce Management Platform', margin, footerY + 5);
+  doc.text(`Document Ref: ${data.referenceNumber}`, pageWidth - margin, footerY + 5, { align: 'right' });
 
   return doc.output('blob');
 };
