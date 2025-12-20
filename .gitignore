@@ -41,3 +41,6 @@ test-results/
 # Cursor MCP config (may contain API tokens)
 .cursor/mcp.json
 mcp.json
+
+# Supabase CLI temp artifacts
+supabase/.temp/
