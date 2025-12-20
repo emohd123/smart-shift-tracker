@@ -5,6 +5,7 @@ A comprehensive full-stack shift management platform connecting companies with p
 ## 📚 Documentation
 
 **👉 [Read the Complete Project Overview](PROJECT_OVERVIEW.md)** - Comprehensive guide covering architecture, features, and implementation details
+**👉 [Supabase MCP (Cursor) Full Access Setup](MCP_SUPABASE_FULL_ACCESS_SETUP.md)** - Enable write access safely (Windows-focused)
 
 ### Quick Links
 - [Key Features](#-key-features)
@@ -104,16 +105,14 @@ npm run dev
    ```
 
 2. **Configure environment**
-   Create `.env.local`:
+   Create a local env file (recommended: `.env.local` or `.env`). **Do not commit it**:
    ```env
    VITE_SUPABASE_URL=your_supabase_project_url
    VITE_SUPABASE_PUBLISHABLE_KEY=your_supabase_anon_key
    ```
 
 3. **Set up database**
-   - Follow instructions in `SUPABASE_SETUP_INSTRUCTIONS.md`
-   - Run SQL migrations in order
-   - Deploy Edge Functions
+   - Follow `BACKEND_SETUP.md` (uses `supabase/migrations/` + `supabase/functions/`)
 
 4. **Start development**
    ```bash
@@ -148,7 +147,7 @@ smart-shift-tracker/
 │   ├── functions/        # Edge Functions
 │   └── migrations/       # Database migrations (60+)
 ├── PROJECT_OVERVIEW.md   # 📘 Complete documentation
-├── SUPABASE_SETUP_INSTRUCTIONS.md
+├── BACKEND_SETUP.md
 └── TESTING_GUIDE.md
 ```
 
@@ -191,7 +190,7 @@ Changes can be made via:
 ## 📝 Additional Documentation
 
 - **[PROJECT_OVERVIEW.md](PROJECT_OVERVIEW.md)** - Complete technical documentation
-- **[SUPABASE_SETUP_INSTRUCTIONS.md](SUPABASE_SETUP_INSTRUCTIONS.md)** - Database setup guide
+- **[BACKEND_SETUP.md](BACKEND_SETUP.md)** - Supabase migrations + Edge Functions setup/deploy
 - **[TESTING_GUIDE.md](TESTING_GUIDE.md)** - Testing procedures
 
 ## 🚀 Deployment
