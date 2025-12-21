@@ -70,16 +70,6 @@ BEGIN
 END;
 $function$;
 
--- Add missing indexes for performance
-CREATE INDEX IF NOT EXISTS idx_certificates_user_id ON public.certificates(user_id);
-CREATE INDEX IF NOT EXISTS idx_certificates_status ON public.certificates(status);
-CREATE INDEX IF NOT EXISTS idx_certificates_reference_number ON public.certificates(reference_number);
-CREATE INDEX IF NOT EXISTS idx_shifts_date ON public.shifts(date);
-CREATE INDEX IF NOT EXISTS idx_time_logs_user_id ON public.time_logs(user_id);
-CREATE INDEX IF NOT EXISTS idx_time_logs_shift_id ON public.time_logs(shift_id);
-CREATE INDEX IF NOT EXISTS idx_messages_sender_receiver ON public.messages(sender_id, receiver_id);
-CREATE INDEX IF NOT EXISTS idx_profiles_role ON public.profiles(role);
-
 -- Ensure all tables have proper updated_at triggers
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
@@ -89,18 +79,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Add updated_at triggers where missing
-CREATE TRIGGER update_profiles_updated_at
-    BEFORE UPDATE ON public.profiles
-    FOR EACH ROW
-    EXECUTE FUNCTION public.update_updated_at_column();
-
-CREATE TRIGGER update_messages_updated_at
-    BEFORE UPDATE ON public.messages
-    FOR EACH ROW
-    EXECUTE FUNCTION public.update_updated_at_column();
-
-CREATE TRIGGER update_payouts_updated_at
-    BEFORE UPDATE ON public.payouts
-    FOR EACH ROW
-    EXECUTE FUNCTION public.update_updated_at_column();
+-- NOTE:
+-- Do not create indexes/triggers here for brand-new projects.
+-- This migration runs before the base tables exist in this repo's history.
+-- Indexes + updated_at triggers are applied in a later migration once tables are created.
