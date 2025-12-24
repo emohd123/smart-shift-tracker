@@ -198,11 +198,11 @@ export function PromoterDetail({ promoterId, onClose, promoterData }: PromoterDe
                     <div>
                       <div className="flex justify-between mb-1">
                         <span className="text-sm font-medium">Total Hours</span>
-                        <span className="text-sm">{promoterData?.total_hours.toFixed(1) || "0"} hrs</span>
+                        <span className="text-sm">{(promoterData?.total_hours ?? 0).toFixed(1)} hrs</span>
                       </div>
                       <Progress value={Math.min(100, (promoterData?.total_hours || 0) / 2)} className="h-2" />
                     </div>
-                    
+
                     <div>
                       <div className="flex justify-between mb-1">
                         <span className="text-sm font-medium">Shifts Completed</span>
@@ -210,11 +210,11 @@ export function PromoterDetail({ promoterId, onClose, promoterData }: PromoterDe
                       </div>
                       <Progress value={Math.min(100, (promoterData?.total_shifts || 0) * 5)} className="h-2" />
                     </div>
-                    
+
                     <div>
                       <div className="flex justify-between mb-1">
                         <span className="text-sm font-medium">Rating</span>
-                        <span className="text-sm">{promoterData?.average_rating.toFixed(1) || "0"}/5</span>
+                        <span className="text-sm">{(promoterData?.average_rating ?? 0).toFixed(1)}/5</span>
                       </div>
                       <Progress value={(promoterData?.average_rating || 0) * 20} className="h-2" />
                     </div>
