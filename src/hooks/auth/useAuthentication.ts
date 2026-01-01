@@ -83,8 +83,6 @@ export const useAuthentication = () => {
     setLoading(true);
     setAuthError(null);
     try {
-
-
       const redirectUrl = `${window.location.origin}/`;
 
       const { data, error } = await supabase.auth.signUp({
@@ -118,13 +116,14 @@ export const useAuthentication = () => {
         throw new Error("Failed to create user account");
       }
 
-
-
-      // Assign role via user_roles table (trigger should handle this, but double-check)
-      // The handle_new_user trigger creates the role automatically
-      // If for some reason it didn't work, we could add a fallback here
-
-      return data.user;
+      // Return user with session info so caller knows if email confirmation is needed
+      // If session is null, email confirmation is required
+      // If session exists, user is auto-logged in
+      return {
+        ...data.user,
+        session: data.session,
+        emailConfirmationRequired: !data.session
+      };
     } catch (error: any) {
       console.error("Signup error:", error);
       setAuthError(error.message || "Could not create account");

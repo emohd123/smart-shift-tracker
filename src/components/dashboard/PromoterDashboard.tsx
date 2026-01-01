@@ -9,13 +9,14 @@ import { useDashboardData } from "@/hooks/useDashboardData";
 import { useState, useEffect } from "react";
 import { useResponsive } from "@/hooks/useResponsive";
 import { Button } from "../ui/button";
-import { Award, Copy, Check, CheckCircle, Clock } from "lucide-react";
+import { Award, Copy, Check, CheckCircle, Clock, Star } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getEffectiveStatus } from "../shifts/utils/statusCalculations";
 import { Badge } from "../ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { PromoterRatingBadge } from "@/components/ratings/PromoterRatingBadge";
 
 type PromoterDashboardProps = {
   shifts: Shift[];
@@ -259,9 +260,15 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
                   {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground mt-3">
-                Companies can use this code to quickly find and assign you to shifts
-              </p>
+              <div className="flex items-center justify-between mt-3">
+                <p className="text-xs text-muted-foreground">
+                  Companies can use this code to quickly find and assign you to shifts
+                </p>
+                <div className="flex items-center gap-1 text-sm">
+                  <Star className="h-4 w-4 text-muted-foreground" />
+                  <PromoterRatingBadge promoterId={user.id} size="sm" />
+                </div>
+              </div>
             </CardContent>
           </Card>
         )}

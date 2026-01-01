@@ -28,7 +28,9 @@ export const useSignupForm = () => {
     setUploadingFiles,
     handleChange,
     activeSection,
-    setActiveSection
+    setActiveSection,
+    emailConfirmationRequired,
+    setEmailConfirmationRequired
   } = useSignupFormState();
 
   const { handleFileChange, cleanupFilePreview } = useSignupFileHandling(setFileData);
@@ -61,20 +63,20 @@ export const useSignupForm = () => {
     try {
       setFormError(null);
 
-
       const { fullName, email, password, role } = formData;
 
       // Step 1: Create user account
-
       const userData = await signup(fullName, email, password, role);
 
       if (!userData || !userData.id) {
         throw new Error("Failed to create user account");
       }
 
+      // Check if email confirmation is required and update state
+      const needsEmailConfirmation = userData.emailConfirmationRequired;
+      setEmailConfirmationRequired(needsEmailConfirmation);
 
-
-      // Step 2: Upload files (non-blocking)
+      // Step 2: Upload files (non-blocking) - only if we have a session (auto-login)
       let idCardUrl = null;
       let profilePhotoUrl = null;
       let companyLogoUrl = null;
@@ -84,8 +86,7 @@ export const useSignupForm = () => {
       const hasPromoterFiles = fileData.idCard || fileData.profilePhoto;
       const hasCompanyFiles = fileData.companyLogo || fileData.businessDocument;
 
-      if (hasPromoterFiles || hasCompanyFiles) {
-
+      if ((hasPromoterFiles || hasCompanyFiles) && !needsEmailConfirmation) {
         const uploadResult = await uploadFiles(userData.id, fileData, role);
 
         if (role === 'company') {
@@ -105,36 +106,38 @@ export const useSignupForm = () => {
             description: "Some files couldn't be uploaded, but your account was created successfully.",
             variant: "default",
           });
-        } else if (companyLogoUrl || businessDocumentUrl || idCardUrl || profilePhotoUrl) {
-
         }
       }
 
-      // Step 3: Update profile and create company profile if needed
+      // If email confirmation is required, show success but don't navigate to dashboard
+      if (needsEmailConfirmation) {
+        setIsSuccess(true);
+        toast({
+          title: "Check your email! 📧",
+          description: "We've sent you a confirmation link. Please check your email to complete registration.",
+        });
+        // Don't navigate - let user see the RegistrationSuccess component
+        return;
+      }
+
+      // Step 3: Update profile and create company profile if needed (only if auto-logged in)
       try {
-
-
         if (role === 'company') {
           // Create company profile
           await createCompanyProfile(userData.id, formData, companyLogoUrl);
-
         }
 
         // Update user profile
         await updateUserProfile(userData.id, formData, idCardUrl, profilePhotoUrl, role);
 
-
         // Auto-generate unique code for promoters
         if (role === 'promoter') {
           try {
-
             const { data: codeData, error: codeError } = await supabase.functions.invoke('generate-unique-code');
 
             if (codeError) {
               console.warn("⚠️ Could not generate unique code during signup:", codeError);
               // Non-blocking: user can generate code later from profile
-            } else if (codeData?.success) {
-
             }
           } catch (codeGenError) {
             console.warn("⚠️ Code generation error (non-blocking):", codeGenError);
@@ -148,6 +151,7 @@ export const useSignupForm = () => {
           description: role === 'company' ? "Redirecting to your company dashboard..." : "Redirecting to your dashboard...",
         });
 
+        // Navigate after a short delay to let user see the success message
         setTimeout(() => {
           navigate(role === 'company' ? "/company" : "/dashboard");
         }, 1500);
@@ -193,6 +197,7 @@ export const useSignupForm = () => {
     setFileData,
     authError,
     activeSection,
-    setActiveSection
+    setActiveSection,
+    emailConfirmationRequired
   };
 };

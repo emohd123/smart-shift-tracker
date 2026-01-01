@@ -213,12 +213,12 @@ export function DocumentUploadStep({
               </div>
               <div className="flex flex-col items-center text-sm text-gray-500">
                 <span>Click to upload a full-length profile photo</span>
-                <span className="text-xs">(JPEG or PNG, clear background, max 5MB)</span>
+                <span className="text-xs">(JPEG, PNG, or WEBP, clear background, max 2MB)</span>
               </div>
               <Input
                 id="profilePhoto"
                 type="file"
-                accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
                 onChange={handleProfilePhotoChange}
                 className="hidden"
               />

@@ -59,6 +59,7 @@ export const useSignupFormState = () => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [uploadingFiles, setUploadingFiles] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("account");
+  const [emailConfirmationRequired, setEmailConfirmationRequired] = useState(false);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
@@ -86,6 +87,8 @@ export const useSignupFormState = () => {
     setUploadingFiles,
     handleChange,
     activeSection,
-    setActiveSection
+    setActiveSection,
+    emailConfirmationRequired,
+    setEmailConfirmationRequired
   };
 };

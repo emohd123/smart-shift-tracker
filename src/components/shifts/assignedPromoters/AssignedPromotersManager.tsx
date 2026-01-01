@@ -9,6 +9,7 @@ import { Users } from "lucide-react";
 import { calculateTotalShiftPayment } from "../utils/paymentCalculations";
 import { AssignPromotersDialog } from "./AssignPromotersDialog";
 import { isCompanyLike } from "@/utils/roleUtils";
+import { ShiftStatus } from "@/types/database";
 
 type AssignedPromotersManagerProps = {
   shiftId: string;
@@ -17,6 +18,7 @@ type AssignedPromotersManagerProps = {
   userRole?: string;
   shiftStartTime?: string;
   shiftEndTime?: string;
+  shiftStatus?: ShiftStatus;
 };
 
 export const AssignedPromotersManager = ({
@@ -26,6 +28,7 @@ export const AssignedPromotersManager = ({
   userRole,
   shiftStartTime,
   shiftEndTime,
+  shiftStatus,
 }: AssignedPromotersManagerProps) => {
   const { promoters, loading: promotersLoading } = useAssignedPromoters(shiftId);
   const { timeLogs, loading: timeLogsLoading } = usePromoterTimeLogs(shiftId);
@@ -154,6 +157,7 @@ export const AssignedPromotersManager = ({
               payRateType={payRateType}
               shiftId={shiftId}
               userRole={userRole}
+              shiftStatus={shiftStatus}
             />
           ))}
         </div>

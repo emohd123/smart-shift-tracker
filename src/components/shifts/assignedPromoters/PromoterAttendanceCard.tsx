@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AttendanceStatusBadge } from "./AttendanceStatusBadge";
 import { TimeLog, calculatePromoterPayment, formatWorkDuration, formatBHD } from "../utils/paymentCalculations";
-import { Clock, Phone, User, X, LogIn, LogOut, Timer } from "lucide-react";
+import { Clock, Phone, User, X, LogIn, LogOut, Timer, Star } from "lucide-react";
 import { format } from "date-fns";
 import { useUnassignPromoter } from "./hooks/useUnassignPromoter";
 import { useCompanyCheckIn } from "./hooks/useCompanyCheckIn";
@@ -17,6 +17,9 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { isCompanyLike } from "@/utils/roleUtils";
+import { ShiftStatus } from "@/types/database";
+import { RatingModal } from "@/components/ratings/RatingModal";
+import { RatingDisplay } from "@/components/ratings/RatingDisplay";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -50,6 +53,7 @@ type PromoterAttendanceCardProps = {
   shiftId: string;
   onUpdate?: () => void;
   userRole?: string;
+  shiftStatus?: ShiftStatus;
 };
 
 export const PromoterAttendanceCard = ({
@@ -60,6 +64,7 @@ export const PromoterAttendanceCard = ({
   shiftId,
   onUpdate,
   userRole,
+  shiftStatus,
 }: PromoterAttendanceCardProps) => {
   const { user } = useAuth();
   const { unassignPromoter, loading: unassigning } = useUnassignPromoter();
@@ -67,16 +72,54 @@ export const PromoterAttendanceCard = ({
   const [elapsedTime, setElapsedTime] = useState(0);
   const [estimatedEarnings, setEstimatedEarnings] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
-  
+
   const hasTimeLogs = timeLogs.length > 0;
   const totalHours = timeLogs.reduce((sum, log) => sum + (log.total_hours || 0), 0);
   const payment = calculatePromoterPayment(timeLogs, payRate, payRateType);
   const latestLog = timeLogs.length > 0 ? timeLogs[timeLogs.length - 1] : null;
   const isCheckedIn = latestLog && !latestLog.check_out_time;
-  
+
   const isCompany = isCompanyLike(userRole);
   const [payStatus, setPayStatus] = useState<"scheduled" | "paid" | null>(promoter.payment_status ?? null);
   const [payUpdating, setPayUpdating] = useState(false);
+
+  // Rating state
+  const [ratingModalOpen, setRatingModalOpen] = useState(false);
+  const [existingRating, setExistingRating] = useState<number | null>(null);
+  const [ratingLoading, setRatingLoading] = useState(true);
+
+  const isShiftCompleted = shiftStatus === ShiftStatus.Completed;
+  const canRate = isCompany && isShiftCompleted && existingRating === null;
+
+  // Fetch existing rating
+  useEffect(() => {
+    const fetchExistingRating = async () => {
+      if (!promoter.id) {
+        setRatingLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from("shift_ratings")
+          .select("rating")
+          .eq("shift_assignment_id", promoter.id)
+          .maybeSingle();
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching rating:", error);
+        }
+
+        setExistingRating(data?.rating ?? null);
+      } catch (err) {
+        console.error("Error fetching rating:", err);
+      } finally {
+        setRatingLoading(false);
+      }
+    };
+
+    fetchExistingRating();
+  }, [promoter.id]);
 
   useEffect(() => {
     setPayStatus(promoter.payment_status ?? null);
@@ -357,18 +400,63 @@ export const PromoterAttendanceCard = ({
             
             {!isCheckedIn && (
               <div className="flex gap-2">
-                <ManualCheckInDialog 
+                <ManualCheckInDialog
                   onCheckIn={handleManualCheckIn}
                   loading={checkInOutLoading}
                 />
-                <PromoterWorkHistory 
+                <PromoterWorkHistory
                   promoterId={promoter.promoter_id}
                   promoterName={promoter.full_name}
                 />
               </div>
             )}
+
+            {/* Rating Section */}
+            {isShiftCompleted && (
+              <div className="pt-2 border-t">
+                {existingRating !== null ? (
+                  <div className="flex items-center justify-between p-2 bg-yellow-50 rounded-md">
+                    <span className="text-sm text-muted-foreground">Your rating:</span>
+                    <RatingDisplay rating={existingRating} size="sm" showValue />
+                  </div>
+                ) : canRate && !ratingLoading ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setRatingModalOpen(true)}
+                  >
+                    <Star className="h-3.5 w-3.5 mr-1" />
+                    Rate Promoter
+                  </Button>
+                ) : null}
+              </div>
+            )}
           </div>
         )}
+
+        {/* Rating Modal */}
+        <RatingModal
+          open={ratingModalOpen}
+          onOpenChange={setRatingModalOpen}
+          shiftId={shiftId}
+          shiftAssignmentId={promoter.id}
+          promoterId={promoter.promoter_id}
+          promoterName={promoter.full_name}
+          onSuccess={() => {
+            setExistingRating(5); // Temporarily set to trigger UI update
+            // Refetch the actual rating
+            supabase
+              .from("shift_ratings")
+              .select("rating")
+              .eq("shift_assignment_id", promoter.id)
+              .maybeSingle()
+              .then(({ data }) => {
+                if (data) setExistingRating(data.rating);
+              });
+            onUpdate?.();
+          }}
+        />
 
         <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t">
           {latestLog?.check_in_time && (

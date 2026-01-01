@@ -7,8 +7,9 @@ import { UserRole } from "@/types/database";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BarChart3, Calendar, Users, Clock, FileText, BarChart } from "lucide-react";
+import { BarChart3, Calendar, Users, Clock, FileText, BarChart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RatingsTable } from "@/components/ratings/RatingsTable";
 
 const Reports = () => {
   const { user, isAuthenticated, loading } = useAuth();
@@ -119,10 +120,11 @@ const Reports = () => {
               value={activeTab}
               onValueChange={setActiveTab}
             >
-              <TabsList className="grid grid-cols-3 md:w-auto md:inline-flex">
+              <TabsList className="grid grid-cols-4 md:w-auto md:inline-flex">
                 <TabsTrigger value="shifts">Shifts</TabsTrigger>
                 <TabsTrigger value="promoters">Promoters</TabsTrigger>
                 <TabsTrigger value="time">Time Tracking</TabsTrigger>
+                <TabsTrigger value="ratings">Ratings</TabsTrigger>
               </TabsList>
               
               <TabsContent value="shifts" className="space-y-4">
@@ -158,6 +160,19 @@ const Reports = () => {
                       This feature is coming soon. You'll be able to see analytics about hours worked, wages, and productivity.
                     </p>
                   </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="ratings" className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-2">
+                    <Star className="h-5 w-5 text-yellow-500" />
+                    <h3 className="text-lg font-medium">Promoter Ratings</h3>
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    View all ratings submitted by companies for promoter performance.
+                  </p>
+                  <RatingsTable />
                 </div>
               </TabsContent>
             </Tabs>

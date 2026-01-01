@@ -28,7 +28,8 @@ export default function SignupForm() {
     uploadingFiles,
     setFileData,
     activeSection,
-    setActiveSection
+    setActiveSection,
+    emailConfirmationRequired
   } = useSignupForm();
 
   if (isSuccess) {
@@ -39,15 +40,19 @@ export default function SignupForm() {
           <div className="mx-auto w-12 h-12 rounded-xl bg-primary flex items-center justify-center mb-3">
             {isCompany ? <Building className="text-white" size={20} /> : <User className="text-white" size={20} />}
           </div>
-          <h2 className="text-2xl font-bold tracking-tight">Create Your Account</h2>
+          <h2 className="text-2xl font-bold tracking-tight">
+            {emailConfirmationRequired ? "Check Your Email" : "Account Created!"}
+          </h2>
           <p className="text-sm text-muted-foreground mt-2">
-            {isCompany 
-              ? "Register your company and start hiring promoters"
-              : "Register to start your journey as a promoter"
+            {emailConfirmationRequired 
+              ? "We've sent you a confirmation email"
+              : isCompany 
+                ? "Your company account is ready"
+                : "Your promoter account is ready"
             }
           </p>
         </div>
-        <RegistrationSuccess />
+        <RegistrationSuccess emailConfirmationRequired={emailConfirmationRequired} />
       </div>
     );
   }

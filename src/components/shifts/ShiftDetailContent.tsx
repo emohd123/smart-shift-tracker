@@ -70,6 +70,7 @@ export const ShiftDetailContent = ({
         userRole={userRole}
         shiftStartTime={shift.startTime}
         shiftEndTime={shift.endTime}
+        shiftStatus={shift.status}
       />
     </div>
   );
