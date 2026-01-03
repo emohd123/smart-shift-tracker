@@ -33,6 +33,7 @@ import CompanyDashboard from "./pages/CompanyDashboard";
 import CompanyProfile from "./pages/CompanyProfile";
 import CompanyContract from "./pages/CompanyContract";
 import AdminOverview from "./pages/AdminOverview";
+import AdminDashboard from "./pages/AdminDashboard";
 
 // Root component
 function App() {
@@ -56,7 +57,8 @@ function App() {
               <Route path="/company" element={<CompanyDashboard />} />
               <Route path="/company/profile" element={<CompanyProfile />} />
               <Route path="/company/contract" element={<CompanyContract />} />
-              <Route path="/admin" element={<AdminOverview />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/admin/legacy" element={<AdminOverview />} />
               <Route path="/shifts" element={<Shifts />} />
               <Route path="/shifts/create" element={<CreateShift />} />
               <Route path="/shifts/:id/edit" element={<EditShift />} />

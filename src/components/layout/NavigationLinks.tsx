@@ -93,7 +93,7 @@ export const NavigationLinks = () => {
       {isAdmin && (
         <>
           <AppLink to="/admin" icon={<LayoutDashboard className="h-4 w-4" />}>
-            Super Admin Dashboard
+            Admin Dashboard
           </AppLink>
           
           <AppLink to="/promoters" icon={<Users className="h-4 w-4" />}>
