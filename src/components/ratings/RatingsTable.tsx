@@ -298,3 +298,5 @@ export const RatingsTable = () => {
     </div>
   );
 };
+
+export default RatingsTable;

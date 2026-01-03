@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { CheckCircle, AlertCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -55,20 +56,55 @@ export const AssignPromotersDialog = ({
   const [schedules, setSchedules] = useState<{ [key: string]: PromoterSchedule }>({});
   const [bulkStartTime, setBulkStartTime] = useState(shiftStartTime);
   const [bulkEndTime, setBulkEndTime] = useState(shiftEndTime);
+    const [contractStatuses, setContractStatuses] = useState<{ [key: string]: boolean }>({});
+    const [companyId, setCompanyId] = useState<string>('');
   
   const { assignPromoters, loading: assigning } = useAssignPromoters(shiftId);
 
   useEffect(() => {
     if (open) {
-      fetchPromoters();
+      fetchPromotersAndContracts();
       setSelectedIds([]);
       setSchedules({});
     }
   }, [open]);
 
-  const fetchPromoters = async () => {
+  const fetchPromotersAndContracts = async () => {
     setLoading(true);
     try {
+            // Get shift details to find company_id
+            const { data: shiftData } = await supabase
+              .from('shifts')
+              .select('company_id')
+              .eq('id', shiftId)
+              .single();
+
+            if (shiftData?.company_id) {
+              setCompanyId(shiftData.company_id);
+
+              // Check if company has active contract
+              const { data: template } = await supabase
+                .from('company_contract_templates')
+                .select('id')
+                .eq('company_id', shiftData.company_id)
+                .eq('is_active', true)
+                .maybeSingle();
+
+              if (template) {
+                // Get all contract acceptances for this company
+                const { data: acceptances } = await supabase
+                  .from('company_contract_acceptances')
+                  .select('promoter_id')
+                  .eq('company_id', shiftData.company_id);
+
+                const statusMap: { [key: string]: boolean } = {};
+                acceptances?.forEach(a => {
+                  statusMap[a.promoter_id] = true;
+                });
+                setContractStatuses(statusMap);
+              }
+            }
+
       // Use RPC function to list eligible promoters (bypasses RLS restrictions)
       const { data, error } = await supabase
         .rpc('list_eligible_promoters');
@@ -328,9 +364,20 @@ export const AssignPromotersDialog = ({
                           className="mt-1"
                         />
                         <label htmlFor={promoter.id} className="flex-1 cursor-pointer">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium">{promoter.full_name}</span>
                             {isAssigned && <Badge variant="secondary" className="text-xs">Already Assigned</Badge>}
+                                                      {contractStatuses[promoter.id] ? (
+                                                        <Badge variant="default" className="text-xs">
+                                                          <CheckCircle className="h-3 w-3 mr-1" />
+                                                          Contract Signed
+                                                        </Badge>
+                                                      ) : contractStatuses[promoter.id] === false ? (
+                                                        <Badge variant="outline" className="text-xs text-amber-600 border-amber-600">
+                                                          <AlertCircle className="h-3 w-3 mr-1" />
+                                                          Awaiting Contract
+                                                        </Badge>
+                                                      ) : null}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             Code: {promoter.unique_code}

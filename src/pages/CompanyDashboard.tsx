@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCompanyLiveData } from "@/hooks/company/useCompanyLiveData";
 import LiveDashboardStats from "@/components/dashboard/company/LiveDashboardStats";
 import ActiveShiftCard from "@/components/dashboard/company/ActiveShiftCard";
+import { BrowsePromotersCard } from "@/components/dashboard/company/BrowsePromotersCard";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function CompanyDashboard() {
@@ -93,6 +94,13 @@ export default function CompanyDashboard() {
             </Card>
           )}
         </div>
+
+        {/* Available Promoters Section */}
+        {user?.id && (
+          <div>
+            <BrowsePromotersCard companyId={user.id} />
+          </div>
+        )}
 
         <div>
           <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>

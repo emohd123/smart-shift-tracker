@@ -7,6 +7,66 @@ import { supabase } from "@/integrations/supabase/client";
 import { ShiftFormData } from "../types/ShiftTypes";
 
 export default function useShiftSubmission(shiftId?: string) {
+
+  // Helper function to send contract notifications
+  async function sendContractNotifications(
+    companyId: string,
+    promoterIds: string[],
+    shiftId: string,
+    shiftTitle: string
+  ) {
+    try {
+      // Check if company has an active contract template
+      const { data: template } = await supabase
+        .from('company_contract_templates')
+        .select('id')
+        .eq('company_id', companyId)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (!template) {
+        console.log('No active contract template found, skipping notifications');
+        return;
+      }
+
+      // Check which promoters need to accept the contract
+      const { data: existingAcceptances } = await supabase
+        .from('company_contract_acceptances')
+        .select('promoter_id')
+        .eq('company_id', companyId);
+
+      const acceptedPromoterIds = new Set(
+        existingAcceptances?.map(a => a.promoter_id) || []
+      );
+
+      // Send notifications to promoters who haven't accepted
+      const notificationsToSend = promoterIds
+        .filter(id => !acceptedPromoterIds.has(id))
+        .map(promoterId => ({
+          user_id: promoterId,
+          title: 'Contract Acceptance Required',
+          message: `Please review and accept the contract before starting shift: ${shiftTitle}`,
+          type: 'contract_required',
+          read: false
+        }));
+
+      if (notificationsToSend.length > 0) {
+        const { error: notifError } = await supabase
+          .from('notifications')
+          .insert(notificationsToSend);
+
+        if (notifError) {
+          console.error('Error sending contract notifications:', notifError);
+        } else {
+          console.log(`Sent ${notificationsToSend.length} contract notifications`);
+        }
+      }
+    } catch (error) {
+      console.error('Error in sendContractNotifications:', error);
+    }
+  }
+
+  export default function useShiftSubmission(shiftId?: string) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -96,8 +156,16 @@ export default function useShiftSubmission(shiftId?: string) {
           if (assignmentError) {
             console.error("Error assigning promoters:", assignmentError);
             toast.error("Shift created but there was an error assigning promoters");
-          } else {
+          } else { 
             console.log("Successfully assigned promoters to shift");
+            
+                      // Send contract notifications to assigned promoters
+                      await sendContractNotifications(
+                        user?.id || '',
+                        formData.selectedPromoterIds,
+                        resultShiftId,
+                        formData.title
+                      );
           }
         }
         
