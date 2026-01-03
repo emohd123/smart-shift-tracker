@@ -1,16 +1,19 @@
 
 import { User } from "@/context/AuthContext";
-import { UserRole } from "@/types/database";
+import { UserRole, isValidUserRole } from "@/types/database";
 
 export const formatUser = (supabaseUser: any): User | null => {
   if (!supabaseUser) return null;
 
-  // Default role is 'promoter', will be overridden if profile data has a different role
+  // Prefer role from auth metadata (set at signup) so routing is correct before RPC fetch
+  const metaRole = supabaseUser.user_metadata?.role;
+  const initialRole = isValidUserRole(metaRole) ? metaRole : UserRole.Promoter;
+
   return {
     id: supabaseUser.id,
     email: supabaseUser.email || '',
     name: supabaseUser.user_metadata?.full_name || supabaseUser.user_metadata?.name || 'User',
-    role: UserRole.Promoter, // Default role, will be updated when profile is loaded
+    role: initialRole,
     metadata: supabaseUser.user_metadata || {},
   };
 };

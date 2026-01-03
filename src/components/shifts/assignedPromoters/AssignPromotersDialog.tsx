@@ -69,12 +69,9 @@ export const AssignPromotersDialog = ({
   const fetchPromoters = async () => {
     setLoading(true);
     try {
+      // Use RPC function to list eligible promoters (bypasses RLS restrictions)
       const { data, error } = await supabase
-        .from("profiles")
-        .select("id, full_name, unique_code, age, nationality, phone_number")
-        .eq("role", "promoter")
-        .eq("verification_status", "approved")
-        .order("full_name");
+        .rpc('list_eligible_promoters');
 
       if (error) throw error;
       setPromoters(data || []);

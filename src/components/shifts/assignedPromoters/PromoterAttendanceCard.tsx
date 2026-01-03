@@ -20,6 +20,7 @@ import { isCompanyLike } from "@/utils/roleUtils";
 import { ShiftStatus } from "@/types/database";
 import { RatingModal } from "@/components/ratings/RatingModal";
 import { RatingDisplay } from "@/components/ratings/RatingDisplay";
+import { toast } from "sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -127,6 +128,49 @@ export const PromoterAttendanceCard = ({
 
   const markPaymentScheduled = async () => {
     if (!isCompany) return;
+    
+    // Validate before scheduling payment
+    if (shiftStatus !== ShiftStatus.Completed) {
+      toast.error("Payment can only be scheduled for completed shifts");
+      return;
+    }
+    
+    if (totalHours <= 0) {
+      toast.error("Cannot schedule payment - no work hours recorded");
+      return;
+    }
+
+    // Check contract acceptance
+    try {
+      const { data: shift } = await supabase
+        .from('shifts')
+        .select('company_id')
+        .eq('id', shiftId)
+        .single();
+
+      if (shift) {
+        const { data: hasTemplate } = await supabase
+          .rpc('has_active_contract_template', { _company_id: shift.company_id });
+
+        if (hasTemplate) {
+          const { data: hasAcceptance } = await supabase
+            .rpc('has_contract_acceptance', { 
+              _promoter_id: promoter.promoter_id,
+              _company_id: shift.company_id 
+            });
+
+          if (!hasAcceptance) {
+            toast.error(`${promoter.full_name} must accept the company contract before payment can be scheduled`);
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking contract:', error);
+      toast.error("Failed to verify contract acceptance");
+      return;
+    }
+
     setPayUpdating(true);
     try {
       await (supabase as any)
@@ -135,9 +179,15 @@ export const PromoterAttendanceCard = ({
           assignment_id: promoter.id,
           status: "scheduled",
           scheduled_at: new Date().toISOString(),
+          scheduled_by: user?.id,
+          amount: payment.total,
           updated_by: user?.id,
         });
       setPayStatus("scheduled");
+      toast.success(`Payment scheduled for ${promoter.full_name}`);
+    } catch (error) {
+      console.error('Error scheduling payment:', error);
+      toast.error("Failed to schedule payment");
     } finally {
       setPayUpdating(false);
       onUpdate?.();
@@ -146,6 +196,12 @@ export const PromoterAttendanceCard = ({
 
   const markPaymentPaid = async () => {
     if (!isCompany) return;
+    
+    if (payStatus !== "scheduled") {
+      toast.error("Payment must be scheduled before marking as paid");
+      return;
+    }
+    
     setPayUpdating(true);
     try {
       await (supabase as any)
@@ -154,10 +210,16 @@ export const PromoterAttendanceCard = ({
           assignment_id: promoter.id,
           status: "paid",
           paid_at: new Date().toISOString(),
+          paid_by: user?.id,
           scheduled_at: promoter.payment_scheduled_at ?? new Date().toISOString(),
+          amount: payment.total,
           updated_by: user?.id,
         });
       setPayStatus("paid");
+      toast.success(`Payment marked as paid for ${promoter.full_name}`);
+    } catch (error) {
+      console.error('Error marking payment as paid:', error);
+      toast.error("Failed to mark payment as paid");
     } finally {
       setPayUpdating(false);
       onUpdate?.();
@@ -235,6 +297,35 @@ export const PromoterAttendanceCard = ({
   };
 
   const handleManualCheckIn = async (customTime?: Date) => {
+    // Check if contract acceptance is required
+    try {
+      const { data: shift } = await supabase
+        .from('shifts')
+        .select('company_id')
+        .eq('id', shiftId)
+        .single();
+
+      if (shift) {
+        const { data: hasTemplate } = await supabase
+          .rpc('has_active_contract_template', { _company_id: shift.company_id });
+
+        if (hasTemplate) {
+          const { data: hasAcceptance } = await supabase
+            .rpc('has_contract_acceptance', { 
+              _promoter_id: promoter.promoter_id,
+              _company_id: shift.company_id 
+            });
+
+          if (!hasAcceptance) {
+            toast.error(`${promoter.full_name} must accept the company contract before starting work`);
+            return;
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error checking contract:', error);
+    }
+
     const success = await manualCheckIn(promoter.promoter_id, promoter.full_name, customTime);
     if (success) {
       onUpdate?.();
