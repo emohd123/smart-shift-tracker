@@ -6,15 +6,13 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ShiftFormData } from "../types/ShiftTypes";
 
-export default function useShiftSubmission(shiftId?: string) {
-
-  // Helper function to send contract notifications
-  async function sendContractNotifications(
+// Helper function to send contract notifications
+async function sendContractNotifications(
     companyId: string,
     promoterIds: string[],
     shiftId: string,
     shiftTitle: string
-  ) {
+) {
     try {
       // Check if company has an active contract template
       const { data: template } = await supabase
@@ -64,7 +62,7 @@ export default function useShiftSubmission(shiftId?: string) {
     } catch (error) {
       console.error('Error in sendContractNotifications:', error);
     }
-  }
+}
 
   export default function useShiftSubmission(shiftId?: string) {
   const [loading, setLoading] = useState(false);
