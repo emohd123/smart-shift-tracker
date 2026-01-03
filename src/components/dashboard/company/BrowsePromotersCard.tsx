@@ -41,7 +41,20 @@ export function BrowsePromotersCard({ companyId }: BrowsePromotersCardProps) {
       // Use list_eligible_promoters RPC
       const { data, error } = await supabase.rpc('list_eligible_promoters');
 
-      if (error) throw error;
+      let promoterRows = data;
+
+      // Fallback to direct select (admins only; companies may hit RLS if migration missing)
+      if (error) {
+        console.warn('list_eligible_promoters RPC failed, falling back to profiles select', error);
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('profiles')
+          .select('id, full_name, email, phone_number, nationality, age, gender, profile_photo_url, verification_status, unique_code')
+          .eq('role', 'promoter')
+          .eq('verification_status', 'approved');
+
+        if (fallbackError) throw fallbackError;
+        promoterRows = fallbackData;
+      }
 
       // Check contract acceptance for each promoter
       const { data: template } = await supabase
@@ -59,12 +72,12 @@ export function BrowsePromotersCard({ companyId }: BrowsePromotersCardProps) {
 
         const acceptedIds = new Set(acceptances?.map(a => a.promoter_id) || []);
 
-        setPromoters(data.map((p: any) => ({
+        setPromoters((promoterRows || []).map((p: any) => ({
           ...p,
           contractAccepted: acceptedIds.has(p.id)
         })));
       } else {
-        setPromoters(data || []);
+        setPromoters(promoterRows || []);
       }
     } catch (error: any) {
       console.error("Error loading promoters:", error);

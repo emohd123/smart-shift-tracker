@@ -92,6 +92,24 @@ async function sendContractNotifications(
         toast.error("Start date is required");
         return;
       }
+
+      // Require an active contract template before assigning promoters (company users)
+      if (!isEditMode && user?.role === 'company' && formData.selectedPromoterIds.length > 0) {
+        const { data: template } = await supabase
+          .from('company_contract_templates')
+          .select('id')
+          .eq('company_id', user.id)
+          .eq('is_active', true)
+          .maybeSingle();
+
+        if (!template) {
+          toast.error("Add a contract before assigning promoters", {
+            description: "Create an active contract template to send for promoter approval."
+          });
+          navigate('/company/contract');
+          return;
+        }
+      }
       
       // Format the data for database
       const shiftData = {

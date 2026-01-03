@@ -11,25 +11,31 @@ export default function usePromoters() {
   const fetchPromoters = async () => {
     setLoadingPromoters(true);
     try {
-      // Fetch verified promoters from profiles table
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, unique_code, full_name, age, nationality, phone_number')
-        .eq('role', 'promoter')
-        .eq('verification_status', 'approved');
-      
-      if (error) {
-        console.error("Error fetching promoters:", error);
-        toast.error("Failed to load promoter list");
-        
-        // Do not use mock data; show empty list
-        setPromoters([]);
-        return;
+      // Primary path: use security definer RPC so companies can bypass RLS and see approved promoters
+      const { data: rpcData, error: rpcError } = await supabase.rpc('list_eligible_promoters');
+
+      let promoterRows = rpcData;
+
+      // Fallback: direct table select (works for admins; companies may hit RLS)
+      if (rpcError) {
+        console.warn("RPC list_eligible_promoters failed, falling back to profiles select", rpcError);
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('id, unique_code, full_name, age, nationality, phone_number')
+          .eq('role', 'promoter')
+          .eq('verification_status', 'approved');
+
+        if (error) {
+          console.error("Error fetching promoters:", error);
+          toast.error("Failed to load promoter list");
+          setPromoters([]);
+          return;
+        }
+        promoterRows = data;
       }
-      
-      if (data && data.length > 0) {
-        // Map promoter profiles to PromoterOption format
-        const formattedPromoters: PromoterOption[] = data.map(promoter => ({
+
+      if (promoterRows && promoterRows.length > 0) {
+        const formattedPromoters: PromoterOption[] = promoterRows.map((promoter: any) => ({
           id: promoter.id,
           unique_code: promoter.unique_code,
           full_name: promoter.full_name,
@@ -37,7 +43,7 @@ export default function usePromoters() {
           nationality: promoter.nationality,
           phone_number: promoter.phone_number || ''
         }));
-        
+
         setPromoters(formattedPromoters);
         console.log(`Loaded ${formattedPromoters.length} promoters from database`);
       } else {
