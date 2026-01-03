@@ -26,12 +26,24 @@ export const useAuthState = () => {
 
           if (formattedUser) {
             try {
-              // Fetch role from user_roles table using security definer function
+              // Try to fetch role from user_roles table using security definer function
               const { data: roleData, error: roleError } = await supabase
                 .rpc('get_user_role', { _user_id: formattedUser.id });
 
               if (roleError) {
-                console.error("Error fetching user role:", roleError);
+                console.warn("get_user_role RPC failed, falling back to profiles table:", roleError);
+                // Fallback: fetch role from profiles table directly
+                const { data: profileData, error: profileError } = await supabase
+                  .from('profiles')
+                  .select('role')
+                  .eq('id', formattedUser.id)
+                  .single();
+                
+                if (profileError) {
+                  console.error("Error fetching profile role:", profileError);
+                } else if (profileData?.role) {
+                  formattedUser.role = profileData.role as UserRole;
+                }
               } else if (roleData) {
                 formattedUser.role = roleData as UserRole;
               }
@@ -78,9 +90,22 @@ export const useAuthState = () => {
             setTimeout(() => {
               supabase
                 .rpc('get_user_role', { _user_id: formattedUser.id })
-                .then(({ data: roleData, error: roleError }) => {
+                .then(async ({ data: roleData, error: roleError }) => {
                   if (roleError) {
-                    console.error("Error fetching user role:", roleError);
+                    console.warn("get_user_role RPC failed, falling back to profiles table:", roleError);
+                    // Fallback: fetch role from profiles table directly
+                    const { data: profileData, error: profileError } = await supabase
+                      .from('profiles')
+                      .select('role')
+                      .eq('id', formattedUser.id)
+                      .single();
+                    
+                    if (profileError) {
+                      console.error("Error fetching profile role:", profileError);
+                    } else if (profileData?.role) {
+                      formattedUser.role = profileData.role as UserRole;
+                      setUser({ ...formattedUser });
+                    }
                   } else if (roleData) {
                     formattedUser.role = roleData as UserRole;
                     setUser({ ...formattedUser });
