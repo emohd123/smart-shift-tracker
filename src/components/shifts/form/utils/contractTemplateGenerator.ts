@@ -223,36 +223,42 @@ export function generateContractTemplate(input: ContractTemplateInput): string {
     <div class="container">
         <!-- Header -->
         <div class="header">
-            <h1>📋 SHIFT WORK CONTRACT</h1>
-            <p style="font-size: 18px; color: #0066cc; margin-top: 10px;">${shiftTitle}</p>
+            <h1>📋 ${shiftTitle.toUpperCase()}</h1>
+            <p style="font-size: 14px; color: #666; margin-top: 5px;">Shift Work Agreement</p>
         </div>
 
         <!-- Parties Section -->
-        ${promoterName || companyName ? `
         <div class="section">
-            <div class="section-title">👥 CONTRACT PARTIES</div>
+            <div class="section-title">👥 AGREEMENT BETWEEN</div>
             <div class="section-content">
-                ${companyName ? `
-                <div class="detail-row">
-                    <span class="detail-label">Company Name</span>
-                    <span class="detail-value"><strong>${companyName}</strong></span>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div style="border-right: 1px solid #ddd; padding-right: 20px;">
+                        <h3 style="color: #0066cc; font-weight: 600; margin-bottom: 10px;">Service Provider (Company)</h3>
+                        ${companyName ? `
+                        <div class="detail-row" style="border-bottom: none;">
+                            <span class="detail-label" style="min-width: auto;">Company Name</span>
+                        </div>
+                        <div style="padding: 5px 0; color: #333; font-weight: 500; margin-bottom: 10px;">${companyName}</div>
+                        ` : ''}
+                    </div>
+                    <div style="padding-left: 20px;">
+                        <h3 style="color: #0066cc; font-weight: 600; margin-bottom: 10px;">Service Contractor (Promoter)</h3>
+                        ${promoterName ? `
+                        <div class="detail-row" style="border-bottom: none;">
+                            <span class="detail-label" style="min-width: auto;">Promoter Name</span>
+                        </div>
+                        <div style="padding: 5px 0; color: #333; font-weight: 500; margin-bottom: 10px;">${promoterName}</div>
+                        ` : '<div style="color: #999; font-size: 14px;">To be filled in during assignment</div>'}
+                        ${promoterId ? `
+                        <div class="detail-row" style="border-bottom: none; margin-top: 10px;">
+                            <span class="detail-label" style="min-width: auto;">ID Code</span>
+                        </div>
+                        <div style="padding: 5px 0; color: #333; font-weight: 500;">${promoterId}</div>
+                        ` : ''}
+                    </div>
                 </div>
-                ` : ''}
-                ${promoterName ? `
-                <div class="detail-row">
-                    <span class="detail-label">Promoter Name</span>
-                    <span class="detail-value"><strong>${promoterName}</strong></span>
-                </div>
-                ` : ''}
-                ${promoterId ? `
-                <div class="detail-row">
-                    <span class="detail-label">Promoter ID</span>
-                    <span class="detail-value">${promoterId}</span>
-                </div>
-                ` : ''}
             </div>
         </div>
-        ` : ''}
 
         <!-- Shift Details Section -->
         <div class="section">
@@ -287,12 +293,6 @@ export function generateContractTemplate(input: ContractTemplateInput): string {
                     <span class="detail-label">Daily Hours</span>
                     <span class="detail-value">${startTime} - ${endTime}</span>
                 </div>
-                ${!promoterName ? `
-                <div class="detail-row">
-                    <span class="detail-label">Number of Promoters</span>
-                    <span class="detail-value">${promoterCount}</span>
-                </div>
-                ` : ''}
             </div>
         </div>
 

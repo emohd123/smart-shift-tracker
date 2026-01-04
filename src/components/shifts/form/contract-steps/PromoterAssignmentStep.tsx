@@ -120,17 +120,20 @@ export default function PromoterAssignmentStep({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>👥 Assign Promoters</CardTitle>
+        <CardTitle>👥 Assign Promoters (Optional)</CardTitle>
         <CardDescription>
-          Select approved promoters to assign to this shift
+          Select approved promoters to assign to this shift. You can skip this step and assign promoters later.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Summary */}
-        <Alert className="bg-purple-50 border-purple-200">
-          <AlertDescription className="text-purple-900">
+        <Alert className="bg-blue-50 border-blue-200">
+          <AlertDescription className="text-blue-900">
             <strong>Total Assigned:</strong> {assignedPromoters.length} promoters | 
             <strong className="ml-4">Total Estimated Payment:</strong> {formatCurrency(totalEstimatedPay)}
+            {assignedPromoters.length === 0 && (
+              <span className="block mt-1 text-sm">You can assign promoters later from the shift details page.</span>
+            )}
           </AlertDescription>
         </Alert>
 
@@ -138,8 +141,9 @@ export default function PromoterAssignmentStep({
         <div className="space-y-3">
           <h3 className="font-semibold text-lg">Assigned Promoters ({assignedPromoters.length})</h3>
           {assignedPromoters.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No promoters assigned yet. Add promoters below.</p>
+            <div className="text-center py-8 text-muted-foreground bg-gray-50 rounded-lg border-2 border-dashed">
+              <p className="text-base">No promoters assigned yet.</p>
+              <p className="text-sm mt-2">You can skip this step and assign promoters later, or add them below.</p>
             </div>
           ) : (
             <div className="space-y-2">

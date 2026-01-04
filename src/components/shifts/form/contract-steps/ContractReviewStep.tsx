@@ -13,7 +13,7 @@ interface ContractReviewStepProps {
   contractPreview?: string;
   loading?: boolean;
   onPrevious: () => void;
-  onSubmit: () => Promise<void>;
+  onSubmit: () => Promise<{ shiftId?: string; success: boolean }>;
   isSubmitting?: boolean;
 }
 

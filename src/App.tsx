@@ -30,7 +30,7 @@ import Revenue from "./pages/Revenue";
 import VerifyCertificatePage from "./pages/VerifyCertificatePage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import CompanyDashboard from "./pages/CompanyDashboard";
-import CompanyProfile from "./pages/CompanyProfile";
+import CompanyProfilePage from "./pages/CompanyProfilePage";
 import CompanyContract from "./pages/CompanyContract";
 import AdminOverview from "./pages/AdminOverview";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -55,7 +55,7 @@ function App() {
             <Route element={<ProtectedRoute />}>
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/company" element={<CompanyDashboard />} />
-              <Route path="/company/profile" element={<CompanyProfile />} />
+              <Route path="/company/profile" element={<CompanyProfilePage />} />
               <Route path="/company/contract" element={<CompanyContract />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/admin/legacy" element={<AdminOverview />} />
@@ -64,7 +64,7 @@ function App() {
               <Route path="/shifts/:id/edit" element={<EditShift />} />
               <Route path="/shifts/:id" element={<ShiftDetails />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<AccountSettings />} />
+              <Route path="/settings" element={<Profile />} />
               <Route path="/promoters" element={<Promoters />} />
               <Route path="/time" element={<TimeTracking />} />
               <Route path="/time-history" element={<TimeHistory />} />

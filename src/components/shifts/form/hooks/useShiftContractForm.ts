@@ -59,7 +59,7 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
     if (!formData.startTime) errors.push("Start time is required");
     if (!formData.endTime) errors.push("End time is required");
     if (!formData.payRate || parseFloat(formData.payRate) <= 0) errors.push("Valid pay rate is required");
-    if (formData.assignedPromoters.length === 0) errors.push("At least one promoter must be assigned");
+    // Promoter assignment is optional - can be assigned later
     if (!formData.paymentDate) errors.push("Payment date is required");
 
     setValidationErrors(errors);
@@ -104,23 +104,35 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
     }));
   }, []);
 
-  const generateContractPreview = useCallback(() => {
+  const generateContractPreview = useCallback(async () => {
     if (formData.dateRange?.from && formData.dateRange?.to) {
       // Fetch company profile for company details
-      let companyName = "";
+      let companyName = "Company";
       if (user?.id) {
         try {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name")
-            .eq("id", user.id)
+          // Try to fetch from company_profiles first (for company accounts)
+          const { data: companyProfile } = await supabase
+            .from("company_profiles")
+            .select("name")
+            .eq("user_id", user.id)
             .single();
           
-          if (profile) {
-            companyName = profile.full_name;
+          if (companyProfile?.name) {
+            companyName = companyProfile.name;
+          } else {
+            // Fallback: fetch from profiles table
+            const { data: userProfile } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", user.id)
+              .single();
+            
+            if (userProfile?.full_name) {
+              companyName = userProfile.full_name;
+            }
           }
         } catch (error) {
-          console.error("Error fetching company profile:", error);
+          console.error("Error fetching company details:", error);
         }
       }
 
@@ -143,7 +155,7 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
       });
       setContractPreview(preview);
     }
-  }, [formData, user]);
+  }, [formData, user?.id]);
 
   const submitShiftAndContract = useCallback(async () => {
     const errors = validateForm();
@@ -178,42 +190,48 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
       if (shiftError) throw shiftError;
       if (!shiftData?.id) throw new Error("Failed to create shift");
 
-      // Create shift assignments for each promoter
-      const assignmentPromises = formData.assignedPromoters.map(promoter =>
-        supabase
-          .from("shift_assignments")
-          .insert({
-            shift_id: shiftData.id,
-            promoter_id: promoter.id,
-            status: "assigned"
-          })
-          .select("id")
-          .single()
-      );
+      // Create shift assignments for each promoter (if any assigned)
+      if (formData.assignedPromoters.length > 0) {
+        const assignmentPromises = formData.assignedPromoters.map(promoter =>
+          supabase
+            .from("shift_assignments")
+            .insert({
+              shift_id: shiftData.id,
+              promoter_id: promoter.id,
+              status: "assigned"
+            })
+            .select("id")
+            .single()
+        );
 
-      const assignmentResults = await Promise.all(assignmentPromises);
+        const assignmentResults = await Promise.all(assignmentPromises);
 
-      // Create payment status records for each assignment
-      const paymentDate = new Date(formData.paymentDate).toISOString();
-      const paymentPromises = assignmentResults.map((result, index) => {
-        if (result.error) return Promise.resolve(result.error);
-        // Use any type to bypass TypeScript limitations with newer tables
-        return (supabase as any)
-          .from("shift_assignment_payment_status")
-          .insert({
-            assignment_id: result.data?.id,
-            status: "scheduled",
-            scheduled_at: paymentDate
-          });
-      });
+        // Create payment status records for each assignment
+        const paymentDate = new Date(formData.paymentDate).toISOString();
+        const paymentPromises = assignmentResults.map((result, index) => {
+          if (result.error) return Promise.resolve(result.error);
+          // Use any type to bypass TypeScript limitations with newer tables
+          return (supabase as any)
+            .from("shift_assignment_payment_status")
+            .insert({
+              assignment_id: result.data?.id,
+              status: "scheduled",
+              scheduled_at: paymentDate
+            });
+        });
 
-      await Promise.all(paymentPromises);
+        await Promise.all(paymentPromises);
+      }
 
       // For now, skip contract notifications as the table doesn't exist
       // In production, you would need to create this table or use an alternative notification system
 
-      toast.success("Shift and contracts created successfully!", {
-        description: `Shift created and ${formData.assignedPromoters.length} promoters assigned`
+      const promoterMessage = formData.assignedPromoters.length > 0
+        ? `Shift created and ${formData.assignedPromoters.length} promoters assigned`
+        : "Shift created successfully. You can assign promoters later.";
+
+      toast.success("Shift created successfully!", {
+        description: promoterMessage
       });
 
       return { shiftId: shiftData.id, success: true };
