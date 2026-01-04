@@ -235,10 +235,11 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
       });
 
       return { shiftId: shiftData.id, success: true };
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating shift and contract:", error);
+      const errorMessage = error?.message || error?.details || error?.hint || JSON.stringify(error) || "Unknown error";
       toast.error("Failed to create shift and contracts", {
-        description: error instanceof Error ? error.message : "Unknown error"
+        description: errorMessage
       });
       return { success: false };
     } finally {

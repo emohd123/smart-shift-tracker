@@ -4,6 +4,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, AlertCircle, Send, Loader2, ChevronLeft, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { formatCurrency, calculateWorkHours, calculateDailyPay } from "../utils/paymentScheduleCalculator";
 import { generateContractTemplate } from "../utils/contractTemplateGenerator";
 
@@ -26,6 +27,7 @@ export default function ContractReviewStep({
   onSubmit,
   isSubmitting = false
 }: ContractReviewStepProps) {
+  const navigate = useNavigate();
   const [showContractPreview, setShowContractPreview] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,7 +54,10 @@ export default function ContractReviewStep({
   const handleSubmit = async () => {
     try {
       setError(null);
-      await onSubmit();
+      const result = await onSubmit();
+      if (result.success) {
+        navigate("/shifts");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit contract");
     }
@@ -237,7 +242,7 @@ export default function ContractReviewStep({
             onClick={handleSubmit}
             size="lg"
             className="gap-2"
-            disabled={isSubmitting || formData.assignedPromoters.length === 0}
+            disabled={isSubmitting}
           >
             {isSubmitting ? (
               <>

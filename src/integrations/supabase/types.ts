@@ -274,7 +274,9 @@ export type Database = {
       company_profiles: {
         Row: {
           address: string | null
+          business_certificate_url: string | null
           company_size: string | null
+          cr_document_url: string | null
           created_at: string | null
           description: string | null
           id: string
@@ -288,7 +290,9 @@ export type Database = {
         }
         Insert: {
           address?: string | null
+          business_certificate_url?: string | null
           company_size?: string | null
+          cr_document_url?: string | null
           created_at?: string | null
           description?: string | null
           id?: string
@@ -302,7 +306,9 @@ export type Database = {
         }
         Update: {
           address?: string | null
+          business_certificate_url?: string | null
           company_size?: string | null
+          cr_document_url?: string | null
           created_at?: string | null
           description?: string | null
           id?: string

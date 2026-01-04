@@ -54,19 +54,18 @@ export default function DocumentsTab() {
     try {
       const { data, error } = await supabase
         .from("company_profiles")
-        .select("logo_url")
+        .select("logo_url, cr_document_url, business_certificate_url")
         .eq("user_id", user.id)
         .maybeSingle();
 
       if (error) {
         console.error("Error loading documents:", error);
       }
-      
-      // Initialize with logo_url only (other columns will be added after migration)
+
       setFileUrls({
         logo: data?.logo_url || null,
-        cr_document: null,
-        business_certificate: null,
+        cr_document: data?.cr_document_url || null,
+        business_certificate: data?.business_certificate_url || null,
       });
     } catch (error) {
       console.error("Error loading documents:", error);
@@ -108,19 +107,17 @@ export default function DocumentsTab() {
       const { data } = supabase.storage.from(docType.bucket).getPublicUrl(path);
       const publicUrl = data.publicUrl;
 
-      // Update database - For now, only logo_url is in the schema
-      // cr_document_url and business_certificate_url will be added after migration
-      if (docType.type === "logo") {
-        const { error: dbError } = await supabase
-          .from("company_profiles")
-          .update({ logo_url: publicUrl })
-          .eq("user_id", user.id);
+      // Update database with document URL
+      const fieldName = docType.type === "logo" ? "logo_url" :
+        docType.type === "cr_document" ? "cr_document_url" :
+        "business_certificate_url";
 
-        if (dbError) throw dbError;
-      } else {
-        // TODO: Uncomment after running migration that adds cr_document_url and business_certificate_url
-        console.warn(`${docType.type} upload successful but database column not yet migrated`);
-      }
+      const { error: dbError } = await supabase
+        .from("company_profiles")
+        .update({ [fieldName]: publicUrl })
+        .eq("user_id", user.id);
+
+      if (dbError) throw dbError;
 
       // Update local state
       setFileUrls(prev => ({

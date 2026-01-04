@@ -7,6 +7,38 @@ import CompanyProfileManager from "@/components/company-profile/CompanyProfileMa
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2, Clock, XCircle } from "lucide-react";
+
+// Get status badge styling based on verification status
+const getStatusConfig = (status: string | undefined) => {
+  switch (status?.toLowerCase()) {
+    case 'approved':
+      return {
+        color: 'bg-green-50 text-green-700 border-green-200',
+        icon: CheckCircle2,
+        label: 'Approved'
+      };
+    case 'pending':
+      return {
+        color: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+        icon: Clock,
+        label: 'Pending Approval'
+      };
+    case 'rejected':
+      return {
+        color: 'bg-red-50 text-red-700 border-red-200',
+        icon: XCircle,
+        label: 'Rejected'
+      };
+    default:
+      return {
+        color: 'bg-gray-50 text-gray-700 border-gray-200',
+        icon: Clock,
+        label: 'Unknown'
+      };
+  }
+};
 
 export default function Profile() {
   const { user, isAuthenticated } = useAuth();
@@ -48,14 +80,24 @@ export default function Profile() {
   }
 
   // Show promoter profile for promoters
+  const statusConfig = getStatusConfig(user?.verification_status);
+  const StatusIcon = statusConfig.icon;
+
   return (
     <AppLayout title="Profile">
       <div className="max-w-3xl mx-auto py-8 px-4">
-        <h1 className="text-3xl font-bold tracking-tight mb-6">My Profile</h1>
-        
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
+          {/* Verification Status Badge */}
+          <Badge variant="outline" className={`${statusConfig.color} flex items-center gap-1.5 px-3 py-1.5`}>
+            <StatusIcon className="h-4 w-4" />
+            {statusConfig.label}
+          </Badge>
+        </div>
+
         {/* Unique Code Card - Only for Promoters */}
         <UniqueCodeCard user={user} />
-        
+
         <ProfileUpdateForm />
       </div>
     </AppLayout>

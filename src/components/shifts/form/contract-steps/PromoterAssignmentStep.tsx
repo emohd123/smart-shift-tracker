@@ -248,7 +248,6 @@ export default function PromoterAssignmentStep({
             onClick={onNext}
             size="lg"
             className="gap-2"
-            disabled={assignedPromoters.length === 0}
           >
             Review & Send Contracts
             <ChevronRight className="h-4 w-4" />

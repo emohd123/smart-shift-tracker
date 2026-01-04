@@ -79,10 +79,10 @@ export default function CompanyInfoTab() {
 
     setSaving(true);
     try {
-      // First try to get existing profile
+      // First try to get existing profile (use user_id for compatibility with both schemas)
       const { data: existingProfile } = await supabase
         .from("company_profiles")
-        .select("id")
+        .select("user_id")
         .eq("user_id", user.id)
         .maybeSingle();
 
@@ -122,9 +122,11 @@ export default function CompanyInfoTab() {
       }
 
       toast.success("Company information updated successfully");
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error updating company info:", error);
-      toast.error("Failed to update company information");
+      // Show actual error message for better debugging
+      const message = error?.message || error?.details || "Failed to update company information";
+      toast.error(message);
     } finally {
       setSaving(false);
     }
