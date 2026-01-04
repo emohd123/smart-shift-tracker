@@ -37,23 +37,46 @@ export function BrowsePromotersCard({ companyId }: BrowsePromotersCardProps) {
   const loadPromoters = async () => {
     try {
       setLoading(true);
+      console.log('[BrowsePromoters] Starting loadPromoters for companyId:', companyId);
 
-      // Use list_eligible_promoters RPC
-      const { data, error } = await supabase.rpc('list_eligible_promoters');
+      let promoterRows: any[] = [];
+      let loadMethod = 'unknown';
 
-      let promoterRows = data;
+      // Try RPC first (if migration has been applied)
+      try {
+        console.log('[BrowsePromoters] Attempting RPC call...');
+        const { data: rpcData, error: rpcError } = await supabase.rpc('list_eligible_promoters');
 
-      // Fallback to direct select (admins only; companies may hit RLS if migration missing)
-      if (error) {
-        console.warn('list_eligible_promoters RPC failed, falling back to profiles select', error);
+        if (rpcError) {
+          console.warn('[BrowsePromoters] RPC error:', rpcError);
+        } else if (rpcData) {
+          promoterRows = rpcData;
+          loadMethod = 'RPC';
+          console.log(`[BrowsePromoters] Loaded ${promoterRows.length} promoters from RPC`);
+        }
+      } catch (rpcEx) {
+        console.warn('[BrowsePromoters] RPC exception:', rpcEx);
+      }
+
+      // Fallback: Direct select for approved promoters
+      if (promoterRows.length === 0) {
+        console.log('[BrowsePromoters] Using fallback direct query...');
         const { data: fallbackData, error: fallbackError } = await supabase
           .from('profiles')
           .select('id, full_name, email, phone_number, nationality, age, gender, profile_photo_url, verification_status, unique_code')
           .eq('role', 'promoter')
-          .eq('verification_status', 'approved');
+          .eq('verification_status', 'approved')
+          .order('full_name', { ascending: true });
 
-        if (fallbackError) throw fallbackError;
-        promoterRows = fallbackData;
+        if (fallbackError) {
+          console.error('[BrowsePromoters] Fallback query error:', fallbackError);
+          toast.error("Failed to load promoters: " + fallbackError.message);
+          setPromoters([]);
+          return;
+        }
+        promoterRows = fallbackData || [];
+        loadMethod = 'DirectQuery';
+        console.log(`[BrowsePromoters] Loaded ${promoterRows.length} promoters from direct query`);
       }
 
       // Check contract acceptance for each promoter
@@ -79,9 +102,12 @@ export function BrowsePromotersCard({ companyId }: BrowsePromotersCardProps) {
       } else {
         setPromoters(promoterRows || []);
       }
+
+      console.log(`[BrowsePromoters] Successfully loaded ${promoterRows.length} promoters via ${loadMethod}`);
     } catch (error: any) {
-      console.error("Error loading promoters:", error);
-      toast.error("Failed to load promoters");
+      console.error("[BrowsePromoters] Unexpected error:", error);
+      toast.error("Failed to load promoters: " + (error?.message || 'Unknown error'));
+      setPromoters([]);
     } finally {
       setLoading(false);
     }
@@ -137,9 +163,21 @@ export function BrowsePromotersCard({ companyId }: BrowsePromotersCardProps) {
         {/* Promoters List */}
         <div className="space-y-3 max-h-[400px] overflow-y-auto">
           {filteredPromoters.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-muted-foreground space-y-3">
               <User className="h-12 w-12 mx-auto mb-2 opacity-20" />
-              <p>No promoters found</p>
+              <div>
+                <p className="font-medium text-foreground mb-1">No promoters available</p>
+                <p className="text-sm mb-3">
+                  {promoters.length === 0 
+                    ? "No promoters have been registered yet in your system." 
+                    : "Your search didn't match any promoters."}
+                </p>
+                {promoters.length === 0 && (
+                  <p className="text-xs text-muted-foreground italic">
+                    💡 Tip: Have promoters sign up and get approved before you can assign shifts.
+                  </p>
+                )}
+              </div>
             </div>
           ) : (
             filteredPromoters.map((promoter) => (

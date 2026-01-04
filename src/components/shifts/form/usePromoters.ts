@@ -11,27 +11,34 @@ export default function usePromoters() {
   const fetchPromoters = async () => {
     setLoadingPromoters(true);
     try {
-      // Primary path: use security definer RPC so companies can bypass RLS and see approved promoters
-      const { data: rpcData, error: rpcError } = await supabase.rpc('list_eligible_promoters');
+      let promoterRows: any[] = [];
 
-      let promoterRows = rpcData;
+      // Try RPC first (if migration has been applied)
+      const { data: rpcData, error: rpcError } = await supabase.rpc('list_eligible_promoters').then(
+        (result) => result,
+        () => ({ data: null, error: new Error('RPC not available') })
+      );
 
-      // Fallback: direct table select (works for admins; companies may hit RLS)
-      if (rpcError) {
-        console.warn("RPC list_eligible_promoters failed, falling back to profiles select", rpcError);
-        const { data, error } = await supabase
+      if (rpcData && !rpcError) {
+        promoterRows = rpcData;
+        console.log('Loaded promoters from RPC');
+      } else {
+        // Fallback: Direct select for approved promoters
+        console.warn('RPC not available, falling back to profiles select');
+        const { data: fallbackData, error: fallbackError } = await supabase
           .from('profiles')
           .select('id, unique_code, full_name, age, nationality, phone_number')
           .eq('role', 'promoter')
-          .eq('verification_status', 'approved');
+          .eq('verification_status', 'approved')
+          .order('full_name', { ascending: true });
 
-        if (error) {
-          console.error("Error fetching promoters:", error);
+        if (fallbackError) {
+          console.error("Error fetching promoters:", fallbackError);
           toast.error("Failed to load promoter list");
           setPromoters([]);
           return;
         }
-        promoterRows = data;
+        promoterRows = fallbackData;
       }
 
       if (promoterRows && promoterRows.length > 0) {

@@ -17,6 +17,7 @@ import {
   Zap 
 } from 'lucide-react';
 import { usePerformanceMonitor, useErrorTracking, useRealUserMonitoring } from '@/hooks/monitoring/usePerformanceMonitor';
+import { supabase } from '@/integrations/supabase/client';
 
 const DevToolsPanel: React.FC = () => {
   const { metrics } = usePerformanceMonitor('DevToolsPanel');
@@ -119,7 +120,7 @@ const DevToolsPanel: React.FC = () => {
         </CardHeader>
         <CardContent className="p-0">
           <Tabs defaultValue="performance" className="h-full">
-            <TabsList className="grid grid-cols-4 w-full">
+            <TabsList className="grid grid-cols-5 w-full">
               <TabsTrigger value="performance" className="text-xs">
                 <Gauge className="h-3 w-3 mr-1" />
                 Perf
@@ -140,6 +141,10 @@ const DevToolsPanel: React.FC = () => {
               <TabsTrigger value="vitals" className="text-xs">
                 <Activity className="h-3 w-3 mr-1" />
                 Vitals
+              </TabsTrigger>
+              <TabsTrigger value="database" className="text-xs">
+                <Database className="h-3 w-3 mr-1" />
+                DB
               </TabsTrigger>
             </TabsList>
 
@@ -233,6 +238,10 @@ const DevToolsPanel: React.FC = () => {
                   </div>
                 </div>
               </TabsContent>
+
+              <TabsContent value="database" className="space-y-2 mt-0">
+                <DatabaseDiagnostics />
+              </TabsContent>
             </ScrollArea>
           </Tabs>
         </CardContent>
@@ -240,5 +249,74 @@ const DevToolsPanel: React.FC = () => {
     </div>
   );
 };
+
+const DatabaseDiagnostics: React.FC = () => {
+  const [approvedCount, setApprovedCount] = useState<number | null>(null);
+  const [rpcWorks, setRpcWorks] = useState<boolean | null>(null);
+  const [testing, setTesting] = useState(false);
+
+  const testDatabase = async () => {
+    setTesting(true);
+    
+    try {
+      // Test 1: Count approved promoters
+      const { data: countData, error: countError } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('role', 'promoter')
+        .eq('verification_status', 'approved');
+      
+      if (!countError) {
+        console.log('[DB Test] Approved promoters count:', countData?.length || 0);
+        setApprovedCount(countData?.length || 0);
+      } else {
+        console.error('[DB Test] Count error:', countError);
+        setApprovedCount(-1);
+      }
+
+      // Test 2: Test RPC
+      const { data: rpcData, error: rpcError } = await supabase.rpc('list_eligible_promoters');
+      if (!rpcError && rpcData) {
+        console.log('[DB Test] RPC works! Data:', rpcData);
+        setRpcWorks(true);
+      } else {
+        console.warn('[DB Test] RPC error:', rpcError);
+        setRpcWorks(false);
+      }
+    } catch (err) {
+      console.error('[DB Test] Error:', err);
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-2 text-xs">
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={testDatabase}
+        disabled={testing}
+        className="w-full"
+      >
+        {testing ? 'Testing...' : 'Test DB Connectivity'}
+      </Button>
+      
+      {approvedCount !== null && (
+        <div className="p-2 bg-muted rounded">
+          <p className="text-muted-foreground">Approved Promoters: <span className="font-mono">{approvedCount}</span></p>
+        </div>
+      )}
+      
+      {rpcWorks !== null && (
+        <div className="p-2 bg-muted rounded">
+          <p className="text-muted-foreground">RPC Status: <span className={`font-mono ${rpcWorks ? 'text-green-600' : 'text-red-600'}`}>{rpcWorks ? 'WORKING' : 'FAILED'}</span></p>
+        </div>
+      )}
+    </div>
+  );
+};
+
+
 
 export default DevToolsPanel;
