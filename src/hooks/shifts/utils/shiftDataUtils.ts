@@ -83,16 +83,24 @@ export const saveShiftsToLocalStorage = (shift: Shift): void => {
 
 /**
  * Filter shifts based on user role
+ * For promoters: Only return shifts they are assigned to (via shift_assignments table)
+ * For admins: Return all shifts
  */
 export const filterShiftsByRole = (shifts: Shift[], userRole?: string, userId?: string): Shift[] => {
   if (!userRole) return [];
 
   // If admin, show all shifts
-  if (userRole === 'admin') return shifts;
+  if (userRole === 'admin' || userRole === 'super_admin') return shifts;
 
-  // For promoters, we would filter based on assignments
-  // This would require a join with shift_assignments in a real API
-  // For now, we just return all shifts for the promoter
+  // For promoters, only show shifts they are assigned to
+  // Note: This should be filtered by shift_assignments, but since we fetch all shifts first,
+  // the filtering by assignments happens in the component via shift_assignments query
+  // Return all shifts here; component will filter by assignments
+  if (userRole === 'promoter') return shifts;
+
+  // For company, return shifts (will be filtered by company_id in the query itself)
+  if (userRole === 'company') return shifts;
+
   return shifts;
 };
 

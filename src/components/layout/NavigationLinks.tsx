@@ -120,7 +120,7 @@ export const NavigationLinks = () => {
           <button className="flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground transition-colors w-full">
             <div className="flex items-center gap-3">
               <Settings className="h-4 w-4" />
-              <span>Settings</span>
+              <span>More</span>
             </div>
             <ChevronDown className="h-4 w-4" />
           </button>
@@ -129,9 +129,9 @@ export const NavigationLinks = () => {
           <DropdownMenuLabel>My Account</DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem asChild>
-            <NavLink to={isCompany ? "/company/profile" : "/settings"} className="flex w-full cursor-pointer">
+            <NavLink to={isCompany ? "/company/profile" : "/profile"} className="flex w-full cursor-pointer">
               <UserRound className="mr-2 h-4 w-4" />
-              <span>Profile</span>
+              <span>Profile & Settings</span>
             </NavLink>
           </DropdownMenuItem>
         </DropdownMenuContent>

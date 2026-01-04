@@ -136,22 +136,36 @@ export const useAuthentication = () => {
   const logout = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signOut();
+      // Sign out from Supabase with scope 'global' to clear all sessions
+      const { error } = await supabase.auth.signOut({ scope: 'global' });
 
       if (error) {
+        console.error("Logout error from Supabase:", error);
         throw error;
       }
 
+      // Clear remember me state
+      localStorage.removeItem('rememberMe');
+      
+      // Clear any other auth-related items (Supabase stores session in localStorage)
+      const keysToRemove = Object.keys(localStorage).filter(key => 
+        key.startsWith('sb-') || key.includes('supabase')
+      );
+      keysToRemove.forEach(key => localStorage.removeItem(key));
+      
+      // Clear session storage
+      sessionStorage.clear();
 
       toast.success("Logged out successfully");
       setAuthError(null);
-
-      // Clear remember me state
-      localStorage.removeItem('rememberMe');
     } catch (error: any) {
       console.error("Error signing out:", error);
       setAuthError(error.message || "Error signing out");
       toast.error(error.message || "Error signing out");
+      
+      // Even if there's an error, force clear local storage
+      localStorage.clear();
+      sessionStorage.clear();
     } finally {
       setLoading(false);
     }

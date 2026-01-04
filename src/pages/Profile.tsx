@@ -4,10 +4,14 @@ import AppLayout from "@/components/layout/AppLayout";
 import ProfileUpdateForm from "@/components/profile/ProfileUpdateForm";
 import { UniqueCodeCard } from "@/components/profile/UniqueCodeCard";
 import CompanyProfileManager from "@/components/company-profile/CompanyProfileManager";
+import PasswordChangeForm from "@/components/profile/PasswordChangeForm";
+import AccountRemovalForm from "@/components/profile/AccountRemovalForm";
 import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card } from "@/components/ui/card";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
 
 // Get status badge styling based on verification status
@@ -44,6 +48,7 @@ export default function Profile() {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
     // Add a small delay to ensure auth state is loaded
@@ -79,12 +84,12 @@ export default function Profile() {
     );
   }
 
-  // Show promoter profile for promoters
+  // Show promoter profile with settings tabs
   const statusConfig = getStatusConfig(user?.verification_status);
   const StatusIcon = statusConfig.icon;
 
   return (
-    <AppLayout title="Profile">
+    <AppLayout title="Profile & Settings">
       <div className="max-w-3xl mx-auto py-8 px-4">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold tracking-tight">My Profile</h1>
@@ -98,7 +103,35 @@ export default function Profile() {
         {/* Unique Code Card - Only for Promoters */}
         <UniqueCodeCard user={user} />
 
-        <ProfileUpdateForm />
+        {/* Tabs for Profile, Password, and Account Settings */}
+        <div className="mt-8">
+          <Tabs 
+            defaultValue="profile" 
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="profile" className="data-[state=active]:shadow-sm">Profile</TabsTrigger>
+              <TabsTrigger value="password" className="data-[state=active]:shadow-sm">Password</TabsTrigger>
+              <TabsTrigger value="account" className="data-[state=active]:shadow-sm">Account</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="profile" className="mt-6 animate-fade-in">
+              <ProfileUpdateForm />
+            </TabsContent>
+            
+            <TabsContent value="password" className="mt-6 animate-fade-in">
+              <PasswordChangeForm />
+            </TabsContent>
+            
+            <TabsContent value="account" className="mt-6 animate-fade-in">
+              <Card className="p-6">
+                <AccountRemovalForm />
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </AppLayout>
   );

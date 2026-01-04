@@ -14,10 +14,11 @@ export function usePromoterData() {
       try {
         setLoading(true);
         
-        // Fetch promoters from profiles table in Supabase
+        // Fetch promoters from profiles table in Supabase (only promoter role)
         const { data: profileData, error: profileError } = await supabase
           .from('profiles')
-          .select('*');
+          .select('*')
+          .eq('role', 'promoter');
           
         if (profileError) {
           throw profileError;

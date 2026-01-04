@@ -16,7 +16,6 @@ import EditShift from "./pages/EditShift";
 import ShiftDetails from "./pages/ShiftDetails";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import AccountSettings from "./pages/AccountSettings";
 import Promoters from "./pages/Promoters";
 import TimeTracking from "./pages/TimeTracking";
 import TimeHistory from "./pages/TimeHistory";
@@ -32,6 +31,7 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import CompanyDashboard from "./pages/CompanyDashboard";
 import CompanyProfilePage from "./pages/CompanyProfilePage";
 import CompanyContract from "./pages/CompanyContract";
+import PromoterContracts from "./pages/PromoterContracts";
 import AdminOverview from "./pages/AdminOverview";
 import AdminDashboard from "./pages/AdminDashboard";
 
@@ -65,6 +65,7 @@ function App() {
               <Route path="/shifts/:id" element={<ShiftDetails />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/settings" element={<Profile />} />
+              <Route path="/contracts" element={<PromoterContracts />} />
               <Route path="/promoters" element={<Promoters />} />
               <Route path="/time" element={<TimeTracking />} />
               <Route path="/time-history" element={<TimeHistory />} />

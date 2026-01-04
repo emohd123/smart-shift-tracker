@@ -29,6 +29,7 @@ type AssignPromotersDialogProps = {
   buttonText?: string;
   shiftStartTime?: string;
   shiftEndTime?: string;
+  onSuccess?: () => void;
 };
 
 type PromoterSchedule = {
@@ -46,6 +47,7 @@ export const AssignPromotersDialog = ({
   buttonText = "Assign Promoters",
   shiftStartTime = "09:00",
   shiftEndTime = "17:00",
+  onSuccess,
 }: AssignPromotersDialogProps) => {
   const [open, setOpen] = useState(false);
   const [promoters, setPromoters] = useState<PromoterOption[]>([]);
@@ -105,15 +107,43 @@ export const AssignPromotersDialog = ({
               }
             }
 
-      // Use RPC function to list eligible promoters (bypasses RLS restrictions)
-      const { data, error } = await supabase
-        .rpc('list_eligible_promoters');
+      // Try RPC first (if migration has been applied)
+      const { data: rpcData, error: rpcError } = await supabase.rpc('list_eligible_promoters').then(
+        (result) => result,
+        () => ({ data: null, error: new Error('RPC not available') })
+      );
 
-      if (error) throw error;
-      setPromoters(data || []);
+      let promoterRows: any[] = [];
+
+      if (rpcData && !rpcError) {
+        promoterRows = rpcData;
+        console.log('Loaded promoters from RPC');
+      } else {
+        // Fallback: Direct select for approved promoters
+        console.warn('RPC not available, falling back to profiles select');
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('profiles')
+          .select('id, unique_code, full_name, email, age, nationality, phone_number, gender, profile_photo_url, verification_status')
+          .eq('role', 'promoter')
+          .eq('verification_status', 'approved')
+          .order('full_name', { ascending: true });
+
+        if (fallbackError) {
+          console.error("Error fetching promoters:", fallbackError);
+          throw fallbackError;
+        }
+        promoterRows = fallbackData || [];
+      }
+      
+      if (!promoterRows || promoterRows.length === 0) {
+        console.log("No approved promoters found");
+        toast.info("No approved promoters available");
+      }
+      
+      setPromoters(promoterRows);
     } catch (error: any) {
       console.error("Error fetching promoters:", error);
-      toast.error("Failed to load promoters");
+      toast.error(`Failed to load promoters: ${error.message || 'Unknown error'}`);
     } finally {
       setLoading(false);
     }
@@ -239,6 +269,7 @@ export const AssignPromotersDialog = ({
       setSearchQuery("");
       setUniqueCode("");
       setSchedules({});
+      onSuccess?.();
     }
   };
 

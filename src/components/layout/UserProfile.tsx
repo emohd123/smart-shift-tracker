@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { UserCircle, LogOut, Settings } from "lucide-react";
+import { UserCircle, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import NotificationBadge from "../notifications/NotificationBadge";
 import { User } from "@/context/AuthContext";
@@ -28,8 +28,20 @@ export default function UserProfile({ user: propUser, onLogout: propLogout }: Us
   const logout = propLogout || contextLogout;
   
   const handleLogout = async () => {
-    await logout();
-    navigate("/login");
+    try {
+      await logout();
+      
+      // Wait a moment for auth state to clear
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 100);
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Even if logout fails, redirect to login
+      setTimeout(() => {
+        navigate("/login", { replace: true });
+      }, 100);
+    }
   };
   
   if (!user) return null;
@@ -64,11 +76,7 @@ export default function UserProfile({ user: propUser, onLogout: propLogout }: Us
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => navigate("/profile")}>
             <UserCircle className="mr-2 h-4 w-4" />
-            Profile
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate("/account-settings")}>
-            <Settings className="mr-2 h-4 w-4" />
-            Settings
+            Profile & Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>

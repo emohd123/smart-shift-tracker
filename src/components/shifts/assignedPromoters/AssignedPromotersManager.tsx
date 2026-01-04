@@ -102,6 +102,7 @@ export const AssignedPromotersManager = ({
                 shiftId={shiftId}
                 shiftStartTime={shiftStartTime}
                 shiftEndTime={shiftEndTime}
+                onSuccess={() => window.location.reload()}
               />
             )}
           </div>
@@ -134,6 +135,7 @@ export const AssignedPromotersManager = ({
               buttonText="Add More"
               shiftStartTime={shiftStartTime}
               shiftEndTime={shiftEndTime}
+              onSuccess={() => window.location.reload()}
             />
           )}
         </div>

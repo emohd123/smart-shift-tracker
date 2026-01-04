@@ -1,38 +1,16 @@
 
-import AppLayout from "@/components/layout/AppLayout";
-import AccountSettingsLayout from "@/components/profile/AccountSettingsLayout";
-import CompanyProfileManager from "@/components/company-profile/CompanyProfileManager";
-import { Separator } from "@/components/ui/separator";
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AccountSettings() {
-  const { user } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
-  // Show company profile manager for company users
-  if (user?.role === "company") {
-    return (
-      <AppLayout title="Company Profile & Settings">
-        <div className="space-y-6">
-          <Separator />
-          <CompanyProfileManager />
-        </div>
-      </AppLayout>
-    );
-  }
+  useEffect(() => {
+    // Redirect to profile page (which now includes all settings)
+    navigate("/profile");
+  }, [navigate, isAuthenticated]);
 
-  // Show regular settings for promoters and admins
-  return (
-    <AppLayout title="Account Settings">
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Account Settings</h1>
-          <p className="text-muted-foreground mt-1">
-            Manage your account settings and profile information.
-          </p>
-        </div>
-        <Separator />
-        <AccountSettingsLayout />
-      </div>
-    </AppLayout>
-  );
+  return null;
 }
