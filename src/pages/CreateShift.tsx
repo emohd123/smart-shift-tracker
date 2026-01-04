@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import AppLayout from "@/components/layout/AppLayout";
-import { ShiftForm } from "@/components/shifts/form/ShiftForm";
+import UnifiedShiftContractForm from "@/components/shifts/form/UnifiedShiftContractForm";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -89,7 +89,8 @@ const CreateShift = () => {
             </CardContent>
           </Card>
         )}
-        <ShiftForm />
+        {/* <ShiftForm /> */}
+        <UnifiedShiftContractForm />
       </div>
     </AppLayout>
   );
