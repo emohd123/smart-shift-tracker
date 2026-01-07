@@ -33,16 +33,20 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
   const [copied, setCopied] = useState(false);
   const [approvedShiftsCount, setApprovedShiftsCount] = useState(0);
   const [approvedShiftIds, setApprovedShiftIds] = useState<Set<string>>(new Set());
+  const [acceptedShiftIds, setAcceptedShiftIds] = useState<Set<string>>(new Set());
   const [pendingAssignments, setPendingAssignments] = useState<any[]>([]);
   const [pendingContracts, setPendingContracts] = useState<any[]>([]);
   const [recentTimeLogs, setRecentTimeLogs] = useState<any[]>([]);
   const [actualEarnings, setActualEarnings] = useState<{ total: number; unpaid: number }>({ total: 0, unpaid: 0 });
   const [shiftEarnings, setShiftEarnings] = useState<Map<string, number>>(new Map());
+
+  // Filter shifts to only show those where promoter has ACCEPTED the assignment
+  const acceptedShifts = shifts.filter(shift => acceptedShiftIds.has(shift.id));
+
+  const { upcomingShifts, nextShift, completedShifts, totalEarned, unpaidAmount } = useDashboardData(acceptedShifts, actualEarnings);
   
-  const { upcomingShifts, nextShift, completedShifts, totalEarned, unpaidAmount } = useDashboardData(shifts, actualEarnings);
-  
-  // Get completed shifts for display in the Recent Activity section
-  const completedShiftsList = shifts.filter(shift => getEffectiveStatus(shift) === "completed");
+  // Get completed shifts for display in the Recent Activity section (only from accepted assignments)
+  const completedShiftsList = acceptedShifts.filter(shift => getEffectiveStatus(shift) === "completed");
   
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -55,12 +59,9 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
   // Fetch pending shift assignments (shifts assigned to promoter but not yet accepted)
   const fetchPendingAssignments = async () => {
     if (!user?.id) {
-      console.log('No user ID, skipping pending assignments fetch');
       return;
     }
-    
-    console.log('Fetching pending assignments for user:', user.id);
-    
+
     try {
       // Fetch assignments with shift details and company info
       const { data, error } = await supabase
@@ -69,7 +70,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
           id,
           status,
           shift_id,
-          shifts!inner (
+          shifts (
             id,
             title,
             date,
@@ -90,8 +91,6 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
         setPendingAssignments([]);
         return;
       }
-      
-      console.log('Pending assignments raw data:', data);
       
       // Now fetch company details for each shift
       if (data && data.length > 0) {
@@ -166,10 +165,29 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
     }
   };
 
+  // Fetch accepted shift IDs (shifts where promoter has approved the assignment)
+  const fetchAcceptedShiftIds = async () => {
+    if (!user?.id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('shift_assignments')
+        .select('shift_id')
+        .eq('promoter_id', user.id)
+        .eq('status', 'accepted');
+
+      if (error) throw error;
+
+      setAcceptedShiftIds(new Set(data?.map(a => a.shift_id) || []));
+    } catch (error) {
+      console.error('Error fetching accepted shift IDs:', error);
+    }
+  };
+
   // Fetch approved shifts count and recent time logs
   const fetchApprovedShifts = async () => {
     if (!user?.id) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('shift_assignments')
@@ -178,7 +196,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
         .eq('certificate_approved', true);
 
       if (error) throw error;
-      
+
       setApprovedShiftsCount(data?.length || 0);
       setApprovedShiftIds(new Set(data?.map(a => a.shift_id) || []));
     } catch (error) {
@@ -272,15 +290,11 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
   };
 
   useEffect(() => {
-    console.log('useEffect running with user:', user);
-    console.log('useEffect running with user.id:', user?.id);
-    
     if (!user?.id) {
-      console.log('No user ID available, skipping fetch calls');
       return;
     }
-    
-    console.log('Calling fetch functions...');
+
+    fetchAcceptedShiftIds();
     fetchApprovedShifts();
     fetchRecentTimeLogs();
     fetchActualEarnings();
@@ -299,12 +313,13 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
         schema: 'public',
         table: 'shift_assignments',
         filter: `promoter_id=eq.${user.id}`
-      }, (payload) => {
-        if (payload.new.certificate_approved) {
+      }, (payload: any) => {
+        if (payload.new?.certificate_approved) {
           fetchApprovedShifts();
           fetchRecentTimeLogs();
         }
-        // Refetch pending assignments when status changes
+        // Refetch accepted shifts and pending assignments when status changes
+        fetchAcceptedShiftIds();
         fetchPendingAssignments();
       })
       .on('postgres_changes', {
@@ -330,11 +345,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
       supabase.removeChannel(channel);
     };
   }, [user?.id]);
-  
-  // Debug logging for troubleshooting
-  console.log('PromoterDashboard render - pendingAssignments:', pendingAssignments);
-  console.log('PromoterDashboard render - pendingContracts:', pendingContracts);
-  
+
   const handleCopyCode = async () => {
     if (user?.unique_code) {
       try {
@@ -472,7 +483,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
                     <div className="flex-1">
                       <h3 className="font-semibold text-sm">{assignment.shifts?.title || 'Unnamed Shift'}</h3>
                       <p className="text-xs text-muted-foreground mt-1">
-                        From {assignment.shifts?.company?.full_name || 'Unknown Company'}
+                        From {assignment.shifts?.company_name || 'Unknown Company'}
                       </p>
                       <div className="text-xs text-muted-foreground mt-2 space-y-1">
                         <p>📅 {assignment.shifts?.date ? new Date(assignment.shifts.date).toLocaleDateString() : 'Date TBD'}</p>
@@ -485,7 +496,7 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
                       <ApproveShiftDialog 
                         assignmentId={assignment.id}
                         shiftTitle={assignment.shifts?.title || 'Unnamed Shift'}
-                        companyName={assignment.shifts?.company?.full_name || 'Unknown Company'}
+                        companyName={assignment.shifts?.company_name || 'Unknown Company'}
                         onSuccess={fetchPendingAssignments}
                       />
                       <Button 

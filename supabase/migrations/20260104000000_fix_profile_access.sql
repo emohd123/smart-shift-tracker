@@ -1,25 +1,18 @@
--- Allow promoters to view company profiles they have shift assignments with
-CREATE POLICY "Promoters can view companies they work with"
-ON public.profiles FOR SELECT
-USING (
-  role = 'company' 
-  AND EXISTS (
-    SELECT 1 FROM shift_assignments sa
-    INNER JOIN shifts s ON s.id = sa.shift_id
-    WHERE sa.promoter_id = auth.uid()
-      AND s.company_id = profiles.id
-  )
-);
+-- Drop the recursive policies that caused infinite recursion
+DROP POLICY IF EXISTS "Promoters can view companies they work with" ON public.profiles;
+DROP POLICY IF EXISTS "Companies can view assigned promoters" ON public.profiles;
 
--- Allow companies to view promoters assigned to their shifts
-CREATE POLICY "Companies can view assigned promoters"
-ON public.profiles FOR SELECT  
-USING (
-  role = 'promoter'
-  AND EXISTS (
-    SELECT 1 FROM shift_assignments sa
-    INNER JOIN shifts s ON s.id = sa.shift_id  
-    WHERE s.company_id = auth.uid()
-      AND sa.promoter_id = profiles.id
-  )
-);
+-- Create a security-definer function to get company details
+CREATE OR REPLACE FUNCTION public.get_company_name(company_id uuid)
+RETURNS text
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT COALESCE(full_name, 'Unknown Company')
+  FROM profiles
+  WHERE id = company_id AND role = 'company'
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_company_name(uuid) TO authenticated;
