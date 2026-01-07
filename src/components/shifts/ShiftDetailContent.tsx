@@ -4,7 +4,10 @@ import ShiftDetail from "./ShiftDetail";
 import { AssignedPromotersManager } from "./assignedPromoters/AssignedPromotersManager";
 import { ShiftStatusToggle } from "./status/ShiftStatusToggle";
 import { ShiftContractEditor } from "./contract/ShiftContractEditor";
+import { PromoterShiftStatus } from "./PromoterShiftStatus";
+import { ShiftApprovalManager } from "./approval/ShiftApprovalManager";
 import { cn } from "@/lib/utils";
+import { ShiftStatus } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Edit } from "lucide-react";
@@ -25,6 +28,7 @@ export const ShiftDetailContent = ({
   userRole,
 }: ShiftDetailContentProps) => {
   const isCompany = isCompanyLike(userRole);
+  const isPromoter = userRole === "promoter";
   const navigate = useNavigate();
 
   return (
@@ -38,6 +42,11 @@ export const ShiftDetailContent = ({
         onCheckOut={() => {}}
         onDelete={onDelete}
       />
+      
+      {/* Promoter monitoring view - shows status, earnings, and history */}
+      {isPromoter && (
+        <PromoterShiftStatus shift={shift} shiftId={shift.id} />
+      )}
       
       {isCompany && (
         <>
@@ -71,15 +80,38 @@ export const ShiftDetailContent = ({
         </>
       )}
       
-      <AssignedPromotersManager
-        shiftId={shift.id}
-        payRate={shift.payRate}
-        payRateType={shift.payRateType || "hourly"}
-        userRole={userRole}
-        shiftStartTime={shift.startTime}
-        shiftEndTime={shift.endTime}
-        shiftStatus={shift.status}
-      />
+      {/* Only show AssignedPromotersManager for companies - promoters have their own status view */}
+      {isCompany && (
+        <>
+          <AssignedPromotersManager
+            shiftId={shift.id}
+            payRate={shift.payRate}
+            payRateType={shift.payRateType || "hourly"}
+            userRole={userRole}
+            shiftStartTime={shift.startTime}
+            shiftEndTime={shift.endTime}
+            shiftStatus={shift.status}
+          />
+          
+          {/* Show approval manager for completed shifts or shifts that should be completed */}
+          {(() => {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const shiftEndDate = shift.endDate ? new Date(shift.endDate) : new Date(shift.date);
+            shiftEndDate.setHours(23, 59, 59, 999);
+            const shouldBeCompleted = shiftEndDate < today;
+            const isCompleted = shift.status === ShiftStatus.Completed;
+            
+            return (isCompleted || shouldBeCompleted) && (
+              <ShiftApprovalManager
+                shiftId={shift.id}
+                companyId={shift.companyId}
+                onApprovalChange={onUpdate}
+              />
+            );
+          })()}
+        </>
+      )}
     </div>
   );
 };

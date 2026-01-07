@@ -32,6 +32,20 @@ export function useShiftDetail(shiftId: string | undefined) {
       
       if (data) {
         const formatted = formatDatabaseShifts([data])[0];
+        
+        // Check if current user is assigned to this shift (for promoters)
+        if (user?.id && user?.role === 'promoter') {
+          const { data: assignmentData } = await supabase
+            .from('shift_assignments')
+            .select('id, status')
+            .eq('shift_id', shiftId)
+            .eq('promoter_id', user.id)
+            .eq('status', 'accepted')
+            .maybeSingle();
+          
+          formatted.is_assigned = !!assignmentData;
+        }
+        
         setShift(formatted);
       } else {
         toast({

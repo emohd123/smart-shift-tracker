@@ -10,6 +10,7 @@ import LiveDashboardStats from "@/components/dashboard/company/LiveDashboardStat
 import ActiveShiftCard from "@/components/dashboard/company/ActiveShiftCard";
 import { BrowsePromotersCard } from "@/components/dashboard/company/BrowsePromotersCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ShiftApprovalManager } from "@/components/shifts/approval/ShiftApprovalManager";
 
 export default function CompanyDashboard() {
   const { user } = useAuth();
@@ -94,6 +95,13 @@ export default function CompanyDashboard() {
             </Card>
           )}
         </div>
+
+        {/* Pending Work Approvals Section */}
+        {user?.id && (
+          <div>
+            <ShiftApprovalManager companyId={user.id} />
+          </div>
+        )}
 
         {/* Available Promoters Section */}
         {user?.id && (

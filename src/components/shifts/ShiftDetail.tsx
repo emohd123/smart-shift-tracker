@@ -44,6 +44,7 @@ export default function ShiftDetail({
   // Leverage the role stored in user object which is protected by RLS
   const isAdmin = isAdminLike(user?.role);
   const isPromoter = user?.role === "promoter";
+  const isCompany = user?.role === "company";
 
   useEffect(() => {
     // Add animation effect on load
@@ -133,6 +134,7 @@ export default function ShiftDetail({
         <ShiftHeader
           shift={shift}
           isAdmin={isAdmin}
+          isCompany={isCompany}
           onDelete={handleDelete}
         />
 

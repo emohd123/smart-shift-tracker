@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Settings } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 type ShiftStatusToggleProps = {
   shift: Shift;
@@ -18,6 +19,7 @@ type ShiftStatusToggleProps = {
 };
 
 export const ShiftStatusToggle = ({ shift, onUpdate }: ShiftStatusToggleProps) => {
+  const { user } = useAuth();
   const [updating, setUpdating] = useState(false);
   const isManualOverride = shift.manual_status_override || false;
   const autoStatus = calculateShiftStatus(shift);
@@ -51,9 +53,20 @@ export const ShiftStatusToggle = ({ shift, onUpdate }: ShiftStatusToggleProps) =
   const handleStatusChange = async (newStatus: string) => {
     setUpdating(true);
     try {
+      const updateData: any = { override_status: newStatus };
+      
+      // If marking as completed, also update status and set manually_completed_at
+      if (newStatus === ShiftStatus.Completed && shift.status !== ShiftStatus.Completed) {
+        updateData.status = ShiftStatus.Completed;
+        updateData.manually_completed_at = new Date().toISOString();
+        if (user?.id) {
+          updateData.completed_by = user.id;
+        }
+      }
+      
       const { error } = await supabase
         .from("shifts")
-        .update({ override_status: newStatus })
+        .update(updateData)
         .eq("id", shift.id);
 
       if (error) throw error;

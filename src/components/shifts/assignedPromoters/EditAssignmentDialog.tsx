@@ -26,6 +26,7 @@ type EditAssignmentDialogProps = {
   currentAutoCheckOut?: boolean;
   hasTimeLogs: boolean;
   onUpdate?: () => void;
+  compact?: boolean;
 };
 
 export const EditAssignmentDialog = ({
@@ -37,6 +38,7 @@ export const EditAssignmentDialog = ({
   currentAutoCheckOut = false,
   hasTimeLogs,
   onUpdate,
+  compact = false,
 }: EditAssignmentDialogProps) => {
   const [open, setOpen] = useState(false);
   const [startTime, setStartTime] = useState(currentStartTime);
@@ -79,9 +81,9 @@ export const EditAssignmentDialog = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Edit className="h-3.5 w-3.5 mr-1" />
-          Edit Schedule
+        <Button variant="outline" size="sm" className={compact ? "h-8 text-xs" : ""}>
+          <Edit className={compact ? "h-3 w-3 mr-1" : "h-3.5 w-3.5 mr-1"} />
+          {compact ? "Schedule" : "Edit Schedule"}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md">

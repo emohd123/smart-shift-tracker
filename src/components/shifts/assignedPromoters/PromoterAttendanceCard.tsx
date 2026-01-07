@@ -5,14 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AttendanceStatusBadge } from "./AttendanceStatusBadge";
 import { TimeLog, calculatePromoterPayment, formatWorkDuration, formatBHD } from "../utils/paymentCalculations";
-import { Clock, Phone, User, X, LogIn, LogOut, Timer, Star, FileText, CheckCircle } from "lucide-react";
+import { Clock, Phone, User, X, LogIn, LogOut, Timer, Star, FileText, CheckCircle, Plus, Gift, Briefcase } from "lucide-react";
 import { format } from "date-fns";
 import { useUnassignPromoter } from "./hooks/useUnassignPromoter";
 import { useCompanyCheckIn } from "./hooks/useCompanyCheckIn";
 import { EditAssignmentDialog } from "./EditAssignmentDialog";
 import { EditTimeLogDialog } from "./EditTimeLogDialog";
 import { ManualCheckInDialog } from "./ManualCheckInDialog";
+import { ManualCheckOutDialog } from "./ManualCheckOutDialog";
 import { PromoterWorkHistory } from "./PromoterWorkHistory";
+import { AddExtraPaymentDialog } from "./AddExtraPaymentDialog";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -76,16 +78,10 @@ export const PromoterAttendanceCard = ({
 }: PromoterAttendanceCardProps) => {
   const { user } = useAuth();
   const { unassignPromoter, loading: unassigning } = useUnassignPromoter();
-  const { checkIn, checkOut, manualCheckIn, loading: checkInOutLoading } = useCompanyCheckIn(shiftId, payRate, payRateType);
+  const { checkIn, checkOut, manualCheckIn, manualCheckOut, loading: checkInOutLoading } = useCompanyCheckIn(shiftId, payRate, payRateType);
   const [elapsedTime, setElapsedTime] = useState(0);
   const [estimatedEarnings, setEstimatedEarnings] = useState(0);
   const [showHistory, setShowHistory] = useState(false);
-
-  const hasTimeLogs = timeLogs.length > 0;
-  const totalHours = timeLogs.reduce((sum, log) => sum + (log.total_hours || 0), 0);
-  const payment = calculatePromoterPayment(timeLogs, payRate, payRateType);
-  const latestLog = timeLogs.length > 0 ? timeLogs[timeLogs.length - 1] : null;
-  const isCheckedIn = latestLog && !latestLog.check_out_time;
 
   const isCompany = isCompanyLike(userRole);
   const [payStatus, setPayStatus] = useState<"scheduled" | "paid" | null>(promoter.payment_status ?? null);
@@ -102,6 +98,25 @@ export const PromoterAttendanceCard = ({
   const [contractHtml, setContractHtml] = useState<string | null>(null);
   const [showContractDialog, setShowContractDialog] = useState(false);
   const [contractLoading, setContractLoading] = useState(true);
+  
+  // Extra payments state
+  const [extraPayments, setExtraPayments] = useState<Array<{
+    id: string;
+    amount: number;
+    type: 'bonus' | 'overtime' | 'extra_task';
+    description: string | null;
+    created_at: string;
+  }>>([]);
+  const [showExtraPayments, setShowExtraPayments] = useState(false);
+
+  // Calculated values (after all state declarations)
+  const hasTimeLogs = timeLogs.length > 0;
+  const totalHours = timeLogs.reduce((sum, log) => sum + (log.total_hours || 0), 0);
+  const basePayment = calculatePromoterPayment(timeLogs, payRate, payRateType);
+  const totalExtraPayment = extraPayments.reduce((sum, ep) => sum + (ep.amount || 0), 0);
+  const payment = basePayment + totalExtraPayment;
+  const latestLog = timeLogs.length > 0 ? timeLogs[timeLogs.length - 1] : null;
+  const isCheckedIn = latestLog && !latestLog.check_out_time;
 
   const isShiftCompleted = shiftStatus === ShiftStatus.Completed;
   const canRate = isCompany && isShiftCompleted && existingRating === null;
@@ -264,6 +279,32 @@ export const PromoterAttendanceCard = ({
   useEffect(() => {
     setPayStatus(promoter.payment_status ?? null);
   }, [promoter.payment_status]);
+
+  // Fetch extra payments
+  const fetchExtraPayments = async () => {
+    if (!promoter.id) return;
+    
+    try {
+      const { data, error } = await (supabase as any)
+        .from('extra_payments')
+        .select('id, amount, type, description, created_at')
+        .eq('shift_assignment_id', promoter.id)
+        .order('created_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching extra payments:', error);
+        return;
+      }
+      
+      setExtraPayments(data || []);
+    } catch (err) {
+      console.error('Error fetching extra payments:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchExtraPayments();
+  }, [promoter.id]);
 
   const markPaymentScheduled = async () => {
     if (!isCompany) return;
@@ -446,9 +487,16 @@ export const PromoterAttendanceCard = ({
     }
   };
 
-  const handleCheckOut = async () => {
+  const handleCheckOut = async (customTime?: Date) => {
     if (!latestLog?.check_in_time) return;
-    const success = await checkOut(latestLog.id as any, promoter.full_name, latestLog.check_in_time);
+    
+    let success: boolean;
+    if (customTime) {
+      success = await manualCheckOut(latestLog.id as any, promoter.full_name, latestLog.check_in_time, customTime);
+    } else {
+      success = await checkOut(latestLog.id as any, promoter.full_name, latestLog.check_in_time);
+    }
+    
     if (success) {
       onUpdate?.();
     }
@@ -519,211 +567,345 @@ export const PromoterAttendanceCard = ({
 
   return (
     <Card className="hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary/10 text-primary">
-                {getInitials(promoter.full_name)}
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h4 className="font-semibold text-sm">{promoter.full_name}</h4>
-              <p className="text-xs text-muted-foreground">Code: {promoter.unique_code}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <AttendanceStatusBadge timeLogs={timeLogs} />
-            {contractStatus === 'accepted' && (
-              <Badge variant="default" className="bg-green-500/10 text-green-600 border-green-500/20">
-                <CheckCircle className="h-3 w-3 mr-1" />
-                Contract Approved
-              </Badge>
-            )}
-            {contractStatus === 'pending' && (
-              <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
-                Contract Pending
-              </Badge>
-            )}
-            {(payStatus === "scheduled" || payStatus === "paid") && (
-              <Badge variant={payStatus === "paid" ? "default" : "outline"}>
-                {payStatus === "paid" ? "Paid" : "Payment Scheduled"}
-              </Badge>
-            )}
-            {isCompany && (
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    disabled={unassigning}
-                    title={hasTimeLogs ? "Cannot unassign promoter with attendance records" : "Unassign promoter"}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle>Unassign Promoter</AlertDialogTitle>
-                    <AlertDialogDescription>
-                      {hasTimeLogs ? (
-                        <>
-                          Cannot unassign <strong>{promoter.full_name}</strong> because they have attendance records for this shift.
-                        </>
-                      ) : (
-                        <>
-                          Are you sure you want to unassign <strong>{promoter.full_name}</strong> from this shift?
-                        </>
+      <CardContent className="p-3 space-y-3">
+        {/* Header Section - Avatar, Name, Code, Phone + Status Badges + Remove */}
+        <div className="flex items-start gap-3">
+          <Avatar className="h-10 w-10 flex-shrink-0">
+            <AvatarFallback className="bg-primary/10 text-primary text-sm">
+              {getInitials(promoter.full_name)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <h4 className="font-semibold text-sm truncate">{promoter.full_name}</h4>
+                <p className="text-xs text-muted-foreground">Code: {promoter.unique_code}</p>
+                {promoter.phone_number && (
+                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                    <Phone className="h-3 w-3" />
+                    {promoter.phone_number}
+                  </p>
+                )}
+              </div>
+              {isCompany && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 flex-shrink-0"
+                      disabled={unassigning}
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Unassign Promoter</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {hasTimeLogs ? (
+                          <>Cannot unassign <strong>{promoter.full_name}</strong> because they have attendance records.</>
+                        ) : (
+                          <>Are you sure you want to unassign <strong>{promoter.full_name}</strong>?</>
+                        )}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      {!hasTimeLogs && (
+                        <AlertDialogAction onClick={handleUnassign} disabled={unassigning}>
+                          {unassigning ? "Unassigning..." : "Unassign"}
+                        </AlertDialogAction>
                       )}
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    {!hasTimeLogs && (
-                      <AlertDialogAction onClick={handleUnassign} disabled={unassigning}>
-                        {unassigning ? "Unassigning..." : "Unassign"}
-                      </AlertDialogAction>
-                    )}
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            )}
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+            </div>
+            {/* Status Badges Row */}
+            <div className="flex flex-wrap gap-1 mt-1.5">
+              <AttendanceStatusBadge timeLogs={timeLogs} />
+              {contractStatus === 'accepted' && (
+                <Badge variant="default" className="bg-green-500/10 text-green-600 border-green-500/20 text-[10px] px-1.5 py-0">
+                  <CheckCircle className="h-2.5 w-2.5 mr-0.5" />
+                  Contract
+                </Badge>
+              )}
+              {contractStatus === 'pending' && (
+                <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[10px] px-1.5 py-0">
+                  Pending
+                </Badge>
+              )}
+              {payStatus === "paid" && (
+                <Badge variant="default" className="text-[10px] px-1.5 py-0">Paid</Badge>
+              )}
+              {payStatus === "scheduled" && (
+                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Scheduled</Badge>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Scheduled Time */}
+        {/* Schedule Section */}
         {promoter.scheduled_start_time && promoter.scheduled_end_time && (
-          <div className="p-2 bg-accent/30 rounded-md text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Scheduled:</span>
-              <span className="font-medium">
-                {promoter.scheduled_start_time} - {promoter.scheduled_end_time}
-              </span>
+          <div className="flex items-center justify-between p-2 bg-accent/30 rounded-md text-xs">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3 w-3 text-muted-foreground" />
+              <span className="font-medium">{promoter.scheduled_start_time} - {promoter.scheduled_end_time}</span>
             </div>
-            {(promoter.auto_checkin_enabled || promoter.auto_checkout_enabled) && (
-              <div className="flex gap-2 mt-1 text-[10px] text-muted-foreground">
-                {promoter.auto_checkin_enabled && <span>• Auto check-in</span>}
-                {promoter.auto_checkout_enabled && <span>• Auto check-out</span>}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Active Check-in Status */}
-        {isCheckedIn && isCompany && (
-          <div className="p-3 bg-green-500/10 border border-green-500/20 rounded-md space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-green-600 font-medium flex items-center gap-1">
-                <Timer className="h-3.5 w-3.5" />
-                Currently Working
-              </span>
-            </div>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <span className="text-muted-foreground">Elapsed:</span>
-                <p className="font-medium">{formatElapsedTime(elapsedTime)}</p>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Est. Earnings:</span>
-                <p className="font-medium text-green-600">{formatBHD(estimatedEarnings)}</p>
-              </div>
+            <div className="flex gap-1">
+              {promoter.auto_checkin_enabled && (
+                <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">Auto In</Badge>
+              )}
+              {promoter.auto_checkout_enabled && (
+                <Badge variant="secondary" className="text-[9px] px-1 py-0 h-4">Auto Out</Badge>
+              )}
             </div>
           </div>
         )}
 
-        {/* Check-in/out Controls */}
+        {/* Active Working Status */}
+        {isCheckedIn && (
+          <div className="flex items-center justify-between p-2 bg-green-500/10 border border-green-500/20 rounded-md text-xs">
+            <span className="text-green-600 font-medium flex items-center gap-1">
+              <Timer className="h-3 w-3" />
+              Working: {formatElapsedTime(elapsedTime)}
+            </span>
+            <span className="text-green-600 font-medium">{formatBHD(estimatedEarnings)}</span>
+          </div>
+        )}
+
+        {/* Action Buttons Grid - 2x3 */}
         {isCompany && (
-          <div className="space-y-2">
-            <div className="flex gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+              disabled={payUpdating || payStatus === "scheduled" || payStatus === "paid"}
+              onClick={markPaymentScheduled}
+            >
+              {payStatus === "scheduled" || payStatus === "paid" ? "Scheduled" : "Schedule Payment"}
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              disabled={payUpdating || payStatus === "paid"}
+              onClick={markPaymentPaid}
+            >
+              {payStatus === "paid" ? "Paid" : "Mark Paid"}
+            </Button>
+            
+            {contractStatus === 'accepted' && contractHtml ? (
               <Button
                 size="sm"
                 variant="outline"
-                className="flex-1"
-                disabled={payUpdating || payStatus === "scheduled" || payStatus === "paid"}
-                onClick={markPaymentScheduled}
-              >
-                {payStatus === "scheduled" || payStatus === "paid" ? "Scheduled" : "Schedule Payment"}
-              </Button>
-              <Button
-                size="sm"
-                className="flex-1"
-                disabled={payUpdating || payStatus === "paid"}
-                onClick={markPaymentPaid}
-              >
-                {payStatus === "paid" ? "Paid" : "Mark Paid"}
-              </Button>
-            </div>
-            {/* View Contract Button */}
-            {contractStatus === 'accepted' && contractHtml && (
-              <Button
-                size="sm"
-                variant="outline"
-                className="w-full"
+                className="h-8 text-xs"
                 onClick={() => setShowContractDialog(true)}
               >
-                <FileText className="h-3.5 w-3.5 mr-1" />
-                View Signed Contract
+                <FileText className="h-3 w-3 mr-1" />
+                Contract
               </Button>
+            ) : (
+              <div /> /* Empty placeholder for grid alignment */
             )}
+            <EditAssignmentDialog
+              assignmentId={promoter.id}
+              promoterName={promoter.full_name}
+              currentStartTime={promoter.scheduled_start_time}
+              currentEndTime={promoter.scheduled_end_time}
+              currentAutoCheckIn={promoter.auto_checkin_enabled}
+              currentAutoCheckOut={promoter.auto_checkout_enabled}
+              hasTimeLogs={hasTimeLogs}
+              onUpdate={onUpdate}
+              compact
+            />
             
-            <div className="flex gap-2">
-              {isCheckedIn && (
-                <Button
-                  onClick={handleCheckOut}
-                  disabled={checkInOutLoading}
-                  size="sm"
-                  variant="destructive"
-                  className="flex-1"
-                >
-                  <LogOut className="h-3.5 w-3.5 mr-1" />
-                  Check Out
-                </Button>
-              )}
-              <EditAssignmentDialog
-                assignmentId={promoter.id}
-                promoterName={promoter.full_name}
-                currentStartTime={promoter.scheduled_start_time}
-                currentEndTime={promoter.scheduled_end_time}
-                currentAutoCheckIn={promoter.auto_checkin_enabled}
-                currentAutoCheckOut={promoter.auto_checkout_enabled}
-                hasTimeLogs={hasTimeLogs}
-                onUpdate={onUpdate}
+            {isCheckedIn ? (
+              <ManualCheckOutDialog
+                onCheckOut={handleCheckOut}
+                loading={checkInOutLoading}
+                checkInTime={latestLog?.check_in_time || new Date().toISOString()}
+                compact
               />
+            ) : (
+              <ManualCheckInDialog
+                onCheckIn={handleManualCheckIn}
+                loading={checkInOutLoading}
+                compact
+              />
+            )}
+            <PromoterWorkHistory
+              promoterId={promoter.promoter_id}
+              promoterName={promoter.full_name}
+              compact
+            />
+            <AddExtraPaymentDialog
+              shiftAssignmentId={promoter.id}
+              promoterId={promoter.promoter_id}
+              promoterName={promoter.full_name}
+              shiftId={shiftId}
+              onSuccess={() => {
+                fetchExtraPayments();
+                onUpdate?.();
+              }}
+              compact
+            />
+          </div>
+        )}
+
+        {/* Stats Row */}
+        {(totalHours > 0 || (isCompany && payment > 0)) && (
+          <div className="flex items-center justify-between p-2 bg-muted/50 rounded-md text-xs">
+            <div className="flex items-center gap-3">
+              {totalHours > 0 && (
+                <span className="flex items-center gap-1">
+                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <span className="font-medium">{formatWorkDuration(totalHours)}</span>
+                </span>
+              )}
+              {latestLog?.check_in_time && (
+                <span className="text-muted-foreground">
+                  In: {format(new Date(latestLog.check_in_time), "HH:mm")}
+                </span>
+              )}
+              {latestLog?.check_out_time && (
+                <span className="text-muted-foreground">
+                  Out: {format(new Date(latestLog.check_out_time), "HH:mm")}
+                </span>
+              )}
             </div>
-            
-            {!isCheckedIn && (
-              <div className="flex gap-2">
-                <ManualCheckInDialog
-                  onCheckIn={handleManualCheckIn}
-                  loading={checkInOutLoading}
-                />
-                <PromoterWorkHistory
-                  promoterId={promoter.promoter_id}
-                  promoterName={promoter.full_name}
-                />
+            {isCompany && payment > 0 && (
+              <div className="text-right">
+                <span className="font-medium text-green-600">{formatBHD(payment)}</span>
+                {totalExtraPayment > 0 && (
+                  <span className="text-[10px] text-muted-foreground block">
+                    +{formatBHD(totalExtraPayment)} extra
+                  </span>
+                )}
               </div>
             )}
+          </div>
+        )}
+        
+        {/* Extra Payments Section - Collapsible */}
+        {isCompany && extraPayments.length > 0 && (
+          <div className="pt-2 border-t">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowExtraPayments(!showExtraPayments)}
+              className="w-full h-7 text-xs justify-between px-2"
+            >
+              <span className="flex items-center gap-1">
+                <Gift className="h-3 w-3" />
+                Extra Payments ({extraPayments.length})
+              </span>
+              <span className="text-green-600 font-medium">{formatBHD(totalExtraPayment)}</span>
+            </Button>
 
-            {/* Rating Section */}
-            {isShiftCompleted && (
-              <div className="pt-2 border-t">
-                {existingRating !== null ? (
-                  <div className="flex items-center justify-between p-2 bg-yellow-50 rounded-md">
-                    <span className="text-sm text-muted-foreground">Your rating:</span>
-                    <RatingDisplay rating={existingRating} size="sm" showValue />
+            {showExtraPayments && (
+              <div className="mt-2 space-y-1.5">
+                {extraPayments.map((ep) => (
+                  <div key={ep.id} className="flex items-center justify-between p-1.5 bg-accent/50 rounded text-[10px]">
+                    <div className="flex items-center gap-2">
+                      {ep.type === 'bonus' && <Gift className="h-3 w-3 text-amber-500" />}
+                      {ep.type === 'overtime' && <Clock className="h-3 w-3 text-blue-500" />}
+                      {ep.type === 'extra_task' && <Briefcase className="h-3 w-3 text-purple-500" />}
+                      <span className="capitalize">{ep.type.replace('_', ' ')}</span>
+                      {ep.description && (
+                        <span className="text-muted-foreground truncate max-w-[100px]" title={ep.description}>
+                          - {ep.description}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-green-600 font-medium">{formatBHD(ep.amount)}</span>
                   </div>
-                ) : canRate && !ratingLoading ? (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="w-full"
-                    onClick={() => setRatingModalOpen(true)}
-                  >
-                    <Star className="h-3.5 w-3.5 mr-1" />
-                    Rate Promoter
-                  </Button>
-                ) : null}
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Rating Section */}
+        {isCompany && isShiftCompleted && (
+          <div className="pt-2 border-t">
+            {existingRating !== null ? (
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground">Rating:</span>
+                <RatingDisplay rating={existingRating} size="sm" showValue />
+              </div>
+            ) : canRate && !ratingLoading ? (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full h-7 text-xs"
+                onClick={() => setRatingModalOpen(true)}
+              >
+                <Star className="h-3 w-3 mr-1" />
+                Rate Promoter
+              </Button>
+            ) : null}
+          </div>
+        )}
+
+        {/* Work Sessions - Collapsible */}
+        {timeLogs.length > 0 && (
+          <div className="pt-2 border-t">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowHistory(!showHistory)}
+              className="w-full h-7 text-xs justify-between px-2"
+            >
+              <span className="flex items-center gap-1">
+                <Timer className="h-3 w-3" />
+                Work Sessions ({timeLogs.length})
+              </span>
+              <span className="text-muted-foreground">{showHistory ? '▲' : '▼'}</span>
+            </Button>
+
+            {showHistory && (
+              <div className="mt-2 space-y-1.5">
+                {timeLogs.map((log, index) => (
+                  <div key={log.id} className="flex items-center justify-between p-1.5 bg-accent/50 rounded text-[10px]">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">#{index + 1}</span>
+                      <span>{format(new Date(log.check_in_time), "MMM dd HH:mm")}</span>
+                      <span className="text-muted-foreground">→</span>
+                      <span>
+                        {log.check_out_time 
+                          ? format(new Date(log.check_out_time), "HH:mm")
+                          : <span className="text-green-500">Active</span>
+                        }
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {log.total_hours && <span>{formatWorkDuration(log.total_hours)}</span>}
+                      {isCompany && log.earnings && (
+                        <span className="text-green-600">{formatBHD(log.earnings)}</span>
+                      )}
+                      {isCompany && log.check_out_time && (
+                        <EditTimeLogDialog
+                          timeLogId={log.id as any}
+                          checkInTime={log.check_in_time}
+                          checkOutTime={log.check_out_time}
+                          payRate={payRate}
+                          payRateType={payRateType}
+                          onUpdate={() => onUpdate?.()}
+                        />
+                      )}
+                    </div>
+                  </div>
+                ))}
+                
+                {/* Session Totals */}
+                <div className="flex justify-between pt-1.5 border-t text-[10px] text-muted-foreground">
+                  <span>Total: {timeLogs.length} sessions, {formatWorkDuration(totalHours)}</span>
+                  {isCompany && payment > 0 && (
+                    <span className="text-green-600 font-medium">{formatBHD(payment)}</span>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -738,8 +920,7 @@ export const PromoterAttendanceCard = ({
           promoterId={promoter.promoter_id}
           promoterName={promoter.full_name}
           onSuccess={() => {
-            setExistingRating(5); // Temporarily set to trigger UI update
-            // Refetch the actual rating
+            setExistingRating(5);
             supabase
               .from("shift_ratings")
               .select("rating")
@@ -752,162 +933,16 @@ export const PromoterAttendanceCard = ({
           }}
         />
 
-        <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t">
-          {latestLog?.check_in_time && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              <div>
-                <p className="text-xs">Check In</p>
-                <p className="font-medium text-foreground">
-                  {format(new Date(latestLog.check_in_time), "MMM dd, HH:mm")}
-                </p>
-                {latestLog.check_out_time && 
-                 format(new Date(latestLog.check_in_time), "yyyy-MM-dd") !== 
-                 format(new Date(latestLog.check_out_time), "yyyy-MM-dd") && (
-                  <p className="text-[10px] text-orange-500 font-medium mt-0.5">Multi-day shift</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {latestLog?.check_out_time && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Clock className="h-3.5 w-3.5" />
-              <div>
-                <p className="text-xs">Check Out</p>
-                <p className="font-medium text-foreground">
-                  {format(new Date(latestLog.check_out_time), "MMM dd, HH:mm")}
-                </p>
-              </div>
-            </div>
-          )}
-
-          {totalHours > 0 && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <User className="h-3.5 w-3.5" />
-              <div>
-                <p className="text-xs">Hours</p>
-                <p className="font-medium text-foreground">{formatWorkDuration(totalHours)}</p>
-              </div>
-            </div>
-          )}
-
-          {isCompany && payment > 0 && (
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <div className="h-3.5 w-3.5 text-green-600">BHD</div>
-              <div>
-                <p className="text-xs">Payment</p>
-                <p className="font-medium text-green-600">{formatBHD(payment)}</p>
-              </div>
-            </div>
-          )}
-
-          {promoter.phone_number && (
-            <div className="flex items-center gap-2 text-muted-foreground col-span-2">
-              <Phone className="h-3.5 w-3.5" />
-              <p className="text-xs">{promoter.phone_number}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Work Session History */}
-        {timeLogs.length > 0 && (
-          <div className="mt-3 pt-3 border-t">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setShowHistory(!showHistory)}
-              className="w-full h-8 text-xs"
-            >
-              <Timer className="h-3.5 w-3.5 mr-1" />
-              {showHistory ? 'Hide' : 'Show'} Work Sessions ({timeLogs.length} session{timeLogs.length > 1 ? 's' : ''})
-            </Button>
-
-            {showHistory && (
-              <div className="mt-2 space-y-2">
-                {timeLogs.map((log, index) => {
-                  const isMultiDay = log.check_out_time && 
-                    format(new Date(log.check_in_time), "yyyy-MM-dd") !== 
-                    format(new Date(log.check_out_time), "yyyy-MM-dd");
-                  
-                  return (
-                    <div key={log.id} className="p-2 bg-accent/50 rounded-md border text-xs space-y-1">
-                      <div className="flex justify-between items-center font-medium">
-                        <span className="text-muted-foreground">Session {index + 1}</span>
-                        <div className="flex items-center gap-1">
-                          {log.total_hours && (
-                            <span className="text-foreground">{formatWorkDuration(log.total_hours)}</span>
-                          )}
-                          {isCompany && log.check_out_time && (
-                            <EditTimeLogDialog
-                              timeLogId={log.id as any}
-                              checkInTime={log.check_in_time}
-                              checkOutTime={log.check_out_time}
-                              payRate={payRate}
-                              payRateType={payRateType}
-                              onUpdate={() => onUpdate?.()}
-                            />
-                          )}
-                        </div>
-                      </div>
-                    
-                    <div className="flex justify-between items-center text-muted-foreground">
-                      <span>{format(new Date(log.check_in_time), "MMM dd, HH:mm")}</span>
-                      <span className="text-xs">→</span>
-                      <span>
-                        {log.check_out_time 
-                          ? format(new Date(log.check_out_time), "MMM dd, HH:mm")
-                          : <span className="text-green-500 font-medium">Active</span>
-                        }
-                      </span>
-                    </div>
-
-                    {isMultiDay && (
-                      <p className="text-[10px] text-orange-500 font-medium">Multi-day session</p>
-                    )}
-
-                    {isCompany && log.earnings && (
-                      <div className="text-green-600 font-medium pt-1">
-                        {formatBHD(log.earnings)}
-                      </div>
-                    )}
-                    </div>
-                  );
-                })}
-                
-                <div className="pt-2 border-t text-xs text-muted-foreground">
-                  <div className="flex justify-between">
-                    <span>Total Sessions:</span>
-                    <span className="font-medium text-foreground">{timeLogs.length}</span>
-                  </div>
-                  {totalHours > 0 && (
-                    <div className="flex justify-between mt-1">
-                      <span>Total Hours:</span>
-                      <span className="font-medium text-foreground">{formatWorkDuration(totalHours)}</span>
-                    </div>
-                  )}
-                  {isCompany && payment > 0 && (
-                    <div className="flex justify-between mt-1">
-                      <span>Total Payment:</span>
-                      <span className="font-medium text-green-600">{formatBHD(payment)}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* Signed Contract Dialog */}
         <Dialog open={showContractDialog} onOpenChange={setShowContractDialog}>
           <DialogContent className="max-w-4xl max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Signed Contract - {promoter.full_name}</DialogTitle>
               <DialogDescription>
-                View the contract signed by {promoter.full_name} ({promoter.unique_code})
+                Contract signed by {promoter.full_name} ({promoter.unique_code})
               </DialogDescription>
             </DialogHeader>
-            <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+            <div className="border rounded-lg overflow-hidden bg-white">
               <div className="overflow-auto max-h-[70vh]">
                 {contractHtml ? (
                   <iframe
@@ -918,7 +953,7 @@ export const PromoterAttendanceCard = ({
                   />
                 ) : (
                   <div className="p-8 text-center text-muted-foreground">
-                    {contractLoading ? 'Loading contract...' : 'Contract not available'}
+                    {contractLoading ? 'Loading...' : 'Contract not available'}
                   </div>
                 )}
               </div>

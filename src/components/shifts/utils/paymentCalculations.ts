@@ -19,8 +19,9 @@ export const calculateWorkDuration = (checkInTime: string, checkOutTime: string 
 };
 
 export const formatWorkDuration = (hours: number): string => {
-  const h = Math.floor(hours);
-  const m = Math.floor((hours - h) * 60);
+  const safeHours = typeof hours === 'number' && !isNaN(hours) ? hours : 0;
+  const h = Math.floor(safeHours);
+  const m = Math.floor((safeHours - h) * 60);
   return `${h}h ${m}m`;
 };
 
@@ -60,7 +61,8 @@ export const calculateTotalShiftPayment = (
 };
 
 export const formatBHD = (amount: number): string => {
-  return `BHD ${amount.toFixed(3)}`;
+  const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  return `BHD ${safeAmount.toFixed(3)}`;
 };
 
 export const calculateLiveEarnings = (
@@ -68,30 +70,35 @@ export const calculateLiveEarnings = (
   payRate: number,
   payRateType: string
 ): { elapsedHours: number; currentEarnings: number } => {
+  if (!checkInTime) {
+    return { elapsedHours: 0, currentEarnings: 0 };
+  }
+  
+  const safePayRate = typeof payRate === 'number' && !isNaN(payRate) ? payRate : 0;
   const checkIn = new Date(checkInTime);
   const now = new Date();
   const elapsedMs = now.getTime() - checkIn.getTime();
-  const elapsedHours = elapsedMs / (1000 * 60 * 60);
+  const elapsedHours = Math.max(0, elapsedMs / (1000 * 60 * 60));
 
   let earnings = 0;
 
   switch (payRateType) {
     case 'hourly':
-      earnings = elapsedHours * payRate;
+      earnings = elapsedHours * safePayRate;
       break;
     case 'daily':
       // Assuming 8-hour day
-      earnings = (elapsedHours / 8) * payRate;
+      earnings = (elapsedHours / 8) * safePayRate;
       break;
     case 'monthly':
       // Assuming 160-hour month
-      earnings = (elapsedHours / 160) * payRate;
+      earnings = (elapsedHours / 160) * safePayRate;
       break;
     case 'fixed':
-      earnings = payRate;
+      earnings = safePayRate;
       break;
     default:
-      earnings = elapsedHours * payRate;
+      earnings = elapsedHours * safePayRate;
   }
 
   return { elapsedHours, currentEarnings: Math.max(0, earnings) };

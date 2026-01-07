@@ -144,13 +144,13 @@ export default function PromoterCertificatesPage() {
       
       setProfile(userProfile);
 
-      // Fetch approved shift assignments
+      // Fetch approved shift assignments (work must be approved before certificate generation)
       const { data: assignments, error: assignmentsError } = await supabase
         .from('shift_assignments')
-        .select('id, shift_id, promoter_id, certificate_approved, approved_at')
+        .select('id, shift_id, promoter_id, work_approved, work_approved_at, certificate_approved, approved_at')
         .eq('promoter_id', user.id)
-        .eq('certificate_approved', true)
-        .order('approved_at', { ascending: false });
+        .eq('work_approved', true) // Work must be approved first
+        .order('work_approved_at', { ascending: false });
 
       if (assignmentsError) throw assignmentsError;
       if (!assignments || assignments.length === 0) {
@@ -241,7 +241,7 @@ export default function PromoterCertificatesPage() {
           timeTo: shift.end_time,
           totalHours,
           location: shift.location,
-          approvedAt: assignment.approved_at
+          approvedAt: assignment.work_approved_at || assignment.approved_at
         });
 
         entry.totalHours += totalHours;
@@ -404,9 +404,11 @@ export default function PromoterCertificatesPage() {
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <AlertCircle className="h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-semibold mb-2">No Approved Work Yet</h3>
-                <p className="text-sm text-muted-foreground max-w-md">
-                  Your completed shifts need to be approved by companies before you can generate certificates.
-                  Check back soon!
+                <p className="text-sm text-muted-foreground max-w-md mb-2">
+                  Your completed shifts need to be approved by the company before you can generate certificates.
+                </p>
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Once a company approves your work for a completed shift, it will appear here. Check back soon or contact the company if your shift has been completed.
                 </p>
               </CardContent>
             </Card>

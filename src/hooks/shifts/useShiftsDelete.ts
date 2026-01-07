@@ -4,6 +4,7 @@ import { Shift } from "@/components/shifts/types/ShiftTypes";
 import { toast } from "sonner";
 import { clearShiftsFromLocalStorage } from "./utils/shiftDataUtils";
 import { deleteShiftDataFromDatabase, deleteAllShiftsFromDatabase } from "./utils/delete";
+import { canDeleteShift } from "./utils/delete/deletePermissionUtils";
 
 interface UseShiftsDeleteProps {
   setShifts: React.Dispatch<React.SetStateAction<Shift[]>>;
@@ -22,9 +23,20 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
     setIsDeleting(true);
     
     try {
-      if (userRole !== 'admin') {
+      // Allow admin and company users to delete shifts
+      if (userRole !== 'admin' && userRole !== 'company') {
         toast.error("Permission Denied", {
-          description: "Only admin users can delete shifts"
+          description: "Only admin or company users can delete shifts"
+        });
+        return;
+      }
+      
+      // Check if shift can be deleted (no completed work history)
+      const deleteCheck = await canDeleteShift(id);
+      
+      if (!deleteCheck.canDelete) {
+        toast.error("Cannot Delete Shift", {
+          description: deleteCheck.reason || "This shift cannot be deleted"
         });
         return;
       }
@@ -71,6 +83,7 @@ export const useShiftsDelete = ({ setShifts, setError, userRole, refreshShifts }
     setIsDeleting(true);
     
     try {
+      // Only admin can delete all shifts (bulk delete is more dangerous)
       if (userRole !== 'admin') {
         toast.error("Permission Denied", {
           description: "Only admin users can delete all shifts"

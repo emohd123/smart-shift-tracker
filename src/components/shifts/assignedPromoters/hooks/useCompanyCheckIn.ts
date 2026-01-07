@@ -132,5 +132,42 @@ export const useCompanyCheckIn = (shiftId: string, payRate: number, payRateType:
     }
   };
 
-  return { checkIn, checkOut, manualCheckIn, loading };
+  const manualCheckOut = async (timeLogId: string, promoterName: string, checkInTime: string, customTime?: Date) => {
+    setLoading(true);
+    try {
+      const checkOutTime = customTime || new Date();
+      const checkIn = new Date(checkInTime);
+      
+      // Validate check-out is after check-in
+      if (checkOutTime <= checkIn) {
+        toast.error("Check-out time must be after check-in time");
+        return false;
+      }
+      
+      const hours = (checkOutTime.getTime() - checkIn.getTime()) / (1000 * 60 * 60);
+      const earnings = calculateEarnings(hours);
+
+      const { error } = await supabase
+        .from("time_logs")
+        .update({
+          check_out_time: checkOutTime.toISOString(),
+          total_hours: hours,
+          earnings: earnings,
+        })
+        .eq("id", timeLogId);
+
+      if (error) throw error;
+
+      toast.success(`${promoterName} checked out at ${checkOutTime.toLocaleTimeString()}: ${hours.toFixed(2)}h worked, BHD ${earnings.toFixed(3)} earned`);
+      return true;
+    } catch (error: any) {
+      console.error("Error checking out:", error);
+      toast.error("Failed to check out promoter");
+      return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { checkIn, checkOut, manualCheckIn, manualCheckOut, loading };
 };

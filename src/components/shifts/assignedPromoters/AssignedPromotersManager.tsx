@@ -2,6 +2,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAssignedPromoters } from "./hooks/useAssignedPromoters";
 import { usePromoterTimeLogs } from "./hooks/usePromoterTimeLogs";
+import { useExtraPayments } from "./hooks/useExtraPayments";
 import { PromoterAttendanceCard } from "./PromoterAttendanceCard";
 import { PaymentSummary } from "./PaymentSummary";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -30,10 +31,18 @@ export const AssignedPromotersManager = ({
   shiftEndTime,
   shiftStatus,
 }: AssignedPromotersManagerProps) => {
-  const { promoters, loading: promotersLoading } = useAssignedPromoters(shiftId);
-  const { timeLogs, loading: timeLogsLoading } = usePromoterTimeLogs(shiftId);
+  const { promoters, loading: promotersLoading, refetch: refetchPromoters } = useAssignedPromoters(shiftId);
+  const { timeLogs, loading: timeLogsLoading, refetch: refetchTimeLogs } = usePromoterTimeLogs(shiftId);
+  const { totalExtraPayments, loading: extraPaymentsLoading, refetch: refetchExtraPayments } = useExtraPayments(shiftId);
+  
+  // Combined refetch function for when data changes
+  const handleUpdate = () => {
+    refetchPromoters();
+    refetchTimeLogs();
+    refetchExtraPayments();
+  };
 
-  const loading = promotersLoading || timeLogsLoading;
+  const loading = promotersLoading || timeLogsLoading || extraPaymentsLoading;
 
   const totalCheckedIn = promoters.filter((p) => {
     const logs = timeLogs[p.promoter_id] || [];
@@ -45,7 +54,8 @@ export const AssignedPromotersManager = ({
     return sum + logs.reduce((logSum, log) => logSum + (log.total_hours || 0), 0);
   }, 0);
 
-  const totalPayment = calculateTotalShiftPayment(timeLogs, payRate, payRateType);
+  const basePayment = calculateTotalShiftPayment(timeLogs, payRate, payRateType);
+  const totalPayment = basePayment + totalExtraPayments;
 
   if (loading) {
     return (
@@ -102,7 +112,7 @@ export const AssignedPromotersManager = ({
                 shiftId={shiftId}
                 shiftStartTime={shiftStartTime}
                 shiftEndTime={shiftEndTime}
-                onSuccess={() => window.location.reload()}
+                onSuccess={handleUpdate}
               />
             )}
           </div>
@@ -135,7 +145,7 @@ export const AssignedPromotersManager = ({
               buttonText="Add More"
               shiftStartTime={shiftStartTime}
               shiftEndTime={shiftEndTime}
-              onSuccess={() => window.location.reload()}
+              onSuccess={handleUpdate}
             />
           )}
         </div>
@@ -160,6 +170,7 @@ export const AssignedPromotersManager = ({
               shiftId={shiftId}
               userRole={userRole}
               shiftStatus={shiftStatus}
+              onUpdate={handleUpdate}
             />
           ))}
         </div>

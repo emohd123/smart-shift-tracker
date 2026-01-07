@@ -13,9 +13,10 @@ import { Label } from "@/components/ui/label";
 type PromoterWorkHistoryProps = {
   promoterId: string;
   promoterName: string;
+  compact?: boolean;
 };
 
-export const PromoterWorkHistory = ({ promoterId, promoterName }: PromoterWorkHistoryProps) => {
+export const PromoterWorkHistory = ({ promoterId, promoterName, compact = false }: PromoterWorkHistoryProps) => {
   const [open, setOpen] = useState(false);
   const [dateFrom, setDateFrom] = useState<string>("");
   const [dateTo, setDateTo] = useState<string>("");
@@ -25,9 +26,9 @@ export const PromoterWorkHistory = ({ promoterId, promoterName }: PromoterWorkHi
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="w-full">
-          <BarChart3 className="h-3.5 w-3.5 mr-1" />
-          View Full History
+        <Button variant="outline" size="sm" className={compact ? "h-8 text-xs" : "w-full"}>
+          <BarChart3 className={compact ? "h-3 w-3 mr-1" : "h-3.5 w-3.5 mr-1"} />
+          {compact ? "History" : "View Full History"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl max-h-[90vh]">

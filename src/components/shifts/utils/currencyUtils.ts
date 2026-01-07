@@ -34,7 +34,8 @@ export const getCurrency = (nationality?: string | null) => {
  */
 export const formatCurrency = (amount: number, nationality?: string | null) => {
   const currency = getCurrency(nationality);
-  return `${currency.symbol} ${amount.toFixed(currency.decimals)}`;
+  const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  return `${currency.symbol} ${safeAmount.toFixed(currency.decimals)}`;
 };
 
 /**
@@ -43,5 +44,6 @@ export const formatCurrency = (amount: number, nationality?: string | null) => {
  * @returns Formatted string in BHD currency format
  */
 export const formatBHD = (amount: number) => {
-  return `BHD ${amount.toFixed(3)}`;
+  const safeAmount = typeof amount === 'number' && !isNaN(amount) ? amount : 0;
+  return `BHD ${safeAmount.toFixed(3)}`;
 };

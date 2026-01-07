@@ -9,9 +9,10 @@ import { format } from "date-fns";
 type ManualCheckInDialogProps = {
   onCheckIn: (customTime?: Date) => void;
   loading: boolean;
+  compact?: boolean;
 };
 
-export const ManualCheckInDialog = ({ onCheckIn, loading }: ManualCheckInDialogProps) => {
+export const ManualCheckInDialog = ({ onCheckIn, loading, compact = false }: ManualCheckInDialogProps) => {
   const [open, setOpen] = useState(false);
   const [useCustomTime, setUseCustomTime] = useState(false);
   const [checkInDate, setCheckInDate] = useState(format(new Date(), "yyyy-MM-dd"));
@@ -31,9 +32,9 @@ export const ManualCheckInDialog = ({ onCheckIn, loading }: ManualCheckInDialogP
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex-1">
-          <Clock className="h-3.5 w-3.5 mr-1" />
-          Manual Check-In
+        <Button variant="outline" size="sm" className={compact ? "h-8 text-xs" : "flex-1"}>
+          <Clock className={compact ? "h-3 w-3 mr-1" : "h-3.5 w-3.5 mr-1"} />
+          {compact ? "Check In" : "Manual Check-In"}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">

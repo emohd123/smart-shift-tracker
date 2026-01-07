@@ -1,7 +1,8 @@
 
 export { deleteShiftDataFromDatabase } from './singleDeleteUtils';
 export { deleteAllShiftsFromDatabase } from './bulkDeleteUtils';
-export { validateDeletePermission } from './deletePermissionUtils';
+export { validateDeletePermission, canDeleteShift } from './deletePermissionUtils';
+export type { ShiftDeleteCheckResult } from './deletePermissionUtils';
 
 // Re-export all utility functions for easier access
 import * as SingleDeleteUtils from './singleDeleteUtils';
