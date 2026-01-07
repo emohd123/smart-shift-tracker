@@ -14,6 +14,7 @@ export interface ContractTemplateInput {
   customTerms?: string;
   promoterName?: string;
   promoterId?: string;
+  promoterUniqueCode?: string;
   companyName?: string;
   companyId?: string;
 }
@@ -35,6 +36,7 @@ export function generateContractTemplate(input: ContractTemplateInput): string {
     customTerms,
     promoterName,
     promoterId,
+    promoterUniqueCode,
     companyName,
     companyId
   } = input;
@@ -249,11 +251,11 @@ export function generateContractTemplate(input: ContractTemplateInput): string {
                         </div>
                         <div style="padding: 5px 0; color: #333; font-weight: 500; margin-bottom: 10px;">${promoterName}</div>
                         ` : '<div style="color: #999; font-size: 14px;">To be filled in during assignment</div>'}
-                        ${promoterId ? `
+                        ${promoterUniqueCode ? `
                         <div class="detail-row" style="border-bottom: none; margin-top: 10px;">
-                            <span class="detail-label" style="min-width: auto;">ID Code</span>
+                            <span class="detail-label" style="min-width: auto;">Unique Promoter Code</span>
                         </div>
-                        <div style="padding: 5px 0; color: #333; font-weight: 500;">${promoterId}</div>
+                        <div style="padding: 5px 0; color: #333; font-weight: 500;">${promoterUniqueCode}</div>
                         ` : ''}
                     </div>
                 </div>

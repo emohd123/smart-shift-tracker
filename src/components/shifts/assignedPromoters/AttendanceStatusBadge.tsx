@@ -10,7 +10,7 @@ export const AttendanceStatusBadge = ({ timeLogs }: AttendanceStatusBadgeProps) 
   if (!timeLogs || timeLogs.length === 0) {
     return (
       <Badge variant="outline" className="bg-muted/50 text-muted-foreground border-border">
-        Pending
+        Not Started
       </Badge>
     );
   }
@@ -35,7 +35,7 @@ export const AttendanceStatusBadge = ({ timeLogs }: AttendanceStatusBadgeProps) 
 
   return (
     <Badge variant="outline" className="bg-muted/50 text-muted-foreground border-border">
-      Pending
+      Not Started
     </Badge>
   );
 };

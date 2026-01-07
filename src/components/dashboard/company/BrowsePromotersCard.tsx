@@ -79,29 +79,9 @@ export function BrowsePromotersCard({ companyId }: BrowsePromotersCardProps) {
         console.log(`[BrowsePromoters] Loaded ${promoterRows.length} promoters from direct query`);
       }
 
-      // Check contract acceptance for each promoter
-      const { data: template } = await supabase
-        .from('company_contract_templates')
-        .select('id')
-        .eq('company_id', companyId)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (template) {
-        const { data: acceptances } = await supabase
-          .from('company_contract_acceptances')
-          .select('promoter_id')
-          .eq('company_id', companyId);
-
-        const acceptedIds = new Set(acceptances?.map(a => a.promoter_id) || []);
-
-        setPromoters((promoterRows || []).map((p: any) => ({
-          ...p,
-          contractAccepted: acceptedIds.has(p.id)
-        })));
-      } else {
-        setPromoters(promoterRows || []);
-      }
+      // Note: Contract acceptance is now per-shift, so we don't check company-wide contracts here
+      // When assigning promoters to a shift, contract acceptance will be created per shift assignment
+      setPromoters(promoterRows || []);
 
       console.log(`[BrowsePromoters] Successfully loaded ${promoterRows.length} promoters via ${loadMethod}`);
     } catch (error: any) {

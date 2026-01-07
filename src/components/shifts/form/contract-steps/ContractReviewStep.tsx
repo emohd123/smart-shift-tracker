@@ -55,8 +55,15 @@ export default function ContractReviewStep({
     try {
       setError(null);
       const result = await onSubmit();
-      if (result.success) {
+      // Add null check before accessing result.success
+      if (result && result.success) {
         navigate("/shifts");
+      } else if (result && !result.success) {
+        // Handle failure case
+        setError("Failed to create shift. Please try again.");
+      } else {
+        // Handle case where result is undefined or null
+        setError("Failed to submit contract. Please try again.");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to submit contract");

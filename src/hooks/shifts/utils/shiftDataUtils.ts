@@ -22,7 +22,8 @@ export const formatDatabaseShifts = (dbShifts: any[]): Shift[] => {
     assigned_promoters: shift.assigned_promoters || 0,
     created_at: shift.created_at,
     manual_status_override: shift.manual_status_override || false,
-    override_status: shift.override_status || undefined
+    override_status: shift.override_status || undefined,
+    companyId: shift.company_id
   }));
 };
 

@@ -11,6 +11,7 @@ import { useResponsive } from "@/hooks/useResponsive";
 import { Button } from "../ui/button";
 import { Award, Copy, Check, CheckCircle, Clock, Star, AlertCircle } from "lucide-react";
 import { useCurrency } from "@/hooks/useCurrency";
+import { formatBHD } from "../shifts/utils/paymentCalculations";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { getEffectiveStatus } from "../shifts/utils/statusCalculations";
@@ -95,27 +96,47 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
       // Now fetch company details for each shift
       if (data && data.length > 0) {
         const companyIds = [...new Set(data.map(a => a.shifts?.company_id).filter(Boolean))];
-        const { data: companies, error: companyError } = await supabase
+        
+        // Fetch from profiles table
+        const { data: profiles } = await supabase
           .from('profiles')
-          .select('id, full_name, company_name')
+          .select('id, full_name')
           .in('id', companyIds);
         
-        if (companyError) {
-          console.error('Error fetching companies:', companyError);
-        } else {
-          console.log('Companies fetched:', companies);
-          // Merge company data into assignments
-          const enrichedData = data.map(assignment => ({
-            ...assignment,
-            shifts: {
-              ...assignment.shifts,
-              company: companies?.find(c => c.id === assignment.shifts?.company_id)
-            }
-          }));
-          console.log('Enriched pending assignments:', enrichedData);
-          setPendingAssignments(enrichedData);
-          return;
-        }
+        // Fetch from company_profiles table (this has the actual company name)
+        const { data: companyProfiles } = await supabase
+          .from('company_profiles')
+          .select('user_id, name')
+          .in('user_id', companyIds);
+        
+        // Create company map - prioritize company_profiles.name
+        const companyMap = new Map();
+        profiles?.forEach((p: any) => {
+          companyMap.set(p.id, { full_name: p.full_name });
+        });
+        companyProfiles?.forEach((cp: any) => {
+          const existing = companyMap.get(cp.user_id) || {};
+          companyMap.set(cp.user_id, { 
+            ...existing, 
+            company_name: cp.name, // This is the primary company name
+            full_name: cp.name || existing.full_name // Use company name as full_name if available
+          });
+        });
+        
+        // Merge company data into assignments
+        const enrichedData = data.map(assignment => ({
+          ...assignment,
+          shifts: {
+            ...assignment.shifts,
+            company: companyMap.get(assignment.shifts?.company_id) || {},
+            company_name: companyMap.get(assignment.shifts?.company_id)?.company_name || 
+                         companyMap.get(assignment.shifts?.company_id)?.full_name || 
+                         'Unknown Company'
+          }
+        }));
+        console.log('Enriched pending assignments:', enrichedData);
+        setPendingAssignments(enrichedData);
+        return;
       }
       
       setPendingAssignments(data || []);
@@ -140,11 +161,22 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
         .select(`
           id,
           company_id,
+          shift_id,
+          shift_assignment_id,
+          template_id,
           status,
-          company_contract_templates!inner (
+          created_at,
+          shifts:shift_id (
             id,
+            title,
+            date,
+            end_date,
+            start_time,
+            end_time,
+            location,
             company_id,
-            title
+            pay_rate,
+            pay_rate_type
           )
         `)
         .eq('promoter_id', user.id)
@@ -157,8 +189,97 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
         return;
       }
       
-      console.log('Pending contracts fetched:', data);
-      setPendingContracts(data || []);
+      // Fetch company names and templates for each contract
+      if (data && data.length > 0) {
+        const companyIds = [...new Set(data.map((c: any) => c.company_id).filter(Boolean))];
+        const templateIds = [...new Set(data.map((c: any) => c.template_id).filter(Boolean))];
+        
+        // Fetch company names from company_profiles
+        // RLS policy now allows promoters to view company profiles for their assignments
+        const companyMap = new Map();
+        
+        // Fetch company_profiles - RLS policy should now allow this
+        const { data: companyProfiles, error: companyProfilesError } = await supabase
+          .from('company_profiles')
+          .select('user_id, name')
+          .in('user_id', companyIds);
+        
+        if (companyProfilesError) {
+          console.error('Error fetching company profiles:', companyProfilesError);
+        } else if (companyProfiles) {
+          // Map company profiles - this is the primary source for company names
+          companyProfiles.forEach((cp: any) => {
+            companyMap.set(cp.user_id, {
+              company_name: cp.name, // This is "Cactus Advertising & Promotions"
+              full_name: cp.name
+            });
+          });
+        }
+        
+        // Fallback: Use profiles.full_name for any companies not found in company_profiles
+        const fetchedCompanyIds = Array.from(companyMap.keys());
+        const missingCompanyIds = companyIds.filter(id => !fetchedCompanyIds.includes(id));
+        
+        if (missingCompanyIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', missingCompanyIds);
+          
+          profiles?.forEach((p: any) => {
+            if (!companyMap.has(p.id)) {
+              companyMap.set(p.id, { 
+                full_name: p.full_name
+              });
+            }
+          });
+        }
+        
+        console.log('Company IDs:', companyIds);
+        console.log('Company Profiles fetched:', companyProfiles);
+        console.log('Final Company Map:', Array.from(companyMap.entries()));
+        
+        // Fetch shift-specific contract templates
+        const templateMap = new Map();
+        const shiftIds = [...new Set(data.map((c: any) => c.shift_id).filter(Boolean))];
+        
+        if (shiftIds.length > 0) {
+          try {
+            const { data: shiftTemplates } = await supabase
+              .from('shift_contract_templates')
+              .select('id, shift_id, title, body_markdown')
+              .in('shift_id', shiftIds);
+            
+            if (shiftTemplates) {
+              shiftTemplates.forEach((template: any) => {
+                templateMap.set(template.shift_id, template);
+              });
+            }
+          } catch (err) {
+            console.warn('Failed to fetch shift-specific templates:', err);
+          }
+        }
+        
+        const enrichedData = data.map((contract: any) => {
+          const companyData = companyMap.get(contract.company_id) || {};
+          const shiftTemplate = contract.shift_id ? templateMap.get(contract.shift_id) : null;
+          // Log for debugging
+          if (!companyData.company_name && !companyData.full_name) {
+            console.warn(`No company data found for company_id: ${contract.company_id}`);
+            console.warn('Available company IDs in map:', Array.from(companyMap.keys()));
+          }
+          return {
+            ...contract,
+            company: companyData,
+            template: shiftTemplate || null
+          };
+        });
+        
+        console.log('Pending contracts fetched:', enrichedData);
+        setPendingContracts(enrichedData || []);
+      } else {
+        setPendingContracts([]);
+      }
     } catch (error) {
       console.warn('Error fetching pending contracts:', error);
       // Don't show error toast for contracts as the table might not exist
@@ -444,21 +565,133 @@ export default function PromoterDashboard({ shifts, loading = false }: PromoterD
                 Contracts Awaiting Approval
               </CardTitle>
               <CardDescription>
-                You have {pendingContracts.length} contract{pendingContracts.length !== 1 ? 's' : ''} to review and approve before working
+                You have {pendingContracts.length} contract{pendingContracts.length !== 1 ? 's' : ''} to review and approve before starting your shifts
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-2 mb-4">
-                {pendingContracts.map((contract) => (
-                  <div key={contract.id} className="p-3 rounded-lg bg-background/50 border border-amber-500/20">
-                    <p className="font-medium text-sm">{contract.company_contract_templates?.title || 'Unnamed Contract'}</p>
-                    <p className="text-xs text-muted-foreground mt-1">Pending your approval</p>
+              <div className="space-y-3 mb-4">
+                {pendingContracts.map((contract: any) => (
+                  <div key={contract.id} className="p-4 rounded-lg bg-background/50 border border-amber-500/20">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <p className="font-medium text-sm">{contract.template?.title || 'Shift Contract'}</p>
+                        <p className="text-sm font-semibold text-foreground mt-1">
+                          Company Name: {contract.company?.company_name || contract.company?.full_name || 'Unknown Company'}
+                        </p>
+                        {contract.shifts && (() => {
+                          const shift = contract.shifts;
+                          
+                          // Parse dates correctly
+                          const startDate = shift.date ? new Date(shift.date + 'T00:00:00') : null;
+                          const endDate = shift.end_date ? new Date(shift.end_date + 'T00:00:00') : null;
+                          
+                          // Format date display
+                          let dateDisplay = 'Date TBD';
+                          if (startDate && !isNaN(startDate.getTime())) {
+                            if (endDate && !isNaN(endDate.getTime()) && endDate.getTime() !== startDate.getTime()) {
+                              dateDisplay = `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+                            } else {
+                              dateDisplay = startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            }
+                          }
+                          
+                          // Calculate hours per day from start_time and end_time
+                          const calculateHoursPerDay = () => {
+                            if (!shift.start_time || !shift.end_time) return 8; // Default to 8 hours
+                            
+                            try {
+                              const [startHour, startMin] = shift.start_time.split(':').map(Number);
+                              const [endHour, endMin] = shift.end_time.split(':').map(Number);
+                              const startMinutes = startHour * 60 + startMin;
+                              const endMinutes = endHour * 60 + endMin;
+                              const diffMinutes = endMinutes - startMinutes;
+                              return Math.max(0, diffMinutes / 60);
+                            } catch {
+                              return 8; // Default to 8 hours if parsing fails
+                            }
+                          };
+                          
+                          // Calculate payment
+                          const payRate = parseFloat(shift.pay_rate) || 0;
+                          const payRateType = shift.pay_rate_type || 'hourly';
+                          let paymentAmount = 0;
+                          
+                          if (payRate > 0) {
+                            const hoursPerDay = calculateHoursPerDay();
+                            const days = endDate && startDate && !isNaN(endDate.getTime()) && !isNaN(startDate.getTime())
+                              ? Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1
+                              : 1;
+                            
+                            switch (payRateType) {
+                              case 'hourly':
+                                paymentAmount = payRate * hoursPerDay * days;
+                                break;
+                              case 'daily':
+                                paymentAmount = payRate * days;
+                                break;
+                              case 'fixed':
+                                paymentAmount = payRate;
+                                break;
+                              default:
+                                paymentAmount = payRate * hoursPerDay; // Default to calculated hours
+                            }
+                          }
+                          
+                          return (
+                            <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                              <p className="font-medium text-foreground">📅 {shift.title || 'Unnamed Shift'}</p>
+                              <p>📆 Period: {dateDisplay}</p>
+                              <p>⏰ Time: {shift.start_time || '--:--'} - {shift.end_time || '--:--'}</p>
+                              {shift.location && <p>📍 {shift.location}</p>}
+                              {(() => {
+                                const payRate = parseFloat(shift.pay_rate) || 0;
+                                const payRateType = shift.pay_rate_type || 'hourly';
+                                
+                                if (payRate <= 0) return null;
+                                
+                                let rateDisplay = '';
+                                
+                                switch (payRateType) {
+                                  case 'hourly':
+                                    rateDisplay = `${formatBHD(payRate)} per hour`;
+                                    break;
+                                  case 'daily':
+                                    rateDisplay = `${formatBHD(payRate)} per day`;
+                                    break;
+                                  case 'monthly':
+                                    rateDisplay = `${formatBHD(payRate)} per month`;
+                                    break;
+                                  case 'fixed':
+                                    rateDisplay = `${formatBHD(payRate)} (fixed amount)`;
+                                    break;
+                                  default:
+                                    rateDisplay = `${formatBHD(payRate)} per hour`;
+                                }
+                                
+                                return (
+                                  <p className="text-green-600 font-semibold mt-2">
+                                    💰 Payment Rate: {rateDisplay}
+                                  </p>
+                                );
+                              })()}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                      <Button
+                        size="sm"
+                        onClick={() => navigate(`/contracts?contract=${contract.id}`)}
+                        className="shrink-0"
+                      >
+                        Review
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
               <Button onClick={() => navigate("/contracts")} className="w-full md:w-auto">
                 <CheckCircle className="mr-2 h-4 w-4" />
-                Review & Approve Contracts
+                Review & Approve All Contracts
               </Button>
             </CardContent>
           </Card>

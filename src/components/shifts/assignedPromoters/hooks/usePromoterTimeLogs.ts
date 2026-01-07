@@ -15,7 +15,17 @@ export const usePromoterTimeLogs = (shiftId: string) => {
         .select("*")
         .eq("shift_id", shiftId);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching time logs:", error);
+        // Don't show error if table is just empty (no records is valid)
+        if (error.code !== 'PGRST116' && error.message !== 'JSON object requested, multiple (or no) rows returned') {
+          toast.error("Failed to load attendance records", {
+            description: error.message || "Please check your permissions"
+          });
+        }
+        setTimeLogs({});
+        return;
+      }
 
       // Group time logs by user_id
       const groupedLogs: { [promoterId: string]: TimeLog[] } = {};
@@ -35,7 +45,13 @@ export const usePromoterTimeLogs = (shiftId: string) => {
       setTimeLogs(groupedLogs);
     } catch (error: any) {
       console.error("Error fetching time logs:", error);
-      toast.error("Failed to load attendance records");
+      // Only show error if it's not just an empty result
+      if (error?.code !== 'PGRST116') {
+        toast.error("Failed to load attendance records", {
+          description: error?.message || "An unexpected error occurred"
+        });
+      }
+      setTimeLogs({});
     } finally {
       setLoading(false);
     }

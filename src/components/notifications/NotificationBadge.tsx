@@ -11,7 +11,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
+import { isMissingTableError } from "@/utils/supabaseErrors";
 
 // Define the notification type
 interface Notification {
@@ -26,6 +28,7 @@ interface Notification {
 
 export default function NotificationBadge() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   
@@ -36,6 +39,8 @@ export default function NotificationBadge() {
   useEffect(() => {
     if (!user) return;
     
+    let subscription: ReturnType<typeof supabase.channel> | null = null;
+    
     const fetchNotifications = async () => {
       try {
         const { data, error } = await supabase
@@ -45,36 +50,49 @@ export default function NotificationBadge() {
           .order('created_at', { ascending: false })
           .limit(10);
         
-        if (error) throw error;
+        if (error) {
+          // Check if table doesn't exist - this is OK, just return empty array
+          if (isMissingTableError(error, 'notifications')) {
+            setNotifications([]);
+            return;
+          }
+          throw error;
+        }
         
         if (data) {
           setNotifications(data as Notification[]);
+          
+          // Only subscribe to realtime updates if table exists
+          subscription = supabase
+            .channel('notifications-changes')
+            .on('postgres_changes', 
+              { 
+                event: 'INSERT', 
+                schema: 'public', 
+                table: 'notifications',
+                filter: `user_id=eq.${user.id}`
+              }, 
+              (payload) => {
+                setNotifications(prev => [payload.new as Notification, ...prev].slice(0, 10));
+              }
+            )
+            .subscribe();
         }
       } catch (error) {
-        console.error("Error fetching notifications:", error);
+        // Only log errors if table exists (not a missing table error)
+        if (!isMissingTableError(error, 'notifications')) {
+          console.error("Error fetching notifications:", error);
+        }
+        setNotifications([]);
       }
     };
     
     fetchNotifications();
     
-    // Subscribe to new notifications
-    const subscription = supabase
-      .channel('notifications-changes')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        }, 
-        (payload) => {
-          setNotifications(prev => [payload.new as Notification, ...prev].slice(0, 10));
-        }
-      )
-      .subscribe();
-    
     return () => {
-      subscription.unsubscribe();
+      if (subscription) {
+        subscription.unsubscribe();
+      }
     };
   }, [user]);
   
@@ -86,7 +104,20 @@ export default function NotificationBadge() {
         .update({ read: true })
         .eq('id', notificationId);
       
-      if (error) throw error;
+      if (error) {
+        if (isMissingTableError(error, 'notifications')) {
+          // Table doesn't exist - just update local state
+          setNotifications(prev => 
+            prev.map(notification => 
+              notification.id === notificationId 
+                ? { ...notification, read: true } 
+                : notification
+            )
+          );
+          return;
+        }
+        throw error;
+      }
       
       setNotifications(prev => 
         prev.map(notification => 
@@ -96,7 +127,9 @@ export default function NotificationBadge() {
         )
       );
     } catch (error) {
-      console.error("Error marking notification as read:", error);
+      if (!isMissingTableError(error, 'notifications')) {
+        console.error("Error marking notification as read:", error);
+      }
     }
   };
   
@@ -109,13 +142,24 @@ export default function NotificationBadge() {
         .eq('user_id', user?.id)
         .in('id', notifications.filter(n => !n.read).map(n => n.id));
       
-      if (error) throw error;
+      if (error) {
+        if (isMissingTableError(error, 'notifications')) {
+          // Table doesn't exist - just update local state
+          setNotifications(prev => 
+            prev.map(notification => ({ ...notification, read: true }))
+          );
+          return;
+        }
+        throw error;
+      }
       
       setNotifications(prev => 
         prev.map(notification => ({ ...notification, read: true }))
       );
     } catch (error) {
-      console.error("Error marking all notifications as read:", error);
+      if (!isMissingTableError(error, 'notifications')) {
+        console.error("Error marking all notifications as read:", error);
+      }
     }
   };
   
@@ -158,6 +202,12 @@ export default function NotificationBadge() {
                   markAsRead(notification.id);
                 }
                 setIsOpen(false);
+                
+                // Navigate to contracts page for contract_required notifications
+                if (notification.type === 'contract_required') {
+                  const contractId = notification.related_id;
+                  navigate(contractId ? `/contracts?contract=${contractId}` : '/contracts');
+                }
               }}
             >
               <div className="flex w-full justify-between">

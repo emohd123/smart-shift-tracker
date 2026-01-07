@@ -3,6 +3,7 @@ import { DateRange } from "react-day-picker";
 import usePromoters from "./usePromoters";
 import useShiftSubmission from "./useShiftSubmission";
 import { ShiftFormData, Shift } from "../types/ShiftTypes";
+import { parseLocalDate } from "@/utils/dateUtils";
 
 interface UseShiftFormProps {
   initialData?: Shift;
@@ -12,12 +13,15 @@ interface UseShiftFormProps {
 export default function useShiftForm({ initialData, onExternalSubmit }: UseShiftFormProps = {}) {
   const [formData, setFormData] = useState<ShiftFormData>(() => {
     if (initialData) {
+      // Parse dates in local timezone to avoid timezone shifts
+      // When database returns "YYYY-MM-DD", new Date() interprets it as UTC midnight
+      // We need to parse it as local date instead
       return {
         title: initialData.title,
         location: initialData.location || "",
         dateRange: {
-          from: new Date(initialData.date),
-          to: initialData.endDate ? new Date(initialData.endDate) : undefined
+          from: parseLocalDate(initialData.date),
+          to: initialData.endDate ? parseLocalDate(initialData.endDate) : undefined
         },
         startTime: initialData.startTime,
         endTime: initialData.endTime,

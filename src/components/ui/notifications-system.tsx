@@ -8,6 +8,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
+import { isMissingTableError } from "@/utils/supabaseErrors";
 
 interface Notification {
   id: string;
@@ -43,11 +44,21 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (error) throw error;
+      if (error) {
+        if (isMissingTableError(error, 'notifications')) {
+          // Table doesn't exist - this is OK, just return empty array
+          setNotifications([]);
+          return;
+        }
+        throw error;
+      }
       setNotifications((data || []) as Notification[]);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
-      toast.error('Failed to load notifications');
+      if (!isMissingTableError(error, 'notifications')) {
+        console.error('Error fetching notifications:', error);
+        toast.error('Failed to load notifications');
+      }
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -57,38 +68,66 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
     fetchNotifications();
   }, [fetchNotifications]);
 
-  // Set up real-time subscription
+  // Set up real-time subscription (only if table exists)
   useEffect(() => {
     if (!user) return;
-
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          const newNotification = payload.new as Notification;
-          setNotifications(prev => [newNotification, ...prev]);
-          
-          // Show toast for new notification
-          toast(newNotification.title, {
-            description: newNotification.message,
-            action: {
-              label: "View",
-              onClick: () => setIsOpen(true)
-            }
-          });
+    
+    // Check if notifications table exists before subscribing
+    let subscription: ReturnType<typeof supabase.channel> | null = null;
+    
+    const setupSubscription = async () => {
+      try {
+        // Try a simple query to check if table exists
+        const { error: testError } = await supabase
+          .from('notifications')
+          .select('id')
+          .limit(1);
+        
+        // If table doesn't exist, don't subscribe
+        if (isMissingTableError(testError, 'notifications')) {
+          return;
         }
-      )
-      .subscribe();
+        
+        // Table exists, set up subscription
+        subscription = supabase
+          .channel('notifications')
+          .on(
+            'postgres_changes',
+            {
+              event: 'INSERT',
+              schema: 'public',
+              table: 'notifications',
+              filter: `user_id=eq.${user.id}`
+            },
+            (payload) => {
+              const newNotification = payload.new as Notification;
+              setNotifications(prev => [newNotification, ...prev]);
+              
+              // Show toast for new notification
+              toast(newNotification.title, {
+                description: newNotification.message,
+                action: {
+                  label: "View",
+                  onClick: () => setIsOpen(true)
+                }
+              });
+            }
+          )
+          .subscribe();
+      } catch (error) {
+        // Silently handle missing table
+        if (!isMissingTableError(error, 'notifications')) {
+          console.error('Error setting up notification subscription:', error);
+        }
+      }
+    };
+    
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (subscription) {
+        supabase.removeChannel(subscription);
+      }
     };
   }, [user]);
 
@@ -99,13 +138,24 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
         .update({ read: true })
         .eq('id', notificationId);
 
-      if (error) throw error;
+      if (error) {
+        if (isMissingTableError(error, 'notifications')) {
+          // Table doesn't exist - just update local state
+          setNotifications(prev =>
+            prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+          );
+          return;
+        }
+        throw error;
+      }
 
       setNotifications(prev =>
         prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
       );
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      if (!isMissingTableError(error, 'notifications')) {
+        console.error('Error marking notification as read:', error);
+      }
     }
   };
 
@@ -114,19 +164,31 @@ export const NotificationSystem: React.FC<NotificationSystemProps> = ({ classNam
 
     try {
       const unreadIds = notifications.filter(n => !n.read).map(n => n.id);
+      if (unreadIds.length === 0) return;
       
       const { error } = await supabase
         .from('notifications')
         .update({ read: true })
         .in('id', unreadIds);
 
-      if (error) throw error;
+      if (error) {
+        if (isMissingTableError(error, 'notifications')) {
+          // Table doesn't exist - just update local state
+          setNotifications(prev =>
+            prev.map(n => ({ ...n, read: true }))
+          );
+          return;
+        }
+        throw error;
+      }
 
       setNotifications(prev =>
         prev.map(n => ({ ...n, read: true }))
       );
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      if (!isMissingTableError(error, 'notifications')) {
+        console.error('Error marking all notifications as read:', error);
+      }
     }
   };
 
@@ -262,10 +324,18 @@ export const useNotifications = () => {
           related_id: relatedId
         });
 
-      if (error) throw error;
+      if (error) {
+        if (isMissingTableError(error, 'notifications')) {
+          // Table doesn't exist - silently fail (notifications feature not available)
+          return false;
+        }
+        throw error;
+      }
       return true;
     } catch (error) {
-      console.error('Error sending notification:', error);
+      if (!isMissingTableError(error, 'notifications')) {
+        console.error('Error sending notification:', error);
+      }
       return false;
     }
   }, []);

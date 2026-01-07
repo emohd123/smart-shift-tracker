@@ -34,6 +34,12 @@ export const SecurityProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       setCSRFToken(token);
       setNonce(nonceValue);
       
+      // Remove existing CSP meta tag if present
+      const existingCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+      if (existingCSP) {
+        existingCSP.remove();
+      }
+      
       // Set CSP header via meta tag
       const cspMeta = document.createElement('meta');
       cspMeta.httpEquiv = 'Content-Security-Policy';

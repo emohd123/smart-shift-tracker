@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { UserPlus, Search, Clock } from "lucide-react";
+import { UserPlus, Search, Clock, AlertTriangle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -17,10 +17,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, AlertCircle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAssignPromoters } from "./hooks/useAssignPromoters";
 import { PromoterOption } from "../types/PromoterTypes";
+import { findOverlappingShifts, OverlappingShift } from "@/utils/shiftOverlapCheck";
 
 type AssignPromotersDialogProps = {
   shiftId: string;
@@ -58,8 +60,15 @@ export const AssignPromotersDialog = ({
   const [schedules, setSchedules] = useState<{ [key: string]: PromoterSchedule }>({});
   const [bulkStartTime, setBulkStartTime] = useState(shiftStartTime);
   const [bulkEndTime, setBulkEndTime] = useState(shiftEndTime);
-    const [contractStatuses, setContractStatuses] = useState<{ [key: string]: boolean }>({});
-    const [companyId, setCompanyId] = useState<string>('');
+  const [contractStatuses, setContractStatuses] = useState<{ [key: string]: boolean }>({});
+  const [companyId, setCompanyId] = useState<string>('');
+  const [shiftDetails, setShiftDetails] = useState<{
+    date: string;
+    end_date: string | null;
+    start_time: string;
+    end_time: string;
+  } | null>(null);
+  const [overlapWarnings, setOverlapWarnings] = useState<{ [promoterId: string]: OverlappingShift[] }>({});
   
   const { assignPromoters, loading: assigning } = useAssignPromoters(shiftId);
 
@@ -74,30 +83,37 @@ export const AssignPromotersDialog = ({
   const fetchPromotersAndContracts = async () => {
     setLoading(true);
     try {
-            // Get shift details to find company_id
+            // Get shift details to find company_id and shift timing
             const { data: shiftData } = await supabase
               .from('shifts')
-              .select('company_id')
+              .select('company_id, date, end_date, start_time, end_time')
               .eq('id', shiftId)
               .single();
 
-            if (shiftData?.company_id) {
+            if (shiftData) {
               setCompanyId(shiftData.company_id);
+              setShiftDetails({
+                date: shiftData.date,
+                end_date: shiftData.end_date,
+                start_time: shiftData.start_time,
+                end_time: shiftData.end_time,
+              });
 
-              // Check if company has active contract
-              const { data: template } = await supabase
-                .from('company_contract_templates')
+              // Check if shift has a contract template
+              const { data: shiftTemplate } = await supabase
+                .from('shift_contract_templates')
                 .select('id')
-                .eq('company_id', shiftData.company_id)
-                .eq('is_active', true)
+                .eq('shift_id', shiftId)
                 .maybeSingle();
 
-              if (template) {
-                // Get all contract acceptances for this company
+              if (shiftTemplate) {
+                // Get all accepted contract acceptances for this specific shift
                 const { data: acceptances } = await supabase
                   .from('company_contract_acceptances')
                   .select('promoter_id')
-                  .eq('company_id', shiftData.company_id);
+                  .eq('shift_id', shiftId)
+                  .eq('status', 'accepted')
+                  .is('superseded_at', null);
 
                 const statusMap: { [key: string]: boolean } = {};
                 acceptances?.forEach(a => {
@@ -189,13 +205,16 @@ export const AssignPromotersDialog = ({
     setUniqueCode("");
   };
 
-  const togglePromoter = (id: string) => {
+  const togglePromoter = async (id: string) => {
     setSelectedIds(prev => {
-      const newIds = prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id];
+      const newIds = prev.includes(id) 
+        ? prev.filter(i => i !== id)
+        : [...prev, id];
       
-      if (!prev.includes(id)) {
-        setSchedules(s => ({
-          ...s,
+      // Initialize schedule for newly selected promoters
+      if (!prev.includes(id) && newIds.includes(id)) {
+        setSchedules(prev => ({
+          ...prev,
           [id]: {
             promoterId: id,
             startTime: shiftStartTime,
@@ -204,10 +223,47 @@ export const AssignPromotersDialog = ({
             autoCheckOut: true,
           }
         }));
+
+        // Check for overlapping shifts when promoter is selected
+        if (shiftDetails) {
+          checkOverlappingShifts(id, shiftDetails);
+        }
+      } else if (prev.includes(id) && !newIds.includes(id)) {
+        // Remove overlap warning when promoter is deselected
+        setOverlapWarnings(prev => {
+          const updated = { ...prev };
+          delete updated[id];
+          return updated;
+        });
       }
       
       return newIds;
     });
+  };
+
+  const checkOverlappingShifts = async (
+    promoterId: string,
+    shiftInfo: { date: string; end_date: string | null; start_time: string; end_time: string }
+  ) => {
+    try {
+      const overlapping = await findOverlappingShifts(
+        shiftId,
+        promoterId,
+        shiftInfo.date,
+        shiftInfo.end_date,
+        shiftInfo.start_time,
+        shiftInfo.end_time
+      );
+
+      if (overlapping.length > 0) {
+        setOverlapWarnings(prev => ({
+          ...prev,
+          [promoterId]: overlapping
+        }));
+      }
+    } catch (error) {
+      console.error('Error checking overlapping shifts:', error);
+    }
   };
 
   const updateSchedule = (promoterId: string, updates: Partial<PromoterSchedule>) => {
@@ -250,6 +306,21 @@ export const AssignPromotersDialog = ({
       return;
     }
 
+    // Check for overlapping shifts before assigning
+    if (shiftDetails) {
+      const hasOverlaps = newAssignments.some(id => overlapWarnings[id] && overlapWarnings[id].length > 0);
+      if (hasOverlaps) {
+        const overlappingPromoters = newAssignments.filter(id => overlapWarnings[id] && overlapWarnings[id].length > 0);
+        toast.error(
+          `Cannot assign ${overlappingPromoters.length} promoter(s) due to overlapping shifts`,
+          {
+            description: "Please review the warnings below and unassign conflicting shifts first."
+          }
+        );
+        return;
+      }
+    }
+
     for (const id of newAssignments) {
       const schedule = schedules[id];
       if (!schedule?.startTime || !schedule?.endTime) {
@@ -269,6 +340,7 @@ export const AssignPromotersDialog = ({
       setSearchQuery("");
       setUniqueCode("");
       setSchedules({});
+      setOverlapWarnings({});
       onSuccess?.();
     }
   };
@@ -398,17 +470,23 @@ export const AssignPromotersDialog = ({
                           <div className="flex items-center gap-2 flex-wrap">
                             <span className="font-medium">{promoter.full_name}</span>
                             {isAssigned && <Badge variant="secondary" className="text-xs">Already Assigned</Badge>}
-                                                      {contractStatuses[promoter.id] ? (
-                                                        <Badge variant="default" className="text-xs">
-                                                          <CheckCircle className="h-3 w-3 mr-1" />
-                                                          Contract Signed
-                                                        </Badge>
-                                                      ) : contractStatuses[promoter.id] === false ? (
-                                                        <Badge variant="outline" className="text-xs text-amber-600 border-amber-600">
-                                                          <AlertCircle className="h-3 w-3 mr-1" />
-                                                          Awaiting Contract
-                                                        </Badge>
-                                                      ) : null}
+                            {isSelected && overlapWarnings[promoter.id] && overlapWarnings[promoter.id].length > 0 && (
+                              <Badge variant="destructive" className="text-xs">
+                                <AlertTriangle className="h-3 w-3 mr-1" />
+                                Overlapping Shift
+                              </Badge>
+                            )}
+                            {contractStatuses[promoter.id] ? (
+                              <Badge variant="default" className="text-xs">
+                                <CheckCircle className="h-3 w-3 mr-1" />
+                                Contract Signed
+                              </Badge>
+                            ) : contractStatuses[promoter.id] === false ? (
+                              <Badge variant="outline" className="text-xs text-amber-600 border-amber-600">
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                Awaiting Contract
+                              </Badge>
+                            ) : null}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             Code: {promoter.unique_code}
@@ -419,6 +497,26 @@ export const AssignPromotersDialog = ({
                       </div>
                       {isSelected && schedule && (
                         <div className="ml-8 space-y-2 pt-2 border-t">
+                          {/* Overlap Warning */}
+                          {overlapWarnings[promoter.id] && overlapWarnings[promoter.id].length > 0 && (
+                            <Alert variant="destructive" className="mb-2">
+                              <AlertTriangle className="h-4 w-4" />
+                              <AlertTitle>Overlapping Shift Conflict</AlertTitle>
+                              <AlertDescription className="mt-1">
+                                <p className="text-xs mb-2">This promoter is already assigned to {overlapWarnings[promoter.id].length} overlapping shift(s):</p>
+                                <ul className="text-xs list-disc list-inside space-y-1">
+                                  {overlapWarnings[promoter.id].map((overlap) => (
+                                    <li key={overlap.shift_id}>
+                                      <strong>{overlap.title}</strong> - {new Date(overlap.date).toLocaleDateString()}
+                                      {overlap.end_date && overlap.end_date !== overlap.date && ` to ${new Date(overlap.end_date).toLocaleDateString()}`}
+                                      {' '}({overlap.start_time} - {overlap.end_time})
+                                    </li>
+                                  ))}
+                                </ul>
+                                <p className="text-xs mt-2 font-semibold">Cannot assign promoter to overlapping shifts.</p>
+                              </AlertDescription>
+                            </Alert>
+                          )}
                           <div className="grid grid-cols-2 gap-2">
                             <div>
                               <Label className="text-xs">Work Start</Label>

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { usePerformanceMonitor, useErrorTracking, useRealUserMonitoring } from '@/hooks/monitoring/usePerformanceMonitor';
 import { supabase } from '@/integrations/supabase/client';
+import { isMissingTableError } from '@/utils/supabaseErrors';
 
 const DevToolsPanel: React.FC = () => {
   const { metrics } = usePerformanceMonitor('DevToolsPanel');
@@ -44,28 +45,42 @@ const DevToolsPanel: React.FC = () => {
     const originalFetch = window.fetch;
     window.fetch = async (...args) => {
       const startTime = Date.now();
+      const url = args[0].toString();
+      
       try {
         const response = await originalFetch(...args);
         const duration = Date.now() - startTime;
         
-        setNetworkRequests(prev => [...prev.slice(-49), {
-          url: args[0].toString(),
-          method: (args[1]?.method || 'GET').toUpperCase(),
-          status: response.status,
-          duration,
-          timestamp: Date.now()
-        }]);
+        // Filter out non-critical errors (like missing notifications table)
+        const isNonCriticalError = response.status === 404 && 
+          (url.includes('/notifications') || url.includes('notifications'));
+        
+        if (!isNonCriticalError) {
+          setNetworkRequests(prev => [...prev.slice(-49), {
+            url,
+            method: (args[1]?.method || 'GET').toUpperCase(),
+            status: response.status,
+            duration,
+            timestamp: Date.now()
+          }]);
+        }
         
         return response;
       } catch (error) {
         const duration = Date.now() - startTime;
-        setNetworkRequests(prev => [...prev.slice(-49), {
-          url: args[0].toString(),
-          method: (args[1]?.method || 'GET').toUpperCase(),
-          status: 0,
-          duration,
-          timestamp: Date.now()
-        }]);
+        
+        // Filter out non-critical errors
+        const isNonCriticalError = url.includes('/notifications') || url.includes('notifications');
+        
+        if (!isNonCriticalError) {
+          setNetworkRequests(prev => [...prev.slice(-49), {
+            url,
+            method: (args[1]?.method || 'GET').toUpperCase(),
+            status: 0,
+            duration,
+            timestamp: Date.now()
+          }]);
+        }
         throw error;
       }
     };
@@ -195,20 +210,35 @@ const DevToolsPanel: React.FC = () => {
               </TabsContent>
 
               <TabsContent value="network" className="space-y-2 mt-0">
-                {networkRequests.slice(-10).map((request, index) => (
-                  <div key={index} className="flex justify-between items-center text-xs p-1 border-b">
-                    <div className="flex-1 truncate">
-                      <span className={`mr-2 font-mono ${
-                        request.status >= 200 && request.status < 300 ? 'text-green-600' :
-                        request.status >= 400 ? 'text-red-600' : 'text-yellow-600'
+                {networkRequests.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">No network requests recorded</p>
+                ) : (
+                  networkRequests.slice(-10).map((request, index) => {
+                    // Determine if this is a critical error
+                    const isCriticalError = request.status >= 500 || 
+                      (request.status >= 400 && !request.url.includes('/notifications'));
+                    
+                    return (
+                      <div key={index} className={`flex justify-between items-center text-xs p-1 border-b ${
+                        !isCriticalError && request.status >= 400 ? 'opacity-60' : ''
                       }`}>
-                        {request.status || 'ERR'}
-                      </span>
-                      <span className="text-muted-foreground">{request.method}</span>
-                    </div>
-                    <span className="font-mono">{request.duration}ms</span>
-                  </div>
-                ))}
+                        <div className="flex-1 truncate">
+                          <span className={`mr-2 font-mono ${
+                            request.status >= 200 && request.status < 300 ? 'text-green-600' :
+                            isCriticalError ? 'text-red-600' : 'text-yellow-600'
+                          }`}>
+                            {request.status || 'ERR'}
+                          </span>
+                          <span className="text-muted-foreground">{request.method}</span>
+                          {request.url.includes('/notifications') && request.status === 404 && (
+                            <span className="ml-2 text-xs text-muted-foreground">(non-critical)</span>
+                          )}
+                        </div>
+                        <span className="font-mono">{request.duration}ms</span>
+                      </div>
+                    );
+                  })
+                )}
               </TabsContent>
 
               <TabsContent value="vitals" className="space-y-3 mt-0">

@@ -5,64 +5,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ShiftFormData } from "../types/ShiftTypes";
-
-// Helper function to send contract notifications
-async function sendContractNotifications(
-    companyId: string,
-    promoterIds: string[],
-    shiftId: string,
-    shiftTitle: string
-) {
-    try {
-      // Check if company has an active contract template
-      const { data: template } = await supabase
-        .from('company_contract_templates')
-        .select('id')
-        .eq('company_id', companyId)
-        .eq('is_active', true)
-        .maybeSingle();
-
-      if (!template) {
-        console.log('No active contract template found, skipping notifications');
-        return;
-      }
-
-      // Check which promoters need to accept the contract
-      const { data: existingAcceptances } = await supabase
-        .from('company_contract_acceptances')
-        .select('promoter_id')
-        .eq('company_id', companyId);
-
-      const acceptedPromoterIds = new Set(
-        existingAcceptances?.map(a => a.promoter_id) || []
-      );
-
-      // Send notifications to promoters who haven't accepted
-      const notificationsToSend = promoterIds
-        .filter(id => !acceptedPromoterIds.has(id))
-        .map(promoterId => ({
-          user_id: promoterId,
-          title: 'Contract Acceptance Required',
-          message: `Please review and accept the contract before starting shift: ${shiftTitle}`,
-          type: 'contract_required',
-          read: false
-        }));
-
-      if (notificationsToSend.length > 0) {
-        const { error: notifError } = await supabase
-          .from('notifications')
-          .insert(notificationsToSend);
-
-        if (notifError) {
-          console.error('Error sending contract notifications:', notifError);
-        } else {
-          console.log(`Sent ${notificationsToSend.length} contract notifications`);
-        }
-      }
-    } catch (error) {
-      console.error('Error in sendContractNotifications:', error);
-    }
-}
+import { formatDateLocal } from "@/utils/dateUtils";
 
   export default function useShiftSubmission(shiftId?: string) {
   const [loading, setLoading] = useState(false);
@@ -92,31 +35,14 @@ async function sendContractNotifications(
         toast.error("Start date is required");
         return;
       }
-
-      // Require an active contract template before assigning promoters (company users)
-      if (!isEditMode && user?.role === 'company' && formData.selectedPromoterIds.length > 0) {
-        const { data: template } = await supabase
-          .from('company_contract_templates')
-          .select('id')
-          .eq('company_id', user.id)
-          .eq('is_active', true)
-          .maybeSingle();
-
-        if (!template) {
-          toast.error("Add a contract before assigning promoters", {
-            description: "Create an active contract template to send for promoter approval."
-          });
-          navigate('/company/contract');
-          return;
-        }
-      }
       
       // Format the data for database
+      // Use formatDateLocal to prevent timezone shifts
       const shiftData = {
         title: formData.title,
         location: formData.location,
-        date: formData.dateRange.from.toISOString().split('T')[0],
-        end_date: formData.dateRange.to ? formData.dateRange.to.toISOString().split('T')[0] : null,
+        date: formatDateLocal(formData.dateRange.from),
+        end_date: formData.dateRange.to ? formatDateLocal(formData.dateRange.to) : null,
         start_time: formData.startTime,
         end_time: formData.endTime,
         pay_rate: formData.payRate ? parseFloat(formData.payRate) : null,
@@ -130,14 +56,37 @@ async function sendContractNotifications(
         // UPDATE existing shift
         console.log("Updating shift:", shiftId, shiftData);
         
+        // First, get the current shift to preserve status
+        const { data: currentShift, error: fetchError } = await supabase
+          .from('shifts')
+          .select('status')
+          .eq('id', shiftId)
+          .single();
+        
+        if (fetchError) throw fetchError;
+        
+        // Preserve the status unless it's being explicitly changed
+        const updateData = {
+          ...shiftData,
+          status: currentShift?.status || 'upcoming'
+        };
+        
         const { data: updated, error: updateError } = await supabase
           .from('shifts')
-          .update(shiftData)
+          .update(updateData)
           .eq('id', shiftId)
           .select('id')
           .single();
           
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error("Update error details:", updateError);
+          throw updateError;
+        }
+        
+        if (!updated) {
+          throw new Error("Update succeeded but no data returned");
+        }
+        
         resultShiftId = updated.id;
         
         toast.success("Shift updated successfully");
@@ -174,14 +123,8 @@ async function sendContractNotifications(
             toast.error("Shift created but there was an error assigning promoters");
           } else { 
             console.log("Successfully assigned promoters to shift");
-            
-                      // Send contract notifications to assigned promoters
-                      await sendContractNotifications(
-                        user?.id || '',
-                        formData.selectedPromoterIds,
-                        resultShiftId,
-                        formData.title
-                      );
+            // Contract acceptance records and notifications are now automatically created
+            // by database triggers when shift assignments are created
           }
         }
         
@@ -192,7 +135,11 @@ async function sendContractNotifications(
       
     } catch (error: any) {
       console.error("Error submitting shift:", error);
-      toast.error(error.message || "Failed to create shift. Please try again.");
+      const errorMessage = error?.message || error?.details || error?.hint || "Unknown error";
+      const action = isEditMode ? "update" : "create";
+      toast.error(`Failed to ${action} shift`, {
+        description: errorMessage
+      });
     } finally {
       setLoading(false);
     }

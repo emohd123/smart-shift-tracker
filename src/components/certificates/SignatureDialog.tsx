@@ -15,6 +15,9 @@ interface SignatureDialogProps {
   onOpenChange: (open: boolean) => void;
   onSignatureComplete: (signatureBase64: string) => void;
   promoterName: string;
+  title?: string;
+  description?: string;
+  confirmButtonText?: string;
 }
 
 export default function SignatureDialog({
@@ -22,6 +25,9 @@ export default function SignatureDialog({
   onOpenChange,
   onSignatureComplete,
   promoterName,
+  title = "Sign Your Certificate",
+  description = `Please sign below to acknowledge that you, ${promoterName}, have completed the stated work assignments.`,
+  confirmButtonText = "Confirm & Generate",
 }: SignatureDialogProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -121,9 +127,9 @@ export default function SignatureDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Sign Your Certificate</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
           <DialogDescription>
-            Please sign below to acknowledge that you, {promoterName}, have completed the stated work assignments.
+            {description}
           </DialogDescription>
         </DialogHeader>
         
@@ -165,7 +171,7 @@ export default function SignatureDialog({
             className="flex items-center gap-2"
           >
             <Check className="h-4 w-4" />
-            Confirm & Generate
+            {confirmButtonText}
           </Button>
         </DialogFooter>
       </DialogContent>

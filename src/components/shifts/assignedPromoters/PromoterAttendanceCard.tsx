@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AttendanceStatusBadge } from "./AttendanceStatusBadge";
 import { TimeLog, calculatePromoterPayment, formatWorkDuration, formatBHD } from "../utils/paymentCalculations";
-import { Clock, Phone, User, X, LogIn, LogOut, Timer, Star } from "lucide-react";
+import { Clock, Phone, User, X, LogIn, LogOut, Timer, Star, FileText, CheckCircle } from "lucide-react";
 import { format } from "date-fns";
 import { useUnassignPromoter } from "./hooks/useUnassignPromoter";
 import { useCompanyCheckIn } from "./hooks/useCompanyCheckIn";
@@ -32,6 +32,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 type PromoterAttendanceCardProps = {
   promoter: {
@@ -88,6 +95,13 @@ export const PromoterAttendanceCard = ({
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
   const [existingRating, setExistingRating] = useState<number | null>(null);
   const [ratingLoading, setRatingLoading] = useState(true);
+  
+  // Contract acceptance state
+  const [contractStatus, setContractStatus] = useState<'pending' | 'accepted' | 'rejected' | null>(null);
+  const [contractSignatureImage, setContractSignatureImage] = useState<string | null>(null);
+  const [contractHtml, setContractHtml] = useState<string | null>(null);
+  const [showContractDialog, setShowContractDialog] = useState(false);
+  const [contractLoading, setContractLoading] = useState(true);
 
   const isShiftCompleted = shiftStatus === ShiftStatus.Completed;
   const canRate = isCompany && isShiftCompleted && existingRating === null;
@@ -122,6 +136,131 @@ export const PromoterAttendanceCard = ({
     fetchExistingRating();
   }, [promoter.id]);
 
+  // Fetch contract acceptance status and signature
+  useEffect(() => {
+    const fetchContractAcceptance = async () => {
+      if (!promoter.id || !promoter.promoter_id) {
+        setContractLoading(false);
+        return;
+      }
+
+      try {
+        setContractLoading(true);
+        const { data: acceptance, error } = await (supabase as any)
+          .from('company_contract_acceptances')
+          .select('status, signature_image, signature_text, accepted_at, shift_id')
+          .eq('shift_assignment_id', promoter.id)
+          .eq('promoter_id', promoter.promoter_id)
+          .is('superseded_at', null)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('Error fetching contract acceptance:', error);
+        }
+
+        if (acceptance) {
+          setContractStatus(acceptance.status);
+          setContractSignatureImage(acceptance.signature_image);
+          
+          // Fetch contract HTML if accepted
+          if (acceptance.status === 'accepted' && acceptance.shift_id) {
+            try {
+              const { data: shiftData } = await supabase
+                .from('shifts')
+                .select('*, company_id')
+                .eq('id', acceptance.shift_id)
+                .single();
+
+              if (shiftData) {
+                // Fetch company name
+                const { data: companyProfile } = await supabase
+                  .from('company_profiles')
+                  .select('name')
+                  .eq('user_id', shiftData.company_id)
+                  .single();
+
+                const companyName = companyProfile?.name || 'Company';
+
+                // Generate contract HTML (similar to PromoterContracts.tsx)
+                const { generateContractTemplate } = await import('@/components/shifts/form/utils/contractTemplateGenerator');
+                const { parseLocalDate } = await import('@/utils/dateUtils');
+
+                const startDate = shiftData.date ? parseLocalDate(shiftData.date) : new Date();
+                const endDate = shiftData.end_date ? parseLocalDate(shiftData.end_date) : startDate;
+                const paymentDate = new Date(endDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+                // Calculate hours per day
+                const [startHour, startMin] = (shiftData.start_time || '09:00').split(':').map(Number);
+                const [endHour, endMin] = (shiftData.end_time || '17:00').split(':').map(Number);
+                const startMinutes = startHour * 60 + startMin;
+                const endMinutes = endHour * 60 + endMin;
+                const hoursPerDay = (endMinutes - startMinutes) / 60;
+                const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+                const payRateType = shiftData.pay_rate_type || 'hourly';
+                let totalPay = 0;
+                if (payRateType === 'hourly') {
+                  totalPay = (shiftData.pay_rate || 0) * hoursPerDay * daysDiff;
+                } else if (payRateType === 'daily') {
+                  totalPay = (shiftData.pay_rate || 0) * daysDiff;
+                } else if (payRateType === 'fixed') {
+                  totalPay = shiftData.pay_rate || 0;
+                }
+
+                const contractHtml = generateContractTemplate({
+                  shiftTitle: shiftData.title || 'Shift Contract',
+                  description: shiftData.description || '',
+                  location: shiftData.location || '',
+                  startDate,
+                  endDate,
+                  startTime: shiftData.start_time || '09:00',
+                  endTime: shiftData.end_time || '17:00',
+                  payRate: shiftData.pay_rate || 0,
+                  payRateType: payRateType as 'hourly' | 'daily' | 'fixed',
+                  paymentDate,
+                  promoterCount: 1,
+                  totalEstimatedPay: totalPay,
+                  promoterName: promoter.full_name,
+                  promoterId: promoter.promoter_id,
+                  promoterUniqueCode: promoter.unique_code,
+                  companyName,
+                  companyId: shiftData.company_id
+                });
+
+                // Add signature image to contract HTML if available
+                if (acceptance.signature_image) {
+                  const signatureSection = `
+                    <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #333;">
+                      <h3 style="text-align: center; margin-bottom: 20px; color: #0066cc;">Promoter Signature</h3>
+                      <div style="text-align: center; margin-bottom: 20px;">
+                        <img src="${acceptance.signature_image}" alt="Promoter Signature" style="max-width: 400px; border: 1px solid #ddd; padding: 10px; background: white;" />
+                      </div>
+                      ${acceptance.signature_text ? `<p style="text-align: center; color: #666;">Signed by: ${acceptance.signature_text}</p>` : ''}
+                      ${acceptance.accepted_at ? `<p style="text-align: center; color: #666; font-size: 12px;">Signed on: ${new Date(acceptance.accepted_at).toLocaleString()}</p>` : ''}
+                    </div>
+                  `;
+                  setContractHtml(contractHtml.replace('</body>', signatureSection + '</body>'));
+                } else {
+                  setContractHtml(contractHtml);
+                }
+              }
+            } catch (err) {
+              console.error('Error generating contract HTML:', err);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching contract acceptance:', err);
+      } finally {
+        setContractLoading(false);
+      }
+    };
+
+    fetchContractAcceptance();
+  }, [promoter.id, promoter.promoter_id, promoter.full_name, promoter.unique_code]);
+
   useEffect(() => {
     setPayStatus(promoter.payment_status ?? null);
   }, [promoter.payment_status]);
@@ -140,26 +279,46 @@ export const PromoterAttendanceCard = ({
       return;
     }
 
-    // Check contract acceptance
+    // Check contract acceptance for this specific shift assignment
     try {
-      const { data: shift } = await supabase
-        .from('shifts')
-        .select('company_id')
-        .eq('id', shiftId)
-        .single();
+      if (!promoter.id) {
+        toast.error("Shift assignment ID is missing");
+        return;
+      }
 
-      if (shift) {
-        const { data: hasTemplate } = await supabase
-          .rpc('has_active_contract_template', { _company_id: shift.company_id });
+      // Check if contract is accepted for this specific shift assignment (not superseded)
+      const { data: acceptance, error: acceptanceError } = await (supabase as any)
+        .from('company_contract_acceptances')
+        .select('id, status, superseded_at')
+        .eq('shift_assignment_id', promoter.id)
+        .eq('promoter_id', promoter.promoter_id)
+        .is('superseded_at', null) // Only check non-superseded acceptances
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      // Check if there's a pending contract (new version requiring approval)
+      if (acceptance?.status === 'pending') {
+        toast.error(`${promoter.full_name} must approve the updated contract before payment can be scheduled`);
+        return;
+      }
 
-        if (hasTemplate) {
-          const { data: hasAcceptance } = await supabase
-            .rpc('has_contract_acceptance', { 
-              _promoter_id: promoter.promoter_id,
-              _company_id: shift.company_id 
-            });
+      if (acceptanceError) {
+        console.error('Error checking contract acceptance:', acceptanceError);
+        // Don't block payment if there's an error checking
+      } else if (!acceptance || acceptance.status !== 'accepted') {
+        // Check if company has an active contract template
+        const { data: shift } = await supabase
+          .from('shifts')
+          .select('company_id')
+          .eq('id', shiftId)
+          .single();
 
-          if (!hasAcceptance) {
+        if (shift?.company_id) {
+          const { data: hasTemplate } = await supabase
+            .rpc('has_active_contract_template', { _company_id: shift.company_id });
+
+          if (hasTemplate) {
             toast.error(`${promoter.full_name} must accept the company contract before payment can be scheduled`);
             return;
           }
@@ -167,8 +326,7 @@ export const PromoterAttendanceCard = ({
       }
     } catch (error) {
       console.error('Error checking contract:', error);
-      toast.error("Failed to verify contract acceptance");
-      return;
+      // Don't block payment if there's an error checking
     }
 
     setPayUpdating(true);
@@ -297,26 +455,46 @@ export const PromoterAttendanceCard = ({
   };
 
   const handleManualCheckIn = async (customTime?: Date) => {
-    // Check if contract acceptance is required
+    // Check if contract acceptance is required for this specific shift assignment
     try {
-      const { data: shift } = await supabase
-        .from('shifts')
-        .select('company_id')
-        .eq('id', shiftId)
-        .single();
+      if (!promoter.id) {
+        toast.error("Shift assignment ID is missing");
+        return;
+      }
 
-      if (shift) {
-        const { data: hasTemplate } = await supabase
-          .rpc('has_active_contract_template', { _company_id: shift.company_id });
+      // Check if contract is accepted for this specific shift assignment (not superseded)
+      const { data: acceptance, error: acceptanceError } = await (supabase as any)
+        .from('company_contract_acceptances')
+        .select('id, status, superseded_at')
+        .eq('shift_assignment_id', promoter.id)
+        .eq('promoter_id', promoter.promoter_id)
+        .is('superseded_at', null) // Only check non-superseded acceptances
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      
+      // Check if there's a pending contract (new version requiring approval)
+      if (acceptance?.status === 'pending') {
+        toast.error(`${promoter.full_name} must approve the updated contract before starting work`);
+        return;
+      }
 
-        if (hasTemplate) {
-          const { data: hasAcceptance } = await supabase
-            .rpc('has_contract_acceptance', { 
-              _promoter_id: promoter.promoter_id,
-              _company_id: shift.company_id 
-            });
+      if (acceptanceError) {
+        console.error('Error checking contract acceptance:', acceptanceError);
+        // Don't block check-in if there's an error checking
+      } else if (!acceptance || acceptance.status !== 'accepted') {
+        // Check if company has an active contract template
+        const { data: shift } = await supabase
+          .from('shifts')
+          .select('company_id')
+          .eq('id', shiftId)
+          .single();
 
-          if (!hasAcceptance) {
+        if (shift?.company_id) {
+          const { data: hasTemplate } = await supabase
+            .rpc('has_active_contract_template', { _company_id: shift.company_id });
+
+          if (hasTemplate) {
             toast.error(`${promoter.full_name} must accept the company contract before starting work`);
             return;
           }
@@ -324,6 +502,7 @@ export const PromoterAttendanceCard = ({
       }
     } catch (error) {
       console.error('Error checking contract:', error);
+      // Don't block check-in if there's an error checking
     }
 
     const success = await manualCheckIn(promoter.promoter_id, promoter.full_name, customTime);
@@ -355,6 +534,17 @@ export const PromoterAttendanceCard = ({
           </div>
           <div className="flex items-center gap-2">
             <AttendanceStatusBadge timeLogs={timeLogs} />
+            {contractStatus === 'accepted' && (
+              <Badge variant="default" className="bg-green-500/10 text-green-600 border-green-500/20">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Contract Approved
+              </Badge>
+            )}
+            {contractStatus === 'pending' && (
+              <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20">
+                Contract Pending
+              </Badge>
+            )}
             {(payStatus === "scheduled" || payStatus === "paid") && (
               <Badge variant={payStatus === "paid" ? "default" : "outline"}>
                 {payStatus === "paid" ? "Paid" : "Payment Scheduled"}
@@ -464,6 +654,19 @@ export const PromoterAttendanceCard = ({
                 {payStatus === "paid" ? "Paid" : "Mark Paid"}
               </Button>
             </div>
+            {/* View Contract Button */}
+            {contractStatus === 'accepted' && contractHtml && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowContractDialog(true)}
+              >
+                <FileText className="h-3.5 w-3.5 mr-1" />
+                View Signed Contract
+              </Button>
+            )}
+            
             <div className="flex gap-2">
               {isCheckedIn && (
                 <Button
@@ -694,6 +897,34 @@ export const PromoterAttendanceCard = ({
             )}
           </div>
         )}
+
+        {/* Signed Contract Dialog */}
+        <Dialog open={showContractDialog} onOpenChange={setShowContractDialog}>
+          <DialogContent className="max-w-4xl max-h-[90vh]">
+            <DialogHeader>
+              <DialogTitle>Signed Contract - {promoter.full_name}</DialogTitle>
+              <DialogDescription>
+                View the contract signed by {promoter.full_name} ({promoter.unique_code})
+              </DialogDescription>
+            </DialogHeader>
+            <div className="border border-gray-200 rounded-lg overflow-hidden bg-white">
+              <div className="overflow-auto max-h-[70vh]">
+                {contractHtml ? (
+                  <iframe
+                    srcDoc={contractHtml}
+                    title="Signed Contract"
+                    className="w-full border-none"
+                    style={{ minHeight: "600px" }}
+                  />
+                ) : (
+                  <div className="p-8 text-center text-muted-foreground">
+                    {contractLoading ? 'Loading contract...' : 'Contract not available'}
+                  </div>
+                )}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </CardContent>
     </Card>
   );

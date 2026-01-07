@@ -32,6 +32,7 @@ const TimeTrackerWrapper = forwardRef(({
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [contractTitle, setContractTitle] = useState<string>("Company Contract");
   const [contractBody, setContractBody] = useState<string>("");
+  const [shiftAssignmentId, setShiftAssignmentId] = useState<string | null>(null);
 
   const {
     isTracking,
@@ -58,6 +59,7 @@ const TimeTrackerWrapper = forwardRef(({
     templateId: string | null;
     templateTitle: string;
     templateBody: string;
+    shiftAssignmentId: string | null;
   }> => {
     if (!user?.id || !shift?.id) {
       return {
@@ -66,6 +68,7 @@ const TimeTrackerWrapper = forwardRef(({
         templateId: null,
         templateTitle: "Company Contract",
         templateBody: "",
+        shiftAssignmentId: null,
       };
     }
     // Fetch company_id for this shift (Shift type doesn't always include it)
@@ -77,6 +80,18 @@ const TimeTrackerWrapper = forwardRef(({
     if (shiftErr) throw shiftErr;
     const cId = (shiftRow?.company_id as string | null) ?? null;
 
+    // Get shift assignment ID for this promoter and shift
+    let shiftAssignmentId: string | null = null;
+    if (user.id && shift.id) {
+      const { data: assignment } = await supabase
+        .from("shift_assignments")
+        .select("id")
+        .eq("shift_id", shift.id)
+        .eq("promoter_id", user.id)
+        .maybeSingle();
+      shiftAssignmentId = assignment?.id ?? null;
+    }
+
     if (cId) {
       // Try to resolve company display name (optional)
       const { data: companyProfile } = await supabase
@@ -86,31 +101,33 @@ const TimeTrackerWrapper = forwardRef(({
         .maybeSingle();
       const cName = companyProfile?.name ?? null;
 
-      // Load active contract template for company
-      const { data: tpl, error: tplErr } = await (supabase as any)
-        .from("company_contract_templates")
+      // Check for shift-specific contract template (required)
+      const { data: shiftTpl, error: shiftTplErr } = await supabase
+        .from("shift_contract_templates")
         .select("id, title, body_markdown")
-        .eq("company_id", cId)
-        .eq("is_active", true)
-        .order("updated_at", { ascending: false })
-        .limit(1)
+        .eq("shift_id", shift.id)
         .maybeSingle();
-      if (tplErr) throw tplErr;
-      if (!tpl?.id) {
+      
+      if (shiftTpl && !shiftTplErr) {
+        // Use shift-specific contract
         return {
           companyId: cId,
           companyName: cName,
-          templateId: null,
-          templateTitle: "Company Contract",
-          templateBody: "",
+          templateId: shiftTpl.id, // Use shift template ID
+          templateTitle: shiftTpl.title || "Shift Contract",
+          templateBody: shiftTpl.body_markdown || "",
+          shiftAssignmentId,
         };
       }
+
+      // No shift-specific contract found - return empty (contract should be created during shift creation)
       return {
         companyId: cId,
         companyName: cName,
-        templateId: tpl.id,
-        templateTitle: tpl.title || "Company Contract",
-        templateBody: tpl.body_markdown || "",
+        templateId: null,
+        templateTitle: "Shift Contract",
+        templateBody: "",
+        shiftAssignmentId,
       };
     }
 
@@ -120,20 +137,48 @@ const TimeTrackerWrapper = forwardRef(({
       templateId: null,
       templateTitle: "Company Contract",
       templateBody: "",
+      shiftAssignmentId,
     };
   };
 
-  const hasAcceptance = async (cId: string) => {
+  const hasAcceptance = async (cId: string, shiftAssignmentId?: string) => {
     if (!user?.id) return false;
+    
+    // If we have a shift assignment ID, check for per-shift approval
+    if (shiftAssignmentId) {
+      const { data, error } = await (supabase as any)
+        .from("company_contract_acceptances")
+        .select("id, status, superseded_at")
+        .eq("shift_assignment_id", shiftAssignmentId)
+        .eq("promoter_id", user.id)
+        .is("superseded_at", null) // Only check non-superseded acceptances
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (error) throw error;
+      // Check if there's a pending contract (new version requiring approval)
+      if (data?.status === 'pending') {
+        return false; // Block check-in if pending
+      }
+      return data?.status === 'accepted';
+    }
+    
+    // Fallback to company-level check (for backward compatibility)
     const { data, error } = await (supabase as any)
       .from("company_contract_acceptances")
-      .select("id")
+      .select("id, status, superseded_at")
       .eq("company_id", cId)
       .eq("promoter_id", user.id)
+      .is("superseded_at", null) // Only check non-superseded acceptances
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     if (error) throw error;
-    return Boolean(data?.id);
+    // Check if there's a pending contract (new version requiring approval)
+    if (data?.status === 'pending') {
+      return false; // Block check-in if pending
+    }
+    return data?.status === 'accepted';
   };
 
   const gatedStartTracking = async () => {
@@ -148,6 +193,7 @@ const TimeTrackerWrapper = forwardRef(({
       setTemplateId(loaded.templateId);
       setContractTitle(loaded.templateTitle);
       setContractBody(loaded.templateBody);
+      setShiftAssignmentId(loaded.shiftAssignmentId);
 
       if (!loaded.companyId) {
         // No company_id – allow tracking (legacy)
@@ -155,8 +201,8 @@ const TimeTrackerWrapper = forwardRef(({
         return handleStartTracking();
       }
 
-      // If acceptance exists, proceed
-      const accepted = await hasAcceptance(loaded.companyId);
+      // If acceptance exists for this shift assignment, proceed
+      const accepted = await hasAcceptance(loaded.companyId, loaded.shiftAssignmentId || undefined);
       if (accepted) {
         setContractLoading(false);
         return handleStartTracking();
@@ -186,17 +232,37 @@ const TimeTrackerWrapper = forwardRef(({
     if (!user?.id || !companyId || !templateId) return;
     setContractLoading(true);
     try {
-      const { error } = await (supabase as any)
-        .from("company_contract_acceptances")
-        .insert({
-          company_id: companyId,
-          promoter_id: user.id,
-          template_id: templateId,
-          signature_text: signatureText,
-          accept_user_agent: navigator.userAgent,
-          accepted_at: new Date().toISOString(),
-        });
-      if (error) throw error;
+      // If we have a shift assignment ID, update the existing pending record
+      if (shiftAssignmentId) {
+        const { error } = await (supabase as any)
+          .from("company_contract_acceptances")
+          .update({
+            signature_text: signatureText,
+            accept_user_agent: navigator.userAgent,
+            accept_ip: null, // Could get IP from request if needed
+            accepted_at: new Date().toISOString(),
+            status: 'accepted',
+          })
+          .eq("shift_assignment_id", shiftAssignmentId)
+          .eq("promoter_id", user.id);
+        if (error) throw error;
+      } else {
+        // Fallback: create new acceptance (shouldn't happen with new system, but for backward compatibility)
+        const { error } = await (supabase as any)
+          .from("company_contract_acceptances")
+          .insert({
+            company_id: companyId,
+            promoter_id: user.id,
+            template_id: templateId,
+            shift_id: shift?.id || null,
+            shift_assignment_id: shiftAssignmentId,
+            signature_text: signatureText,
+            accept_user_agent: navigator.userAgent,
+            accepted_at: new Date().toISOString(),
+            status: 'accepted',
+          });
+        if (error) throw error;
+      }
 
       toast.success("Contract accepted");
       setContractOpen(false);

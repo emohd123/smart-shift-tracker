@@ -18,6 +18,7 @@ export interface Shift {
   created_at?: string;
   manual_status_override?: boolean;
   override_status?: ShiftStatus;
+  companyId?: string;
 }
 
 export interface ShiftFormData {

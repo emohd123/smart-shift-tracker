@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { 
   CalendarDays, ChevronDown, 
   ClipboardList, Clock, Home, MessageCircle, 
-  Settings, UserRound, Users, FileBarChart2, Eraser, Award, LayoutDashboard, DollarSign, FileText
+  Settings, UserRound, Users, FileBarChart2, Eraser, Award, LayoutDashboard, DollarSign
 } from "lucide-react";
 import { UserRole } from "@/types/database";
 import {
@@ -61,12 +61,6 @@ export const NavigationLinks = () => {
       {isCompany && (
         <AppLink to="/shifts/create" icon={<CalendarDays className="h-4 w-4" />}>
           Create Shift
-        </AppLink>
-      )}
-
-      {isCompany && (
-        <AppLink to="/company/contract" icon={<FileText className="h-4 w-4" />}>
-          Contract Template
         </AppLink>
       )}
       

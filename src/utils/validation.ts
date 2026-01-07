@@ -105,16 +105,17 @@ export const generateNonce = (): string => {
 export const createCSPDirective = (nonce: string): string => {
   return [
     "default-src 'self'",
-    `script-src 'self' 'nonce-${nonce}' https://cdnjs.cloudflare.com`,
-    `style-src 'self' 'nonce-${nonce}' 'unsafe-inline' https://fonts.googleapis.com`,
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https:",
-    "connect-src 'self' https:",
+    `script-src 'self' 'nonce-${nonce}' https://cdnjs.cloudflare.com https://maps.googleapis.com`,
+    // Note: 'unsafe-inline' is needed for React/Vite inline styles. Nonce is only for scripts.
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+    "font-src 'self' https://fonts.gstatic.com https://maps.gstatic.com",
+    "img-src 'self' data: blob: https: https://maps.googleapis.com https://maps.gstatic.com",
+    "connect-src 'self' https: https://maps.googleapis.com https://maps.gstatic.com",
     "media-src 'self'",
     "object-src 'none'",
     "base-uri 'self'",
     "form-action 'self'",
-    "frame-ancestors 'none'",
+    // Note: 'frame-ancestors' only works in HTTP headers, not meta tags, so we remove it
     "upgrade-insecure-requests"
   ].join('; ');
 };

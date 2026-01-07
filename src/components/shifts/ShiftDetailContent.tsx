@@ -3,6 +3,7 @@ import { Shift } from "./types/ShiftTypes";
 import ShiftDetail from "./ShiftDetail";
 import { AssignedPromotersManager } from "./assignedPromoters/AssignedPromotersManager";
 import { ShiftStatusToggle } from "./status/ShiftStatusToggle";
+import { ShiftContractEditor } from "./contract/ShiftContractEditor";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +61,13 @@ export const ShiftDetailContent = ({
           </Card>
           
           <ShiftStatusToggle shift={shift} onUpdate={onUpdate} />
+          
+          <ShiftContractEditor 
+            shiftId={shift.id} 
+            companyId={shift.companyId || ""} 
+            shift={shift}
+            onUpdate={onUpdate}
+          />
         </>
       )}
       

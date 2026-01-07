@@ -27,16 +27,17 @@ export function UnifiedShiftContractForm({ initialData }: UnifiedShiftContractFo
     handleDetailsChange,
     handlePaymentChange,
     handlePromoterChange,
+    handleContractChange,
     generateContractPreview,
     submitShiftAndContract
   } = useShiftContractForm({ initialData });
 
   // Generate contract preview when entering the preview step
   useEffect(() => {
-    if (activeStep === "preview") {
+    if (activeStep === "preview" && !formData.contractBody) {
       generateContractPreview();
     }
-  }, [activeStep, generateContractPreview]);
+  }, [activeStep, generateContractPreview, formData.contractBody]);
 
   const stepIndicators = [
     { id: "details", label: "Shift Details", icon: FileText },
@@ -146,9 +147,12 @@ export function UnifiedShiftContractForm({ initialData }: UnifiedShiftContractFo
         {activeStep === "preview" && (
           <ContractPreviewStep
             contractPreview={contractPreview}
+            contractTitle={formData.contractTitle}
+            contractBody={formData.contractBody}
             formData={formData}
             onNext={handleNext}
             onPrevious={handlePrevious}
+            onContractChange={handleContractChange}
           />
         )}
 

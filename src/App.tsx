@@ -30,7 +30,6 @@ const ShiftDetails = lazy(() => import("./pages/ShiftDetails"));
 
 // Lazy load - Other protected pages
 const CompanyProfilePage = lazy(() => import("./pages/CompanyProfilePage"));
-const CompanyContract = lazy(() => import("./pages/CompanyContract"));
 const PromoterContracts = lazy(() => import("./pages/PromoterContracts"));
 const Promoters = lazy(() => import("./pages/Promoters"));
 const TimeTracking = lazy(() => import("./pages/TimeTracking"));
@@ -71,7 +70,6 @@ function App() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/company" element={<CompanyDashboard />} />
                   <Route path="/company/profile" element={<CompanyProfilePage />} />
-                  <Route path="/company/contract" element={<CompanyContract />} />
                   <Route path="/admin" element={<AdminDashboard />} />
                   <Route path="/admin/legacy" element={<AdminOverview />} />
                   <Route path="/shifts" element={<Shifts />} />

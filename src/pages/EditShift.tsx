@@ -65,10 +65,11 @@ const EditShift = () => {
         location: data.location || "",
         status: data.status as ShiftStatus,
         payRate: data.pay_rate || 0,
-        payRateType: data.pay_rate_type,
+        payRateType: data.pay_rate_type || "hourly",
         isPaid: data.is_paid || false,
         manual_status_override: data.manual_status_override,
-        override_status: data.override_status as ShiftStatus | undefined
+        override_status: data.override_status as ShiftStatus | undefined,
+        companyId: data.company_id
       };
       
       setShift(formattedShift);

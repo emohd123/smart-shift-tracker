@@ -5,6 +5,8 @@ import { toast } from "sonner";
 import { ShiftFormData } from "../../types/ShiftTypes";
 import { calculatePaymentSchedule, PaymentScheduleItem } from "../utils/paymentScheduleCalculator";
 import { generateContractTemplate } from "../utils/contractTemplateGenerator";
+import { findOverlappingShifts } from "@/utils/shiftOverlapCheck";
+import { formatDateLocal } from "@/utils/dateUtils";
 
 interface ShiftContractFormState {
   title: string;
@@ -25,6 +27,8 @@ interface ShiftContractFormState {
   paymentDate: string;
   customPaymentTerms?: string;
   contractTerms?: string;
+  contractTitle?: string;
+  contractBody?: string;
 }
 
 export function useShiftContractForm(options?: { initialData?: ShiftFormData }) {
@@ -41,7 +45,9 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
     assignedPromoters: [],
     paymentDate: "",
     customPaymentTerms: "",
-    contractTerms: ""
+    contractTerms: "",
+    contractTitle: "Shift Contract",
+    contractBody: ""
   });
 
   const [paymentSchedule, setPaymentSchedule] = useState<PaymentScheduleItem[]>([]);
@@ -68,6 +74,14 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
 
   const handleDetailsChange = useCallback((updatedFields: Partial<ShiftContractFormState>) => {
     setFormData(prev => ({ ...prev, ...updatedFields }));
+  }, []);
+
+  const handleContractChange = useCallback((title: string, body: string) => {
+    setFormData(prev => ({
+      ...prev,
+      contractTitle: title,
+      contractBody: body
+    }));
   }, []);
 
   const handlePaymentChange = useCallback((paymentDate: string, customTerms?: string) => {
@@ -154,6 +168,13 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
         companyId: user?.id
       });
       setContractPreview(preview);
+      // Initialize contract body if not already set
+      if (!formData.contractBody) {
+        setFormData(prev => ({
+          ...prev,
+          contractBody: preview
+        }));
+      }
     }
   }, [formData, user?.id]);
 
@@ -161,7 +182,7 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
     const errors = validateForm();
     if (errors.length > 0) {
       toast.error("Please fix validation errors before submitting");
-      return;
+      return { success: false }; // Always return object
     }
 
     setLoading(true);
@@ -169,7 +190,8 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
       if (!user?.id) throw new Error("Not authenticated");
 
       // Create shift - use the first date from the range as the shift date
-      const shiftDate = formData.dateRange.from?.toISOString().split('T')[0];
+      // Format date in local timezone to prevent timezone shifts
+      const shiftDate = formData.dateRange.from ? formatDateLocal(formData.dateRange.from) : undefined;
       
       const { data: shiftData, error: shiftError } = await supabase
         .from("shifts")
@@ -190,8 +212,114 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
       if (shiftError) throw shiftError;
       if (!shiftData?.id) throw new Error("Failed to create shift");
 
+      // Save contract to shift_contract_templates
+      const contractTitleToSave = formData.contractTitle || "Shift Contract";
+      const contractBodyToSave = formData.contractBody || contractPreview;
+      
+      const { error: contractError } = await supabase
+        .from("shift_contract_templates")
+        .insert({
+          shift_id: shiftData.id,
+          company_id: user.id,
+          title: contractTitleToSave,
+          body_markdown: contractBodyToSave,
+          version: 1,
+          created_by: user.id
+        });
+
+      if (contractError) {
+        console.error("Error saving contract template:", contractError);
+        // Don't fail the whole operation if contract save fails, but log it
+        toast.warning("Shift created but contract save failed", {
+          description: "You can edit the contract later in Shift Details"
+        });
+      }
+
       // Create shift assignments for each promoter (if any assigned)
       if (formData.assignedPromoters.length > 0) {
+        // Check for overlapping shifts before assigning
+        // Format dates in local timezone to prevent timezone shifts
+        const shiftDate = formData.dateRange.from ? formatDateLocal(formData.dateRange.from) : '';
+        const shiftEndDate = formData.dateRange.to ? formatDateLocal(formData.dateRange.to) : null;
+        const shiftStartTime = formData.startTime;
+        const shiftEndTime = formData.endTime;
+
+        const overlapChecks = await Promise.all(
+          formData.assignedPromoters.map(async (promoter) => {
+            const overlapping = await findOverlappingShifts(
+              shiftData.id,
+              promoter.id,
+              shiftDate,
+              shiftEndDate,
+              shiftStartTime,
+              shiftEndTime
+            );
+            return { promoterId: promoter.id, promoterName: promoter.fullName, overlapping };
+          })
+        );
+
+        const promotersWithOverlaps = overlapChecks.filter(check => check.overlapping.length > 0);
+        if (promotersWithOverlaps.length > 0) {
+          const overlapNames = promotersWithOverlaps.map(p => p.promoterName).join(', ');
+          toast.error(
+            `Cannot assign ${promotersWithOverlaps.length} promoter(s) due to overlapping shifts`,
+            {
+              description: `${overlapNames} have conflicting shift assignments. Please unassign them from overlapping shifts first.`
+            }
+          );
+          // Continue with non-overlapping promoters only
+          const validPromoters = formData.assignedPromoters.filter(
+            p => !promotersWithOverlaps.some(overlap => overlap.promoterId === p.id)
+          );
+          
+          if (validPromoters.length === 0) {
+            toast.error("No promoters could be assigned due to overlapping shifts");
+            return { success: false };
+          }
+
+          toast.warning(`Assigned ${validPromoters.length} of ${formData.assignedPromoters.length} promoters (${promotersWithOverlaps.length} skipped due to overlaps)`);
+          
+          const assignmentPromises = validPromoters.map(promoter =>
+            supabase
+              .from("shift_assignments")
+              .insert({
+                shift_id: shiftData.id,
+                promoter_id: promoter.id,
+                status: "assigned"
+              })
+              .select("id")
+              .single()
+          );
+
+          const assignmentResults = await Promise.all(assignmentPromises);
+          
+          // Create payment status records for each assignment
+          const paymentDate = new Date(formData.paymentDate).toISOString();
+          const paymentPromises = assignmentResults.map((result) => {
+            if (result.error) return Promise.resolve(result.error);
+            return (supabase as any)
+              .from("shift_assignment_payment_status")
+              .insert({
+                assignment_id: result.data?.id,
+                status: "scheduled",
+                scheduled_at: paymentDate
+              });
+          });
+
+          await Promise.all(paymentPromises);
+          
+          const promoterMessage = validPromoters.length > 0
+            ? `Shift created and ${validPromoters.length} promoters assigned (${promotersWithOverlaps.length} skipped due to overlaps)`
+            : "Shift created successfully. You can assign promoters later.";
+
+          toast.success("Shift created successfully!", {
+            description: promoterMessage
+          });
+
+          return { shiftId: shiftData.id, success: true };
+        }
+
+        // No overlaps, proceed with all assignments
         const assignmentPromises = formData.assignedPromoters.map(promoter =>
           supabase
             .from("shift_assignments")
@@ -208,7 +336,7 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
 
         // Create payment status records for each assignment
         const paymentDate = new Date(formData.paymentDate).toISOString();
-        const paymentPromises = assignmentResults.map((result, index) => {
+        const paymentPromises = assignmentResults.map((result) => {
           if (result.error) return Promise.resolve(result.error);
           // Use any type to bypass TypeScript limitations with newer tables
           return (supabase as any)
@@ -222,9 +350,6 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
 
         await Promise.all(paymentPromises);
       }
-
-      // For now, skip contract notifications as the table doesn't exist
-      // In production, you would need to create this table or use an alternative notification system
 
       const promoterMessage = formData.assignedPromoters.length > 0
         ? `Shift created and ${formData.assignedPromoters.length} promoters assigned`
@@ -256,6 +381,7 @@ export function useShiftContractForm(options?: { initialData?: ShiftFormData }) 
     handleDetailsChange,
     handlePaymentChange,
     handlePromoterChange,
+    handleContractChange,
     generateContractPreview,
     submitShiftAndContract
   };

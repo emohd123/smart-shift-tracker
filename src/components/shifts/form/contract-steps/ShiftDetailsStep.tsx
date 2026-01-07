@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ChevronRight, AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { formatDateLocal, parseLocalDate } from "@/utils/dateUtils";
 
 interface ShiftDetailsStepProps {
   formData: any;
@@ -82,8 +83,8 @@ export default function ShiftDetailsStep({
             <Input
               id="startDate"
               type="date"
-              value={formData.dateRange?.from ? formData.dateRange.from.toISOString().split('T')[0] : ''}
-              onChange={(e) => handleDateRangeChange("from", e.target.value ? new Date(e.target.value) : undefined)}
+              value={formData.dateRange?.from ? formatDateLocal(formData.dateRange.from) : ''}
+              onChange={(e) => handleDateRangeChange("from", e.target.value ? parseLocalDate(e.target.value) : undefined)}
             />
           </div>
           <div className="space-y-2">
@@ -91,8 +92,8 @@ export default function ShiftDetailsStep({
             <Input
               id="endDate"
               type="date"
-              value={formData.dateRange?.to ? formData.dateRange.to.toISOString().split('T')[0] : ''}
-              onChange={(e) => handleDateRangeChange("to", e.target.value ? new Date(e.target.value) : undefined)}
+              value={formData.dateRange?.to ? formatDateLocal(formData.dateRange.to) : ''}
+              onChange={(e) => handleDateRangeChange("to", e.target.value ? parseLocalDate(e.target.value) : undefined)}
             />
           </div>
         </div>

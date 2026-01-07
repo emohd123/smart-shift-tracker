@@ -31,7 +31,13 @@ export const useAuthState = () => {
                 .rpc('get_user_role', { _user_id: formattedUser.id });
 
               if (roleError) {
-                console.warn("get_user_role RPC failed, falling back to profiles table:", roleError);
+                // Check if it's a missing function error (404) - this is expected if function doesn't exist
+                const isMissingFunction = roleError.code === 'PGRST202' || roleError.message?.includes('Could not find the function');
+                
+                if (!isMissingFunction) {
+                  console.warn("get_user_role RPC failed, falling back to profiles table:", roleError);
+                }
+                
                 // Fallback: fetch role from profiles table directly
                 const { data: profileData, error: profileError } = await supabase
                   .from('profiles')
@@ -92,7 +98,13 @@ export const useAuthState = () => {
                 .rpc('get_user_role', { _user_id: formattedUser.id })
                 .then(async ({ data: roleData, error: roleError }) => {
                   if (roleError) {
-                    console.warn("get_user_role RPC failed, falling back to profiles table:", roleError);
+                    // Check if it's a missing function error (404) - this is expected if function doesn't exist
+                    const isMissingFunction = roleError.code === 'PGRST202' || roleError.message?.includes('Could not find the function');
+                    
+                    if (!isMissingFunction) {
+                      console.warn("get_user_role RPC failed, falling back to profiles table:", roleError);
+                    }
+                    
                     // Fallback: fetch role from profiles table directly
                     const { data: profileData, error: profileError } = await supabase
                       .from('profiles')
