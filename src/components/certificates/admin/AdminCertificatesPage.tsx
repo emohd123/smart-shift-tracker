@@ -261,13 +261,15 @@ export default function AdminCertificatesPage() {
         registration_number: string | null;
         phone_number: string | null;
         email: string | null;
+        website: string | null;
+        industry: string | null;
       }>();
       
       if (companyIds.length > 0) {
-        // Get company_profiles for name, logo, registration
+        // Get company_profiles for name, logo, registration, website, industry
         const { data: companies } = await supabase
           .from('company_profiles')
-          .select('user_id, name, logo_url, registration_id')
+          .select('user_id, name, logo_url, registration_id, website, industry')
           .in('user_id', companyIds);
 
         // Get profiles for phone and email
@@ -285,7 +287,9 @@ export default function AdminCertificatesPage() {
             logo_url: c.logo_url,
             registration_number: c.registration_id || null,
             phone_number: userProfile?.phone_number || null,
-            email: userProfile?.email || null
+            email: userProfile?.email || null,
+            website: c.website || null,
+            industry: c.industry || null
           });
         });
       }
@@ -320,6 +324,8 @@ export default function AdminCertificatesPage() {
           company_registration_number: companyInfo?.registration_number || null,
           company_phone_number: companyInfo?.phone_number || null,
           company_email: companyInfo?.email || null,
+          company_website: companyInfo?.website || null,
+          company_industry: companyInfo?.industry || null,
           total_hours: hoursWorked,
           status: assignmentStatus || s.status || 'completed'
         };
@@ -371,17 +377,24 @@ export default function AdminCertificatesPage() {
 
     selectedShiftsList.forEach(shift => {
       if (!companyMap.has(shift.company_id)) {
+        const companyData = {
+          id: shift.company_id,
+          name: shift.company_name,
+          logo_url: shift.company_logo_url || null,
+          website: shift.company_website || null,
+          registration_number: shift.company_registration_number || null,
+          phone_number: shift.company_phone_number || null,
+          email: shift.company_email || null,
+          contact_person: null // Column doesn't exist in database
+        };
+        
+        // Add industry to company object if available
+        if (shift.company_industry) {
+          (companyData as any).industry = shift.company_industry;
+        }
+        
         companyMap.set(shift.company_id, {
-          company: {
-            id: shift.company_id,
-            name: shift.company_name,
-            logo_url: shift.company_logo_url || null,
-            website: null,
-            registration_number: shift.company_registration_number || null,
-            phone_number: shift.company_phone_number || null,
-            email: shift.company_email || null,
-            contact_person: null
-          },
+          company: companyData,
           shifts: [],
           totalHours: 0
         });

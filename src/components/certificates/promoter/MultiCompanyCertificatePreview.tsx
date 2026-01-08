@@ -1,9 +1,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Building2, Calendar, Clock, MapPin } from "lucide-react";
+import { CheckCircle, Building2, Calendar, Clock, MapPin, Mail, Phone, Globe, User, Hash, Briefcase, Tag, FileText } from "lucide-react";
 import { format } from "date-fns";
 import QRCode from "react-qr-code";
 import { MultiCompanyCertificate, CompanyWorkEntry } from "../types/certificate";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 // Helper to format hours as whole numbers
 const formatHours = (hours: number) => Math.round(hours);
@@ -38,12 +39,44 @@ export default function MultiCompanyCertificatePreview({ data }: MultiCompanyCer
 
       <CardContent className="p-6 space-y-6">
         {/* Promoter Info */}
-        <div className="text-center pb-4 border-b">
-          <h2 className="text-xl font-semibold">{data.promoterName}</h2>
-          <p className="text-sm text-muted-foreground">Promoter</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Issue Date: {format(new Date(data.issueDate), 'MMMM dd, yyyy')}
-          </p>
+        <div className="bg-secondary/20 rounded-lg p-4 border">
+          <div className="flex items-start gap-4">
+            {data.promoter?.profile_photo_url && (
+              <Avatar className="h-20 w-20 border-2 border-primary/50">
+                <AvatarImage src={data.promoter.profile_photo_url} alt={data.promoterName} />
+                <AvatarFallback>{data.promoterName.charAt(0)}</AvatarFallback>
+              </Avatar>
+            )}
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-primary">{data.promoterName}</h2>
+              <p className="text-sm text-muted-foreground">Promoter</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Issued on: {format(new Date(data.issueDate), 'MMMM dd, yyyy')}
+              </p>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+                {data.promoter?.email && (
+                  <p className="flex items-center gap-1">
+                    <Mail className="h-3 w-3" /> {data.promoter.email}
+                  </p>
+                )}
+                {data.promoter?.phone_number && (
+                  <p className="flex items-center gap-1">
+                    <Phone className="h-3 w-3" /> {data.promoter.phone_number}
+                  </p>
+                )}
+                {data.promoter?.nationality && (
+                  <p className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" /> {data.promoter.nationality}
+                  </p>
+                )}
+                {data.promoter?.unique_code && (
+                  <p className="flex items-center gap-1">
+                    <Tag className="h-3 w-3" /> {data.promoter.unique_code}
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Companies Section */}
@@ -64,11 +97,45 @@ export default function MultiCompanyCertificatePreview({ data }: MultiCompanyCer
                     <Building2 className="h-4 w-4 text-primary" />
                     <h3 className="font-semibold text-lg">{companyEntry.company.name}</h3>
                   </div>
-                  {companyEntry.company.website && (
-                    <p className="text-xs text-muted-foreground">{companyEntry.company.website}</p>
+                  {(companyEntry.company as any).industry && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Briefcase className="h-3 w-3" /> {(companyEntry.company as any).industry}
+                    </p>
                   )}
+                  {((companyEntry.company as any).city || (companyEntry.company as any).country) && (
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> {[(companyEntry.company as any).city, (companyEntry.company as any).country].filter(Boolean).join(', ')}
+                    </p>
+                  )}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
+                    {companyEntry.company.website && (
+                      <p className="flex items-center gap-1">
+                        <Globe className="h-3 w-3" /> <a href={companyEntry.company.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{companyEntry.company.website}</a>
+                      </p>
+                    )}
+                    {companyEntry.company.email && (
+                      <p className="flex items-center gap-1">
+                        <Mail className="h-3 w-3" /> {companyEntry.company.email}
+                      </p>
+                    )}
+                    {companyEntry.company.phone_number && (
+                      <p className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" /> {companyEntry.company.phone_number}
+                      </p>
+                    )}
+                    {(companyEntry.company as any).contact_person && (
+                      <p className="flex items-center gap-1">
+                        <User className="h-3 w-3" /> {(companyEntry.company as any).contact_person}
+                      </p>
+                    )}
+                    {((companyEntry.company as any).cr_number || companyEntry.company.registration_number) && (
+                      <p className="flex items-center gap-1 col-span-2">
+                        <FileText className="h-3 w-3" /> CR/Reg. No: {(companyEntry.company as any).cr_number || companyEntry.company.registration_number}
+                      </p>
+                    )}
+                  </div>
                   <Badge variant="secondary" className="mt-2">
-                    {formatHours(companyEntry.totalHours)} Hours Total
+                    {formatHours(companyEntry.totalHours)} Verified Hours Total
                   </Badge>
                 </div>
               </div>

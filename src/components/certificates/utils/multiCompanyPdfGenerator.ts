@@ -3,9 +3,9 @@ import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
 import { MultiCompanyCertificate } from '../types/certificate';
 
-/* ---------------------------------------------
+/* ------------------------------------------------
    Helpers
---------------------------------------------- */
+------------------------------------------------ */
 
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
@@ -23,17 +23,13 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
 
 const roundHours = (h: number) => Math.round(h || 0);
 
-/* ---------------------------------------------
-   MAIN GENERATOR
---------------------------------------------- */
+/* ------------------------------------------------
+   PDF Generator
+------------------------------------------------ */
 
 export async function generateMultiCompanyPDF(
   data: MultiCompanyCertificate
 ): Promise<Blob> {
-
-  /* -------------------------------------------
-     Document Setup (Landscape A4)
-  ------------------------------------------- */
 
   const doc = new jsPDF({
     orientation: 'landscape',
@@ -45,42 +41,38 @@ export async function generateMultiCompanyPDF(
   const pageHeight = 210;
   const margin = 18;
   const cardWidth = pageWidth - margin * 2;
-
   let yPos = margin;
 
-  /* -------------------------------------------
-     Brand Colors
-  ------------------------------------------- */
+  /* ------------------------------------------------
+     Colors
+  ------------------------------------------------ */
 
-  const primary: [number, number, number] = [37, 99, 235];   // SmartShift Blue
+  const primary: [number, number, number] = [37, 99, 235];
   const muted: [number, number, number] = [100, 116, 139];
   const dark: [number, number, number] = [15, 23, 42];
   const border: [number, number, number] = [226, 232, 240];
   const bg: [number, number, number] = [248, 250, 252];
 
-  /* -------------------------------------------
-     SmartShift WATERMARK
-  ------------------------------------------- */
+  /* ------------------------------------------------
+     WATERMARK (SUBTLE)
+  ------------------------------------------------ */
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(60);
-  doc.setTextColor(230, 235, 240);
+  doc.setFontSize(48);
+  doc.setTextColor(245, 247, 250);
   doc.text(
     'SMARTSHIFT',
     pageWidth / 2,
-    pageHeight / 2,
-    {
-      align: 'center',
-      angle: 30
-    }
+    pageHeight / 2 + 20,
+    { align: 'center', angle: 25 }
   );
 
-  /* -------------------------------------------
-     Header
-  ------------------------------------------- */
+  /* ------------------------------------------------
+     HEADER
+  ------------------------------------------------ */
 
-  doc.setTextColor(...primary);
   doc.setFontSize(18);
+  doc.setTextColor(...primary);
   doc.text('WORK EXPERIENCE CERTIFICATE', pageWidth / 2, yPos, { align: 'center' });
 
   yPos += 8;
@@ -96,146 +88,165 @@ export async function generateMultiCompanyPDF(
 
   yPos += 14;
 
-  /* -------------------------------------------
-     PROMOTER PROFILE BLOCK (Enhanced with all details)
-  ------------------------------------------- */
+  /* ------------------------------------------------
+     PROMOTER PROFILE CARD
+  ------------------------------------------------ */
 
-  // Calculate dynamic height based on available fields
-  const promoter = data.promoter;
-  const hasEmail = Boolean(promoter?.email);
-  const hasPhone = Boolean(promoter?.phone_number);
-  const hasNationality = Boolean(promoter?.nationality);
-  const hasAge = Boolean(promoter?.age);
-  const hasUniqueCode = Boolean(promoter?.unique_code);
-  
-  // Base height: 32mm (photo 20mm + padding 12mm, or text fields if no photo)
-  // Additional fields: 6mm each (matching text line spacing)
-  const additionalFields = (hasEmail ? 1 : 0) + (hasPhone ? 1 : 0) + 
-                          (hasNationality ? 1 : 0) + (hasAge ? 1 : 0) + 
-                          (hasUniqueCode ? 1 : 0);
-  const profileBlockHeight = 32 + (additionalFields * 6);
-
-  doc.setDrawColor(...border);
   doc.setFillColor(...bg);
-  doc.rect(margin, yPos, cardWidth, profileBlockHeight, 'FD');
+  doc.setDrawColor(...border);
+  doc.rect(margin, yPos, cardWidth, 36, 'FD');
 
   const profileX = margin + 10;
   const profileY = yPos + 8;
-  let textY = profileY;
 
-  // Profile Photo
-  if (promoter?.profile_photo_url) {
-    const img = await loadImageAsBase64(promoter.profile_photo_url);
-    if (img) {
-      doc.addImage(img, 'JPEG', profileX, profileY, 20, 20);
-    }
+  if (data.promoter?.profile_photo_url) {
+    const img = await loadImageAsBase64(data.promoter.profile_photo_url);
+    if (img) doc.addImage(img, 'JPEG', profileX, profileY, 20, 20);
   }
 
   const textX = profileX + 26;
 
-  // Full Name
   doc.setFontSize(12);
   doc.setTextColor(...dark);
-  doc.setFont('helvetica', 'bold');
-  doc.text(data.promoterName, textX, textY + 6);
-  textY += 6;
+  doc.text(data.promoterName, textX, profileY + 5);
 
-  // Role
   doc.setFontSize(8);
   doc.setTextColor(...muted);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Promoter', textX, textY + 6);
-  textY += 6;
+  doc.text('Promoter', textX, profileY + 11);
 
-  // Certificate Reference
-  doc.text(`Certificate Ref: ${data.referenceNumber}`, textX, textY + 6);
-  textY += 6;
-
-  // Issue Date
   const issueDate = new Date(data.issueDate || new Date()).toLocaleDateString(
     'en-US',
     { month: 'long', day: '2-digit', year: 'numeric' }
   );
-  doc.text(`Issued on: ${issueDate}`, textX, textY + 6);
-  textY += 6;
 
-  // Email (if available)
-  if (hasEmail) {
-    doc.text(`Email: ${promoter!.email}`, textX, textY + 6);
-    textY += 6;
-  }
+  doc.text(`Issued on: ${issueDate}`, textX, profileY + 17);
 
-  // Phone (if available)
-  if (hasPhone) {
-    doc.text(`Phone: ${promoter!.phone_number}`, textX, textY + 6);
-    textY += 6;
-  }
+  /* --- Promoter Details Grid --- */
 
-  // Nationality (if available)
-  if (hasNationality) {
-    doc.text(`Nationality: ${promoter!.nationality}`, textX, textY + 6);
-    textY += 6;
-  }
+  const infoY = profileY + 23;
+  const col2X = textX + 70;
 
-  // Age (if available)
-  if (hasAge) {
-    doc.text(`Age: ${promoter!.age}`, textX, textY + 6);
-    textY += 6;
-  }
+  doc.setFontSize(7.5);
+  doc.text(`Email: ${data.promoter?.email || '-'}`, textX, infoY);
+  doc.text(`Phone: ${data.promoter?.phone_number || '-'}`, textX, infoY + 5);
 
-  // Unique Code (if available)
-  if (hasUniqueCode) {
-    doc.text(`Code: ${promoter!.unique_code}`, textX, textY + 6);
-    textY += 6;
-  }
+  doc.text(`Nationality: ${data.promoter?.nationality || '-'}`, col2X, infoY);
+  doc.text(`Code: ${data.promoter?.unique_code || '-'}`, col2X, infoY + 5);
 
-  yPos += profileBlockHeight + 8;
+  yPos += 46;
 
-  /* -------------------------------------------
-     COMPANY WORK CARDS
-  ------------------------------------------- */
+  /* ------------------------------------------------
+     COMPANY WORK CARDS (WITH DETAILS)
+  ------------------------------------------------ */
 
   for (const company of data.companies) {
 
-    if (yPos > pageHeight - 70) {
+    if (yPos > pageHeight - 80) {
       doc.addPage();
       yPos = margin;
     }
 
     const cardStartY = yPos;
-    let contentY = cardStartY + 10;
 
     doc.setFillColor(...bg);
-    doc.rect(margin, cardStartY, cardWidth, 10, 'F');
+    doc.setDrawColor(...border);
+    doc.rect(margin, cardStartY, cardWidth, 44, 'FD');
 
+    /* Logo */
     if (company.company.logo_url) {
       const logo = await loadImageAsBase64(company.company.logo_url);
-      if (logo) {
-        doc.addImage(logo, 'PNG', margin + 10, contentY - 6, 16, 16);
-      }
+      if (logo) doc.addImage(logo, 'PNG', margin + 12, cardStartY + 10, 20, 20);
     }
 
+    const cx = margin + 40;
+    let cy = cardStartY + 14;
+
+    /* Company Name */
     doc.setFontSize(11);
     doc.setTextColor(...dark);
     doc.setFont('helvetica', 'bold');
-    doc.text(company.company.name, margin + 32, contentY);
+    doc.text(company.company.name, cx, cy);
 
+    cy += 6;
+
+    /* Industry / Type - using optional field from type */
+    const companyAny = company.company as any;
+    if (companyAny.industry) {
+      doc.setFontSize(8);
+      doc.setTextColor(...muted);
+      doc.setFont('helvetica', 'normal');
+      doc.text(companyAny.industry, cx, cy);
+      cy += 5;
+    }
+
+    /* Location - using optional fields from type */
+    const location = [companyAny.city, companyAny.country].filter(Boolean).join(', ');
+    if (location) {
+      doc.setFontSize(7.5);
+      doc.setTextColor(...muted);
+      doc.text(`Location: ${location}`, cx, cy);
+      cy += 5;
+    }
+
+    /* Website */
+    if (company.company.website) {
+      doc.setFontSize(7.5);
+      doc.setTextColor(...muted);
+      doc.text(`Website: ${company.company.website}`, cx, cy);
+      cy += 5;
+    }
+
+    /* Email */
+    if (company.company.email) {
+      doc.setFontSize(7.5);
+      doc.setTextColor(...muted);
+      doc.text(`Email: ${company.company.email}`, cx, cy);
+      cy += 5;
+    }
+
+    /* Phone */
+    if (company.company.phone_number) {
+      doc.setFontSize(7.5);
+      doc.setTextColor(...muted);
+      doc.text(`Phone: ${company.company.phone_number}`, cx, cy);
+      cy += 5;
+    }
+
+    /* Contact Person - only if it exists in data */
+    if (company.company.contact_person) {
+      doc.setFontSize(7.5);
+      doc.setTextColor(...muted);
+      doc.text(`Contact: ${company.company.contact_person}`, cx, cy);
+      cy += 5;
+    }
+
+    /* CR / Registration Number */
+    const crNumber = companyAny.cr_number || company.company.registration_number;
+    if (crNumber) {
+      doc.setFontSize(8);
+      doc.setTextColor(...dark);
+      doc.text(`CR / Reg. No: ${crNumber}`, cx, cy);
+      cy += 6;
+    }
+
+    /* Total Hours */
+    doc.setFontSize(8.5);
+    doc.setTextColor(...dark);
+    doc.text(`Total Verified Hours: ${roundHours(company.totalHours)}`, cx, cy);
+
+    yPos = cardStartY + 50;
+
+    /* Work Assignments */
     doc.setFontSize(8);
     doc.setTextColor(...muted);
-    doc.setFont('helvetica', 'normal');
-    doc.text(
-      `${roundHours(company.totalHours)} Total Hours`,
-      pageWidth - margin - 30,
-      contentY,
-      { align: 'right' }
-    );
+    doc.text('Work Assignments', margin + 12, yPos);
 
-    contentY += 6;
+    yPos += 4;
 
     autoTable(doc, {
-      startY: contentY,
-      margin: { left: margin + 10, right: margin + 10 },
-      tableWidth: cardWidth - 20,
+      startY: yPos,
+      margin: { left: margin + 12, right: margin + 12 },
+      tableWidth: cardWidth - 24,
       head: [['Event / Campaign', 'Date', 'Location', 'Hours']],
       body: company.shifts.map(s => [
         s.title || '—',
@@ -268,45 +279,52 @@ export async function generateMultiCompanyPDF(
     });
 
     const endY = (doc as any).lastAutoTable.finalY;
-
     doc.setDrawColor(...border);
     doc.rect(margin, cardStartY, cardWidth, endY - cardStartY + 6, 'S');
-
-    yPos = endY + 12;
+    yPos = endY + 14;
   }
 
-  /* -------------------------------------------
+  /* ------------------------------------------------
      SUMMARY + QR
-  ------------------------------------------- */
+  ------------------------------------------------ */
 
   const verifyUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(data.referenceNumber)}`;
   const qr = await QRCode.toDataURL(verifyUrl, { width: 120 });
 
-  doc.setFillColor(240, 248, 255);
-  doc.rect(margin, yPos, cardWidth, 22, 'F');
+  doc.setFillColor(235, 245, 255);
+  doc.rect(margin, yPos, cardWidth, 20, 'F');
 
-  doc.setFontSize(14);
-  doc.setTextColor(...primary);
+  doc.setFontSize(15);
   doc.setFont('helvetica', 'bold');
+  doc.setTextColor(...primary);
   doc.text(
-    `${roundHours(data.grandTotalHours)} Total Verified Hours`,
+    `${roundHours(data.grandTotalHours)} VERIFIED WORK HOURS`,
     margin + 10,
-    yPos + 14
+    yPos + 13
   );
 
-  doc.addImage(qr, 'PNG', pageWidth - margin - 26, yPos + 3, 18, 18);
+  doc.addImage(qr, 'PNG', pageWidth - margin - 22, yPos + 3, 16, 16);
 
-  /* -------------------------------------------
+  yPos += 28;
+
+  /* ------------------------------------------------
      FOOTER
-  ------------------------------------------- */
+  ------------------------------------------------ */
 
   doc.setFontSize(7);
-  doc.setTextColor(...muted);
   doc.setFont('helvetica', 'normal');
+  doc.setTextColor(...muted);
   doc.text(
-    'Generated digitally by SmartShift Tracker • This certificate is verifiable via QR code',
+    `Certificate Reference: ${data.referenceNumber}`,
     pageWidth / 2,
-    pageHeight - 10,
+    pageHeight - 12,
+    { align: 'center' }
+  );
+
+  doc.text(
+    'Generated digitally by SmartShift Tracker • Verifiable via QR code',
+    pageWidth / 2,
+    pageHeight - 8,
     { align: 'center' }
   );
 
