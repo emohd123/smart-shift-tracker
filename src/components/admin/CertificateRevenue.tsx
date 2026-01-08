@@ -28,43 +28,72 @@ export default function CertificateRevenue() {
 
   const fetchCertificateStats = async () => {
     try {
-      // Get certificate payments
-      const { data: payments, error: paymentsError } = await supabase
+      // Get certificate payments - handle gracefully if table doesn't exist
+      let payments: any[] = [];
+      const { data: paymentsData, error: paymentsError } = await supabase
         .from("certificate_payments")
         .select("amount, status, created_at");
 
-      if (paymentsError) throw paymentsError;
+      if (paymentsError) {
+        // If table doesn't exist, log but don't crash
+        if (paymentsError.code === 'PGRST205' || paymentsError.message?.includes('schema cache')) {
+          console.warn("certificate_payments table not found, using empty data");
+        } else {
+          throw paymentsError;
+        }
+      } else {
+        payments = paymentsData || [];
+      }
 
-      // Get certificate verifications count
-      const { count: verificationsCount, error: verError } = await supabase
+      // Get certificate verifications count - handle gracefully if table doesn't exist
+      let verificationsCount = 0;
+      const { count, error: verError } = await supabase
         .from("certificate_verifications")
         .select("*", { count: 'exact', head: true });
 
-      if (verError) throw verError;
+      if (verError) {
+        // If table doesn't exist, log but don't crash
+        if (verError.code === 'PGRST205' || verError.message?.includes('schema cache')) {
+          console.warn("certificate_verifications table not found, using 0");
+        } else {
+          throw verError;
+        }
+      } else {
+        verificationsCount = count || 0;
+      }
 
       const currentMonth = new Date().getMonth();
       const currentYear = new Date().getFullYear();
 
-      const paidPayments = payments?.filter(p => p.status === 'completed') || [];
-      const pendingPayments = payments?.filter(p => p.status === 'pending') || [];
+      const paidPayments = payments.filter(p => p.status === 'completed') || [];
+      const pendingPayments = payments.filter(p => p.status === 'pending') || [];
 
-      const totalRevenue = paidPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+      const totalRevenue = paidPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
       const thisMonthRevenue = paidPayments
         .filter(p => {
+          if (!p.created_at) return false;
           const date = new Date(p.created_at);
           return date.getMonth() === currentMonth && date.getFullYear() === currentYear;
         })
-        .reduce((sum, p) => sum + Number(p.amount), 0);
+        .reduce((sum, p) => sum + Number(p.amount || 0), 0);
 
       setStats({
         totalRevenue,
         thisMonthRevenue,
         paidCertificates: paidPayments.length,
         pendingCertificates: pendingPayments.length,
-        totalVerifications: verificationsCount || 0
+        totalVerifications: verificationsCount
       });
     } catch (error) {
       console.error("Error fetching certificate stats:", error);
+      // Set default stats on error
+      setStats({
+        totalRevenue: 0,
+        thisMonthRevenue: 0,
+        paidCertificates: 0,
+        pendingCertificates: 0,
+        totalVerifications: 0
+      });
     } finally {
       setLoading(false);
     }

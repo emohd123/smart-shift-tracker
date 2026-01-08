@@ -14,7 +14,7 @@ const Login = () => {
   useEffect(() => {
     if (isAuthenticated) {
       toast.info("Already signed in");
-      navigate("/shifts", { replace: true });
+      navigate("/dashboard", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 

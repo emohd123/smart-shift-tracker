@@ -77,30 +77,75 @@ export default function AdminCertificatesPage() {
     try {
       setLoading(true);
       
-      // Fetch promoter roles
-      const { data: promoterRoles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'promoter');
+      // Directly fetch promoters from profiles table
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, full_name, unique_code, profile_photo_url, age, nationality, phone_number, email')
+        .eq('role', 'promoter')
+        .order('full_name');
 
-      if (rolesError) throw rolesError;
+      if (error) {
+        // If error is about role column, try without role filter
+        if (error.code === 'PGRST116' || error.message?.includes('column') || error.message?.includes('role')) {
+          console.warn('Role column not found, fetching all profiles');
+          const { data: allData, error: allError } = await supabase
+            .from('profiles')
+            .select('id, full_name, unique_code, profile_photo_url, age, nationality, phone_number, email, role')
+            .order('full_name');
+          
+          if (allError) throw allError;
+          
+          // Filter manually for promoters
+          const promoterData = allData?.filter(p => p.role === 'promoter') || [];
+          if (promoterData.length === 0) {
+            setPromoters([]);
+            setLoading(false);
+            return;
+          }
+          
+          // Continue with promoterData
+          const promoterList: PromoterOption[] = [];
+          
+          for (const p of promoterData) {
+            const { data: timeLogs, error: timeError } = await supabase
+              .from('time_logs')
+              .select('shift_id, total_hours')
+              .eq('user_id', p.id);
+            
+            if (timeError) {
+              console.error('Error fetching time logs for', p.id, timeError);
+            }
+            
+            const uniqueShiftIds = new Set(timeLogs?.map(log => log.shift_id).filter(Boolean) || []);
+            const shiftCount = uniqueShiftIds.size;
+            const totalHours = timeLogs?.reduce((sum, log) => sum + (log.total_hours || 0), 0) || 0;
 
-      if (!promoterRoles || promoterRoles.length === 0) {
+            promoterList.push({
+              id: p.id,
+              full_name: p.full_name || 'Unknown',
+              unique_code: p.unique_code || '',
+              profile_photo_url: p.profile_photo_url,
+              total_shifts: shiftCount,
+              total_hours: totalHours,
+              age: p.age,
+              nationality: p.nationality,
+              phone_number: p.phone_number,
+              email: p.email
+            });
+          }
+
+          setPromoters(promoterList);
+          setLoading(false);
+          return;
+        }
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
         setPromoters([]);
         setLoading(false);
         return;
       }
-
-      const promoterIds = promoterRoles.map(r => r.user_id);
-
-      // Fetch profiles for these promoters
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, full_name, unique_code, profile_photo_url, age, nationality, phone_number, email')
-        .in('id', promoterIds)
-        .order('full_name');
-
-      if (error) throw error;
 
       const promoterList: PromoterOption[] = [];
       
@@ -133,9 +178,12 @@ export default function AdminCertificatesPage() {
       }
 
       setPromoters(promoterList);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching promoters:', error);
-      toast.error('Failed to load promoters');
+      const errorMessage = error?.message || error?.code || 'Unknown error';
+      console.error('Full error details:', error);
+      toast.error(`Failed to load promoters: ${errorMessage}`);
+      setPromoters([]);
     } finally {
       setLoading(false);
     }
@@ -144,23 +192,41 @@ export default function AdminCertificatesPage() {
   const fetchPromoterShifts = async (promoterId: string) => {
     try {
       setLoadingShifts(true);
+      console.log('Fetching shifts for promoter:', promoterId);
 
+      // First, get ALL shifts the promoter was assigned to (don't filter by status)
+      const { data: assignments, error: assignmentsError } = await supabase
+        .from('shift_assignments')
+        .select('shift_id, status, work_approved')
+        .eq('promoter_id', promoterId);
+
+      if (assignmentsError) {
+        console.error('Error fetching assignments:', assignmentsError);
+      } else {
+        console.log('Found assignments:', assignments?.length || 0, assignments);
+      }
+
+      // Get time logs for this promoter
       const { data: timeLogs, error: timeLogsError } = await supabase
         .from('time_logs')
         .select('shift_id, total_hours, check_in_time, check_out_time')
         .eq('user_id', promoterId);
 
-      if (timeLogsError) throw timeLogsError;
-
-      if (!timeLogs || timeLogs.length === 0) {
-        setShifts([]);
-        setLoadingShifts(false);
-        return;
+      if (timeLogsError) {
+        console.error('Error fetching time logs:', timeLogsError);
+      } else {
+        console.log('Found time logs:', timeLogs?.length || 0, timeLogs);
       }
 
-      const shiftIds = [...new Set(timeLogs.map(t => t.shift_id).filter(Boolean))];
+      // Combine shift IDs from both assignments and time logs
+      const assignmentShiftIds = assignments?.map(a => a.shift_id).filter(Boolean) || [];
+      const timeLogShiftIds = timeLogs?.map(t => t.shift_id).filter(Boolean) || [];
+      const allShiftIds = [...new Set([...assignmentShiftIds, ...timeLogShiftIds])];
 
-      if (shiftIds.length === 0) {
+      console.log('Combined shift IDs:', allShiftIds.length, allShiftIds);
+
+      if (allShiftIds.length === 0) {
+        console.warn('No shift IDs found for promoter');
         setShifts([]);
         setLoadingShifts(false);
         return;
@@ -169,10 +235,22 @@ export default function AdminCertificatesPage() {
       const { data: shiftsData, error: shiftsError } = await supabase
         .from('shifts')
         .select('id, title, date, start_time, end_time, location, company_id, status')
-        .in('id', shiftIds)
+        .in('id', allShiftIds)
         .order('date', { ascending: false });
 
-      if (shiftsError) throw shiftsError;
+      if (shiftsError) {
+        console.error('Error fetching shifts:', shiftsError);
+        throw shiftsError;
+      }
+
+      console.log('Found shifts data:', shiftsData?.length || 0, shiftsData);
+
+      if (!shiftsData || shiftsData.length === 0) {
+        console.warn('No shifts found for IDs:', allShiftIds);
+        setShifts([]);
+        setLoadingShifts(false);
+        return;
+      }
 
       // Get company details including logo, registration, phone, email
       const companyIds = [...new Set(shiftsData?.map(s => s.company_id).filter(Boolean) || [])];
@@ -212,20 +290,16 @@ export default function AdminCertificatesPage() {
         });
       }
 
+      // Create time log map for hours worked
       const timeLogMap = new Map<string, number>();
-      timeLogs.forEach(log => {
+      timeLogs?.forEach(log => {
         if (log.shift_id) {
           const current = timeLogMap.get(log.shift_id) || 0;
           timeLogMap.set(log.shift_id, current + (log.total_hours || 0));
         }
       });
 
-      const { data: assignments } = await supabase
-        .from('shift_assignments')
-        .select('shift_id, status')
-        .eq('promoter_id', promoterId)
-        .in('shift_id', shiftIds);
-
+      // Create assignment status map
       const assignmentStatusMap = new Map(assignments?.map(a => [a.shift_id, a.status]) || []);
 
       const shiftEntries: ShiftEntry[] = shiftsData?.map(s => {
@@ -251,10 +325,12 @@ export default function AdminCertificatesPage() {
         };
       }) || [];
 
+      console.log('Final shift entries:', shiftEntries.length, shiftEntries);
       setShifts(shiftEntries);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching shifts:', error);
-      toast.error('Failed to load shifts');
+      toast.error(`Failed to load shifts: ${error.message || 'Unknown error'}`);
+      setShifts([]);
     } finally {
       setLoadingShifts(false);
     }

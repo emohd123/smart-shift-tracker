@@ -50,19 +50,34 @@ export default function CompanyShiftApproval() {
         getEffectiveStatus(shift as any) === 'completed'
       ) || [];
 
-      // Fetch promoters for each shift
+      // Fetch promoters for each shift (show all assignments that have work done)
       const shiftsWithPromoters = await Promise.all(
         completedShifts.map(async (shift) => {
+          // First, check if there are any time logs for this shift to determine which assignments have work
+          const { data: timeLogs } = await supabase
+            .from('time_logs')
+            .select('user_id')
+            .eq('shift_id', shift.id);
+          
+          const promoterIdsWithWork = new Set(timeLogs?.map(t => t.user_id) || []);
+          
           const { data: assignments } = await supabase
             .from('shift_assignments')
             .select(`
               id,
               promoter_id,
-              certificate_approved,
-              approved_at,
+              status,
+              work_approved,
+              work_approved_at,
               profiles:promoter_id (full_name)
             `)
-            .eq('shift_id', shift.id);
+            .eq('shift_id', shift.id)
+            .in('status', ['accepted', 'pending']); // Include accepted and pending (in case status wasn't updated)
+          
+          // Filter to only show assignments that have work done OR are accepted
+          const assignmentsWithWork = assignments?.filter(a => 
+            promoterIdsWithWork.has(a.promoter_id) || a.status === 'accepted'
+          ) || [];
 
           return {
             id: shift.id,
@@ -71,13 +86,13 @@ export default function CompanyShiftApproval() {
             startTime: shift.start_time,
             endTime: shift.end_time,
             location: shift.location || 'N/A',
-            promoters: assignments?.map(a => ({
+            promoters: assignmentsWithWork.map(a => ({
               id: a.id,
               promoterId: a.promoter_id,
               promoterName: (a.profiles as any)?.full_name || 'Unknown',
-              approved: a.certificate_approved || false,
-              approvedAt: a.approved_at
-            })) || []
+              approved: a.work_approved || false,
+              approvedAt: a.work_approved_at
+            }))
           };
         })
       );

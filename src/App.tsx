@@ -19,8 +19,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 // Lazy load - Role-specific dashboards (code split by role)
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const CompanyDashboard = lazy(() => import("./pages/CompanyDashboard"));
-const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const AdminOverview = lazy(() => import("./pages/AdminOverview"));
 
 // Lazy load - Shifts (largest feature set)
 const Shifts = lazy(() => import("./pages/Shifts"));
@@ -70,8 +68,7 @@ function App() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/company" element={<CompanyDashboard />} />
                   <Route path="/company/profile" element={<CompanyProfilePage />} />
-                  <Route path="/admin" element={<AdminDashboard />} />
-                  <Route path="/admin/legacy" element={<AdminOverview />} />
+                  <Route path="/admin" element={<Dashboard />} />
                   <Route path="/shifts" element={<Shifts />} />
                   <Route path="/shifts/create" element={<CreateShift />} />
                   <Route path="/shifts/:id/edit" element={<EditShift />} />

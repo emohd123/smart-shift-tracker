@@ -41,7 +41,7 @@ export default function LoginForm({ onError }: LoginFormProps) {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      navigate("/shifts");
+      navigate("/dashboard");
     }
   }, [isAuthenticated, navigate]);
 

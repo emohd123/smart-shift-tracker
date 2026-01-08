@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { isAdminLike } from "@/utils/roleUtils";
 import { Shift } from "./types/ShiftTypes";
@@ -10,7 +10,9 @@ import BulkDeleteButton from "./list/BulkDeleteButton";
 import EmptyShifts from "./list/EmptyShifts";
 import BulkPayRateDialog from "./list/BulkPayRateDialog";
 import { Button } from "@/components/ui/button";
-import { DollarSign } from "lucide-react";
+import { DollarSign, ArrowUpDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getEffectiveStatus } from "./utils/statusCalculations";
 
 interface ShiftListProps {
   shifts: Shift[];
@@ -20,6 +22,8 @@ interface ShiftListProps {
   deleteAllShifts?: () => Promise<void>;
 }
 
+type SortOption = "date-desc" | "date-asc" | "status" | "company" | "title";
+
 const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, deleteAllShifts }: ShiftListProps) => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -27,14 +31,41 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
   const [isDeleting, setIsDeleting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [showBulkPayRateDialog, setShowBulkPayRateDialog] = useState(false);
+  const [sortBy, setSortBy] = useState<SortOption>("date-desc");
 
   const isAdmin = isAdminLike(user?.role);
 
-  const filteredShifts = shifts.filter(shift =>
-    shift.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shift.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    shift.date.includes(searchTerm)
-  );
+  const filteredAndSortedShifts = useMemo(() => {
+    // Filter by search term
+    let filtered = shifts.filter(shift =>
+      shift.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shift.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      shift.date.includes(searchTerm) ||
+      shift.companyName?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Sort
+    filtered = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "date-desc":
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "date-asc":
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        case "status":
+          const statusA = getEffectiveStatus(a);
+          const statusB = getEffectiveStatus(b);
+          return statusA.localeCompare(statusB);
+        case "company":
+          return (a.companyName || "").localeCompare(b.companyName || "");
+        case "title":
+          return a.title.localeCompare(b.title);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [shifts, searchTerm, sortBy]);
 
   const handleSelectShift = (shiftId: string) => {
     setSelectedShifts(prev =>
@@ -139,11 +170,24 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
         deleteAllShifts={deleteAllShifts}
       />
 
-      <div className="flex gap-4 items-center">
+      <div className="flex gap-4 items-center flex-wrap">
         <SearchBar
           searchTerm={searchTerm}
           setSearchTerm={setSearchTerm}
         />
+        <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+          <SelectTrigger className="w-[180px]">
+            <ArrowUpDown className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Sort by" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="date-desc">Date (Newest)</SelectItem>
+            <SelectItem value="date-asc">Date (Oldest)</SelectItem>
+            <SelectItem value="status">Status</SelectItem>
+            <SelectItem value="company">Company</SelectItem>
+            <SelectItem value="title">Title</SelectItem>
+          </SelectContent>
+        </Select>
 
         {isAdmin && selectedShifts.length > 0 && (
           <>
@@ -164,11 +208,11 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
         )}
       </div>
 
-      {filteredShifts.length === 0 ? (
+      {filteredAndSortedShifts.length === 0 ? (
         <EmptyShifts />
       ) : (
         <ShiftGrid
-          shifts={filteredShifts}
+          shifts={filteredAndSortedShifts}
           selectedShifts={isAdmin ? selectedShifts : undefined}
           onSelectShift={isAdmin ? handleSelectShift : undefined}
         />

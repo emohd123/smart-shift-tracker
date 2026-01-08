@@ -42,17 +42,17 @@ const ProtectedRoute = () => {
   
   // If route requires admin but user is not admin
   if (requiresAdmin && !isAdminLike) {
-    return <Navigate to="/shifts" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // If route allows company or admin but user is neither
   if (companyAccessRoute && !(isAdminLike || user?.role === UserRole.Company)) {
-    return <Navigate to="/shifts" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // Promoter-only route restriction
   if (promoterOnlyRoute && user?.role !== UserRole.Promoter) {
-    return <Navigate to="/shifts" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   // If authenticated, render the child routes

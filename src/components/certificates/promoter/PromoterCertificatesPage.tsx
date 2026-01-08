@@ -147,7 +147,7 @@ export default function PromoterCertificatesPage() {
       // Fetch approved shift assignments (work must be approved before certificate generation)
       const { data: assignments, error: assignmentsError } = await supabase
         .from('shift_assignments')
-        .select('id, shift_id, promoter_id, work_approved, work_approved_at, certificate_approved, approved_at')
+        .select('id, shift_id, promoter_id, work_approved, work_approved_at')
         .eq('promoter_id', user.id)
         .eq('work_approved', true) // Work must be approved first
         .order('work_approved_at', { ascending: false });
@@ -241,7 +241,7 @@ export default function PromoterCertificatesPage() {
           timeTo: shift.end_time,
           totalHours,
           location: shift.location,
-          approvedAt: assignment.work_approved_at || assignment.approved_at
+          approvedAt: assignment.work_approved_at
         });
 
         entry.totalHours += totalHours;

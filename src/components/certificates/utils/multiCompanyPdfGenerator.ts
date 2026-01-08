@@ -1,17 +1,19 @@
 ﻿import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { MultiCompanyCertificate } from '../types/certificate';
 import QRCode from 'qrcode';
+import { MultiCompanyCertificate } from '../types/certificate';
 
-// Helper to load image as base64
+/* ---------------------------------------------
+   Helpers
+--------------------------------------------- */
+
 async function loadImageAsBase64(url: string): Promise<string | null> {
   try {
-    const response = await fetch(url);
-    const blob = await response.blob();
-    return new Promise((resolve) => {
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return await new Promise(resolve => {
       const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.onerror = () => resolve(null);
+      reader.onload = () => resolve(reader.result as string);
       reader.readAsDataURL(blob);
     });
   } catch {
@@ -19,413 +21,294 @@ async function loadImageAsBase64(url: string): Promise<string | null> {
   }
 }
 
-// Shorten certificate reference number
-function shortenRefNumber(ref: string): string {
-  const parts = ref.split('-');
-  if (parts.length >= 3) {
-    return parts[parts.length - 1];
-  }
-  return ref.slice(-6);
-}
+const roundHours = (h: number) => Math.round(h || 0);
 
-export async function generateMultiCompanyPDF(data: MultiCompanyCertificate): Promise<Blob> {
-  const doc = new jsPDF();
-  const pageWidth = 210;
-  const pageHeight = 297;
-  const margin = 12;
-  const cardWidth = pageWidth - (margin * 2);
-  let yPos = 0;
+/* ---------------------------------------------
+   MAIN GENERATOR
+--------------------------------------------- */
 
-  // Official color palette
-  const navy: [number, number, number] = [13, 33, 55];
-  const gold: [number, number, number] = [184, 134, 11];
-  const darkText: [number, number, number] = [26, 26, 46];
-  const mutedText: [number, number, number] = [74, 85, 104];
-  const lineColor: [number, number, number] = [201, 209, 220];
-  const success: [number, number, number] = [13, 92, 47];
+export async function generateMultiCompanyPDF(
+  data: MultiCompanyCertificate
+): Promise<Blob> {
 
-  const shortRef = shortenRefNumber(data.referenceNumber);
-  const promoter = data.promoter;
-  
-  // Format issue date
-  const dateToFormat = data.issueDate ? new Date(data.issueDate) : new Date();
-  const issueDisplay = dateToFormat.toLocaleDateString('en-GB', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric'
+  /* -------------------------------------------
+     Document Setup (Landscape A4)
+  ------------------------------------------- */
+
+  const doc = new jsPDF({
+    orientation: 'landscape',
+    unit: 'mm',
+    format: 'a4'
   });
-  const yearDisplay = dateToFormat.getFullYear().toString();
-  
-  const partTimerIdDisplay = promoter?.unique_code || 'PT-' + shortRef;
-  const verifyUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(data.referenceNumber)}`;
-  
-  // Generate QR code
-  let verifyQrDataUrl: string | null = null;
-  try {
-    verifyQrDataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 200 });
-  } catch {
-    verifyQrDataUrl = null;
-  }
 
-  // ===== SUBTLE DOCUMENT FRAME (no ornaments) =====
-  doc.setDrawColor(navy[0], navy[1], navy[2]);
-  doc.setLineWidth(0.6);
-  doc.rect(12, 12, pageWidth - 24, pageHeight - 24, 'S');
-  doc.setDrawColor(gold[0], gold[1], gold[2]);
-  doc.setLineWidth(0.25);
-  doc.rect(14, 14, pageWidth - 28, pageHeight - 28, 'S');
+  const pageWidth = 297;
+  const pageHeight = 210;
+  const margin = 18;
+  const cardWidth = pageWidth - margin * 2;
 
-  // ===== HEADER BANNER =====
-  yPos = 18;
-  doc.setFillColor(navy[0], navy[1], navy[2]);
-  doc.rect(margin, yPos, cardWidth, 28, 'F');
-  
-  // Gold accent line at bottom of header
-  doc.setFillColor(gold[0], gold[1], gold[2]);
-  doc.rect(margin, yPos + 28, cardWidth, 1.5, 'F');
-  
-  // Title
-  doc.setTextColor(255, 255, 255);
+  let yPos = margin;
+
+  /* -------------------------------------------
+     Brand Colors
+  ------------------------------------------- */
+
+  const primary: [number, number, number] = [37, 99, 235];   // SmartShift Blue
+  const muted: [number, number, number] = [100, 116, 139];
+  const dark: [number, number, number] = [15, 23, 42];
+  const border: [number, number, number] = [226, 232, 240];
+  const bg: [number, number, number] = [248, 250, 252];
+
+  /* -------------------------------------------
+     SmartShift WATERMARK
+  ------------------------------------------- */
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(60);
+  doc.setTextColor(230, 235, 240);
+  doc.text(
+    'SMARTSHIFT',
+    pageWidth / 2,
+    pageHeight / 2,
+    {
+      align: 'center',
+      angle: 30
+    }
+  );
+
+  /* -------------------------------------------
+     Header
+  ------------------------------------------- */
+
+  doc.setTextColor(...primary);
   doc.setFontSize(18);
-  doc.setFont('helvetica', 'bold');
-  doc.text('CERTIFICATE OF EMPLOYMENT', pageWidth / 2, yPos + 13, { align: 'center' });
-  
+  doc.text('WORK EXPERIENCE CERTIFICATE', pageWidth / 2, yPos, { align: 'center' });
+
+  yPos += 8;
+
   doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Official Documentation of Professional Work Experience', pageWidth / 2, yPos + 22, { align: 'center' });
+  doc.setTextColor(...muted);
+  doc.text(
+    'This document certifies verified work experience completed via SmartShift',
+    pageWidth / 2,
+    yPos,
+    { align: 'center' }
+  );
 
-  // Official seal (right side of header)
-  const sealX = pageWidth - margin - 18;
-  const sealY = yPos + 14;
-  doc.setDrawColor(gold[0], gold[1], gold[2]);
-  doc.setLineWidth(0.8);
-  doc.circle(sealX, sealY, 8, 'S');
-  doc.setLineWidth(0.4);
-  doc.circle(sealX, sealY, 6, 'S');
-  doc.setFontSize(5);
-  doc.setFont('helvetica', 'bold');
-  doc.text('CERTIFIED', sealX, sealY - 1, { align: 'center' });
-  doc.setFontSize(7);
-  doc.text('✦', sealX, sealY + 3, { align: 'center' });
-  doc.setFontSize(4);
-  doc.text(yearDisplay, sealX, sealY + 6, { align: 'center' });
+  yPos += 14;
 
-  yPos = 52;
+  /* -------------------------------------------
+     PROMOTER PROFILE BLOCK (Enhanced with all details)
+  ------------------------------------------- */
 
-  // ===== DOCUMENT METADATA BAR =====
-  doc.setFillColor(247, 249, 252);
-  doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
-  doc.setLineWidth(0.3);
-  doc.rect(margin, yPos, cardWidth, 11, 'FD');
+  // Calculate dynamic height based on available fields
+  const promoter = data.promoter;
+  const hasEmail = Boolean(promoter?.email);
+  const hasPhone = Boolean(promoter?.phone_number);
+  const hasNationality = Boolean(promoter?.nationality);
+  const hasAge = Boolean(promoter?.age);
+  const hasUniqueCode = Boolean(promoter?.unique_code);
   
-  doc.setFontSize(5.5);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
-  
-  const metaItems = [
-    `DOCUMENT ID: ${partTimerIdDisplay}`,
-    `REFERENCE: ${shortRef}`,
-    `ISSUE DATE: ${issueDisplay}`,
-    `STATUS: VALID`
-  ];
-  
-  const metaWidth = cardWidth / 4;
-  metaItems.forEach((item, i) => {
-    doc.text(item, margin + (metaWidth * i) + metaWidth / 2, yPos + 7, { align: 'center' });
-  });
+  // Base height: 32mm (photo 20mm + padding 12mm, or text fields if no photo)
+  // Additional fields: 6mm each (matching text line spacing)
+  const additionalFields = (hasEmail ? 1 : 0) + (hasPhone ? 1 : 0) + 
+                          (hasNationality ? 1 : 0) + (hasAge ? 1 : 0) + 
+                          (hasUniqueCode ? 1 : 0);
+  const profileBlockHeight = 32 + (additionalFields * 6);
 
-  yPos = 68;
+  doc.setDrawColor(...border);
+  doc.setFillColor(...bg);
+  doc.rect(margin, yPos, cardWidth, profileBlockHeight, 'FD');
 
-  // ===== CERTIFICATION STATEMENT =====
-  doc.setTextColor(darkText[0], darkText[1], darkText[2]);
-  doc.setFontSize(9);
-  doc.setFont('helvetica', 'normal');
-  const statement = `This is to certify that ${data.promoterName} has successfully completed the work assignments detailed herein, demonstrating professional competence and dedication in their role as a Part-Timer.`;
-  const splitStatement = doc.splitTextToSize(statement, cardWidth - 10);
-  doc.text(splitStatement, pageWidth / 2, yPos, { align: 'center' });
-
-  yPos += splitStatement.length * 4 + 6;
-
-  // ===== IDENTITY CARD =====
-  const profileCardHeight = 28;
-  doc.setFillColor(255, 254, 248);
-  doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
-  doc.setLineWidth(0.5);
-  doc.rect(margin, yPos, cardWidth, profileCardHeight, 'FD');
-  
-  // Left border accent
-  doc.setFillColor(navy[0], navy[1], navy[2]);
-  doc.rect(margin, yPos, 3, profileCardHeight, 'F');
-
-  let textStartX = margin + 8;
+  const profileX = margin + 10;
+  const profileY = yPos + 8;
+  let textY = profileY;
 
   // Profile Photo
   if (promoter?.profile_photo_url) {
-    try {
-      const photoBase64 = await loadImageAsBase64(promoter.profile_photo_url);
-      if (photoBase64) {
-        doc.setDrawColor(navy[0], navy[1], navy[2]);
-        doc.setLineWidth(0.5);
-        doc.rect(margin + 6, yPos + 3, 22, 22, 'S');
-        doc.addImage(photoBase64, 'JPEG', margin + 7, yPos + 4, 20, 20);
-        textStartX = margin + 32;
-      }
-    } catch {}
+    const img = await loadImageAsBase64(promoter.profile_photo_url);
+    if (img) {
+      doc.addImage(img, 'JPEG', profileX, profileY, 20, 20);
+    }
   }
 
-  // Name
-  doc.setTextColor(navy[0], navy[1], navy[2]);
+  const textX = profileX + 26;
+
+  // Full Name
   doc.setFontSize(12);
-  doc.setFont('times', 'bold');
-  doc.text(data.promoterName, textStartX, yPos + 10);
-
-  // Badges
-  doc.setFillColor(navy[0], navy[1], navy[2]);
-  doc.rect(textStartX, yPos + 13, 20, 4.5, 'F');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(5);
+  doc.setTextColor(...dark);
   doc.setFont('helvetica', 'bold');
-  doc.text('PART-TIMER', textStartX + 10, yPos + 16.2, { align: 'center' });
-  
-  doc.setFillColor(success[0], success[1], success[2]);
-  doc.rect(textStartX + 23, yPos + 13, 18, 4.5, 'F');
-  doc.text('✓ VERIFIED', textStartX + 32, yPos + 16.2, { align: 'center' });
+  doc.text(data.promoterName, textX, textY + 6);
+  textY += 6;
 
-  // Details row
-  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
-  doc.setFontSize(6);
-  doc.setFont('helvetica', 'normal');
-  const details: string[] = [];
-  if (promoter?.nationality) details.push(promoter.nationality);
-  if (promoter?.age) details.push(promoter.age + ' years');
-  if (promoter?.phone_number) details.push(promoter.phone_number);
-  if (promoter?.email) details.push(promoter.email);
-  doc.text(details.join('  •  '), textStartX, yPos + 24);
-
-  // Total hours badge (right)
-  const hoursBadgeX = pageWidth - margin - 32;
-  doc.setFillColor(navy[0], navy[1], navy[2]);
-  doc.rect(hoursBadgeX, yPos + 4, 28, 18, 'F');
-  doc.setDrawColor(gold[0], gold[1], gold[2]);
-  doc.setLineWidth(0.8);
-  doc.rect(hoursBadgeX, yPos + 4, 28, 18, 'S');
-  doc.setTextColor(255, 255, 255);
-  doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text(`${Math.round(data.grandTotalHours)}`, hoursBadgeX + 14, yPos + 13, { align: 'center' });
-  doc.setFontSize(5);
-  doc.text('TOTAL HOURS', hoursBadgeX + 14, yPos + 18, { align: 'center' });
-
-  yPos += profileCardHeight + 6;
-
-  // ===== SECTION HEADER - EMPLOYMENT RECORD =====
-  doc.setDrawColor(navy[0], navy[1], navy[2]);
-  doc.setLineWidth(1);
-  doc.line(margin, yPos + 4, margin + 55, yPos + 4);
-  doc.setTextColor(navy[0], navy[1], navy[2]);
+  // Role
   doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.text('EMPLOYMENT RECORD', margin, yPos + 2);
-  
-  yPos += 10;
+  doc.setTextColor(...muted);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Promoter', textX, textY + 6);
+  textY += 6;
 
-  // ===== COMPANIES SECTION =====
-  for (let i = 0; i < data.companies.length; i++) {
-    const company = data.companies[i];
-    const cardTop = yPos;
-    const headerHeight = 22;
+  // Certificate Reference
+  doc.text(`Certificate Ref: ${data.referenceNumber}`, textX, textY + 6);
+  textY += 6;
 
-    // Company header
-    doc.setFillColor(247, 249, 252);
-    doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
-    doc.setLineWidth(0.5);
-    doc.rect(margin, cardTop, cardWidth, headerHeight, 'FD');
+  // Issue Date
+  const issueDate = new Date(data.issueDate || new Date()).toLocaleDateString(
+    'en-US',
+    { month: 'long', day: '2-digit', year: 'numeric' }
+  );
+  doc.text(`Issued on: ${issueDate}`, textX, textY + 6);
+  textY += 6;
 
-    let contentX = margin + 6;
-    const logoSize = 16;
+  // Email (if available)
+  if (hasEmail) {
+    doc.text(`Email: ${promoter!.email}`, textX, textY + 6);
+    textY += 6;
+  }
 
-    // Company Logo
+  // Phone (if available)
+  if (hasPhone) {
+    doc.text(`Phone: ${promoter!.phone_number}`, textX, textY + 6);
+    textY += 6;
+  }
+
+  // Nationality (if available)
+  if (hasNationality) {
+    doc.text(`Nationality: ${promoter!.nationality}`, textX, textY + 6);
+    textY += 6;
+  }
+
+  // Age (if available)
+  if (hasAge) {
+    doc.text(`Age: ${promoter!.age}`, textX, textY + 6);
+    textY += 6;
+  }
+
+  // Unique Code (if available)
+  if (hasUniqueCode) {
+    doc.text(`Code: ${promoter!.unique_code}`, textX, textY + 6);
+    textY += 6;
+  }
+
+  yPos += profileBlockHeight + 8;
+
+  /* -------------------------------------------
+     COMPANY WORK CARDS
+  ------------------------------------------- */
+
+  for (const company of data.companies) {
+
+    if (yPos > pageHeight - 70) {
+      doc.addPage();
+      yPos = margin;
+    }
+
+    const cardStartY = yPos;
+    let contentY = cardStartY + 10;
+
+    doc.setFillColor(...bg);
+    doc.rect(margin, cardStartY, cardWidth, 10, 'F');
+
     if (company.company.logo_url) {
-      try {
-        const logoBase64 = await loadImageAsBase64(company.company.logo_url);
-        if (logoBase64) {
-          doc.setFillColor(255, 255, 255);
-          doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
-          doc.rect(margin + 4, cardTop + 3, logoSize, logoSize, 'FD');
-          doc.addImage(logoBase64, 'PNG', margin + 5, cardTop + 4, logoSize - 2, logoSize - 2);
-          contentX = margin + logoSize + 10;
-        }
-      } catch {}
+      const logo = await loadImageAsBase64(company.company.logo_url);
+      if (logo) {
+        doc.addImage(logo, 'PNG', margin + 10, contentY - 6, 16, 16);
+      }
     }
 
-    // Hours Badge - top right
-    const hBadgeW = 32;
-    doc.setFillColor(255, 255, 255);
-    doc.setDrawColor(navy[0], navy[1], navy[2]);
-    doc.setLineWidth(0.5);
-    doc.rect(margin + cardWidth - hBadgeW - 4, cardTop + 5, hBadgeW, 10, 'FD');
-    doc.setTextColor(navy[0], navy[1], navy[2]);
+    doc.setFontSize(11);
+    doc.setTextColor(...dark);
     doc.setFont('helvetica', 'bold');
+    doc.text(company.company.name, margin + 32, contentY);
+
     doc.setFontSize(8);
-    doc.text(Math.round(company.totalHours) + ' hrs', margin + cardWidth - hBadgeW / 2 - 4, cardTop + 12, { align: 'center' });
-
-    // Company Name
-    const maxNameW = margin + cardWidth - hBadgeW - contentX - 15;
-    doc.setTextColor(navy[0], navy[1], navy[2]);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    let displayName = company.company.name;
-    while (doc.getTextWidth(displayName) > maxNameW && displayName.length > 8) {
-      displayName = displayName.slice(0, -1);
-    }
-    if (displayName !== company.company.name) displayName += '...';
-    doc.text(displayName, contentX, cardTop + 10);
-
-    // Registration + Contact row
-    doc.setFontSize(6);
+    doc.setTextColor(...muted);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
-    const infoLine: string[] = [];
-    if (company.company.registration_number) infoLine.push('Reg: ' + company.company.registration_number);
-    if (company.company.phone_number) infoLine.push('Tel: ' + company.company.phone_number);
-    if (company.company.email) infoLine.push(company.company.email);
-    doc.text(infoLine.join('  |  '), contentX, cardTop + 18);
+    doc.text(
+      `${roundHours(company.totalHours)} Total Hours`,
+      pageWidth - margin - 30,
+      contentY,
+      { align: 'right' }
+    );
 
-    // Table
-    const tableStartY = cardTop + headerHeight + 2;
-    const tableData = company.shifts.map(shift => [
-      shift.title.length > 22 ? shift.title.slice(0, 20) + '...' : shift.title,
-      new Date(shift.dateFrom).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-      (shift.location || 'On-site').length > 16 ? (shift.location || 'On-site').slice(0, 14) + '...' : (shift.location || 'On-site'),
-      Math.round(shift.totalHours) + 'h'
-    ]);
+    contentY += 6;
 
     autoTable(doc, {
-      startY: tableStartY,
+      startY: contentY,
+      margin: { left: margin + 10, right: margin + 10 },
+      tableWidth: cardWidth - 20,
       head: [['Event / Campaign', 'Date', 'Location', 'Hours']],
-      body: tableData,
-      tableWidth: cardWidth,
-      margin: { left: margin, right: margin },
-      theme: 'plain',
-      headStyles: {
-        fillColor: navy,
-        textColor: [255, 255, 255],
-        fontSize: 6.5,
-        fontStyle: 'bold',
-        halign: 'center',
-        cellPadding: 2.5,
-        lineWidth: 0,
-        minCellHeight: 6
-      },
+      body: company.shifts.map(s => [
+        s.title || '—',
+        new Date(s.dateFrom).toLocaleDateString('en-US', {
+          month: 'short',
+          day: '2-digit',
+          year: 'numeric'
+        }),
+        s.location || 'On-site',
+        `${roundHours(s.totalHours)}h`
+      ]),
+      theme: 'grid',
       styles: {
-        fontSize: 7,
-        cellPadding: 2.5,
-        halign: 'center',
-        textColor: darkText,
-        lineColor: lineColor,
-        lineWidth: 0.2,
-        minCellHeight: 6
+        fontSize: 8,
+        cellPadding: 4,
+        lineColor: border,
+        lineWidth: 0.2
       },
-      bodyStyles: { fillColor: [255, 255, 255] },
-      alternateRowStyles: { fillColor: [250, 251, 252] },
+      headStyles: {
+        fillColor: bg,
+        textColor: dark,
+        fontStyle: 'bold'
+      },
       columnStyles: {
-        0: { cellWidth: 68, halign: 'left', fontStyle: 'bold' },
-        1: { cellWidth: 34 },
-        2: { cellWidth: 50 },
-        3: { cellWidth: 20, fontStyle: 'bold', textColor: navy }
+        0: { cellWidth: 120 },
+        1: { cellWidth: 45 },
+        2: { cellWidth: 60 },
+        3: { cellWidth: 22, halign: 'right', fontStyle: 'bold' }
       }
     });
 
-    const tableBottom = (doc as any).lastAutoTable?.finalY || tableStartY + 15;
-    
-    // Card border
-    doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
-    doc.setLineWidth(0.6);
-    doc.rect(margin, cardTop, cardWidth, tableBottom - cardTop + 4, 'S');
+    const endY = (doc as any).lastAutoTable.finalY;
 
-    yPos = tableBottom + 8;
+    doc.setDrawColor(...border);
+    doc.rect(margin, cardStartY, cardWidth, endY - cardStartY + 6, 'S');
+
+    yPos = endY + 12;
   }
 
-  // ===== BOTTOM SECTION - SIGNATURE & VERIFICATION =====
-  // Keep it near the bottom for short certificates (cleaner / more official).
-  const bottomY = Math.max(yPos, 250);
-  
-  // Signature box
-  doc.setFillColor(255, 255, 255);
-  doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
-  doc.setLineWidth(0.4);
-  doc.rect(margin, bottomY, 52, 20, 'FD');
-  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
-  doc.setFontSize(5);
-  doc.setFont('helvetica', 'bold');
-  doc.text('AUTHORIZED SIGNATURE', margin + 26, bottomY + 4, { align: 'center' });
-  doc.setDrawColor(darkText[0], darkText[1], darkText[2]);
-  doc.setLineWidth(0.4);
-  doc.line(margin + 4, bottomY + 16, margin + 48, bottomY + 16);
-  
-  // Signature if provided
-  if (data.signature) {
-    try {
-      doc.addImage(data.signature, 'PNG', margin + 6, bottomY + 5, 40, 10);
-    } catch {}
-  }
+  /* -------------------------------------------
+     SUMMARY + QR
+  ------------------------------------------- */
 
-  // Date box
-  doc.setFillColor(247, 249, 252);
-  doc.rect(margin + 55, bottomY, 32, 20, 'FD');
-  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
-  doc.setFontSize(5);
-  doc.text('DATE OF ISSUE', margin + 71, bottomY + 4, { align: 'center' });
-  doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'bold');
-  doc.text(issueDisplay, margin + 71, bottomY + 13, { align: 'center' });
+  const verifyUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(data.referenceNumber)}`;
+  const qr = await QRCode.toDataURL(verifyUrl, { width: 120 });
 
-  // Verification box
-  const verifyBoxX = margin + 90;
-  const verifyBoxW = cardWidth - 90;
-  doc.setFillColor(240, 244, 248);
-  doc.setDrawColor(navy[0], navy[1], navy[2]);
-  doc.setLineWidth(0.6);
-  doc.rect(verifyBoxX, bottomY, verifyBoxW, 20, 'FD');
-  
-  // Checkmark circle
-  doc.setFillColor(success[0], success[1], success[2]);
-  doc.circle(verifyBoxX + 7, bottomY + 10, 4.5, 'F');
-  doc.setTextColor(255, 255, 255);
+  doc.setFillColor(240, 248, 255);
+  doc.rect(margin, yPos, cardWidth, 22, 'F');
+
+  doc.setFontSize(14);
+  doc.setTextColor(...primary);
+  doc.setFont('helvetica', 'bold');
+  doc.text(
+    `${roundHours(data.grandTotalHours)} Total Verified Hours`,
+    margin + 10,
+    yPos + 14
+  );
+
+  doc.addImage(qr, 'PNG', pageWidth - margin - 26, yPos + 3, 18, 18);
+
+  /* -------------------------------------------
+     FOOTER
+  ------------------------------------------- */
+
   doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.text('✓', verifyBoxX + 7, bottomY + 12, { align: 'center' });
-  
-  // Verification text
-  doc.setTextColor(navy[0], navy[1], navy[2]);
-  doc.setFontSize(7);
-  doc.setFont('helvetica', 'bold');
-  doc.text('AUTHENTICATED', verifyBoxX + 16, bottomY + 8);
-  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
-  doc.setFontSize(5);
+  doc.setTextColor(...muted);
   doc.setFont('helvetica', 'normal');
-  doc.text('This certificate is digitally verified.', verifyBoxX + 16, bottomY + 13);
-  doc.text('Scan QR code to verify authenticity.', verifyBoxX + 16, bottomY + 17);
-  
-  // QR Code
-  if (verifyQrDataUrl) {
-    try {
-      doc.addImage(verifyQrDataUrl, 'PNG', pageWidth - margin - 17, bottomY + 2, 14, 14);
-    } catch {}
-  }
-
-  // ===== FOOTER =====
-  const footerY = 280;
-  doc.setDrawColor(lineColor[0], lineColor[1], lineColor[2]);
-  doc.setLineWidth(0.3);
-  doc.line(margin, footerY, pageWidth - margin, footerY);
-  
-  doc.setTextColor(mutedText[0], mutedText[1], mutedText[2]);
-  doc.setFontSize(6);
-  doc.setFont('helvetica', 'normal');
-  doc.text('Smart Shift Tracker™ — Workforce Management Platform', margin, footerY + 5);
-  doc.text(`Document Ref: ${shortRef}`, pageWidth - margin, footerY + 5, { align: 'right' });
+  doc.text(
+    'Generated digitally by SmartShift Tracker • This certificate is verifiable via QR code',
+    pageWidth / 2,
+    pageHeight - 10,
+    { align: 'center' }
+  );
 
   return doc.output('blob');
 }

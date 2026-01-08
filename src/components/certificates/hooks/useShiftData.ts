@@ -88,7 +88,7 @@ export const useShiftData = () => {
         .select(`
           id,
           shift_id,
-          certificate_approved,
+          work_approved,
           time_logs (
             id,
             check_in_time,
@@ -102,7 +102,7 @@ export const useShiftData = () => {
           )
         `)
         .eq('promoter_id', targetUserId)
-        .eq('certificate_approved', true);
+        .eq('work_approved', true);
       
       if (error || !assignments || assignments.length === 0) {
         return {

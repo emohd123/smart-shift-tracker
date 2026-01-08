@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { 
   CalendarDays, ChevronDown, 
   ClipboardList, Clock, Home, MessageCircle, 
-  Settings, UserRound, Users, FileBarChart2, Eraser, Award, LayoutDashboard, DollarSign
+  Settings, UserRound, Users, FileBarChart2, Eraser, Award, DollarSign
 } from "lucide-react";
 import { UserRole } from "@/types/database";
 import {
@@ -86,10 +86,6 @@ export const NavigationLinks = () => {
       
       {isAdmin && (
         <>
-          <AppLink to="/admin" icon={<LayoutDashboard className="h-4 w-4" />}>
-            Admin Dashboard
-          </AppLink>
-          
           <AppLink to="/promoters" icon={<Users className="h-4 w-4" />}>
             Promoters
           </AppLink>

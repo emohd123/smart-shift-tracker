@@ -441,7 +441,7 @@ export default function PromoterDashboard({ loading: externalLoading = false }: 
         .from('shift_assignments')
         .select('id, shift_id')
         .eq('promoter_id', user.id)
-        .eq('certificate_approved', true);
+        .eq('work_approved', true);
 
       if (error) throw error;
 

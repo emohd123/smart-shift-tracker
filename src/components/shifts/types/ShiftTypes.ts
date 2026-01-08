@@ -19,6 +19,15 @@ export interface Shift {
   manual_status_override?: boolean;
   override_status?: ShiftStatus;
   companyId?: string;
+  // Enhanced fields
+  companyName?: string;
+  companyLogoUrl?: string;
+  promoterCount?: number;
+  activePromoterCount?: number;
+  totalHours?: number;
+  totalEarnings?: number;
+  workApproved?: boolean;
+  workApprovedAt?: string;
 }
 
 export interface ShiftFormData {

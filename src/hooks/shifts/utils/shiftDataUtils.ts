@@ -19,11 +19,20 @@ export const formatDatabaseShifts = (dbShifts: any[]): Shift[] => {
     payRateType: shift.pay_rate_type || 'hour',
     isPaid: shift.is_paid || false,
     is_assigned: shift.is_assigned || false,
-    assigned_promoters: shift.assigned_promoters || 0,
+    assigned_promoters: shift.assigned_promoters || shift.promoterCount || 0,
     created_at: shift.created_at,
     manual_status_override: shift.manual_status_override || false,
     override_status: shift.override_status || undefined,
-    companyId: shift.company_id
+    companyId: shift.company_id,
+    // Enhanced fields
+    companyName: shift.companyName,
+    companyLogoUrl: shift.companyLogoUrl,
+    promoterCount: shift.promoterCount,
+    activePromoterCount: shift.activePromoterCount,
+    totalHours: shift.totalHours,
+    totalEarnings: shift.totalEarnings,
+    workApproved: shift.workApproved,
+    workApprovedAt: shift.workApprovedAt
   }));
 };
 

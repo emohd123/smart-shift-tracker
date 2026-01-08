@@ -39,9 +39,9 @@ export default function CertificateAnalytics() {
       // Get total approved assignments
       const { data: approvedAssignments } = await supabase
         .from('shift_assignments')
-        .select('promoter_id, approved_at')
+        .select('promoter_id, work_approved_at')
         .in('shift_id', shiftIds)
-        .eq('certificate_approved', true);
+        .eq('work_approved', true);
 
       // Count unique promoters
       const uniquePromoters = new Set(approvedAssignments?.map(a => a.promoter_id) || []);
@@ -50,7 +50,7 @@ export default function CertificateAnalytics() {
       const oneMonthAgo = new Date();
       oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
       const recentApprovals = approvedAssignments?.filter(a => 
-        new Date(a.approved_at || '') > oneMonthAgo
+        a.work_approved_at && new Date(a.work_approved_at) > oneMonthAgo
       ).length || 0;
 
       // Get verification count from certificates table (approximation)

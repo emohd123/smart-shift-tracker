@@ -84,8 +84,6 @@ export const PromoterAttendanceCard = ({
   const [showHistory, setShowHistory] = useState(false);
 
   const isCompany = isCompanyLike(userRole);
-  const [payStatus, setPayStatus] = useState<"scheduled" | "paid" | null>(promoter.payment_status ?? null);
-  const [payUpdating, setPayUpdating] = useState(false);
 
   // Rating state
   const [ratingModalOpen, setRatingModalOpen] = useState(false);
@@ -276,9 +274,6 @@ export const PromoterAttendanceCard = ({
     fetchContractAcceptance();
   }, [promoter.id, promoter.promoter_id, promoter.full_name, promoter.unique_code]);
 
-  useEffect(() => {
-    setPayStatus(promoter.payment_status ?? null);
-  }, [promoter.payment_status]);
 
   // Fetch extra payments
   const fetchExtraPayments = async () => {
@@ -306,124 +301,6 @@ export const PromoterAttendanceCard = ({
     fetchExtraPayments();
   }, [promoter.id]);
 
-  const markPaymentScheduled = async () => {
-    if (!isCompany) return;
-    
-    // Validate before scheduling payment
-    if (shiftStatus !== ShiftStatus.Completed) {
-      toast.error("Payment can only be scheduled for completed shifts");
-      return;
-    }
-    
-    if (totalHours <= 0) {
-      toast.error("Cannot schedule payment - no work hours recorded");
-      return;
-    }
-
-    // Check contract acceptance for this specific shift assignment
-    try {
-      if (!promoter.id) {
-        toast.error("Shift assignment ID is missing");
-        return;
-      }
-
-      // Check if contract is accepted for this specific shift assignment (not superseded)
-      const { data: acceptance, error: acceptanceError } = await (supabase as any)
-        .from('company_contract_acceptances')
-        .select('id, status, superseded_at')
-        .eq('shift_assignment_id', promoter.id)
-        .eq('promoter_id', promoter.promoter_id)
-        .is('superseded_at', null) // Only check non-superseded acceptances
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      
-      // Check if there's a pending contract (new version requiring approval)
-      if (acceptance?.status === 'pending') {
-        toast.error(`${promoter.full_name} must approve the updated contract before payment can be scheduled`);
-        return;
-      }
-
-      if (acceptanceError) {
-        console.error('Error checking contract acceptance:', acceptanceError);
-        // Don't block payment if there's an error checking
-      } else if (!acceptance || acceptance.status !== 'accepted') {
-        // Check if company has an active contract template
-        const { data: shift } = await supabase
-          .from('shifts')
-          .select('company_id')
-          .eq('id', shiftId)
-          .single();
-
-        if (shift?.company_id) {
-          const { data: hasTemplate } = await supabase
-            .rpc('has_active_contract_template', { _company_id: shift.company_id });
-
-          if (hasTemplate) {
-            toast.error(`${promoter.full_name} must accept the company contract before payment can be scheduled`);
-            return;
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error checking contract:', error);
-      // Don't block payment if there's an error checking
-    }
-
-    setPayUpdating(true);
-    try {
-      await (supabase as any)
-        .from("shift_assignment_payment_status")
-        .upsert({
-          assignment_id: promoter.id,
-          status: "scheduled",
-          scheduled_at: new Date().toISOString(),
-          scheduled_by: user?.id,
-          amount: payment.total,
-          updated_by: user?.id,
-        });
-      setPayStatus("scheduled");
-      toast.success(`Payment scheduled for ${promoter.full_name}`);
-    } catch (error) {
-      console.error('Error scheduling payment:', error);
-      toast.error("Failed to schedule payment");
-    } finally {
-      setPayUpdating(false);
-      onUpdate?.();
-    }
-  };
-
-  const markPaymentPaid = async () => {
-    if (!isCompany) return;
-    
-    if (payStatus !== "scheduled") {
-      toast.error("Payment must be scheduled before marking as paid");
-      return;
-    }
-    
-    setPayUpdating(true);
-    try {
-      await (supabase as any)
-        .from("shift_assignment_payment_status")
-        .upsert({
-          assignment_id: promoter.id,
-          status: "paid",
-          paid_at: new Date().toISOString(),
-          paid_by: user?.id,
-          scheduled_at: promoter.payment_scheduled_at ?? new Date().toISOString(),
-          amount: payment.total,
-          updated_by: user?.id,
-        });
-      setPayStatus("paid");
-      toast.success(`Payment marked as paid for ${promoter.full_name}`);
-    } catch (error) {
-      console.error('Error marking payment as paid:', error);
-      toast.error("Failed to mark payment as paid");
-    } finally {
-      setPayUpdating(false);
-      onUpdate?.();
-    }
-  };
 
   // Calculate elapsed time and estimated earnings for active check-ins
   useEffect(() => {
@@ -636,12 +513,6 @@ export const PromoterAttendanceCard = ({
                   Pending
                 </Badge>
               )}
-              {payStatus === "paid" && (
-                <Badge variant="default" className="text-[10px] px-1.5 py-0">Paid</Badge>
-              )}
-              {payStatus === "scheduled" && (
-                <Badge variant="outline" className="text-[10px] px-1.5 py-0">Scheduled</Badge>
-              )}
             </div>
           </div>
         </div>
@@ -678,24 +549,6 @@ export const PromoterAttendanceCard = ({
         {/* Action Buttons Grid - 2x3 */}
         {isCompany && (
           <div className="grid grid-cols-2 gap-1.5">
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 text-xs"
-              disabled={payUpdating || payStatus === "scheduled" || payStatus === "paid"}
-              onClick={markPaymentScheduled}
-            >
-              {payStatus === "scheduled" || payStatus === "paid" ? "Scheduled" : "Schedule Payment"}
-            </Button>
-            <Button
-              size="sm"
-              className="h-8 text-xs"
-              disabled={payUpdating || payStatus === "paid"}
-              onClick={markPaymentPaid}
-            >
-              {payStatus === "paid" ? "Paid" : "Mark Paid"}
-            </Button>
-            
             {contractStatus === 'accepted' && contractHtml ? (
               <Button
                 size="sm"
