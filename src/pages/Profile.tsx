@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, Clock, XCircle } from "lucide-react";
+import { ProfileChangeRequests } from "@/components/profile/ProfileChangeRequests";
 
 // Get status badge styling based on verification status
 const getStatusConfig = (status: string | undefined) => {
@@ -78,6 +79,8 @@ export default function Profile() {
       <AppLayout title="Company Profile & Settings">
         <div className="space-y-6">
           <Separator />
+          {/* Profile Change Requests - Show at top if any exist */}
+          <ProfileChangeRequests />
           <CompanyProfileManager />
         </div>
       </AppLayout>
@@ -102,6 +105,9 @@ export default function Profile() {
 
         {/* Unique Code Card - Only for Promoters */}
         <UniqueCodeCard user={user} />
+
+        {/* Profile Change Requests - Show at top if any exist */}
+        <ProfileChangeRequests />
 
         {/* Tabs for Profile, Password, and Account Settings */}
         <div className="mt-8">

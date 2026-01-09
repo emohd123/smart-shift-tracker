@@ -1,24 +1,23 @@
-
 import { useState, useEffect } from "react";
-import { usePromoters } from "../hooks/usePromoters";
-import { PromoterStats } from "../PromoterStats";
-import { PromoterDetail } from "../PromoterDetail";
-import { PromoterTableSkeleton } from "./PromoterTableSkeleton";
-import { PromoterFilters } from "./PromoterFilters";
-import { PromoterTable } from "./PromoterTable";
+import { useCompanies } from "./hooks/useCompanies";
+import { CompanyStats } from "./CompanyStats";
+import { CompanyDetail } from "./CompanyDetail";
+import { CompanyTableSkeleton } from "./list/CompanyTableSkeleton";
+import { CompanyFilters } from "./list/CompanyFilters";
+import { CompanyTable } from "./list/CompanyTable";
 import { toast } from "sonner";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { format } from "date-fns";
 import { BulkRequestChangesDialog } from "@/components/admin/dialogs/BulkRequestChangesDialog";
 
-interface PromotersListProps {
+interface CompaniesListProps {
   filterStatus?: string | null;
 }
 
-export function PromotersList({ filterStatus }: PromotersListProps) {
+export function CompaniesList({ filterStatus }: CompaniesListProps) {
   const {
-    promoters,
+    companies,
     loading,
     error,
     searchTerm,
@@ -26,10 +25,10 @@ export function PromotersList({ filterStatus }: PromotersListProps) {
     sortBy,
     sortDirection,
     toggleSort
-  } = usePromoters();
-  const [selectedPromoter, setSelectedPromoter] = useState<string | null>(null);
+  } = useCompanies();
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string | null>(filterStatus);
-  const [selectedPromoters, setSelectedPromoters] = useState<string[]>([]);
+  const [selectedCompanies, setSelectedCompanies] = useState<string[]>([]);
   const [showBulkRequestDialog, setShowBulkRequestDialog] = useState(false);
   
   // Update selected status when filterStatus prop changes
@@ -46,46 +45,46 @@ export function PromotersList({ filterStatus }: PromotersListProps) {
     setCurrentPage(1);
   }, [selectedStatus, searchTerm]);
   
-  // Filter promoters by verification status if selected
+  // Filter companies by verification status if selected
   const filteredByStatus = selectedStatus 
-    ? promoters.filter(p => p.verification_status === selectedStatus)
-    : promoters;
+    ? companies.filter(c => c.verificationStatus === selectedStatus)
+    : companies;
     
   // Calculate pagination
-  const paginatedPromoters = filteredByStatus.slice(
+  const paginatedCompanies = filteredByStatus.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
   // Close the detail panel
   const handleCloseDetail = () => {
-    setSelectedPromoter(null);
+    setSelectedCompany(null);
   };
   
   // Handle checkbox selection
-  const handleSelectPromoter = (promoterId: string) => {
-    setSelectedPromoters(prev => {
-      if (prev.includes(promoterId)) {
-        return prev.filter(id => id !== promoterId);
+  const handleSelectCompany = (companyId: string) => {
+    setSelectedCompanies(prev => {
+      if (prev.includes(companyId)) {
+        return prev.filter(id => id !== companyId);
       } else {
-        return [...prev, promoterId];
+        return [...prev, companyId];
       }
     });
   };
   
   // Handle select all checkbox
   const handleSelectAll = () => {
-    if (selectedPromoters.length === paginatedPromoters.length) {
-      setSelectedPromoters([]);
+    if (selectedCompanies.length === paginatedCompanies.length) {
+      setSelectedCompanies([]);
     } else {
-      setSelectedPromoters(paginatedPromoters.map(p => p.id));
+      setSelectedCompanies(paginatedCompanies.map(c => c.id));
     }
   };
   
   // Bulk action handlers
   const handleBulkAction = async (action: string) => {
-    if (selectedPromoters.length === 0) {
-      toast.warning("Please select at least one promoter");
+    if (selectedCompanies.length === 0) {
+      toast.warning("Please select at least one company");
       return;
     }
     
@@ -96,27 +95,27 @@ export function PromotersList({ filterStatus }: PromotersListProps) {
         const { error } = await supabase
           .from('profiles')
           .update({ verification_status: 'approved' })
-          .in('id', selectedPromoters);
+          .in('id', selectedCompanies);
         
         if (error) throw error;
-        toast.success(`Approved ${selectedPromoters.length} promoters`);
+        toast.success(`Approved ${selectedCompanies.length} companies`);
         
       } else if (action === "reject") {
         const { error } = await supabase
           .from('profiles')
           .update({ verification_status: 'rejected' })
-          .in('id', selectedPromoters);
+          .in('id', selectedCompanies);
         
         if (error) throw error;
-        toast.error(`Rejected ${selectedPromoters.length} promoters`);
+        toast.error(`Rejected ${selectedCompanies.length} companies`);
       }
       
-      setSelectedPromoters([]);
+      setSelectedCompanies([]);
       window.location.reload(); // Refresh to show updated data
       
     } catch (error) {
       console.error('Bulk action error:', error);
-      toast.error('Failed to update promoters');
+      toast.error('Failed to update companies');
     }
   };
   
@@ -128,16 +127,21 @@ export function PromotersList({ filterStatus }: PromotersListProps) {
 
   // Export data function
   const exportData = () => {
-    return filteredByStatus.map(p => ({
-      name: p.full_name,
-      phone: p.phone_number || "",
-      nationality: p.nationality || "",
-      gender: p.gender || "",
-      verification_status: p.verification_status || "",
-      total_hours: p.total_hours.toFixed(2),
-      total_shifts: p.total_shifts,
-      average_rating: p.average_rating.toFixed(2),
-      joined_date: format(new Date(p.created_at), "yyyy-MM-dd"),
+    return filteredByStatus.map(c => ({
+      company_name: c.companyName,
+      registration_id: c.registrationId || "",
+      industry: c.industry || "",
+      company_size: c.companySize || "",
+      signup_date: format(new Date(c.signupDate), "yyyy-MM-dd"),
+      verification_status: c.verificationStatus || "",
+      total_shifts: c.totalShifts,
+      total_hours: c.totalHours.toFixed(2),
+      total_spend: c.totalSpend.toFixed(2),
+      promoters_count: c.promotersCount,
+      last_activity: c.lastActivityDate ? format(new Date(c.lastActivityDate), "yyyy-MM-dd") : "",
+      email: c.email || "",
+      phone: c.phoneNumber || "",
+      website: c.website || "",
     }));
   };
 
@@ -147,7 +151,7 @@ export function PromotersList({ filterStatus }: PromotersListProps) {
       <Alert variant="destructive" className="my-4">
         <AlertCircle className="h-4 w-4" />
         <AlertDescription>
-          There was an error loading promoter data. Please try again later.
+          There was an error loading company data. Please try again later.
         </AlertDescription>
       </Alert>
     );
@@ -155,24 +159,23 @@ export function PromotersList({ filterStatus }: PromotersListProps) {
 
   return (
     <div className="space-y-6">
-      <PromoterStats promoters={promoters} loading={loading} />
+      <CompanyStats companies={companies} loading={loading} />
       
-      <PromoterFilters 
+      <CompanyFilters 
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
         selectedStatus={selectedStatus}
         handleStatusFilter={handleStatusFilter}
-        selectedPromoters={selectedPromoters}
+        selectedCompanies={selectedCompanies}
         handleBulkAction={handleBulkAction}
         exportData={exportData}
-        onBulkRequestChanges={() => setShowBulkRequestDialog(true)}
       />
 
       {loading ? (
-        <PromoterTableSkeleton count={5} />
+        <CompanyTableSkeleton count={5} />
       ) : (
-        <PromoterTable 
-          paginatedPromoters={paginatedPromoters}
+        <CompanyTable 
+          paginatedCompanies={paginatedCompanies}
           filteredByStatus={filteredByStatus}
           itemsPerPage={itemsPerPage}
           currentPage={currentPage}
@@ -180,18 +183,18 @@ export function PromotersList({ filterStatus }: PromotersListProps) {
           toggleSort={toggleSort}
           sortBy={sortBy}
           sortDirection={sortDirection}
-          setSelectedPromoter={setSelectedPromoter}
-          selectedPromoters={selectedPromoters}
-          handleSelectPromoter={handleSelectPromoter}
+          setSelectedCompany={setSelectedCompany}
+          selectedCompanies={selectedCompanies}
+          handleSelectCompany={handleSelectCompany}
           handleSelectAll={handleSelectAll}
         />
       )}
 
-      {selectedPromoter && (
-        <PromoterDetail 
-          promoterId={selectedPromoter} 
+      {selectedCompany && (
+        <CompanyDetail 
+          companyId={selectedCompany} 
           onClose={handleCloseDetail} 
-          promoterData={promoters.find(p => p.id === selectedPromoter)}
+          companyData={companies.find(c => c.id === selectedCompany)}
         />
       )}
 
@@ -201,12 +204,12 @@ export function PromotersList({ filterStatus }: PromotersListProps) {
         onOpenChange={(open) => {
           setShowBulkRequestDialog(open);
           if (!open) {
-            setSelectedPromoters([]);
+            setSelectedCompanies([]);
           }
         }}
-        userIds={selectedPromoters}
-        userRole="promoter"
-        userCount={selectedPromoters.length}
+        userIds={selectedCompanies}
+        userRole="company"
+        userCount={selectedCompanies.length}
       />
     </div>
   );

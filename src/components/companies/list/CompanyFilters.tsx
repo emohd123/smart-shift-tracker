@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,11 +12,12 @@ import {
   CheckCheck, 
   Filter, 
   Search, 
-  UserX, 
+  XCircle, 
   BadgeCheck, 
   Clock, 
-  UserCog, 
+  Building2, 
   AlertTriangle,
+  Download,
   MessageSquare
 } from "lucide-react";
 import { toast } from "sonner";
@@ -25,37 +25,38 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExportButton } from "@/components/admin/shared/ExportButton";
 
-interface PromoterFiltersProps {
+interface CompanyFiltersProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
   selectedStatus: string | null;
   handleStatusFilter: (status: string | null) => void;
-  selectedPromoters: string[];
+  selectedCompanies: string[];
   handleBulkAction: (action: string) => void;
   exportData: () => any[];
   onBulkRequestChanges?: () => void;
 }
 
-export function PromoterFilters({
+export function CompanyFilters({
   searchTerm,
   setSearchTerm,
   selectedStatus,
   handleStatusFilter,
-  selectedPromoters,
+  selectedCompanies,
   handleBulkAction,
   exportData,
   onBulkRequestChanges
-}: PromoterFiltersProps) {
+}: CompanyFiltersProps) {
   const getStatusIcon = (status: string | null) => {
     switch (status) {
       case "approved":
+      case "verified":
         return <BadgeCheck className="h-4 w-4 text-green-600" />;
       case "pending":
         return <Clock className="h-4 w-4 text-yellow-600" />;
       case "rejected":
         return <AlertTriangle className="h-4 w-4 text-red-600" />;
       default:
-        return <UserCog className="h-4 w-4 text-muted-foreground" />;
+        return <Building2 className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
@@ -67,7 +68,7 @@ export function PromoterFilters({
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               type="search"
-              placeholder="Search promoters..."
+              placeholder="Search companies..."
               className="pl-8 bg-background"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -93,7 +94,7 @@ export function PromoterFilters({
                   onClick={() => handleStatusFilter(null)}
                   className="flex items-center gap-2"
                 >
-                  <UserCog className="h-4 w-4" />
+                  <Building2 className="h-4 w-4" />
                   All Statuses
                 </DropdownMenuItem>
                 <DropdownMenuItem 
@@ -102,6 +103,13 @@ export function PromoterFilters({
                 >
                   <BadgeCheck className="h-4 w-4" />
                   Approved
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => handleStatusFilter("verified")}
+                  className="flex items-center gap-2 text-green-600"
+                >
+                  <BadgeCheck className="h-4 w-4" />
+                  Verified
                 </DropdownMenuItem>
                 <DropdownMenuItem 
                   onClick={() => handleStatusFilter("pending")}
@@ -120,13 +128,13 @@ export function PromoterFilters({
               </DropdownMenuContent>
             </DropdownMenu>
             
-            {selectedPromoters.length > 0 && (
+            {selectedCompanies.length > 0 && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="default" className="flex items-center gap-2">
                     Actions
                     <Badge variant="secondary" className="ml-1 bg-primary/20 text-primary">
-                      {selectedPromoters.length}
+                      {selectedCompanies.length}
                     </Badge>
                   </Button>
                 </DropdownMenuTrigger>
@@ -144,7 +152,7 @@ export function PromoterFilters({
                     onClick={() => handleBulkAction("reject")} 
                     className="text-red-600 flex items-center gap-2"
                   >
-                    <UserX className="h-4 w-4" />
+                    <XCircle className="h-4 w-4" />
                     Reject Selected
                   </DropdownMenuItem>
                   {onBulkRequestChanges && (
@@ -165,7 +173,7 @@ export function PromoterFilters({
 
             <ExportButton
               data={exportData()}
-              filename="promoters-report"
+              filename="companies-report"
             />
           </div>
         </div>

@@ -6,12 +6,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, MapPin, Phone, Mail, CalendarClock } from "lucide-react";
+import { Loader2, MapPin, Phone, Mail, CalendarClock, FileText, Download, Image, X, Eye, ExternalLink, AlertTriangle, MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { PromoterData } from "./types";
 import { format, parseISO } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { UserProfile } from "@/context/AuthContext";
+import { toast } from "sonner";
+import { RequestProfileChangesDialog } from "@/components/admin/dialogs/RequestProfileChangesDialog";
+import { useAuth } from "@/context/AuthContext";
+import { isAdminLike } from "@/utils/roleUtils";
 
 interface PromoterDetailProps {
   promoterId: string;
@@ -20,10 +24,15 @@ interface PromoterDetailProps {
 }
 
 export function PromoterDetail({ promoterId, onClose, promoterData }: PromoterDetailProps) {
+  const { user } = useAuth();
+  const isAdmin = isAdminLike(user?.role);
   const [open, setOpen] = useState(true);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [shiftHistory, setShiftHistory] = useState<any[]>([]);
+  const [previewFile, setPreviewFile] = useState<{ url: string; type: 'image' | 'pdf' | 'other' } | null>(null);
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [changeRequests, setChangeRequests] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchPromoterDetails = async () => {
@@ -130,6 +139,26 @@ export function PromoterDetail({ promoterId, onClose, promoterData }: PromoterDe
     }
   };
 
+  // Check if URL is a PDF
+  const isPDF = (url: string): boolean => {
+    return url.toLowerCase().endsWith('.pdf') || url.toLowerCase().includes('application/pdf');
+  };
+
+  // Get file type from URL
+  const getFileType = (url: string): 'image' | 'pdf' | 'other' => {
+    if (isPDF(url)) return 'pdf';
+    const ext = url.split('.').pop()?.toLowerCase() || '';
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'].includes(ext)) return 'image';
+    return 'other';
+  };
+
+  // Handle file preview
+  const handlePreview = (url: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    setPreviewFile({ url, type: getFileType(url) });
+  };
+
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
@@ -146,10 +175,20 @@ export function PromoterDetail({ promoterId, onClose, promoterData }: PromoterDe
           </div>
         ) : (
           <Tabs defaultValue="overview">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-4' : 'grid-cols-3'}`}>
               <TabsTrigger value="overview">Overview</TabsTrigger>
               <TabsTrigger value="shifts">Recent Shifts</TabsTrigger>
               <TabsTrigger value="documents">Documents</TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="requests">
+                  Change Requests
+                  {changeRequests.filter(r => r.status === 'pending').length > 0 && (
+                    <Badge variant="destructive" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                      {changeRequests.filter(r => r.status === 'pending').length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              )}
             </TabsList>
             
             <TabsContent value="overview" className="pt-4">
@@ -186,6 +225,21 @@ export function PromoterDetail({ promoterId, onClose, promoterData }: PromoterDe
                         <span>Joined {formatDate(profile?.created_at || "")}</span>
                       </div>
                     </div>
+
+                    {/* Admin Actions */}
+                    {isAdmin && (
+                      <div className="mt-4 pt-4 border-t">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={() => setShowRequestDialog(true)}
+                        >
+                          <MessageSquare className="h-4 w-4 mr-2" />
+                          Request Changes
+                        </Button>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
                 
@@ -280,44 +334,151 @@ export function PromoterDetail({ promoterId, onClose, promoterData }: PromoterDe
                   <CardTitle>Verification Documents</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="border rounded-md p-4">
-                      <h4 className="font-medium mb-2">ID Card</h4>
+                  <div className="space-y-4">
+                    {/* ID Card */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <FileText className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-medium">ID Card</div>
+                          <div className="text-sm text-muted-foreground">
+                            {profile?.id_card_url ? "Uploaded" : "Not uploaded"}
+                          </div>
+                        </div>
+                      </div>
                       {profile?.id_card_url ? (
-                        <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                          <img 
-                            src={profile.id_card_url} 
-                            alt="ID Card" 
-                            className="max-h-full max-w-full object-contain rounded-md"
-                          />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => handlePreview(profile.id_card_url!, e)}
+                            className="text-primary hover:underline text-sm flex items-center gap-1"
+                          >
+                            <Eye className="h-4 w-4" />
+                            Preview
+                          </button>
+                          <a
+                            href={profile.id_card_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline text-sm flex items-center gap-1"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </a>
                         </div>
                       ) : (
-                        <div className="aspect-video bg-muted rounded-md flex items-center justify-center text-muted-foreground">
-                          No ID card uploaded
-                        </div>
+                        <span className="text-sm text-muted-foreground">No file</span>
                       )}
                     </div>
 
-                    <div className="border rounded-md p-4">
-                      <h4 className="font-medium mb-2">Profile Photo</h4>
+                    {/* Profile Photo */}
+                    <div className="flex items-center justify-between p-4 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/10 rounded-lg">
+                          <Image className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                          <div className="font-medium">Profile Photo</div>
+                          <div className="text-sm text-muted-foreground">
+                            {profile?.profile_photo_url ? "Uploaded" : "Not uploaded"}
+                          </div>
+                        </div>
+                      </div>
                       {profile?.profile_photo_url ? (
-                        <div className="aspect-video bg-muted rounded-md flex items-center justify-center">
-                          <img 
-                            src={profile.profile_photo_url} 
-                            alt="Profile Photo" 
-                            className="max-h-full max-w-full object-contain rounded-md"
-                          />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={(e) => handlePreview(profile.profile_photo_url!, e)}
+                            className="text-primary hover:underline text-sm flex items-center gap-1"
+                          >
+                            <Eye className="h-4 w-4" />
+                            Preview
+                          </button>
+                          <a
+                            href={profile.profile_photo_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline text-sm flex items-center gap-1"
+                          >
+                            <Download className="h-4 w-4" />
+                            Download
+                          </a>
                         </div>
                       ) : (
-                        <div className="aspect-video bg-muted rounded-md flex items-center justify-center text-muted-foreground">
-                          No profile photo uploaded
-                        </div>
+                        <span className="text-sm text-muted-foreground">No file</span>
                       )}
                     </div>
+
+                    {!profile?.id_card_url && !profile?.profile_photo_url && (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <FileText className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                        <p>No files uploaded yet</p>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
             </TabsContent>
+
+            {/* Change Requests Tab (Admin Only) */}
+            {isAdmin && (
+              <TabsContent value="requests" className="pt-4">
+                <Card>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle>Change Requests</CardTitle>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowRequestDialog(true)}
+                      >
+                        <MessageSquare className="h-4 w-4 mr-2" />
+                        New Request
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    {changeRequests.length === 0 ? (
+                      <p className="text-center py-8 text-muted-foreground">No change requests</p>
+                    ) : (
+                      <div className="space-y-4">
+                        {changeRequests.map((request) => (
+                          <div key={request.id} className="border rounded-lg p-4">
+                            <div className="flex items-start justify-between mb-2">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Badge variant={
+                                    request.status === 'pending' ? 'destructive' :
+                                    request.status === 'in_progress' ? 'default' :
+                                    request.status === 'resolved' ? 'secondary' : 'outline'
+                                  }>
+                                    {request.status}
+                                  </Badge>
+                                  <span className="text-sm font-medium">{request.field_name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ({request.request_type})
+                                  </span>
+                                </div>
+                                <p className="text-sm text-muted-foreground mb-2">{request.message}</p>
+                                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                  <span>Requested: {formatDate(request.created_at)}</span>
+                                  {request.requested_by_profile && (
+                                    <span>By: {request.requested_by_profile.full_name || 'Admin'}</span>
+                                  )}
+                                  {request.resolved_at && (
+                                    <span>Resolved: {formatDate(request.resolved_at)}</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            )}
           </Tabs>
         )}
         
@@ -325,6 +486,122 @@ export function PromoterDetail({ promoterId, onClose, promoterData }: PromoterDe
           <Button onClick={handleClose}>Close</Button>
         </div>
       </DialogContent>
+
+      {/* Request Changes Dialog */}
+      {isAdmin && (
+        <RequestProfileChangesDialog
+          open={showRequestDialog}
+          onOpenChange={setShowRequestDialog}
+          userId={promoterId}
+          userRole="promoter"
+          userName={profile?.full_name || 'Promoter'}
+        />
+      )}
+
+      {/* File Preview Dialog */}
+      {previewFile && (
+        <Dialog open={!!previewFile} onOpenChange={() => setPreviewFile(null)}>
+          <DialogContent className="sm:max-w-[90vw] max-w-[95vw] h-[90vh] max-h-[90vh] p-0">
+            <DialogHeader className="p-4 border-b">
+              <DialogTitle>File Preview</DialogTitle>
+              <DialogDescription>
+                {previewFile.type === 'image' ? 'Image preview' : previewFile.type === 'pdf' ? 'PDF document' : 'File preview'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex-1 overflow-auto p-4 bg-muted/50">
+              {previewFile.type === 'image' ? (
+                <div className="flex items-center justify-center min-h-[400px]">
+                  <img
+                    src={previewFile.url}
+                    alt="Preview"
+                    className="max-w-full max-h-[80vh] object-contain rounded-md shadow-lg"
+                    onError={() => {
+                      toast.error('Failed to load image');
+                    }}
+                  />
+                </div>
+              ) : previewFile.type === 'pdf' ? (
+                <div className="flex flex-col items-center justify-center min-h-[400px]">
+                  <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-2">PDF Preview</p>
+                  <p className="text-sm text-muted-foreground mb-4 text-center max-w-md">
+                    PDF files cannot be previewed inline due to security restrictions. Please download or open in a new tab to view.
+                  </p>
+                  <div className="flex gap-2">
+                    <a
+                      href={previewFile.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Open in New Tab
+                    </a>
+                    <a
+                      href={previewFile.url}
+                      download
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90"
+                    >
+                      <Download className="h-4 w-4" />
+                      Download
+                    </a>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center min-h-[400px]">
+                  <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-4">Preview not available for this file type</p>
+                  <a
+                    href={previewFile.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download File
+                  </a>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t">
+              {previewFile.type === 'pdf' ? (
+                <>
+                  <a
+                    href={previewFile.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Open in New Tab
+                  </a>
+                  <a
+                    href={previewFile.url}
+                    download
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/90 text-sm"
+                  >
+                    <Download className="h-4 w-4" />
+                    Download
+                  </a>
+                </>
+              ) : (
+                <a
+                  href={previewFile.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 text-sm"
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </a>
+              )}
+              <Button variant="outline" onClick={() => setPreviewFile(null)}>
+                Close
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Dialog>
   );
 }
