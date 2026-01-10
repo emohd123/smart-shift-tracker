@@ -14,9 +14,9 @@ export function CompanyStats({ companies, loading }: CompanyStatsProps) {
   const totalCompanies = companies.length;
   const activeCompanies = companies.filter(c => c.verificationStatus === "approved" || c.verificationStatus === "verified").length;
   const pendingCompanies = companies.filter(c => c.verificationStatus === "pending").length;
-  const totalShifts = companies.reduce((sum, c) => sum + c.totalShifts, 0);
-  const totalSpend = companies.reduce((sum, c) => sum + c.totalSpend, 0);
-  const totalPromoters = companies.reduce((sum, c) => sum + c.promotersCount, 0);
+  const totalShifts = companies.reduce((sum, c) => sum + (c.totalShifts || 0), 0);
+  const totalSpend = companies.reduce((sum, c) => sum + (c.totalSpend || 0), 0);
+  const totalPromoters = companies.reduce((sum, c) => sum + (c.promotersCount || 0), 0);
   
   // Calculate averages
   const avgShiftsPerCompany = totalCompanies > 0 ? totalShifts / totalCompanies : 0;

@@ -123,12 +123,12 @@ export function RequestProfileChangesDialog({
         throw requestError;
       }
 
-      // Send notification to user
+      // Send notification to user (non-blocking)
       const fieldLabel = availableFields.find(f => f.value === fieldName)?.label || fieldName;
       const notificationTitle = 'Profile Update Required';
       const notificationMessage = `${fieldLabel}: ${message.trim()}`;
       
-      await sendNotification(
+      const notificationSent = await sendNotification(
         userId,
         notificationTitle,
         notificationMessage,
@@ -136,7 +136,13 @@ export function RequestProfileChangesDialog({
         requestData.id
       );
 
-      toast.success(`Change request sent to ${userName}`);
+      if (notificationSent) {
+        toast.success(`Change request sent to ${userName}`);
+      } else {
+        toast.success(`Change request created for ${userName}`, {
+          description: 'Note: Notification could not be sent, but the request has been saved.'
+        });
+      }
       onOpenChange(false);
       
       // Reset form

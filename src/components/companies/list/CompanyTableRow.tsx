@@ -126,16 +126,16 @@ export function CompanyTableRow({
         </div>
       </TableCell>
       <TableCell className="py-3 text-right" onClick={() => setSelectedCompany(company.id)}>
-        <div className="font-medium">{company.totalShifts}</div>
+        <div className="font-medium">{company.totalShifts || 0}</div>
       </TableCell>
       <TableCell className="py-3 text-right" onClick={() => setSelectedCompany(company.id)}>
-        <div className="font-medium">{company.totalHours.toFixed(1)}h</div>
+        <div className="font-medium">{(company.totalHours || 0).toFixed(1)}h</div>
       </TableCell>
       <TableCell className="py-3 text-right" onClick={() => setSelectedCompany(company.id)}>
-        <div className="font-medium">{formatBHD(company.totalSpend)}</div>
+        <div className="font-medium">{formatBHD(company.totalSpend || 0)}</div>
       </TableCell>
       <TableCell className="py-3 text-right" onClick={() => setSelectedCompany(company.id)}>
-        <div className="font-medium">{company.promotersCount}</div>
+        <div className="font-medium">{company.promotersCount || 0}</div>
       </TableCell>
       <TableCell className="py-3" onClick={() => setSelectedCompany(company.id)}>
         {formatDate(company.signupDate)}

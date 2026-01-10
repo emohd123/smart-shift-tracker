@@ -56,33 +56,64 @@ export function ProfileChangeRequests() {
   useEffect(() => {
     if (!user?.id) return;
 
-    const channel = supabase
-      .channel('profile_change_requests')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'profile_change_requests',
-          filter: `user_id=eq.${user.id}`
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-            const newRequest = payload.new as ProfileChangeRequest;
-            setRequests(prev => [newRequest, ...prev]);
-            toast.info('New profile change request received', {
-              description: newRequest.message
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            const updatedRequest = payload.new as ProfileChangeRequest;
-            setRequests(prev => prev.map(r => r.id === updatedRequest.id ? updatedRequest : r));
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+
+    const setupSubscription = async () => {
+      try {
+        // Test if table exists first
+        const { error: testError } = await supabase
+          .from('profile_change_requests')
+          .select('id')
+          .limit(1);
+
+        if (testError) {
+          // Table doesn't exist - silently skip subscription
+          if (testError.code === 'PGRST116' || testError.code === '42P01') {
+            return;
           }
+          throw testError;
         }
-      )
-      .subscribe();
+
+        channel = supabase
+          .channel('profile_change_requests')
+          .on(
+            'postgres_changes',
+            {
+              event: '*',
+              schema: 'public',
+              table: 'profile_change_requests',
+              filter: `user_id=eq.${user.id}`
+            },
+            (payload) => {
+              try {
+                if (payload.eventType === 'INSERT') {
+                  const newRequest = payload.new as ProfileChangeRequest;
+                  setRequests(prev => [newRequest, ...prev]);
+                  toast.info('New profile change request received', {
+                    description: newRequest.message
+                  });
+                } else if (payload.eventType === 'UPDATE') {
+                  const updatedRequest = payload.new as ProfileChangeRequest;
+                  setRequests(prev => prev.map(r => r.id === updatedRequest.id ? updatedRequest : r));
+                }
+              } catch (error) {
+                console.error('Error processing real-time update:', error);
+              }
+            }
+          )
+          .subscribe();
+      } catch (error) {
+        console.error('Error setting up real-time subscription:', error);
+        // Don't show error to user - subscription is optional
+      }
+    };
+
+    setupSubscription();
 
     return () => {
-      supabase.removeChannel(channel);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [user?.id]);
 

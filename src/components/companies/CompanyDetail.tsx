@@ -398,7 +398,7 @@ export function CompanyDetail({ companyId, onClose, companyData }: CompanyDetail
                           {recentShifts.map((shift) => (
                             <TableRow key={shift.id}>
                               <TableCell className="font-medium">{shift.title}</TableCell>
-                              <TableCell>{formatDate(shift.date)}</TableCell>
+                              <TableCell>{shift.date ? formatDate(shift.date) : "N/A"}</TableCell>
                               <TableCell>{shift.location || "N/A"}</TableCell>
                               <TableCell>
                                 <Badge variant="outline">{shift.status}</Badge>

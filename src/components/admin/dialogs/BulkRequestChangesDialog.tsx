@@ -93,7 +93,8 @@ export function BulkRequestChangesDialog({
         status: 'pending'
       }));
 
-      const { data: requestData, error: requestError } = await supabase
+      let requestData: any[] | null = null;
+      const { data: insertedData, error: requestError } = await supabase
         .from('profile_change_requests')
         .insert(requests)
         .select();
@@ -105,27 +106,78 @@ export function BulkRequestChangesDialog({
           setLoading(false);
           return;
         }
-        throw requestError;
+        
+        // Handle partial failures - try inserting one by one
+        if (requestError.code === '23505' || requestError.message?.includes('duplicate')) {
+          toast.error('Some requests already exist. Please try again.');
+          setLoading(false);
+          return;
+        }
+        
+        // Try inserting individually to see which ones succeed
+        const results = await Promise.allSettled(
+          requests.map(req =>
+            supabase
+              .from('profile_change_requests')
+              .insert(req)
+              .select()
+              .single()
+          )
+        );
+
+        const successful = results.filter(r => r.status === 'fulfilled').length;
+        const failed = results.filter(r => r.status === 'rejected').length;
+
+        if (successful === 0) {
+          throw new Error('Failed to create any change requests');
+        }
+
+        if (failed > 0) {
+          toast.warning(`Created ${successful} request${successful > 1 ? 's' : ''}, ${failed} failed`, {
+            description: 'Some requests could not be created. Please try again for the failed ones.'
+          });
+        }
+
+        // Get successful request data
+        const successfulData = results
+          .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
+          .map(r => r.value.data)
+          .filter(Boolean)
+          .flat();
+
+        requestData = successfulData;
+      } else {
+        requestData = insertedData;
       }
 
-      // Send notifications to all users
+      // Send notifications to all users (non-blocking) - only for successfully created requests
       const fieldLabel = availableFields.find(f => f.value === fieldName)?.label || fieldName;
       const notificationTitle = 'Profile Update Required';
       const notificationMessage = `${fieldLabel}: ${message.trim()}`;
       
-      const notificationPromises = userIds.map(userId =>
-        sendNotification(
-          userId,
-          notificationTitle,
-          notificationMessage,
-          'warning',
-          requestData?.find(r => r.user_id === userId)?.id
+      const successfulUserIds = requestData?.map(r => r.user_id) || userIds;
+      const notificationResults = await Promise.allSettled(
+        successfulUserIds.map(userId =>
+          sendNotification(
+            userId,
+            notificationTitle,
+            notificationMessage,
+            'warning',
+            requestData?.find(r => r.user_id === userId)?.id
+          )
         )
       );
 
-      await Promise.all(notificationPromises);
+      const successCount = notificationResults.filter(r => r.status === 'fulfilled' && r.value === true).length;
+      const failureCount = notificationResults.length - successCount;
 
-      toast.success(`Change requests sent to ${userCount} ${userRole}${userCount > 1 ? 's' : ''}`);
+      if (failureCount === 0) {
+        toast.success(`Change requests sent to ${successfulUserIds.length} ${userRole}${successfulUserIds.length > 1 ? 's' : ''}`);
+      } else {
+        toast.success(`Change requests created for ${successfulUserIds.length} ${userRole}${successfulUserIds.length > 1 ? 's' : ''}`, {
+          description: `${successCount} notifications sent, ${failureCount} failed. Requests are still saved.`
+        });
+      }
       onOpenChange(false);
       
       // Reset form

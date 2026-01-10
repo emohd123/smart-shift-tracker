@@ -128,16 +128,16 @@ export function CompaniesList({ filterStatus }: CompaniesListProps) {
   // Export data function
   const exportData = () => {
     return filteredByStatus.map(c => ({
-      company_name: c.companyName,
+      company_name: c.companyName || "",
       registration_id: c.registrationId || "",
       industry: c.industry || "",
       company_size: c.companySize || "",
-      signup_date: format(new Date(c.signupDate), "yyyy-MM-dd"),
+      signup_date: c.signupDate ? format(new Date(c.signupDate), "yyyy-MM-dd") : "",
       verification_status: c.verificationStatus || "",
-      total_shifts: c.totalShifts,
-      total_hours: c.totalHours.toFixed(2),
-      total_spend: c.totalSpend.toFixed(2),
-      promoters_count: c.promotersCount,
+      total_shifts: c.totalShifts || 0,
+      total_hours: (c.totalHours || 0).toFixed(2),
+      total_spend: (c.totalSpend || 0).toFixed(2),
+      promoters_count: c.promotersCount || 0,
       last_activity: c.lastActivityDate ? format(new Date(c.lastActivityDate), "yyyy-MM-dd") : "",
       email: c.email || "",
       phone: c.phoneNumber || "",
