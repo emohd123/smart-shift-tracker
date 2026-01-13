@@ -17,6 +17,12 @@ export interface FormData {
   bankDetails: string;
   role: UserRole; // 'promoter' or 'company' at signup
   
+  // Enhanced bank account fields
+  bankAccountHolderName?: string;
+  ibanNumber?: string;
+  bankName?: string;
+  bankCountry?: string;
+  
   // Company-specific fields
   companyName?: string;
   companyRegistrationId?: string;

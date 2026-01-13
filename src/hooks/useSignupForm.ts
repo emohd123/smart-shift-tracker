@@ -42,6 +42,8 @@ export const useSignupForm = () => {
       if (activeSection === "account") {
         setActiveSection("personal");
       } else if (activeSection === "personal") {
+        setActiveSection(formData.role === 'company' ? "documents" : "bank");
+      } else if (activeSection === "bank") {
         setActiveSection("documents");
       }
     }
@@ -50,8 +52,10 @@ export const useSignupForm = () => {
   const handlePrevStep = () => {
     if (activeSection === "personal") {
       setActiveSection("account");
-    } else if (activeSection === "documents") {
+    } else if (activeSection === "bank") {
       setActiveSection("personal");
+    } else if (activeSection === "documents") {
+      setActiveSection(formData.role === 'company' ? "personal" : "bank");
     }
   };
 

@@ -26,6 +26,10 @@ export type UserProfile = {
   is_student: boolean;
   address: string;
   bank_details?: string;
+  bank_account_holder_name?: string;
+  iban_number?: string;
+  bank_name?: string;
+  bank_country?: string;
   id_card_url?: string;
   profile_photo_url?: string;
   verification_status: VerificationStatus;

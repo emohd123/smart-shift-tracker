@@ -41,6 +41,10 @@ export default function ProfileUpdateForm() {
       is_student: false,
       address: "",
       bank_details: "",
+      bank_account_holder_name: "",
+      iban_number: "",
+      bank_name: "",
+      bank_country: "BH",
       id_card_url: null as string | null,
       profile_photo_url: null as string | null,
     }
@@ -99,6 +103,11 @@ export default function ProfileUpdateForm() {
         is_student: Boolean(data.is_student),
         address: data.address || "",
         bank_details: data.bank_details || "",
+        // Enhanced bank account fields
+        bank_account_holder_name: data.bank_account_holder_name || null,
+        iban_number: data.iban_number || null,
+        bank_name: data.bank_name || null,
+        bank_country: data.bank_country || 'BH',
         id_card_url: idCardUrl || null,
         profile_photo_url: profilePhotoUrl || null,
       };

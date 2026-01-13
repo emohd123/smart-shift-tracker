@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AttendanceStatusBadge } from "./AttendanceStatusBadge";
 import { TimeLog, calculatePromoterPayment, formatWorkDuration, formatBHD } from "../utils/paymentCalculations";
-import { Clock, Phone, User, X, LogIn, LogOut, Timer, Star, FileText, CheckCircle, Plus, Gift, Briefcase } from "lucide-react";
+import { Clock, Phone, User, X, LogIn, LogOut, Timer, Star, FileText, CheckCircle, Plus, Gift, Briefcase, CreditCard } from "lucide-react";
 import { format } from "date-fns";
 import { useUnassignPromoter } from "./hooks/useUnassignPromoter";
 import { useCompanyCheckIn } from "./hooks/useCompanyCheckIn";
@@ -15,6 +15,7 @@ import { ManualCheckInDialog } from "./ManualCheckInDialog";
 import { ManualCheckOutDialog } from "./ManualCheckOutDialog";
 import { PromoterWorkHistory } from "./PromoterWorkHistory";
 import { AddExtraPaymentDialog } from "./AddExtraPaymentDialog";
+import { PaymentProcessingDialog } from "./PaymentProcessingDialog";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -106,6 +107,15 @@ export const PromoterAttendanceCard = ({
     created_at: string;
   }>>([]);
   const [showExtraPayments, setShowExtraPayments] = useState(false);
+  
+  // Payment processing state
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [promoterBankDetails, setPromoterBankDetails] = useState<{
+    ibanNumber?: string;
+    bankName?: string;
+    bankAccountHolderName?: string;
+  } | null>(null);
+  const [shiftTitle, setShiftTitle] = useState<string>('');
 
   // Calculated values (after all state declarations)
   const hasTimeLogs = timeLogs.length > 0;
@@ -115,6 +125,14 @@ export const PromoterAttendanceCard = ({
   const payment = basePayment + totalExtraPayment;
   const latestLog = timeLogs.length > 0 ? timeLogs[timeLogs.length - 1] : null;
   const isCheckedIn = latestLog && !latestLog.check_out_time;
+  
+  // Check if payment can be processed
+  const hasCompletedTimeLogs = timeLogs.some(log => log.check_out_time !== null);
+  const canProcessPayment = isCompany && 
+    hasCompletedTimeLogs && 
+    payment > 0 &&
+    (promoter.payment_status === 'scheduled' || promoter.payment_status === null || promoter.payment_status === 'pending') &&
+    shiftStatus !== 'cancelled';
 
   const isShiftCompleted = shiftStatus === ShiftStatus.Completed;
   const canRate = isCompany && isShiftCompleted && existingRating === null;
@@ -300,6 +318,84 @@ export const PromoterAttendanceCard = ({
   useEffect(() => {
     fetchExtraPayments();
   }, [promoter.id]);
+
+  // Fetch shift title and promoter bank details when payment dialog opens
+  useEffect(() => {
+    if (showPaymentDialog && isCompany) {
+      const fetchPaymentData = async () => {
+        try {
+          // Fetch shift title
+          const { data: shiftData } = await supabase
+            .from('shifts')
+            .select('title')
+            .eq('id', shiftId)
+            .single();
+          
+          if (shiftData) {
+            setShiftTitle(shiftData.title || 'Shift');
+          }
+
+          // Fetch promoter bank details
+          const { data: promoterProfile } = await supabase
+            .from('profiles')
+            .select('iban_number, bank_name, bank_account_holder_name')
+            .eq('id', promoter.promoter_id)
+            .single();
+
+          if (promoterProfile) {
+            setPromoterBankDetails({
+              ibanNumber: promoterProfile.iban_number || undefined,
+              bankName: promoterProfile.bank_name || undefined,
+              bankAccountHolderName: promoterProfile.bank_account_holder_name || undefined
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching payment data:', error);
+        }
+      };
+
+      fetchPaymentData();
+    }
+  }, [showPaymentDialog, isCompany, shiftId, promoter.promoter_id]);
+
+  // Fetch shift title and promoter bank details when payment dialog opens
+  useEffect(() => {
+    if (showPaymentDialog && isCompany) {
+      const fetchPaymentData = async () => {
+        try {
+          // Fetch shift title
+          const { data: shiftData } = await supabase
+            .from('shifts')
+            .select('title')
+            .eq('id', shiftId)
+            .single();
+          
+          if (shiftData) {
+            setShiftTitle(shiftData.title || 'Shift');
+          }
+
+          // Fetch promoter bank details
+          const { data: promoterProfile } = await supabase
+            .from('profiles')
+            .select('iban_number, bank_name, bank_account_holder_name')
+            .eq('id', promoter.promoter_id)
+            .single();
+
+          if (promoterProfile) {
+            setPromoterBankDetails({
+              ibanNumber: promoterProfile.iban_number || undefined,
+              bankName: promoterProfile.bank_name || undefined,
+              bankAccountHolderName: promoterProfile.bank_account_holder_name || undefined
+            });
+          }
+        } catch (error) {
+          console.error('Error fetching payment data:', error);
+        }
+      };
+
+      fetchPaymentData();
+    }
+  }, [showPaymentDialog, isCompany, shiftId, promoter.promoter_id]);
 
 
   // Calculate elapsed time and estimated earnings for active check-ins
@@ -604,6 +700,23 @@ export const PromoterAttendanceCard = ({
               }}
               compact
             />
+            {canProcessPayment && (
+              <Button
+                size="sm"
+                variant="default"
+                className="h-8 text-xs bg-green-600 hover:bg-green-700"
+                onClick={() => setShowPaymentDialog(true)}
+              >
+                <CreditCard className="h-3 w-3 mr-1" />
+                Pay
+              </Button>
+            )}
+            {promoter.payment_status === 'paid' && (
+              <Badge variant="default" className="bg-green-500/10 text-green-600 border-green-500/20 text-[10px] px-1.5 py-0 h-8 flex items-center">
+                <CheckCircle className="h-2.5 w-2.5 mr-0.5" />
+                Paid
+              </Badge>
+            )}
           </div>
         )}
 
@@ -785,6 +898,29 @@ export const PromoterAttendanceCard = ({
             onUpdate?.();
           }}
         />
+
+        {/* Payment Processing Dialog */}
+        {canProcessPayment && (
+          <PaymentProcessingDialog
+            open={showPaymentDialog}
+            onClose={() => {
+              setShowPaymentDialog(false);
+              setPromoterBankDetails(null);
+            }}
+            assignmentId={promoter.id}
+            promoterId={promoter.promoter_id}
+            promoterName={promoter.full_name}
+            amount={payment}
+            ibanNumber={promoterBankDetails?.ibanNumber}
+            bankName={promoterBankDetails?.bankName}
+            bankAccountHolderName={promoterBankDetails?.bankAccountHolderName}
+            shiftTitle={shiftTitle}
+            onPaymentComplete={() => {
+              onUpdate?.();
+              setShowPaymentDialog(false);
+            }}
+          />
+        )}
 
         {/* Signed Contract Dialog */}
         <Dialog open={showContractDialog} onOpenChange={setShowContractDialog}>

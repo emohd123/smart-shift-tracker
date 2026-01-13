@@ -38,7 +38,10 @@ export const useAssignedPromoters = (shiftId: string) => {
           profiles:promoter_id (
             full_name,
             unique_code,
-            phone_number
+            phone_number,
+            iban_number,
+            bank_name,
+            bank_account_holder_name
           )
         `)
         .eq("shift_id", shiftId);
@@ -51,9 +54,9 @@ export const useAssignedPromoters = (shiftId: string) => {
       if (assignmentIds.length > 0) {
         try {
           const { data: payRows } = await (supabase as any)
-            .from("shift_assignment_payment_status")
-            .select("assignment_id, status, scheduled_at, paid_at")
-            .in("assignment_id", assignmentIds);
+          .from("shift_assignment_payment_status")
+          .select("assignment_id, status, scheduled_at, paid_at, amount, transaction_reference")
+          .in("assignment_id", assignmentIds);
           (payRows || []).forEach((p: any) => paymentMap.set(p.assignment_id, p));
         } catch {
           paymentMap = new Map();

@@ -1,6 +1,7 @@
 
 import { FormData, FileData } from "@/components/auth/signup/types";
 import { sanitizeInput, emailSchema, passwordSchema, nameSchema, phoneSchema, containsSqlInjection, useInputValidation } from "@/utils/validation";
+import { validateIBAN } from "@/utils/ibanValidation";
 
 export const useSignupFormValidation = (
   formData: FormData, 
@@ -180,6 +181,52 @@ export const useSignupFormValidation = (
     return true;
   };
   
+  const validateBankAccount = () => {
+    setFormError(null);
+    
+    // Only validate for promoters
+    if (formData.role === 'company') {
+      return true;
+    }
+    
+    // Check required fields
+    if (!formData.bankAccountHolderName || !formData.ibanNumber || !formData.bankName || !formData.bankCountry) {
+      setFormError("All bank account fields are required");
+      return false;
+    }
+    
+    // Sanitize inputs
+    const sanitizedHolderName = sanitizeInput(formData.bankAccountHolderName.trim());
+    const sanitizedBankName = sanitizeInput(formData.bankName.trim());
+    
+    // Check for SQL injection attempts
+    if (containsSqlInjection(sanitizedHolderName) || containsSqlInjection(sanitizedBankName)) {
+      setFormError("Invalid characters detected in bank account information");
+      return false;
+    }
+    
+    // Validate account holder name
+    if (sanitizedHolderName.length < 2 || sanitizedHolderName.length > 100) {
+      setFormError("Account holder name must be between 2 and 100 characters");
+      return false;
+    }
+    
+    // Validate bank name
+    if (sanitizedBankName.length < 2 || sanitizedBankName.length > 100) {
+      setFormError("Bank name must be between 2 and 100 characters");
+      return false;
+    }
+    
+    // Validate IBAN
+    const ibanValidation = validateIBAN(formData.ibanNumber || '');
+    if (!ibanValidation.valid) {
+      setFormError(ibanValidation.error || "Invalid IBAN format");
+      return false;
+    }
+    
+    return true;
+  };
+  
   const validateDocuments = () => {
     setFormError(null);
     
@@ -194,6 +241,8 @@ export const useSignupFormValidation = (
         return validateAccountInfo();
       case "personal":
         return formData.role === 'company' ? validateCompanyInfo() : validatePersonalInfo();
+      case "bank":
+        return validateBankAccount();
       case "documents":
         return validateDocuments();
       default:
@@ -210,6 +259,8 @@ export const useSignupFormValidation = (
       if (!validateCompanyInfo()) return false;
     } else {
       if (!validatePersonalInfo()) return false;
+      // Validate bank account for promoters
+      if (!validateBankAccount()) return false;
     }
     
     // Documents are optional, so we don't need to validate them

@@ -38,6 +38,8 @@ const DataPurge = lazy(() => import("./pages/DataPurge"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Certificates = lazy(() => import("./pages/Certificates"));
 const Revenue = lazy(() => import("./pages/Revenue"));
+const PaymentReceipts = lazy(() => import("./pages/PaymentReceipts"));
+const PaymentReceiptViewerPage = lazy(() => import("./pages/PaymentReceiptViewer"));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -84,6 +86,9 @@ function App() {
                   <Route path="/data-purge" element={<DataPurge />} />
                   <Route path="/certificates" element={<Certificates />} />
                   <Route path="/revenue" element={<Revenue />} />
+                  <Route path="/payments/receipts" element={<PaymentReceipts />} />
+                  <Route path="/payments/receipts/:receiptId" element={<PaymentReceiptViewerPage />} />
+                  <Route path="/company/payments" element={<PaymentReceipts />} />
                 </Route>
                 
                 {/* Fallback route */}

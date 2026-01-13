@@ -182,6 +182,11 @@ export const useSignupFileUpload = (setUploadingFiles: React.Dispatch<React.SetS
           is_student: formData.isStudent === true,
           address: formData.address || '',
           bank_details: formData.bankDetails || null,
+          // Enhanced bank account fields
+          bank_account_holder_name: formData.bankAccountHolderName || null,
+          iban_number: formData.ibanNumber || null,
+          bank_name: formData.bankName || null,
+          bank_country: formData.bankCountry || 'BH',
           id_card_url: idCardUrl,
           profile_photo_url: profilePhotoUrl,
           unique_code: uniqueCode, // Add generated unique code

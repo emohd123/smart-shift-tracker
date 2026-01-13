@@ -23,6 +23,12 @@ export const useSignupFormState = () => {
     bankDetails: "",
     role: roleFromUrl === 'company' ? UserRole.Company : UserRole.Promoter,
     
+    // Enhanced bank account fields
+    bankAccountHolderName: "",
+    ibanNumber: "",
+    bankName: "",
+    bankCountry: "BH",
+    
     // Company-specific fields
     companyName: "",
     companyRegistrationId: "",

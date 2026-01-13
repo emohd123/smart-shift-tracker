@@ -17,6 +17,7 @@ import { Copy, Check } from "lucide-react";
 import { GenderType } from "@/types/database";
 import { countries } from "@/lib/countries";
 import { toast } from "sonner";
+import { formatIBAN } from "@/utils/ibanValidation";
 import { 
   Form,
   FormField, 
@@ -45,6 +46,13 @@ export default function ProfileFormFields({
   const [copied, setCopied] = useState(false);
   
   const uniqueCode = form.watch("unique_code");
+  const ibanNumber = form.watch("iban_number");
+  
+  // Handle IBAN formatting
+  const handleIBANChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\s/g, '').toUpperCase();
+    form.setValue("iban_number", value);
+  };
   
   const handleCopyCode = async () => {
     if (uniqueCode) {
@@ -207,16 +215,76 @@ export default function ProfileFormFields({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="bank_details">Bank Details</Label>
+          <Label htmlFor="bank_account_holder_name">Account Holder Name</Label>
           <Input
-            id="bank_details"
+            id="bank_account_holder_name"
             type="text"
-            {...form.register("bank_details")}
+            {...form.register("bank_account_holder_name")}
             readOnly={readOnly}
             disabled={readOnly}
+            placeholder="John Doe"
           />
-          {form.formState.errors.bank_details && (
-            <p className="text-sm text-red-500">{form.formState.errors.bank_details.message as string}</p>
+          {form.formState.errors.bank_account_holder_name && (
+            <p className="text-sm text-red-500">{form.formState.errors.bank_account_holder_name.message as string}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="iban_number">IBAN Number</Label>
+          <Input
+            id="iban_number"
+            type="text"
+            value={ibanNumber ? formatIBAN(ibanNumber) : ''}
+            onChange={handleIBANChange}
+            readOnly={readOnly}
+            disabled={readOnly}
+            placeholder="BH02 CITI 0000 1077 1816 11"
+            className="font-mono"
+            maxLength={42}
+          />
+          <p className="text-xs text-muted-foreground">
+            International Bank Account Number (15-34 characters)
+          </p>
+          {form.formState.errors.iban_number && (
+            <p className="text-sm text-red-500">{form.formState.errors.iban_number.message as string}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="bank_name">Bank Name</Label>
+          <Input
+            id="bank_name"
+            type="text"
+            {...form.register("bank_name")}
+            readOnly={readOnly}
+            disabled={readOnly}
+            placeholder="e.g., Bank of Bahrain and Kuwait"
+          />
+          {form.formState.errors.bank_name && (
+            <p className="text-sm text-red-500">{form.formState.errors.bank_name.message as string}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="bank_country">Bank Country</Label>
+          <Select
+            onValueChange={(value) => form.setValue("bank_country", value)}
+            defaultValue={form.getValues("bank_country") || "BH"}
+            disabled={readOnly}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select country" />
+            </SelectTrigger>
+            <SelectContent>
+              {countries.map((country) => (
+                <SelectItem key={country.code} value={country.code}>
+                  {country.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {form.formState.errors.bank_country && (
+            <p className="text-sm text-red-500">{form.formState.errors.bank_country.message as string}</p>
           )}
         </div>
       </div>

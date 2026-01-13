@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccountInfoStep } from "./signup/AccountInfoStep";
 import { PersonalInfoStep } from "./signup/PersonalInfoStep";
+import { BankAccountStep } from "./signup/BankAccountStep";
 import { DocumentUploadStep } from "./signup/DocumentUploadStep";
 import { CompanyInfoStep } from "./signup/CompanyInfoStep";
 import { CompanyDocumentStep } from "./signup/CompanyDocumentStep";
@@ -83,11 +84,12 @@ export default function SignupForm() {
       <div className="bg-white rounded-lg shadow-sm border p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <Tabs value={activeSection} onValueChange={setActiveSection} className="w-full">
-            <TabsList className="grid grid-cols-3 mb-6">
+            <TabsList className={`grid mb-6 ${isCompany ? 'grid-cols-3' : 'grid-cols-4'}`}>
               <TabsTrigger value="account">Account Info</TabsTrigger>
               <TabsTrigger value="personal">
                 {isCompany ? "Company Details" : "Personal Details"}
               </TabsTrigger>
+              {!isCompany && <TabsTrigger value="bank">Bank Account</TabsTrigger>}
               <TabsTrigger value="documents">Documents</TabsTrigger>
             </TabsList>
             
@@ -160,11 +162,42 @@ export default function SignupForm() {
                   <ArrowLeft size={16} className="mr-2" />
                   Back
                 </Button>
-                <Button type="button" onClick={() => setActiveSection("documents")}>
+                <Button type="button" onClick={() => setActiveSection(isCompany ? "documents" : "bank")}>
                   Next
                 </Button>
               </div>
             </TabsContent>
+            
+            {!isCompany && (
+              <TabsContent value="bank" className="space-y-4">
+                <BankAccountStep
+                  formData={formData}
+                  handleChange={handleChange}
+                  setFormData={(newData) => {
+                    Object.entries(newData).forEach(([key, value]) => {
+                      const syntheticEvent = {
+                        target: {
+                          name: key,
+                          value,
+                          type: typeof value === 'boolean' ? 'checkbox' : 'text',
+                          checked: Boolean(value)
+                        }
+                      } as React.ChangeEvent<HTMLInputElement>;
+                      handleChange(syntheticEvent);
+                    });
+                  }}
+                />
+                <div className="flex justify-between mt-4">
+                  <Button type="button" variant="outline" onClick={() => setActiveSection("personal")}>
+                    <ArrowLeft size={16} className="mr-2" />
+                    Back
+                  </Button>
+                  <Button type="button" onClick={() => setActiveSection("documents")}>
+                    Next
+                  </Button>
+                </div>
+              </TabsContent>
+            )}
             
             <TabsContent value="documents" className="space-y-4">
               {isCompany ? (

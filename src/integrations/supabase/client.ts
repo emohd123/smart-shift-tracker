@@ -5,13 +5,49 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
-// Import the supabase client like this:
-// import { supabase } from "@/integrations/supabase/client";
+// Validate environment variables and create client
+let supabaseClient: ReturnType<typeof createClient<Database>>;
 
-export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
-  auth: {
-    storage: localStorage,
-    persistSession: true,
-    autoRefreshToken: true,
+if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
+  const missingVars = [];
+  if (!SUPABASE_URL) missingVars.push('VITE_SUPABASE_URL');
+  if (!SUPABASE_PUBLISHABLE_KEY) missingVars.push('VITE_SUPABASE_PUBLISHABLE_KEY');
+  
+  console.error(
+    `❌ Missing required environment variables: ${missingVars.join(', ')}\n` +
+    `Please create a .env file with:\n` +
+    `VITE_SUPABASE_URL=your_supabase_url\n` +
+    `VITE_SUPABASE_PUBLISHABLE_KEY=your_publishable_key`
+  );
+  
+  // Create a dummy client to prevent crashes, but operations will fail
+  // This allows the app to load and show error messages instead of crashing
+  const dummyUrl = 'https://placeholder.supabase.co';
+  const dummyKey = 'placeholder-key';
+  
+  supabaseClient = createClient<Database>(dummyUrl, dummyKey, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    }
+  });
+  
+  // Show user-friendly error in console
+  if (typeof window !== 'undefined') {
+    console.error('⚠️ Supabase configuration is missing. Please check your .env file.');
   }
-});
+} else {
+  // Import the supabase client like this:
+  // import { supabase } from "@/integrations/supabase/client";
+
+  supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+    auth: {
+      storage: localStorage,
+      persistSession: true,
+      autoRefreshToken: true,
+    }
+  });
+}
+
+export const supabase = supabaseClient;

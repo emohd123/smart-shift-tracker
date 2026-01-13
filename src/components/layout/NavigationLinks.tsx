@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { 
   CalendarDays, ChevronDown, 
   ClipboardList, Clock, Home, MessageCircle, 
-  Settings, UserRound, Users, FileBarChart2, Eraser, Award, DollarSign
+  Settings, UserRound, Users, FileBarChart2, Eraser, Award, DollarSign, Receipt
 } from "lucide-react";
 import { UserRole } from "@/types/database";
 import {
@@ -83,6 +83,15 @@ export const NavigationLinks = () => {
       <AppLink to="/certificates" icon={<Award className="h-4 w-4" />}>
         Certificates
       </AppLink>
+      
+      {(isPromoter || isCompany) && (
+        <AppLink 
+          to={isCompany ? "/company/payments" : "/payments/receipts"} 
+          icon={<Receipt className="h-4 w-4" />}
+        >
+          {isCompany ? "Payments" : "My Payments"}
+        </AppLink>
+      )}
       
       {isAdmin && (
         <>

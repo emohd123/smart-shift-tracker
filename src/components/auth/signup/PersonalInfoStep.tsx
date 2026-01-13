@@ -116,18 +116,6 @@ export function PersonalInfoStep({
         />
       </div>
       
-      <div className="space-y-2">
-        <Label htmlFor="bankDetails">Bank Details (Optional)</Label>
-        <Input
-          id="bankDetails"
-          name="bankDetails"
-          type="text"
-          value={formData.bankDetails || ''}
-          onChange={handleChange}
-          placeholder="Bank account details"
-        />
-      </div>
-      
       <div className="flex items-center space-x-2">
         <Checkbox
           id="isStudent"

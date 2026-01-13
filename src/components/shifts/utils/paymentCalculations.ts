@@ -103,3 +103,79 @@ export const calculateLiveEarnings = (
 
   return { elapsedHours, currentEarnings: Math.max(0, earnings) };
 };
+
+/**
+ * Calculate payment from time logs with detailed breakdown
+ * @param timeLogs - Array of time log entries
+ * @param payRate - Payment rate per unit
+ * @param payRateType - Type of pay rate (hourly, daily, monthly, fixed)
+ * @returns Object with total hours, amount, and breakdown by date
+ */
+export const calculatePaymentFromTimeLogs = (
+  timeLogs: TimeLog[],
+  payRate: number,
+  payRateType: string = 'hourly'
+): {
+  totalHours: number;
+  amount: number;
+  breakdown: Array<{ date: string; hours: number; amount: number }>;
+} => {
+  // Filter only completed time logs
+  const completedLogs = timeLogs.filter(log => log.check_out_time !== null);
+  
+  // Calculate total hours
+  const totalHours = completedLogs.reduce((sum, log) => {
+    return sum + (log.total_hours || 0);
+  }, 0);
+
+  // Group by date for breakdown
+  const breakdownMap = new Map<string, { hours: number; amount: number }>();
+  
+  completedLogs.forEach(log => {
+    if (!log.check_in_time) return;
+    
+    const date = new Date(log.check_in_time).toISOString().split('T')[0];
+    const hours = log.total_hours || 0;
+    
+    const existing = breakdownMap.get(date) || { hours: 0, amount: 0 };
+    existing.hours += hours;
+    
+    // Calculate amount for this day based on pay rate type
+    let dayAmount = 0;
+    switch (payRateType) {
+      case 'hourly':
+        dayAmount = hours * payRate;
+        break;
+      case 'daily':
+        dayAmount = (hours / 8) * payRate;
+        break;
+      case 'monthly':
+        dayAmount = (hours / 160) * payRate;
+        break;
+      case 'fixed':
+        dayAmount = payRate;
+        break;
+      default:
+        dayAmount = hours * payRate;
+    }
+    
+    existing.amount += dayAmount;
+    breakdownMap.set(date, existing);
+  });
+
+  // Convert map to array
+  const breakdown = Array.from(breakdownMap.entries()).map(([date, data]) => ({
+    date,
+    hours: data.hours,
+    amount: data.amount
+  })).sort((a, b) => a.date.localeCompare(b.date));
+
+  // Calculate total amount
+  const amount = calculatePromoterPayment(completedLogs, payRate, payRateType);
+
+  return {
+    totalHours,
+    amount,
+    breakdown
+  };
+};
