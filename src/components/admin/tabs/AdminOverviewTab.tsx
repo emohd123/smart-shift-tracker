@@ -13,6 +13,7 @@ import ShiftList from "@/components/shifts/ShiftList";
 import { getEffectiveStatus } from "@/components/shifts/utils/statusCalculations";
 import { formatBHD } from "@/components/shifts/utils/currencyUtils";
 import { supabase } from "@/integrations/supabase/client";
+import { tooltips } from "@/config/tooltips";
 
 export default function AdminOverviewTab() {
   const { user, isAuthenticated } = useAuth();
@@ -85,12 +86,14 @@ export default function AdminOverviewTab() {
           value={shiftsLoading ? "—" : opsStats.todaysCount}
           icon={Calendar}
           description={`Active now: ${shiftsLoading ? "—" : opsStats.activeCount}`}
+          tooltip={tooltips.company.admin.todaysShifts}
         />
         <MetricCard
           title="Completed Shifts"
           value={shiftsLoading ? "—" : opsStats.completedCount}
           icon={CheckCircle}
           description="All-time completed"
+          tooltip={tooltips.company.admin.completedShifts}
         />
         <MetricCard
           title="Total Payable"
@@ -98,6 +101,7 @@ export default function AdminOverviewTab() {
           icon={DollarSign}
           description="From actual time logs"
           iconClassName="text-green-600"
+          tooltip={tooltips.company.admin.totalPayable}
         />
         <MetricCard
           title="System Status"
@@ -105,6 +109,7 @@ export default function AdminOverviewTab() {
           icon={Activity}
           description="All services running"
           iconClassName="text-green-600"
+          tooltip={tooltips.company.admin.systemStatus}
         />
       </div>
 

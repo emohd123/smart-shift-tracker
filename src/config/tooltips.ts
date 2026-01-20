@@ -98,6 +98,10 @@ export const tooltips = {
       revenue: "Revenue analytics and financial reports",
       reports: "Generate and view detailed reports",
       system: "System settings and configuration options",
+      totalPayable: "Total amount payable to promoters calculated from completed time logs. Based on hours worked multiplied by shift pay rates.",
+      todaysShifts: "Number of shifts scheduled for today",
+      completedShifts: "Total number of shifts that have been completed across all time",
+      systemStatus: "Current operational status of all platform services",
     },
     settings: {
       passwordChange: "Change your account password for security",

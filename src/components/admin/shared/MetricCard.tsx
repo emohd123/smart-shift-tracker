@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
 
 interface MetricCardProps {
   title: string;
@@ -13,6 +14,7 @@ interface MetricCardProps {
   };
   className?: string;
   iconClassName?: string;
+  tooltip?: string;
 }
 
 export function MetricCard({
@@ -23,11 +25,15 @@ export function MetricCard({
   trend,
   className,
   iconClassName,
+  tooltip,
 }: MetricCardProps) {
   return (
     <Card className={cn("", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <div className="flex items-center gap-1.5">
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          {tooltip && <HelpTooltip content={tooltip} />}
+        </div>
         <Icon className={cn("h-4 w-4 text-muted-foreground", iconClassName)} />
       </CardHeader>
       <CardContent>
