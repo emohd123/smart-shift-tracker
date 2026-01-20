@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import MessageList from "./MessageList";
+import RealtimeConnectionStatus from "./RealtimeConnectionStatus";
 import { useMessages } from "@/hooks/messages/useMessages";
 import { useSendMessage } from "@/hooks/messages/useSendMessage";
 import { cn } from "@/lib/utils";
@@ -25,7 +26,7 @@ const ChatInterface = ({ currentUser, contact, onBackToContacts }: ChatInterface
   const [error, setError] = useState<string | null>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { messages, loading, refreshMessages } = useMessages(currentUser?.id, contact.id);
+  const { messages, loading, refreshMessages, connectionStatus } = useMessages(currentUser?.id, contact.id);
   const { sendMessage, sending } = useSendMessage();
 
   // Focus input when contact changes
@@ -91,28 +92,33 @@ const ChatInterface = ({ currentUser, contact, onBackToContacts }: ChatInterface
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="p-3 border-b flex items-center gap-2 bg-card shadow-sm">
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="md:hidden" 
-          onClick={onBackToContacts}
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        
-        <Avatar className="h-10 w-10">
-          <AvatarFallback className="bg-primary/10 text-primary">
-            {getInitials(contact.name || "User")}
-          </AvatarFallback>
-        </Avatar>
-        
-        <div>
-          <h3 className="font-medium">{contact.name}</h3>
-          <p className="text-xs text-muted-foreground">
-            {isAdminLike(contact.role) ? "Administrator" : "Promoter"}
-          </p>
+      <div className="p-3 border-b flex items-center justify-between bg-card shadow-sm">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden" 
+            onClick={onBackToContacts}
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          
+          <Avatar className="h-10 w-10">
+            <AvatarFallback className="bg-primary/10 text-primary">
+              {getInitials(contact.name || "User")}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div>
+            <h3 className="font-medium">{contact.name}</h3>
+            <p className="text-xs text-muted-foreground">
+              {isAdminLike(contact.role) ? "Administrator" : "Promoter"}
+            </p>
+          </div>
         </div>
+        
+        {/* Real-time connection status (dev mode only) */}
+        <RealtimeConnectionStatus status={connectionStatus} />
       </div>
       
       {/* Messages */}

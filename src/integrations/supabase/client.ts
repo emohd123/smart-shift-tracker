@@ -46,6 +46,11 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       storage: localStorage,
       persistSession: true,
       autoRefreshToken: true,
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
     }
   });
   
@@ -62,8 +67,37 @@ if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
       storage: localStorage,
       persistSession: true,
       autoRefreshToken: true,
+    },
+    realtime: {
+      params: {
+        eventsPerSecond: 10
+      }
     }
   });
+
+  // Log real-time connection status in development
+  if (typeof window !== 'undefined' && import.meta.env.DEV) {
+    // Monitor realtime connection through channel subscriptions
+    // Connection status is tracked via individual channel subscriptions
+    console.log('✅ Supabase Realtime: Client initialized with WebSocket support');
+  }
 }
 
 export const supabase = supabaseClient;
+
+/**
+ * Helper function to check real-time connection status
+ * Returns true if WebSocket connection is active
+ */
+export const getRealtimeConnectionStatus = (): boolean => {
+  if (!supabaseClient) return false;
+  const realtime = supabaseClient.realtime;
+  if (!realtime) return false;
+  
+  // Check if there are any active channels
+  const channels = realtime.channels;
+  if (!channels || channels.length === 0) return false;
+  
+  // Check if at least one channel is subscribed
+  return channels.some(channel => channel.state === 'joined');
+};
