@@ -267,8 +267,6 @@ export default function RevenueAnalytics() {
   };
 
   const exportData = () => {
-
-  const exportData = () => {
     const csv = [
       ["Date", "Revenue", "Paid", "Unpaid", "Shifts"].join(","),
       ...timeSeriesData.map(d => 
