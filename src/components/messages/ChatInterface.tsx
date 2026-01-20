@@ -1,10 +1,11 @@
 
 import { useState, useEffect, useRef } from "react";
 import { User } from "@/context/AuthContext";
-import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { ArrowLeft, Send, Loader2, AlertCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import MessageList from "./MessageList";
 import { useMessages } from "@/hooks/messages/useMessages";
 import { useSendMessage } from "@/hooks/messages/useSendMessage";
@@ -21,9 +22,10 @@ interface ChatInterfaceProps {
 
 const ChatInterface = ({ currentUser, contact, onBackToContacts }: ChatInterfaceProps) => {
   const [message, setMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const { messages, loading } = useMessages(currentUser?.id, contact.id);
+  const { messages, loading, refreshMessages } = useMessages(currentUser?.id, contact.id);
   const { sendMessage, sending } = useSendMessage();
 
   // Focus input when contact changes
@@ -49,16 +51,31 @@ const ChatInterface = ({ currentUser, contact, onBackToContacts }: ChatInterface
     
     if (!message.trim() || !currentUser) return;
     
+    // Clear any previous errors
+    setError(null);
+    
     try {
-      await sendMessage({
+      const sentMessage = await sendMessage({
         senderId: currentUser.id,
         receiverId: contact.id,
         content: message.trim()
       });
       
       setMessage("");
-    } catch (error) {
+      
+      // Manually refresh messages immediately to ensure the new message appears
+      // This is a fallback in case real-time doesn't work
+      if (refreshMessages) {
+        // Small delay to ensure database write is complete
+        setTimeout(() => {
+          refreshMessages();
+        }, 300);
+      }
+    } catch (error: any) {
       console.error("Failed to send message:", error);
+      // Extract error message
+      const errorMessage = error?.message || error?.error?.message || "Failed to send message. Please try again.";
+      setError(errorMessage);
     }
   };
 
@@ -122,34 +139,56 @@ const ChatInterface = ({ currentUser, contact, onBackToContacts }: ChatInterface
       </div>
       
       {/* Input area */}
-      <form onSubmit={handleSendMessage} className="border-t p-3 flex gap-2 items-center">
-        <Input
-          ref={inputRef}
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type a message..."
-          className="flex-1"
-          disabled={sending || !currentUser}
-        />
-        <div className="flex items-center gap-2">
-          <Button 
-            type="submit" 
-            size="icon" 
-            disabled={!message.trim() || sending || !currentUser}
-            className={cn(
-              "transition-all", 
-              sending && "animate-pulse"
-            )}
-          >
-            {sending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Send className="h-4 w-4" />
-            )}
-          </Button>
-          <HelpTooltip content={tooltips.company.messages.sendMessage} />
-        </div>
-      </form>
+      <div className="border-t">
+        {error && (
+          <Alert variant="destructive" className="m-3 mb-2">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription className="flex items-center justify-between">
+              <span>{error}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-4 w-4 p-0"
+                onClick={() => setError(null)}
+              >
+                <X className="h-3 w-3" />
+              </Button>
+            </AlertDescription>
+          </Alert>
+        )}
+        <form onSubmit={handleSendMessage} className="p-3 flex gap-2 items-center">
+          <Input
+            ref={inputRef}
+            value={message}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              // Clear error when user starts typing
+              if (error) setError(null);
+            }}
+            placeholder="Type a message..."
+            className="flex-1"
+            disabled={sending || !currentUser}
+          />
+          <div className="flex items-center gap-2">
+            <Button 
+              type="submit" 
+              size="icon" 
+              disabled={!message.trim() || sending || !currentUser}
+              className={cn(
+                "transition-all", 
+                sending && "animate-pulse"
+              )}
+            >
+              {sending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
+            <HelpTooltip content={tooltips.company.messages.sendMessage} />
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

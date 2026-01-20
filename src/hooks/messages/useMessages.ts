@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Message } from "./types";
 import { toast } from "sonner";
@@ -37,11 +37,10 @@ export const useMessages = (
           const { data, error } = await supabase
             .from("messages")
             .select("*")
-            .or(`sender_id.eq.${currentUserId},recipient_id.eq.${currentUserId}`)
-            .or(`sender_id.eq.${contactId},recipient_id.eq.${contactId}`)
+            .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${contactId}),and(sender_id.eq.${contactId},recipient_id.eq.${currentUserId})`)
             .order("created_at", { ascending: false })
             .limit(1)
-            .single();
+            .maybeSingle();
 
           if (error && error.code !== "PGRST116") {
             console.error("Error fetching last message:", error);
@@ -51,22 +50,21 @@ export const useMessages = (
             setLastMessage(data);
           }
         } else {
-          // Fetch full conversation
+          // Fetch full conversation - use proper PostgREST syntax
           const { data, error } = await supabase
             .from("messages")
             .select("*")
-            .or(
-              `and(sender_id.eq.${currentUserId},recipient_id.eq.${contactId}),` +
-              `and(sender_id.eq.${contactId},recipient_id.eq.${currentUserId})`
-            )
+            .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${contactId}),and(sender_id.eq.${contactId},recipient_id.eq.${currentUserId})`)
             .order("created_at", { ascending: true });
 
           if (error) {
             console.error("Error fetching messages:", error);
+            console.error("Error details:", JSON.stringify(error, null, 2));
             return;
           }
 
-          setMessages(data);
+          console.log("Fetched messages:", data?.length || 0, "messages");
+          setMessages(data || []);
 
           // Mark received messages as read
           if (data && data.length > 0) {
@@ -95,28 +93,40 @@ export const useMessages = (
     // Load initial messages
     loadMessages();
 
-    // Set up real-time subscription
+    // Set up real-time subscription with better error handling
+    const channelName = `messages:${currentUserId}:${contactId}`;
     const subscription = supabase
-      .channel('messages_changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table: 'messages',
-          filter: `(sender_id=eq.${currentUserId} AND recipient_id=eq.${contactId}) OR (sender_id=eq.${contactId} AND recipient_id=eq.${currentUserId})`
         },
         async (payload) => {
-
-
+          console.log('Realtime event received:', payload.eventType, payload.new);
+          
           // Handle different events
           if (payload.eventType === 'INSERT') {
             const newMessage = payload.new as Message;
+            
+            // Only process if message is part of this conversation
+            const isRelevant = 
+              (newMessage.sender_id === currentUserId && newMessage.recipient_id === contactId) ||
+              (newMessage.sender_id === contactId && newMessage.recipient_id === currentUserId);
+
+            if (!isRelevant) return;
 
             if (onlyLastMessage) {
               setLastMessage(newMessage);
             } else {
-              setMessages(prev => [...prev, newMessage]);
+              // Check if message already exists to avoid duplicates
+              setMessages(prev => {
+                const exists = prev.some(msg => msg.id === newMessage.id);
+                if (exists) return prev;
+                return [...prev, newMessage];
+              });
 
               // Mark as read if this is a received message
               if (newMessage.recipient_id === currentUserId && !newMessage.read) {
@@ -128,6 +138,12 @@ export const useMessages = (
             }
           } else if (payload.eventType === 'UPDATE') {
             const updatedMessage = payload.new as Message;
+            
+            const isRelevant = 
+              (updatedMessage.sender_id === currentUserId && updatedMessage.recipient_id === contactId) ||
+              (updatedMessage.sender_id === contactId && updatedMessage.recipient_id === currentUserId);
+
+            if (!isRelevant) return;
 
             if (onlyLastMessage) {
               if (lastMessage?.id === updatedMessage.id) {
@@ -143,7 +159,13 @@ export const useMessages = (
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('Successfully subscribed to messages channel');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('Error subscribing to messages channel');
+        }
+      });
 
     // Clean up subscription
     return () => {
@@ -151,5 +173,50 @@ export const useMessages = (
     };
   }, [currentUserId, contactId, onlyLastMessage]);
 
-  return { messages, lastMessage, loading };
+  // Expose a refresh function
+  const refreshMessages = useCallback(async () => {
+    if (!currentUserId || !contactId) return;
+    
+    setLoading(true);
+    try {
+      if (onlyLastMessage) {
+        const { data, error } = await supabase
+          .from("messages")
+          .select("*")
+          .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${contactId}),and(sender_id.eq.${contactId},recipient_id.eq.${currentUserId})`)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (error && error.code !== "PGRST116") {
+          console.error("Error fetching last message:", error);
+        }
+
+        if (data) {
+          setLastMessage(data);
+        }
+      } else {
+        const { data, error } = await supabase
+          .from("messages")
+          .select("*")
+          .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${contactId}),and(sender_id.eq.${contactId},recipient_id.eq.${currentUserId})`)
+          .order("created_at", { ascending: true });
+
+        if (error) {
+          console.error("Error fetching messages:", error);
+          console.error("Error details:", JSON.stringify(error, null, 2));
+          return;
+        }
+
+        console.log("Refreshed messages:", data?.length || 0, "messages");
+        setMessages(data || []);
+      }
+    } catch (error) {
+      console.error("Error refreshing messages:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentUserId, contactId, onlyLastMessage]);
+
+  return { messages, lastMessage, loading, refreshMessages };
 };
