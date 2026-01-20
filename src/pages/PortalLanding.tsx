@@ -8,8 +8,6 @@ import {
   Sparkles,
   Zap,
   CheckCircle2,
-  FormInput,
-  Calendar,
   Award,
   DollarSign,
   Star,
@@ -36,21 +34,36 @@ const Particle = ({ delay = 0, pattern = 'normal' }: { delay?: number; pattern?:
   // Different animation patterns
   const getAnimation = () => {
     if (pattern === 'wave') {
+      // Wave pattern with sine wave motion
       return {
         y: [0, -40, 0],
-        x: [0, xMovement + waveAmplitude * Math.sin(0), xMovement + waveAmplitude * Math.sin(Math.PI)],
+        x: [xMovement, xMovement + waveAmplitude, xMovement, xMovement - waveAmplitude, xMovement],
         opacity: [0.2, 0.9, 0.2],
         scale: [1, 1.6, 1],
       };
     } else if (pattern === 'orbit') {
+      // Circular orbit pattern
       return {
         rotate: [0, 360],
-        x: [orbitCenterX, orbitCenterX + orbitRadius, orbitCenterX, orbitCenterX - orbitRadius, orbitCenterX],
-        y: [orbitCenterY, orbitCenterY, orbitCenterY + orbitRadius, orbitCenterY, orbitCenterY - orbitRadius],
+        x: [
+          orbitCenterX,
+          orbitCenterX + orbitRadius * 0.707,
+          orbitCenterX,
+          orbitCenterX - orbitRadius * 0.707,
+          orbitCenterX
+        ],
+        y: [
+          orbitCenterY,
+          orbitCenterY - orbitRadius * 0.707,
+          orbitCenterY - orbitRadius,
+          orbitCenterY - orbitRadius * 0.707,
+          orbitCenterY
+        ],
         opacity: [0.3, 0.8, 0.3],
         scale: [1, 1.4, 1],
       };
     }
+    // Normal floating pattern
     return {
       y: [0, -40, 0],
       x: [0, xMovement, 0],
@@ -65,8 +78,8 @@ const Particle = ({ delay = 0, pattern = 'normal' }: { delay?: number; pattern?:
       style={{
         width: size,
         height: size,
-        left: pattern === 'orbit' ? `${orbitCenterX}%` : `${x}%`,
-        top: pattern === 'orbit' ? `${orbitCenterY}%` : `${y}%`,
+        left: `${x}%`,
+        top: `${y}%`,
         willChange: 'transform, opacity',
       }}
       animate={getAnimation()}
@@ -162,6 +175,40 @@ const AnimatedGrid = () => {
 };
 
 const PortalLanding = () => {
+  // Mobile/touch detection
+  const [isMobile, setIsMobile] = useState(false);
+  const [isTouch, setIsTouch] = useState(false);
+
+  useEffect(() => {
+    // Check for touch device
+    const checkTouch = () => {
+      setIsTouch('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    };
+    
+    // Check for mobile screen size
+    const checkMobile = () => {
+      const isMobileScreen = window.matchMedia('(max-width: 768px)').matches;
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+      setIsMobile(isMobileScreen || isMobileDevice);
+    };
+
+    checkTouch();
+    checkMobile();
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const handleResize = () => {
+      checkMobile();
+    };
+    
+    mediaQuery.addEventListener('change', handleResize);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleResize);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   // Mouse parallax setup
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
@@ -186,8 +233,9 @@ const PortalLanding = () => {
   const [particleBursts, setParticleBursts] = useState<Array<{ x: number; y: number; id: number }>>([]);
   const rippleIdRef = useRef(0);
 
-  // Throttled mouse move handler
+  // Throttled mouse move handler (desktop only)
   const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (isMobile || isTouch) return;
     const { clientX, clientY } = e;
     const { innerWidth, innerHeight } = window;
     const xPercent = (clientX / innerWidth - 0.5) * 20;
@@ -200,13 +248,13 @@ const PortalLanding = () => {
     orbY2.set(yPercent * -0.5);
     orbX3.set(xPercent * 0.3);
     orbY3.set(yPercent * 0.3);
-  }, [mouseX, mouseY, cursorX, cursorY, orbX2, orbY2, orbX3, orbY3]);
+  }, [isMobile, isTouch, mouseX, mouseY, cursorX, cursorY, orbX2, orbY2, orbX3, orbY3]);
 
-  // Click handler for ripples and particle bursts
-  const handleClick = useCallback((e: React.MouseEvent) => {
-    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+  // Click/touch handler for ripples and particle bursts
+  const handleInteraction = useCallback((clientX: number, clientY: number, target: HTMLElement) => {
+    const rect = target.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
     
     // Add ripple
     const rippleId = rippleIdRef.current++;
@@ -216,13 +264,26 @@ const PortalLanding = () => {
     }, 1000);
 
     // Add particle burst
-    setParticleBursts(prev => [...prev, { x: e.clientX, y: e.clientY, id: rippleId }]);
+    setParticleBursts(prev => [...prev, { x: clientX, y: clientY, id: rippleId }]);
     setTimeout(() => {
       setParticleBursts(prev => prev.filter(b => b.id !== rippleId));
     }, 2000);
   }, []);
 
+  const handleClick = useCallback((e: React.MouseEvent) => {
+    handleInteraction(e.clientX, e.clientY, e.currentTarget as HTMLElement);
+  }, [handleInteraction]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (touch) {
+      handleInteraction(touch.clientX, touch.clientY, e.currentTarget as HTMLElement);
+    }
+  }, [handleInteraction]);
+
   useEffect(() => {
+    if (isMobile || isTouch) return;
+    
     let rafId: number;
     const throttledMove = (e: MouseEvent) => {
       if (rafId) cancelAnimationFrame(rafId);
@@ -234,7 +295,7 @@ const PortalLanding = () => {
       window.removeEventListener('mousemove', throttledMove);
       if (rafId) cancelAnimationFrame(rafId);
     };
-  }, [handleMouseMove]);
+  }, [handleMouseMove, isMobile, isTouch]);
   const container = {
     hidden: { opacity: 0 },
     show: {
@@ -252,18 +313,18 @@ const PortalLanding = () => {
     },
   };
 
-  const cardHover = {
-    scale: 1.08,
-    y: -15,
-    rotateY: 5,
+  const cardHover = (isMobile: boolean) => ({
+    scale: isMobile ? 1 : 1.08,
+    y: isMobile ? 0 : -15,
+    rotateY: isMobile ? 0 : 5,
     transition: { duration: 0.4, ease: "easeOut" },
-  };
+  });
 
   const cardTap = { scale: 0.96 };
 
-  // Generate particles - increased density with patterns
+  // Generate particles - reduced count on mobile for performance
   const particles = useMemo(() => {
-    const count = 70;
+    const count = isMobile ? 40 : 70; // Reduce on mobile
     return Array.from({ length: count }, (_, i) => {
       const patternType = i % 3 === 0 ? 'wave' : i % 3 === 1 ? 'orbit' : 'normal';
       return (
@@ -274,11 +335,11 @@ const PortalLanding = () => {
         />
       );
     });
-  }, []);
+  }, [isMobile]);
 
-  // Generate floating shapes - increased density with spiral patterns
+  // Generate floating shapes - reduced count on mobile
   const shapes = useMemo(() => {
-    const count = 18;
+    const count = isMobile ? 10 : 18; // Reduce on mobile
     return Array.from({ length: count }, (_, i) => {
       const pattern = i % 3 === 0 ? 'spiral' : 'normal';
       return (
@@ -290,7 +351,7 @@ const PortalLanding = () => {
         />
       );
     });
-  }, []);
+  }, [isMobile]);
 
   // Generate card particles - memoized
   const cardParticles = useMemo(() => {
@@ -309,8 +370,9 @@ const PortalLanding = () => {
 
   return (
     <motion.div 
-      className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden"
+      className={`min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950 relative overflow-hidden ${isMobile || isTouch ? '' : 'cursor-none'}`}
       onClick={handleClick}
+      onTouchStart={handleTouchStart}
     >
       {/* Animated Grid Background */}
       <AnimatedGrid />
@@ -466,7 +528,7 @@ const PortalLanding = () => {
         {shapes}
       </div>
 
-      {/* Animated mesh gradient overlay with rotation */}
+      {/* Animated mesh gradient overlay */}
       <motion.div
         className="absolute inset-0 opacity-30 dark:opacity-20"
         animate={{
@@ -475,38 +537,42 @@ const PortalLanding = () => {
             'radial-gradient(circle at 80% 80%, rgba(147, 51, 234, 0.15) 0%, transparent 50%)',
             'radial-gradient(circle at 50% 20%, rgba(236, 72, 153, 0.15) 0%, transparent 50%)',
             'radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 50%)',
-          ],
-          rotate: [0, 360]
+          ]
         }}
         transition={{
-          background: { duration: 8, repeat: Infinity, ease: "easeInOut" },
-          rotate: { duration: 60, repeat: Infinity, ease: "linear" }
+          duration: 8,
+          repeat: Infinity,
+          ease: "easeInOut"
         }}
       />
 
-      {/* Cursor glow effect */}
-      <motion.div
-        className="fixed pointer-events-none z-50"
-        style={{
-          x: cursorXSpring,
-          y: cursorYSpring,
-          left: -20,
-          top: -20,
-        }}
-      >
+      {/* Cursor glow effect - desktop only */}
+      {!isMobile && !isTouch && (
         <motion.div
-          className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400/40 to-purple-400/40 blur-xl"
-          animate={{
-            scale: [1, 1.5, 1],
-            opacity: [0.3, 0.6, 0.3]
+          className="fixed pointer-events-none z-50"
+          style={{
+            x: cursorXSpring,
+            y: cursorYSpring,
           }}
-          transition={{
-            duration: 2,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-      </motion.div>
+          initial={{ left: 0, top: 0 }}
+        >
+          <motion.div
+            className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-400/40 to-purple-400/40 blur-xl"
+            style={{
+              transform: 'translate(-50%, -50%)',
+            }}
+            animate={{
+              scale: [1, 1.5, 1],
+              opacity: [0.3, 0.6, 0.3]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+          />
+        </motion.div>
+      )}
 
       {/* Click ripples */}
       {ripples.map((ripple) => (
@@ -514,8 +580,8 @@ const PortalLanding = () => {
           key={ripple.id}
           className="absolute pointer-events-none rounded-full border-2 border-blue-400/50"
           style={{
-            left: ripple.x,
-            top: ripple.y,
+            left: `${ripple.x}px`,
+            top: `${ripple.y}px`,
             transform: 'translate(-50%, -50%)',
           }}
           initial={{ width: 0, height: 0, opacity: 0.8 }}
@@ -526,7 +592,7 @@ const PortalLanding = () => {
 
       {/* Particle bursts on click */}
       {particleBursts.map((burst) => (
-        <div key={burst.id} className="fixed pointer-events-none" style={{ left: burst.x, top: burst.y }}>
+        <div key={burst.id} className="fixed pointer-events-none" style={{ left: `${burst.x}px`, top: `${burst.y}px` }}>
           {Array.from({ length: 8 }).map((_, i) => (
             <motion.div
               key={i}
@@ -560,7 +626,7 @@ const PortalLanding = () => {
           <div className="container mx-auto flex items-center justify-between">
             <motion.div
               className="flex items-center gap-3"
-              whileHover={{ scale: 1.05 }}
+              whileHover={isMobile ? {} : { scale: 1.05 }}
             >
               <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center shadow-lg">
                 <Sparkles className="text-white" size={24} />
@@ -577,13 +643,13 @@ const PortalLanding = () => {
           variants={container}
           initial="hidden"
           animate="show"
-          className="flex-1 flex items-center justify-center px-4 py-12"
+          className="flex-1 flex items-center justify-center px-4 sm:px-6 py-8 sm:py-12"
         >
           <div className="container mx-auto max-w-5xl">
             {/* Title */}
-            <motion.div variants={item} className="text-center mb-14">
+            <motion.div variants={item} className="text-center mb-10 sm:mb-14">
               <motion.h1
-                className="text-4xl md:text-6xl font-extrabold tracking-tight mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent"
+                className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight mb-3 sm:mb-4 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent px-2"
                 animate={{
                   backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"],
                 }}
@@ -596,22 +662,22 @@ const PortalLanding = () => {
               >
                 Choose Your Platform
               </motion.h1>
-              <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto px-2">
                 Seamlessly switch between our powerful tools for collecting
                 customer data and managing part-time work.
               </p>
             </motion.div>
 
             {/* Cards */}
-            <div className="grid md:grid-cols-2 gap-8 md:gap-10">
+            <div className="grid md:grid-cols-2 gap-6 sm:gap-8 md:gap-10">
               {/* Form Builder */}
               <motion.div
                 variants={item}
-                whileHover={cardHover}
+                whileHover={cardHover(isMobile)}
                 whileTap={cardTap}
                 className="group relative"
                 style={{ perspective: "1000px" }}
-                animate={{
+                animate={isMobile ? {} : {
                   y: [0, -5, 0]
                 }}
                 transition={{
@@ -620,7 +686,7 @@ const PortalLanding = () => {
                   ease: "easeInOut"
                 }}
               >
-                <div className="relative h-full rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-2 border-blue-200/50 dark:border-blue-800/50 shadow-2xl hover:shadow-blue-500/30 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-500 overflow-hidden p-8 flex flex-col">
+                <div className="relative h-full rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-2 border-blue-200/50 dark:border-blue-800/50 shadow-2xl hover:shadow-blue-500/30 hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-500 overflow-hidden p-6 sm:p-8 flex flex-col">
                   {/* Pulsing border effect */}
                   <motion.div
                     className="absolute inset-0 rounded-3xl border-2 border-blue-400/30 opacity-0 group-hover:opacity-100"
@@ -791,10 +857,10 @@ const PortalLanding = () => {
                       href="https://app.onestoneads.com/formbuilder"
                       target="_blank"
                       rel="noopener noreferrer"
-                      whileHover={{ scale: 1.03 }}
+                      whileHover={isMobile ? {} : { scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                     >
-                      <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg flex items-center justify-center gap-2">
+                      <Button className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg flex items-center justify-center gap-2 min-h-[48px] text-base">
                         Go to Form Builder
                         <ArrowRight size={18} />
                       </Button>
@@ -806,11 +872,11 @@ const PortalLanding = () => {
               {/* Smart Shift */}
               <motion.div
                 variants={item}
-                whileHover={cardHover}
+                whileHover={cardHover(isMobile)}
                 whileTap={cardTap}
                 className="group relative"
                 style={{ perspective: "1000px" }}
-                animate={{
+                animate={isMobile ? {} : {
                   y: [0, -5, 0]
                 }}
                 transition={{
@@ -820,7 +886,7 @@ const PortalLanding = () => {
                   delay: 0.5
                 }}
               >
-                <div className="relative h-full rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-2 border-purple-200/50 dark:border-purple-800/50 shadow-2xl hover:shadow-purple-500/30 hover:border-purple-400 dark:hover:border-purple-600 transition-all duration-500 overflow-hidden p-8 flex flex-col">
+                <div className="relative h-full rounded-3xl bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl border-2 border-purple-200/50 dark:border-purple-800/50 shadow-2xl hover:shadow-purple-500/30 hover:border-purple-400 dark:hover:border-purple-600 transition-all duration-500 overflow-hidden p-6 sm:p-8 flex flex-col">
                   {/* Pulsing border effect */}
                   <motion.div
                     className="absolute inset-0 rounded-3xl border-2 border-purple-400/30 opacity-0 group-hover:opacity-100"
@@ -992,10 +1058,10 @@ const PortalLanding = () => {
                       href="https://smart-shift-tracker.vercel.app"
                       target="_blank"
                       rel="noopener noreferrer"
-                      whileHover={{ scale: 1.03 }}
+                      whileHover={isMobile ? {} : { scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                     >
-                      <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg flex items-center justify-center gap-2">
+                      <Button className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg flex items-center justify-center gap-2 min-h-[48px] text-base">
                         Go to Smart Shift
                         <ArrowRight size={18} />
                       </Button>
@@ -1008,7 +1074,7 @@ const PortalLanding = () => {
             {/* Bottom badges */}
             <motion.div
               variants={item}
-              className="mt-14 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground"
+              className="mt-10 sm:mt-14 flex flex-wrap justify-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground px-2"
             >
               <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/70 dark:bg-slate-900/70 border border-slate-200/60 dark:border-slate-800/60 shadow-sm">
                 <Zap size={15} className="text-blue-500" />
