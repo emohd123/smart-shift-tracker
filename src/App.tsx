@@ -8,6 +8,7 @@ import DevToolsPanel from "./components/devtools/DevToolsPanel";
 
 // Eager load - Critical pages (public routes)
 import Index from "./pages/Index";
+import PortalLanding from "./pages/PortalLanding";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -59,6 +60,7 @@ function App() {
               <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<Index />} />
+                <Route path="/portal" element={<PortalLanding />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
