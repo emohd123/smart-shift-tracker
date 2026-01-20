@@ -16,6 +16,8 @@ import { getEffectiveStatus } from "./utils/statusCalculations";
 import { ShiftStatus } from "@/types/database";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 // Define global functions for TypeScript
 declare global {
@@ -231,10 +233,13 @@ export const ShiftsContent = ({
       {isAdmin && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-sm font-medium flex items-center gap-2">
-              <Building2 className="h-4 w-4" />
-              Filter by Company
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <Building2 className="h-4 w-4" />
+                Filter by Company
+              </CardTitle>
+              <HelpTooltip content={tooltips.company.shifts.list.companyFilter} />
+            </div>
           </CardHeader>
           <CardContent>
             <Select 
@@ -267,7 +272,10 @@ export const ShiftsContent = ({
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">All Shifts</CardTitle>
+            <div className="flex items-center gap-1.5">
+              <CardTitle className="text-sm font-medium text-muted-foreground">All Shifts</CardTitle>
+              <HelpTooltip content="Total number of shifts across all statuses" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{filteredShifts.length}</div>
@@ -275,7 +283,10 @@ export const ShiftsContent = ({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Current</CardTitle>
+            <div className="flex items-center gap-1.5">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Current</CardTitle>
+              <HelpTooltip content={tooltips.company.shifts.list.statusBadge} />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600 dark:text-green-400">{currentShifts.length}</div>
@@ -283,7 +294,10 @@ export const ShiftsContent = ({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
+            <div className="flex items-center gap-1.5">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Completed</CardTitle>
+              <HelpTooltip content="Shifts that have been finished and completed" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">{completedShifts.length}</div>
@@ -291,7 +305,10 @@ export const ShiftsContent = ({
         </Card>
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming</CardTitle>
+            <div className="flex items-center gap-1.5">
+              <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming</CardTitle>
+              <HelpTooltip content="Shifts that are scheduled but haven't started yet" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{upcomingShifts.length}</div>
@@ -301,12 +318,15 @@ export const ShiftsContent = ({
 
       {/* Status Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="all">All ({filteredShifts.length})</TabsTrigger>
-          <TabsTrigger value="current">Current ({currentShifts.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({completedShifts.length})</TabsTrigger>
-          <TabsTrigger value="upcoming">Upcoming ({upcomingShifts.length})</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center gap-2 mb-2">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="all">All ({filteredShifts.length})</TabsTrigger>
+            <TabsTrigger value="current">Current ({currentShifts.length})</TabsTrigger>
+            <TabsTrigger value="completed">Completed ({completedShifts.length})</TabsTrigger>
+            <TabsTrigger value="upcoming">Upcoming ({upcomingShifts.length})</TabsTrigger>
+          </TabsList>
+          <HelpTooltip content={tooltips.company.shifts.list.statusFilter} />
+        </div>
         <TabsContent value={activeTab} className="mt-4">
           <ShiftList
             shifts={getShiftsForTab()}

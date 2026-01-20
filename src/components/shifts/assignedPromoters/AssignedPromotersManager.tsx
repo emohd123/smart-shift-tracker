@@ -11,6 +11,8 @@ import { calculateTotalShiftPayment } from "../utils/paymentCalculations";
 import { AssignPromotersDialog } from "./AssignPromotersDialog";
 import { isCompanyLike } from "@/utils/roleUtils";
 import { ShiftStatus } from "@/types/database";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type AssignedPromotersManagerProps = {
   shiftId: string;
@@ -86,10 +88,13 @@ export const AssignedPromotersManager = ({
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Assigned Promoters
-          </CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Assigned Promoters
+            </CardTitle>
+            <HelpTooltip content={tooltips.company.shifts.assignedPromoters} />
+          </div>
           <CardDescription>
             {isCompany 
               ? "Manage promoter attendance and track payments"

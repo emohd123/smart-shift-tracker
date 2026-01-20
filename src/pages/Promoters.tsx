@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserCheck, UserPlus, UserX, Users, Building2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 const Promoters = () => {
   const { user, isAuthenticated, loading } = useAuth();

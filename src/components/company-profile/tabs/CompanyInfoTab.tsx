@@ -9,6 +9,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 interface CompanyInfoForm {
   name: string;
@@ -160,7 +162,10 @@ export default function CompanyInfoTab() {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Company Name *</FormLabel>
+                    <div className="flex items-center gap-1.5">
+                      <FormLabel>Company Name *</FormLabel>
+                      <HelpTooltip content={tooltips.company.profile.companyName} />
+                    </div>
                     <FormControl>
                       <Input placeholder="Enter company name" {...field} />
                     </FormControl>
@@ -173,7 +178,10 @@ export default function CompanyInfoTab() {
                 name="registration_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>CR Number (Registration ID) *</FormLabel>
+                    <div className="flex items-center gap-1.5">
+                      <FormLabel>CR Number (Registration ID) *</FormLabel>
+                      <HelpTooltip content={tooltips.company.profile.registrationId} />
+                    </div>
                     <FormControl>
                       <Input placeholder="Enter CR number" {...field} />
                     </FormControl>
@@ -190,7 +198,10 @@ export default function CompanyInfoTab() {
                 name="website"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Website URL</FormLabel>
+                    <div className="flex items-center gap-1.5">
+                      <FormLabel>Website URL</FormLabel>
+                      <HelpTooltip content={tooltips.company.profile.website} />
+                    </div>
                     <FormControl>
                       <Input type="url" placeholder="https://example.com" {...field} />
                     </FormControl>
@@ -243,7 +254,10 @@ export default function CompanyInfoTab() {
                 name="address"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Address *</FormLabel>
+                    <div className="flex items-center gap-1.5">
+                      <FormLabel>Address *</FormLabel>
+                      <HelpTooltip content={tooltips.company.profile.address} />
+                    </div>
                     <FormControl>
                       <Input placeholder="Enter company address" {...field} />
                     </FormControl>

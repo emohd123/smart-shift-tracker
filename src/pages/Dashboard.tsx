@@ -7,6 +7,8 @@ import { useShiftsData } from "@/hooks/shifts/useShiftsData";
 import { UserRole } from "@/types/database";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LayoutDashboard } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 // Tab Components
 import AdminOverviewTab from "@/components/admin/tabs/AdminOverviewTab";
@@ -59,14 +61,17 @@ const Dashboard = () => {
 
           {/* Tabbed Interface */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="users">Users</TabsTrigger>
-              <TabsTrigger value="shifts">Shifts</TabsTrigger>
-              <TabsTrigger value="revenue">Revenue</TabsTrigger>
-              <TabsTrigger value="reports">Reports</TabsTrigger>
-              <TabsTrigger value="system">System</TabsTrigger>
-            </TabsList>
+            <div className="flex items-center gap-2">
+              <TabsList className="grid w-full grid-cols-6 lg:w-auto lg:inline-grid">
+                <TabsTrigger value="overview">Overview</TabsTrigger>
+                <TabsTrigger value="users">Users</TabsTrigger>
+                <TabsTrigger value="shifts">Shifts</TabsTrigger>
+                <TabsTrigger value="revenue">Revenue</TabsTrigger>
+                <TabsTrigger value="reports">Reports</TabsTrigger>
+                <TabsTrigger value="system">System</TabsTrigger>
+              </TabsList>
+              <HelpTooltip content="Navigate between different admin management sections" />
+            </div>
 
             <TabsContent value="overview" className="space-y-6">
               <AdminOverviewTab />

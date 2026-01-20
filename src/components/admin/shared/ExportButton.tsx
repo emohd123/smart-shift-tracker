@@ -8,6 +8,8 @@ import {
 import { Download, FileSpreadsheet, FileText } from "lucide-react";
 import { toast } from "sonner";
 import Papa from "papaparse";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 interface ExportButtonProps {
   data: any[];
@@ -80,23 +82,26 @@ export function ExportButton({
   };
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={disabled}>
-          <Download className="h-4 w-4 mr-2" />
-          Export
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={exportToCSV}>
-          <FileSpreadsheet className="h-4 w-4 mr-2" />
-          Export as CSV
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={exportToJSON}>
-          <FileText className="h-4 w-4 mr-2" />
-          Export as JSON
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="sm" disabled={disabled}>
+            <Download className="h-4 w-4 mr-2" />
+            Export
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={exportToCSV}>
+            <FileSpreadsheet className="h-4 w-4 mr-2" />
+            Export as CSV
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={exportToJSON}>
+            <FileText className="h-4 w-4 mr-2" />
+            Export as JSON
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <HelpTooltip content={tooltips.company.reports.exportOptions} />
+    </div>
   );
 }

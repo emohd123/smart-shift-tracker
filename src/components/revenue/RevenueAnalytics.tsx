@@ -18,6 +18,8 @@ import {
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { isAdminLike } from "@/utils/roleUtils";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 import {
   LineChart,
   Line,
@@ -424,18 +426,24 @@ export default function RevenueAnalytics() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-            <TabsList>
-              <TabsTrigger value="7d">7 Days</TabsTrigger>
-              <TabsTrigger value="30d">30 Days</TabsTrigger>
-              <TabsTrigger value="90d">90 Days</TabsTrigger>
-              <TabsTrigger value="all">All Time</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          <Button variant="outline" size="sm" onClick={exportData}>
-            <Download className="h-4 w-4 mr-2" />
-            Export
-          </Button>
+          <div className="flex items-center gap-2">
+            <Tabs value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+              <TabsList>
+                <TabsTrigger value="7d">7 Days</TabsTrigger>
+                <TabsTrigger value="30d">30 Days</TabsTrigger>
+                <TabsTrigger value="90d">90 Days</TabsTrigger>
+                <TabsTrigger value="all">All Time</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <HelpTooltip content={tooltips.company.revenue.dateRange} />
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={exportData}>
+              <Download className="h-4 w-4 mr-2" />
+              Export
+            </Button>
+            <HelpTooltip content={tooltips.company.revenue.export} />
+          </div>
         </div>
       </div>
 

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +8,8 @@ import { Calendar as CalendarIcon, Clock } from "lucide-react";
 import { format, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { DateRange } from "react-day-picker";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type DateTimeFieldsProps = {
   dateRange: DateRange | undefined;
@@ -28,7 +29,10 @@ export default function DateTimeFields({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label>Date Range</Label>
+        <div className="flex items-center gap-1.5">
+          <Label>Date Range</Label>
+          <HelpTooltip content={tooltips.company.shifts.dateRange} />
+        </div>
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -67,7 +71,10 @@ export default function DateTimeFields({
       
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="startTime">Start Time</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="startTime">Start Time</Label>
+            <HelpTooltip content={tooltips.company.shifts.startTime} />
+          </div>
           <div className="flex items-center">
             <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -82,7 +89,10 @@ export default function DateTimeFields({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="endTime">End Time</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="endTime">End Time</Label>
+            <HelpTooltip content={tooltips.company.shifts.endTime} />
+          </div>
           <div className="flex items-center">
             <Clock className="mr-2 h-4 w-4 text-muted-foreground" />
             <Input

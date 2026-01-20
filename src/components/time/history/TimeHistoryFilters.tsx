@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 interface TimeHistoryFiltersProps {
   dateFrom: Date | null;
@@ -37,7 +39,10 @@ export default function TimeHistoryFilters({
       <CardContent className="pt-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="dateFrom">From Date</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="dateFrom">From Date</Label>
+              <HelpTooltip content={tooltips.partTimer.timeHistory.dateFilter} />
+            </div>
             <Input
               id="dateFrom"
               type="date"
@@ -47,7 +52,10 @@ export default function TimeHistoryFilters({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dateTo">To Date</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="dateTo">To Date</Label>
+              <HelpTooltip content="End date for filtering time logs" />
+            </div>
             <Input
               id="dateTo"
               type="date"
@@ -74,7 +82,10 @@ export default function TimeHistoryFilters({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="minEarnings">Min Earnings (BHD)</Label>
+            <div className="flex items-center gap-1.5">
+              <Label htmlFor="minEarnings">Min Earnings (BHD)</Label>
+              <HelpTooltip content="Filter time logs to show only those with earnings above this amount" />
+            </div>
             <Input
               id="minEarnings"
               type="number"

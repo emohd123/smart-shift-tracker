@@ -28,6 +28,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MapPin, Eye } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type PromoterDashboardProps = {
   shifts?: Shift[]; // Optional - we fetch our own data now
@@ -796,10 +798,13 @@ export default function PromoterDashboard({ loading: externalLoading = false }: 
         {activeSession && (
           <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/30 animate-pulse-slow">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg text-green-600">
-                <Play className="h-5 w-5 fill-current" />
-                Currently Working
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg text-green-600">
+                  <Play className="h-5 w-5 fill-current" />
+                  Currently Working
+                </CardTitle>
+                <HelpTooltip content={tooltips.partTimer.dashboard.activeShifts} />
+              </div>
               <CardDescription className="flex items-center gap-2">
                 <span>{activeSession.shift_title}</span>
                 <span className="text-xs text-muted-foreground">

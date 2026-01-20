@@ -8,13 +8,8 @@ import {
   SelectTrigger,
   SelectValue
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { HelpCircle } from "lucide-react";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type PayRateFieldProps = {
   payRate: string;
@@ -33,20 +28,9 @@ export default function PayRateField({
 }: PayRateFieldProps) {
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5">
         <Label htmlFor="payRate">Pay Rate {required ? "" : "(Optional)"}</Label>
-        {!required && (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                <p>Leave blank if the pay rate is not yet determined. You can set it later before processing payments. Shifts without pay rates will need to be updated before promoters can be paid.</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+        <HelpTooltip content={required ? tooltips.company.shifts.payRate : "Leave blank if the pay rate is not yet determined. You can set it later before processing payments. Shifts without pay rates will need to be updated before promoters can be paid."} />
       </div>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="flex items-center col-span-2">
@@ -64,12 +48,16 @@ export default function PayRateField({
             className="focus:border-primary"
           />
         </div>
-        <div>
+        <div className="space-y-2">
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="payRateType">Rate Type</Label>
+            <HelpTooltip content={tooltips.company.shifts.payRateType} />
+          </div>
           <Select 
             value={payRateType} 
             onValueChange={onPayRateTypeChange}
           >
-            <SelectTrigger>
+            <SelectTrigger id="payRateType">
               <SelectValue placeholder="Per hour" />
             </SelectTrigger>
             <SelectContent>

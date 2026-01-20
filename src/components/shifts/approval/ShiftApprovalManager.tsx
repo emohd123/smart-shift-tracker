@@ -8,6 +8,8 @@ import { formatBHD } from "../utils/currencyUtils";
 import { format } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatWorkDuration } from "../utils/paymentCalculations";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type ShiftApprovalManagerProps = {
   shiftId?: string; // If provided, only show approvals for this shift
@@ -94,10 +96,13 @@ export const ShiftApprovalManager = ({
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-amber-600" />
-              Pending Work Approvals
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+                Pending Work Approvals
+              </CardTitle>
+              <HelpTooltip content="Review and approve completed work from promoters before processing payments" />
+            </div>
             <CardDescription>
               {filteredApprovals.length} promoter{filteredApprovals.length !== 1 ? 's' : ''} awaiting approval
             </CardDescription>

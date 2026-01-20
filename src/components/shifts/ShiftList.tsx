@@ -13,6 +13,8 @@ import { Button } from "@/components/ui/button";
 import { DollarSign, ArrowUpDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getEffectiveStatus } from "./utils/statusCalculations";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 interface ShiftListProps {
   shifts: Shift[];
@@ -171,34 +173,43 @@ const ShiftList = ({ shifts, title = "Shifts", deleteShift, refreshShifts, delet
       />
 
       <div className="flex gap-4 items-center flex-wrap">
-        <SearchBar
-          searchTerm={searchTerm}
-          setSearchTerm={setSearchTerm}
-        />
-        <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-          <SelectTrigger className="w-[180px]">
-            <ArrowUpDown className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="date-desc">Date (Newest)</SelectItem>
-            <SelectItem value="date-asc">Date (Oldest)</SelectItem>
-            <SelectItem value="status">Status</SelectItem>
-            <SelectItem value="company">Company</SelectItem>
-            <SelectItem value="title">Title</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex items-center gap-2">
+          <SearchBar
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+          />
+          <HelpTooltip content={tooltips.company.shifts.list.search} />
+        </div>
+        <div className="flex items-center gap-2">
+          <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+            <SelectTrigger className="w-[180px]">
+              <ArrowUpDown className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="date-desc">Date (Newest)</SelectItem>
+              <SelectItem value="date-asc">Date (Oldest)</SelectItem>
+              <SelectItem value="status">Status</SelectItem>
+              <SelectItem value="company">Company</SelectItem>
+              <SelectItem value="title">Title</SelectItem>
+            </SelectContent>
+          </Select>
+          <HelpTooltip content={tooltips.company.shifts.list.sortBy} />
+        </div>
 
         {isAdmin && selectedShifts.length > 0 && (
           <>
-            <Button
-              variant="secondary"
-              onClick={() => setShowBulkPayRateDialog(true)}
-              className="gap-2"
-            >
-              <DollarSign className="h-4 w-4" />
-              Update Pay Rates ({selectedShifts.length})
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="secondary"
+                onClick={() => setShowBulkPayRateDialog(true)}
+                className="gap-2"
+              >
+                <DollarSign className="h-4 w-4" />
+                Update Pay Rates ({selectedShifts.length})
+              </Button>
+              <HelpTooltip content={tooltips.company.shifts.list.bulkActions} />
+            </div>
             <BulkDeleteButton
               selectedCount={selectedShifts.length}
               isDeleting={isDeleting}

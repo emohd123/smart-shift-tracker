@@ -10,6 +10,8 @@ import { AlertCircle, X, Clock, MapPin } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type TimeTrackerCardProps = {
   isTracking: boolean;
@@ -62,13 +64,16 @@ const TimeTrackerCard = ({
           isTracking && "bg-primary/5"
         )}>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Clock className={cn(
-                "h-5 w-5",
-                isTracking ? "text-primary" : "text-muted-foreground"
-              )} />
-              Time Tracker
-            </CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2">
+                <Clock className={cn(
+                  "h-5 w-5",
+                  isTracking ? "text-primary" : "text-muted-foreground"
+                )} />
+                Time Tracker
+              </CardTitle>
+              <HelpTooltip content={isTracking ? tooltips.partTimer.timeTracking.activeShift : "Track your work time and earnings for shifts"} />
+            </div>
             {isTracking && (
               <motion.div
                 initial={{ scale: 0.8, opacity: 0 }}

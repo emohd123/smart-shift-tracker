@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { useMessages } from "@/hooks/messages/useMessages";
 import { isAdminLike } from "@/utils/roleUtils";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 interface ChatSidebarProps {
   contacts: User[];
@@ -56,15 +58,21 @@ const ChatSidebar = ({
   return (
     <div className={cn("flex flex-col h-full", isMobileView ? "max-h-96 border rounded-lg overflow-hidden" : "")}>
       <div className="p-3 border-b">
-        <h3 className="font-medium mb-3">Messages</h3>
-        <div className="relative">
-          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search contacts..."
-            className="pl-8"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className="flex items-center gap-2 mb-3">
+          <h3 className="font-medium">Messages</h3>
+          <HelpTooltip content={tooltips.company.messages.filters} />
+        </div>
+        <div className="relative flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search contacts..."
+              className="pl-8"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <HelpTooltip content="Search for contacts by name" />
         </div>
       </div>
 

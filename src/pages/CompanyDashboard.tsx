@@ -11,6 +11,8 @@ import ActiveShiftCard from "@/components/dashboard/company/ActiveShiftCard";
 import { BrowsePromotersCard } from "@/components/dashboard/company/BrowsePromotersCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ShiftApprovalManager } from "@/components/shifts/approval/ShiftApprovalManager";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 export default function CompanyDashboard() {
   const { user } = useAuth();
@@ -31,7 +33,10 @@ export default function CompanyDashboard() {
     <AppLayout title="Company Dashboard">
       <div className="space-y-6">
         <div>
-          <h2 className="text-2xl font-bold">Live Operations</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-2xl font-bold">Live Operations</h2>
+            <HelpTooltip content={tooltips.company.dashboard.liveOperations} />
+          </div>
           <p className="text-muted-foreground">Real-time view of your active shifts</p>
         </div>
 
@@ -53,9 +58,12 @@ export default function CompanyDashboard() {
         )}
 
         <div>
-          <h3 className="text-xl font-semibold mb-4">
-            Active Shifts Right Now ({ongoingShifts.length})
-          </h3>
+          <div className="flex items-center gap-2 mb-4">
+            <h3 className="text-xl font-semibold">
+              Active Shifts Right Now ({ongoingShifts.length})
+            </h3>
+            <HelpTooltip content={tooltips.company.dashboard.activeShiftsHeader} />
+          </div>
           
           {loading ? (
             <div className="space-y-4">
@@ -84,12 +92,18 @@ export default function CompanyDashboard() {
                   </p>
                 </div>
                 <div className="flex gap-2 mt-2">
-                  <Button asChild variant="outline">
-                    <Link to="/shifts">View All Shifts</Link>
-                  </Button>
-                  <Button asChild>
-                    <Link to="/shifts/create">Create New Shift</Link>
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Button asChild variant="outline">
+                      <Link to="/shifts">View All Shifts</Link>
+                    </Button>
+                    <HelpTooltip content={tooltips.company.dashboard.viewAllShifts} side="top" />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button asChild>
+                      <Link to="/shifts/create">Create New Shift</Link>
+                    </Button>
+                    <HelpTooltip content={tooltips.company.dashboard.createNewShift} side="top" />
+                  </div>
                 </div>
               </div>
             </Card>

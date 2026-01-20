@@ -3,6 +3,8 @@ import React from "react";
 import { Calendar, Clock, MapPin, ArrowRight } from "lucide-react";
 import { formatBHD } from "@/components/shifts/utils/currencyUtils";
 import { motion } from "framer-motion";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 interface TimeLogItemProps {
   log: {
@@ -41,8 +43,11 @@ const TimeLogItem = ({ log, formatTime, formatDate, formatDuration, index }: Tim
             </div>
           </div>
           <div className="flex flex-col items-end">
-            <div className="font-medium text-lg text-primary/90">
-              {log.earnings ? formatBHD(log.earnings) : 'N/A'}
+            <div className="flex items-center gap-1.5">
+              <div className="font-medium text-lg text-primary/90">
+                {log.earnings ? formatBHD(log.earnings) : 'N/A'}
+              </div>
+              <HelpTooltip content={tooltips.partTimer.timeHistory.earnings} />
             </div>
             <div className="text-sm flex items-center mt-1 space-x-2">
               <Clock className="h-3 w-3 mr-1 text-muted-foreground" />
@@ -50,8 +55,11 @@ const TimeLogItem = ({ log, formatTime, formatDate, formatDuration, index }: Tim
               <ArrowRight className="h-3 w-3 text-muted-foreground" />
               <span>{formatTime(log.check_out_time)}</span>
             </div>
-            <div className="text-sm text-primary/80 font-medium mt-1 bg-primary/5 px-2 py-0.5 rounded-full">
-              {log.total_hours ? formatDuration(log.total_hours) : 'N/A'}
+            <div className="flex items-center gap-1.5 mt-1">
+              <div className="text-sm text-primary/80 font-medium bg-primary/5 px-2 py-0.5 rounded-full">
+                {log.total_hours ? formatDuration(log.total_hours) : 'N/A'}
+              </div>
+              <HelpTooltip content={tooltips.partTimer.timeHistory.hoursWorked} />
             </div>
           </div>
         </div>

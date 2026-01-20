@@ -5,6 +5,22 @@ import type { Database } from './types';
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+// Debug logging (only in development)
+if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  console.log('🔍 Supabase Config Check:', {
+    hasUrl: !!SUPABASE_URL,
+    hasKey: !!SUPABASE_PUBLISHABLE_KEY,
+    urlPreview: SUPABASE_URL ? `${SUPABASE_URL.substring(0, 30)}...` : 'missing',
+    keyPreview: SUPABASE_PUBLISHABLE_KEY ? `${SUPABASE_PUBLISHABLE_KEY.substring(0, 20)}...` : 'missing',
+  });
+}
+
+// Check if we're using placeholder values (indicates missing env vars)
+export const isSupabaseConfigured = !!(SUPABASE_URL && 
+  SUPABASE_PUBLISHABLE_KEY && 
+  SUPABASE_URL !== 'https://placeholder.supabase.co' && 
+  SUPABASE_PUBLISHABLE_KEY !== 'placeholder-key');
+
 // Validate environment variables and create client
 let supabaseClient: ReturnType<typeof createClient<Database>>;
 

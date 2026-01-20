@@ -10,6 +10,8 @@ import { Eraser } from "lucide-react";
 import { toast } from "sonner";
 import { useShiftsData } from "@/hooks/shifts/useShiftsData";
 import { usePromoterDelete } from "@/hooks/promoters/usePromoterDelete";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 const DataPurge = () => {
   const { user, isAuthenticated, loading } = useAuth();
@@ -69,6 +71,7 @@ const DataPurge = () => {
             <div className="flex items-center gap-2">
               <Eraser className="h-6 w-6 text-destructive" />
               <CardTitle className="text-2xl font-bold tracking-tight">Data Purge</CardTitle>
+              <HelpTooltip content={tooltips.company.dataPurge.purgeOptions} />
             </div>
             <CardDescription>
               Permanently delete shifts and promoters data from the system.
@@ -77,7 +80,10 @@ const DataPurge = () => {
           <CardContent>
             <div className="space-y-6">
               <div className="bg-muted/50 p-6 rounded-lg border border-destructive/10">
-                <h3 className="text-lg font-medium mb-2">Warning</h3>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-lg font-medium">Warning</h3>
+                  <HelpTooltip content={tooltips.company.dataPurge.warnings} />
+                </div>
                 <p className="text-muted-foreground mb-4">
                   The operations on this page will permanently delete data from the database.
                   These actions cannot be undone. Please proceed with caution.
@@ -86,7 +92,10 @@ const DataPurge = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Card className="bg-background">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">Shifts Data</CardTitle>
+                      <div className="flex items-center gap-1.5">
+                        <CardTitle className="text-lg">Shifts Data</CardTitle>
+                        <HelpTooltip content={tooltips.company.dataPurge.dataTypes} />
+                      </div>
                       <CardDescription>Delete all shift records</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -99,7 +108,10 @@ const DataPurge = () => {
                   
                   <Card className="bg-background">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg">Promoters Data</CardTitle>
+                      <div className="flex items-center gap-1.5">
+                        <CardTitle className="text-lg">Promoters Data</CardTitle>
+                        <HelpTooltip content="Delete all promoter profile and assignment records" />
+                      </div>
                       <CardDescription>Delete all promoter records</CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -113,7 +125,10 @@ const DataPurge = () => {
                   
                   <Card className="bg-destructive/5 border-destructive/30">
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-lg text-destructive">Complete Purge</CardTitle>
+                      <div className="flex items-center gap-1.5">
+                        <CardTitle className="text-lg text-destructive">Complete Purge</CardTitle>
+                        <HelpTooltip content={tooltips.company.dataPurge.confirmation} />
+                      </div>
                       <CardDescription>Delete all application data</CardDescription>
                     </CardHeader>
                     <CardContent>

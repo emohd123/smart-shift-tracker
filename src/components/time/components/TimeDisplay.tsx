@@ -2,6 +2,8 @@
 import { formatBHD } from "../../shifts/utils/currencyUtils";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type TimeDisplayProps = {
   elapsedTime: number;
@@ -45,12 +47,13 @@ export default function TimeDisplay({ elapsedTime, earnings, isTracking }: TimeD
         <motion.div 
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-muted-foreground text-sm mt-2"
+          className="text-muted-foreground text-sm mt-2 flex items-center justify-center gap-1.5"
         >
           <span>Current earnings: </span>
           <span className={isTracking ? "text-primary font-medium" : ""}>
             {formatBHD(earnings)}
           </span>
+          <HelpTooltip content="Earnings calculated based on hours worked and shift pay rate" />
         </motion.div>
       )}
     </div>

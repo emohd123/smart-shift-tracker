@@ -12,6 +12,8 @@ import { format } from "date-fns";
 import { useAuth } from "@/context/AuthContext";
 import { isCompanyLike } from "@/utils/roleUtils";
 import { ShiftPaymentGroupedView } from "./ShiftPaymentGroupedView";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 function IndividualReceiptsView() {
   const navigate = useNavigate();
@@ -109,16 +111,19 @@ function IndividualReceiptsView() {
     <div className="space-y-6">
       {/* Filters */}
       <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search by receipt number, shift, or name..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex-1 relative flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by receipt number, shift, or name..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <HelpTooltip content={tooltips.company.payments.search} />
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
           <Input
             type="date"
             placeholder="From"
@@ -133,6 +138,7 @@ function IndividualReceiptsView() {
             onChange={(e) => setDateFilter({ ...dateFilter, to: e.target.value })}
             className="w-40"
           />
+          <HelpTooltip content={tooltips.company.payments.dateFilter} />
         </div>
       </div>
 
@@ -143,9 +149,12 @@ function IndividualReceiptsView() {
             <span className="text-sm text-muted-foreground">
               {filteredReceipts.length} receipt{filteredReceipts.length !== 1 ? 's' : ''}
             </span>
-            <span className="text-lg font-bold">
-              Total: {formatBHD(totalAmount)}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-bold">
+                Total: {formatBHD(totalAmount)}
+              </span>
+              <HelpTooltip content={tooltips.company.payments.amount} />
+            </div>
           </div>
         </div>
       )}
@@ -239,16 +248,19 @@ export default function PaymentReceiptList() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="by-shift" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="by-shift" className="flex items-center gap-2">
-                <Layers className="h-4 w-4" />
-                By Shift
-              </TabsTrigger>
-              <TabsTrigger value="all-receipts" className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                All Receipts
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex items-center gap-2 mb-2">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="by-shift" className="flex items-center gap-2">
+                  <Layers className="h-4 w-4" />
+                  By Shift
+                </TabsTrigger>
+                <TabsTrigger value="all-receipts" className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  All Receipts
+                </TabsTrigger>
+              </TabsList>
+              <HelpTooltip content="View receipts grouped by shift or as individual receipts" />
+            </div>
             <TabsContent value="by-shift" className="mt-6">
               <ShiftPaymentGroupedView />
             </TabsContent>

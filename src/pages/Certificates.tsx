@@ -14,6 +14,8 @@ import PromoterCertificatesPage from "@/components/certificates/promoter/Promote
 import AdminCertificatesPage from "@/components/certificates/admin/AdminCertificatesPage";
 import { isAdminLike } from "@/utils/roleUtils";
 import { UserRole } from "@/types/database";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 export default function Certificates() {
   const { user } = useAuth();
@@ -82,6 +84,7 @@ export default function Certificates() {
                     {isSuperAdmin ? "Super Admin" : "Admin"}
                   </Badge>
                 )}
+                <HelpTooltip content={isPromoter ? tooltips.partTimer.certificates.generation : "Manage and generate professional work certificates"} />
               </div>
               <p className="text-muted-foreground mt-1 max-w-2xl">
                 {getDescription()}

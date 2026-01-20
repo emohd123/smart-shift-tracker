@@ -96,7 +96,10 @@ export default function ProfileFormFields({
       
       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="full_name">Full Name</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="full_name">Full Name</Label>
+            <HelpTooltip content={tooltips.partTimer.profile.fullName} />
+          </div>
           <Input
             id="full_name"
             type="text"
@@ -110,7 +113,10 @@ export default function ProfileFormFields({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="nationality">Nationality</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="nationality">Nationality</Label>
+            <HelpTooltip content={tooltips.partTimer.profile.nationality} />
+          </div>
           <Input
             id="nationality"
             type="text"
@@ -124,7 +130,10 @@ export default function ProfileFormFields({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="age">Age</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="age">Age</Label>
+            <HelpTooltip content={tooltips.partTimer.profile.age} />
+          </div>
           <Input
             id="age"
             type="number"
@@ -138,7 +147,10 @@ export default function ProfileFormFields({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone_number">Phone Number</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="phone_number">Phone Number</Label>
+            <HelpTooltip content={tooltips.partTimer.profile.phoneNumber} />
+          </div>
           <Input
             id="phone_number"
             type="tel"
@@ -215,7 +227,10 @@ export default function ProfileFormFields({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="bank_account_holder_name">Account Holder Name</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="bank_account_holder_name">Account Holder Name</Label>
+            <HelpTooltip content={tooltips.partTimer.profile.bankDetails} />
+          </div>
           <Input
             id="bank_account_holder_name"
             type="text"
@@ -230,7 +245,10 @@ export default function ProfileFormFields({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="iban_number">IBAN Number</Label>
+          <div className="flex items-center gap-1.5">
+            <Label htmlFor="iban_number">IBAN Number</Label>
+            <HelpTooltip content="International Bank Account Number used for receiving payments. Must match your bank account details." />
+          </div>
           <Input
             id="iban_number"
             type="text"

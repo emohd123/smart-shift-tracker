@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 import {
   Table,
   TableBody,
@@ -807,23 +809,29 @@ const Reports = () => {
         {/* Date Range Filter */}
         <Card>
           <CardHeader>
-            <CardTitle>Date Range</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle>Date Range</CardTitle>
+              <HelpTooltip content={tooltips.company.reports.dateRange} />
+            </div>
             <CardDescription>Select a time period to analyze</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex flex-col sm:flex-row gap-4">
-              <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
-                <SelectTrigger className="w-full sm:w-[200px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7d">Last 7 Days</SelectItem>
-                  <SelectItem value="30d">Last 30 Days</SelectItem>
-                  <SelectItem value="90d">Last 90 Days</SelectItem>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="custom">Custom Range</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex items-center gap-2">
+                <Select value={timeRange} onValueChange={(v) => setTimeRange(v as TimeRange)}>
+                  <SelectTrigger className="w-full sm:w-[200px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="7d">Last 7 Days</SelectItem>
+                    <SelectItem value="30d">Last 30 Days</SelectItem>
+                    <SelectItem value="90d">Last 90 Days</SelectItem>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+                <HelpTooltip content="Choose a predefined time period or select custom dates" />
+              </div>
               {timeRange === "custom" && (
                 <>
                   <Input
@@ -866,7 +874,10 @@ const Reports = () => {
             <>
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription>Total Shifts</CardDescription>
+                  <div className="flex items-center gap-1.5">
+                    <CardDescription>Total Shifts</CardDescription>
+                    <HelpTooltip content={tooltips.company.reports.statistics} />
+                  </div>
                   <CardTitle className="text-3xl flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-primary" />
                     {metrics.totalShifts.toLocaleString()}
@@ -879,7 +890,10 @@ const Reports = () => {
               
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription>Active Promoters</CardDescription>
+                  <div className="flex items-center gap-1.5">
+                    <CardDescription>Active Promoters</CardDescription>
+                    <HelpTooltip content="Number of promoters who have worked shifts in the selected period" />
+                  </div>
                   <CardTitle className="text-3xl flex items-center gap-2">
                     <Users className="h-5 w-5 text-primary" />
                     {metrics.activePromoters.toLocaleString()}
@@ -892,7 +906,10 @@ const Reports = () => {
               
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription>Total Hours</CardDescription>
+                  <div className="flex items-center gap-1.5">
+                    <CardDescription>Total Hours</CardDescription>
+                    <HelpTooltip content="Combined total hours worked by all promoters in the selected period" />
+                  </div>
                   <CardTitle className="text-3xl flex items-center gap-2">
                     <Clock className="h-5 w-5 text-primary" />
                     {metrics.totalHours.toLocaleString()}
@@ -905,7 +922,10 @@ const Reports = () => {
               
               <Card>
                 <CardHeader className="pb-2">
-                  <CardDescription>Certificates</CardDescription>
+                  <div className="flex items-center gap-1.5">
+                    <CardDescription>Certificates</CardDescription>
+                    <HelpTooltip content="Total number of certificates generated in the selected period" />
+                  </div>
                   <CardTitle className="text-3xl flex items-center gap-2">
                     <FileText className="h-5 w-5 text-primary" />
                     {metrics.certificates.toLocaleString()}
@@ -942,13 +962,16 @@ const Reports = () => {
               value={activeTab}
               onValueChange={setActiveTab}
             >
-              <TabsList className="grid grid-cols-5 md:w-auto md:inline-flex">
-                <TabsTrigger value="shifts">Shifts</TabsTrigger>
-                <TabsTrigger value="promoters">Promoters</TabsTrigger>
-                <TabsTrigger value="companies">Companies</TabsTrigger>
-                <TabsTrigger value="time">Time Tracking</TabsTrigger>
-                <TabsTrigger value="ratings">Ratings</TabsTrigger>
-              </TabsList>
+              <div className="flex items-center gap-2">
+                <TabsList className="grid grid-cols-5 md:w-auto md:inline-flex">
+                  <TabsTrigger value="shifts">Shifts</TabsTrigger>
+                  <TabsTrigger value="promoters">Promoters</TabsTrigger>
+                  <TabsTrigger value="companies">Companies</TabsTrigger>
+                  <TabsTrigger value="time">Time Tracking</TabsTrigger>
+                  <TabsTrigger value="ratings">Ratings</TabsTrigger>
+                </TabsList>
+                <HelpTooltip content={tooltips.company.reports.reportType} />
+              </div>
               
               {/* Shifts Tab */}
               <TabsContent value="shifts" className="space-y-4">

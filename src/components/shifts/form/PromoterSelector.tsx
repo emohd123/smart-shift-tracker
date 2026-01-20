@@ -4,6 +4,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 import {
   Command,
   CommandEmpty,
@@ -72,7 +74,10 @@ export default function PromoterSelector({
 
   return (
     <div className="space-y-3">
-      <Label htmlFor="promoters">Assign Promoters (Optional)</Label>
+      <div className="flex items-center gap-1.5">
+        <Label htmlFor="promoters">Assign Promoters (Optional)</Label>
+        <HelpTooltip content={tooltips.company.shifts.promoterSelection} />
+      </div>
       
       {/* Quick Add by Code */}
       <div className="flex gap-2">

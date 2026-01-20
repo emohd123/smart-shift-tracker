@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Users, Clock } from "lucide-react";
 import { formatBHD } from "../utils/paymentCalculations";
 import { isCompanyLike } from "@/utils/roleUtils";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type PaymentSummaryProps = {
   totalPromoters: number;
@@ -24,7 +26,10 @@ export const PaymentSummary = ({
     <div className={`grid grid-cols-1 ${isCompany ? 'md:grid-cols-4' : 'md:grid-cols-2'} gap-4 mb-6`}>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total Assigned</CardTitle>
+          <div className="flex items-center gap-1.5">
+            <CardTitle className="text-sm font-medium">Total Assigned</CardTitle>
+            <HelpTooltip content={tooltips.company.shifts.assignedPromoters} />
+          </div>
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -35,7 +40,10 @@ export const PaymentSummary = ({
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Checked In</CardTitle>
+          <div className="flex items-center gap-1.5">
+            <CardTitle className="text-sm font-medium">Checked In</CardTitle>
+            <HelpTooltip content="Number of promoters currently checked in and working on this shift" />
+          </div>
           <div className="h-4 w-4 rounded-full bg-green-500" />
         </CardHeader>
         <CardContent>
@@ -48,7 +56,10 @@ export const PaymentSummary = ({
         <>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
+              <div className="flex items-center gap-1.5">
+                <CardTitle className="text-sm font-medium">Total Hours</CardTitle>
+                <HelpTooltip content="Combined total hours worked by all promoters on this shift" />
+              </div>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
@@ -59,7 +70,10 @@ export const PaymentSummary = ({
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Payment</CardTitle>
+              <div className="flex items-center gap-1.5">
+                <CardTitle className="text-sm font-medium">Total Payment</CardTitle>
+                <HelpTooltip content={tooltips.company.shifts.paymentSummary} />
+              </div>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>

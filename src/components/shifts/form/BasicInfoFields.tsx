@@ -1,6 +1,7 @@
-
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type BasicInfoFieldsProps = {
   title: string;
@@ -16,7 +17,10 @@ export default function BasicInfoFields({
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="title">Shift Title</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor="title">Shift Title</Label>
+          <HelpTooltip content={tooltips.company.shifts.title} />
+        </div>
         <Input
           id="title"
           name="title"
@@ -28,7 +32,10 @@ export default function BasicInfoFields({
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="location">Location</Label>
+        <div className="flex items-center gap-1.5">
+          <Label htmlFor="location">Location</Label>
+          <HelpTooltip content={tooltips.company.shifts.location} />
+        </div>
         <Input
           id="location"
           name="location"

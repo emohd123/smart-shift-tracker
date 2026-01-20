@@ -11,6 +11,8 @@ import { CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { formatDate } from "./utils/shiftUtils";
 import { formatBHD } from "./utils/currencyUtils";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type ShiftInfoProps = {
   shift: Shift;
@@ -25,8 +27,11 @@ export function ShiftInfo({ shift, isPromoter }: ShiftInfoProps) {
           <div className="space-y-3">
             <div className="flex items-start gap-2.5">
               <Calendar className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <div>
-                <div className="font-medium">Date</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="font-medium">Date</div>
+                  <HelpTooltip content={tooltips.company.shifts.dateRange} />
+                </div>
                 <div className="text-sm text-muted-foreground">
                   {formatDate(shift.date)}
                 </div>
@@ -35,8 +40,11 @@ export function ShiftInfo({ shift, isPromoter }: ShiftInfoProps) {
             
             <div className="flex items-start gap-2.5">
               <Clock className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <div>
-                <div className="font-medium">Time</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="font-medium">Time</div>
+                  <HelpTooltip content={`${tooltips.company.shifts.startTime} - ${tooltips.company.shifts.endTime}`} />
+                </div>
                 <div className="text-sm text-muted-foreground">
                   {shift.startTime} - {shift.endTime}
                 </div>
@@ -45,8 +53,11 @@ export function ShiftInfo({ shift, isPromoter }: ShiftInfoProps) {
             
             <div className="flex items-start gap-2.5">
               <MapPin className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <div>
-                <div className="font-medium">Location</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="font-medium">Location</div>
+                  <HelpTooltip content={tooltips.company.shifts.location} />
+                </div>
                 <div className="text-sm text-muted-foreground">
                   {shift.location}
                 </div>
@@ -57,8 +68,11 @@ export function ShiftInfo({ shift, isPromoter }: ShiftInfoProps) {
           <div className="space-y-3">
             <div className="flex items-start gap-2.5">
               <BanknoteIcon className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <div>
-                <div className="font-medium">Pay Rate</div>
+              <div className="flex-1">
+                <div className="flex items-center gap-1.5">
+                  <div className="font-medium">Pay Rate</div>
+                  <HelpTooltip content={tooltips.company.shifts.payRate} />
+                </div>
                 <div className="text-sm text-muted-foreground">
                   {formatBHD(shift.payRate)}/hr
                 </div>

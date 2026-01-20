@@ -5,6 +5,8 @@ import { ArrowLeft, Calendar, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { formatBHD } from "@/components/shifts/utils/currencyUtils";
 import { motion } from "framer-motion";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 interface TimeHistoryHeaderProps {
   totalEarnings: number;
@@ -30,10 +32,13 @@ const TimeHistoryHeader = ({ totalEarnings }: TimeHistoryHeaderProps) => {
           Back to Time Tracking
         </Button>
         
-        <Button variant="outline" size="sm">
-          <Download size={16} className="mr-2" />
-          Export CSV
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm">
+            <Download size={16} className="mr-2" />
+            Export CSV
+          </Button>
+          <HelpTooltip content={tooltips.partTimer.timeHistory.export} />
+        </div>
       </div>
       
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -47,13 +52,16 @@ const TimeHistoryHeader = ({ totalEarnings }: TimeHistoryHeaderProps) => {
           </p>
         </div>
         <motion.div 
-          className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-md text-center"
+          className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-md text-center flex items-center gap-2"
           initial={{ scale: 0.95 }}
           animate={{ scale: 1 }}
           transition={{ duration: 0.3 }}
         >
-          <div className="text-sm text-muted-foreground">Total Earnings</div>
-          <div className="text-xl font-bold text-primary">{formatBHD(totalEarnings)}</div>
+          <div className="flex-1">
+            <div className="text-sm text-muted-foreground">Total Earnings</div>
+            <div className="text-xl font-bold text-primary">{formatBHD(totalEarnings)}</div>
+          </div>
+          <HelpTooltip content={tooltips.partTimer.timeHistory.earnings} />
         </motion.div>
       </div>
     </motion.div>

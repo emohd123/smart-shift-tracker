@@ -1,6 +1,8 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Activity, Users, Clock, DollarSign } from "lucide-react";
 import { formatBHD } from "@/components/shifts/utils/currencyUtils";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 interface LiveDashboardStatsProps {
   activeShifts: number;
@@ -21,7 +23,10 @@ export default function LiveDashboardStats({
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Active Shifts</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-muted-foreground">Active Shifts</p>
+                <HelpTooltip content={tooltips.company.dashboard.activeShifts} />
+              </div>
               <p className="text-2xl font-bold mt-2">{activeShifts}</p>
             </div>
             <div className="relative">
@@ -41,7 +46,10 @@ export default function LiveDashboardStats({
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Promoters Working</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-muted-foreground">Promoters Working</p>
+                <HelpTooltip content={tooltips.company.dashboard.activePromoters} />
+              </div>
               <p className="text-2xl font-bold mt-2">{activePromoters}</p>
             </div>
             <Users className="h-8 w-8 text-primary" />
@@ -53,7 +61,10 @@ export default function LiveDashboardStats({
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Total Hours</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-muted-foreground">Total Hours</p>
+                <HelpTooltip content={tooltips.company.dashboard.totalHours} />
+              </div>
               <p className="text-2xl font-bold mt-2">{totalHours.toFixed(1)}h</p>
             </div>
             <Clock className="h-8 w-8 text-primary" />
@@ -65,7 +76,10 @@ export default function LiveDashboardStats({
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-muted-foreground">Live Earnings</p>
+              <div className="flex items-center gap-1.5">
+                <p className="text-sm font-medium text-muted-foreground">Live Earnings</p>
+                <HelpTooltip content={tooltips.company.dashboard.liveEarnings} />
+              </div>
               <p className="text-2xl font-bold mt-2">{formatBHD(liveEarnings)}</p>
             </div>
             <DollarSign className="h-8 w-8 text-primary" />

@@ -14,6 +14,8 @@ import { Loader2, CheckCircle, AlertCircle, ScrollText } from "lucide-react";
 import { generateContractTemplate } from "@/components/shifts/form/utils/contractTemplateGenerator";
 import { parseLocalDate } from "@/utils/dateUtils";
 import SignatureDialog from "@/components/certificates/SignatureDialog";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type ContractAcceptance = {
   id: string;

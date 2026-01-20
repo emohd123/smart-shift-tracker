@@ -13,7 +13,9 @@ export function LoginFormAlert({ formError, isCreatingAdmin }: LoginFormAlertPro
   let displayMessage = formError;
   
   // More friendly messages for common errors
-  if (formError.includes("Invalid login credentials")) {
+  if (formError.includes("Invalid API key") || formError.includes("Invalid api key") || formError.includes("api key")) {
+    displayMessage = "Configuration error: API keys are not properly configured. Please contact support or check your environment settings.";
+  } else if (formError.includes("Invalid login credentials")) {
     displayMessage = "The email or password you entered is incorrect. Please try again.";
   } else if (formError.includes("Email not confirmed")) {
     displayMessage = "Please confirm your email before signing in.";

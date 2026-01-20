@@ -10,6 +10,8 @@ import { useMessages } from "@/hooks/messages/useMessages";
 import { useSendMessage } from "@/hooks/messages/useSendMessage";
 import { cn } from "@/lib/utils";
 import { isAdminLike } from "@/utils/roleUtils";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 interface ChatInterfaceProps {
   currentUser: User | null;
@@ -129,21 +131,24 @@ const ChatInterface = ({ currentUser, contact, onBackToContacts }: ChatInterface
           className="flex-1"
           disabled={sending || !currentUser}
         />
-        <Button 
-          type="submit" 
-          size="icon" 
-          disabled={!message.trim() || sending || !currentUser}
-          className={cn(
-            "transition-all", 
-            sending && "animate-pulse"
-          )}
-        >
-          {sending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Send className="h-4 w-4" />
-          )}
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            type="submit" 
+            size="icon" 
+            disabled={!message.trim() || sending || !currentUser}
+            className={cn(
+              "transition-all", 
+              sending && "animate-pulse"
+            )}
+          >
+            {sending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+          <HelpTooltip content={tooltips.company.messages.sendMessage} />
+        </div>
       </form>
     </div>
   );

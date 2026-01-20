@@ -63,29 +63,33 @@ export function PromoterFilters({
     <Card className="mb-4">
       <CardContent className="p-4">
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search promoters..."
-              className="pl-8 bg-background"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+          <div className="relative w-full max-w-sm flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search promoters..."
+                className="pl-8 bg-background"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <HelpTooltip content={tooltips.company.promoters.search} />
           </div>
           
           <div className="flex items-center gap-2 w-full md:w-auto">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="flex items-center gap-2 bg-background">
-                  {getStatusIcon(selectedStatus)}
-                  <span>
-                    {selectedStatus 
-                      ? `${selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}` 
-                      : "All Statuses"}
-                  </span>
-                </Button>
-              </DropdownMenuTrigger>
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2 bg-background">
+                    {getStatusIcon(selectedStatus)}
+                    <span>
+                      {selectedStatus 
+                        ? `${selectedStatus.charAt(0).toUpperCase() + selectedStatus.slice(1)}` 
+                        : "All Statuses"}
+                    </span>
+                  </Button>
+                </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
                 <DropdownMenuSeparator />
@@ -117,19 +121,22 @@ export function PromoterFilters({
                   <AlertTriangle className="h-4 w-4" />
                   Rejected
                 </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <HelpTooltip content={tooltips.company.promoters.statusFilter} />
+            </div>
             
             {selectedPromoters.length > 0 && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="default" className="flex items-center gap-2">
-                    Actions
-                    <Badge variant="secondary" className="ml-1 bg-primary/20 text-primary">
-                      {selectedPromoters.length}
-                    </Badge>
-                  </Button>
-                </DropdownMenuTrigger>
+              <div className="flex items-center gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="default" className="flex items-center gap-2">
+                      Actions
+                      <Badge variant="secondary" className="ml-1 bg-primary/20 text-primary">
+                        {selectedPromoters.length}
+                      </Badge>
+                    </Button>
+                  </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel>Bulk Actions</DropdownMenuLabel>
                   <DropdownMenuSeparator />
@@ -161,6 +168,8 @@ export function PromoterFilters({
                   )}
                 </DropdownMenuContent>
               </DropdownMenu>
+              <HelpTooltip content={tooltips.company.promoters.bulkActions} />
+            </div>
             )}
 
             <ExportButton

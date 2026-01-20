@@ -13,6 +13,8 @@ import EmptyTimeLogState from "@/components/time/history/EmptyTimeLogState";
 import TimeHistoryHeader from "@/components/time/history/TimeHistoryHeader";
 import TimeHistoryFilters from "@/components/time/history/TimeHistoryFilters";
 import EarningsAnalytics from "@/components/time/analytics/EarningsAnalytics";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 const TimeHistory = () => {
   const { user } = useAuth();
@@ -65,14 +67,17 @@ const TimeHistory = () => {
             <Card>
               <CardHeader className="px-6 pt-6 pb-0" />
               <CardContent>
-                <div className="relative mb-6">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search by shift name, location or date..."
-                    className="pl-9"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
+                <div className="relative mb-6 flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      placeholder="Search by shift name, location or date..."
+                      className="pl-9"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <HelpTooltip content="Search your time logs by shift name, location, or date" />
                 </div>
                 
                 {loading ? (

@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ErrorSeverity, useError } from "@/context/ErrorContext";
 
@@ -12,6 +12,11 @@ export const useAuthentication = () => {
     // Prevent login attempt with empty fields
     if (!emailOrUsername || !password) {
       throw new Error("Email and password are required");
+    }
+
+    // Check if Supabase is properly configured
+    if (!isSupabaseConfigured) {
+      throw new Error("Invalid API key: The application is not properly configured. Please contact support.");
     }
 
     setLoading(true);
@@ -44,7 +49,9 @@ export const useAuthentication = () => {
         console.error("Login error from Supabase:", error);
 
         // Provide more user-friendly error messages
-        if (error.message.includes("Invalid login credentials")) {
+        if (error.message.includes("Invalid API key") || error.message.includes("Invalid api key") || error.message.includes("api key")) {
+          throw new Error("Invalid API key: The application is not properly configured. Please contact support.");
+        } else if (error.message.includes("Invalid login credentials")) {
           throw new Error("Invalid email or password. Please try again.");
         } else if (error.message.includes("Email not confirmed")) {
           throw new Error("Please confirm your email before signing in.");

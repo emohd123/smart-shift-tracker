@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, CheckCircle, DollarSign, Wallet } from "lucide-react";
 import { Shift } from "../../shifts/types/ShiftTypes";
 import { useCurrency } from "@/hooks/useCurrency";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 type DashboardStatsProps = {
   upcomingShifts: Shift[];
@@ -25,10 +27,13 @@ export default function DashboardStats({
     <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center text-base font-medium">
-            <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
-            Upcoming Shifts
-          </CardTitle>
+          <div className="flex items-center gap-1.5">
+            <CardTitle className="flex items-center text-base font-medium">
+              <Calendar className="h-4 w-4 mr-2 text-muted-foreground" />
+              Upcoming Shifts
+            </CardTitle>
+            <HelpTooltip content={tooltips.partTimer.dashboard.upcomingShifts} />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{upcomingShifts.length}</div>
@@ -55,10 +60,13 @@ export default function DashboardStats({
       
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="flex items-center text-base font-medium">
-            <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
-            Earnings
-          </CardTitle>
+          <div className="flex items-center gap-1.5">
+            <CardTitle className="flex items-center text-base font-medium">
+              <DollarSign className="h-4 w-4 mr-2 text-muted-foreground" />
+              Earnings
+            </CardTitle>
+            <HelpTooltip content={tooltips.partTimer.dashboard.earningsSummary} />
+          </div>
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{format(totalEarned)}</div>
