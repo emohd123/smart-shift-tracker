@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Search, Download, Calendar, DollarSign, Layers } from "lucide-react";
+import { FileText, Search, Download, Calendar, DollarSign, Layers, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { formatBHD } from "@/components/shifts/utils/paymentCalculations";
 import { format } from "date-fns";
@@ -234,11 +234,32 @@ function IndividualReceiptsView() {
 }
 
 export default function PaymentReceiptList() {
-  const { userRole } = useAuth();
+  const { userRole, user } = useAuth();
+  const navigate = useNavigate();
   const isCompany = isCompanyLike(userRole);
 
+  const handleBack = () => {
+    // Navigate back to previous page, or to dashboard if no history
+    if (window.history.length > 1) {
+      navigate(-1);
+    } else {
+      navigate(isCompany ? "/company" : "/dashboard");
+    }
+  };
+
   return (
-    <div className="container max-w-6xl mx-auto py-8">
+    <div className="space-y-6">
+      <div className="mb-4">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={handleBack}
+          className="group"
+        >
+          <ArrowLeft size={16} className="mr-2 group-hover:-translate-x-1 transition-transform" />
+          Back
+        </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
