@@ -26,6 +26,8 @@ import {
   FormControl, 
   FormMessage 
 } from "@/components/ui/form";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 export interface ProfileFormFieldsProps {
   form: UseFormReturn<any>;

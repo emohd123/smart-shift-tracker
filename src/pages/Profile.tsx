@@ -46,24 +46,19 @@ const getStatusConfig = (status: string | undefined) => {
 };
 
 export default function Profile() {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("profile");
 
   useEffect(() => {
-    // Add a small delay to ensure auth state is loaded
-    const timer = setTimeout(() => {
-      if (!isAuthenticated) {
-        navigate("/login");
-      }
-      setLoading(false);
-    }, 500);
+    // Only redirect if auth has finished loading and user is not authenticated
+    if (!authLoading && !isAuthenticated) {
+      navigate("/login");
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, navigate]);
-
-  if (loading) {
+  // Show loading state while auth is initializing
+  if (authLoading) {
     return (
       <AppLayout title="Profile">
         <div className="flex justify-center items-center h-64">
@@ -71,6 +66,11 @@ export default function Profile() {
         </div>
       </AppLayout>
     );
+  }
+
+  // Don't render anything if not authenticated (will redirect)
+  if (!isAuthenticated) {
+    return null;
   }
 
   // Show company profile for company users
