@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { User } from "@/context/AuthContext";
 import { ArrowLeft, Send, Loader2, AlertCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,16 +36,16 @@ const ChatInterface = ({ currentUser, contact, onBackToContacts }: ChatInterface
     }
   }, [contact.id]);
 
-  // Scroll to bottom on new messages
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const scrollToBottom = () => {
+  const scrollToBottom = useCallback(() => {
     if (messageEndRef.current) {
       messageEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  };
+  }, []);
+
+  // Scroll to bottom on new messages
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();

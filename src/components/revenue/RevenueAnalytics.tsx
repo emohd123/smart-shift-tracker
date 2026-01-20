@@ -90,11 +90,130 @@ export default function RevenueAnalytics() {
   const [companyRevenue, setCompanyRevenue] = useState<CompanyRevenue[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchRevenueStats = useCallback(async () => {
+    try {
+      setLoading(true);
+      
+      const { start, end, previousStart, previousEnd } = getDateRange(timeRange);
+      
+      // Build query with date filter
+      let shiftsQuery = supabase
+        .from("shifts")
+        .select("*, profiles!shifts_company_id_fkey(company_name)")
+        .eq("status", "completed");
+
+      if (timeRange !== "all") {
+        shiftsQuery = shiftsQuery
+          .gte("date", start.toISOString().split('T')[0])
+          .lte("date", end.toISOString().split('T')[0]);
+      }
+
+      const { data: shifts, error: shiftsError } = await shiftsQuery;
+
+      if (shiftsError) throw shiftsError;
+
+      // Calculate revenue from shifts
+      let totalRevenue = 0;
+      let shiftRevenue = 0;
+      const timeSeriesMap = new Map<string, number>();
+      const companyRevenueMap = new Map<string, { revenue: number; shifts: number }>();
+
+      shifts?.forEach((shift: any) => {
+        const shiftDate = shift.date;
+        const payRate = Number(shift.payRate || 0);
+        const hours = calculateShiftHours(shift.startTime, shift.endTime);
+        const revenue = payRate * hours;
+
+        totalRevenue += revenue;
+        shiftRevenue += revenue;
+
+        // Time series data
+        const dateKey = shiftDate;
+        timeSeriesMap.set(dateKey, (timeSeriesMap.get(dateKey) || 0) + revenue);
+
+        // Company revenue
+        const companyName = shift.profiles?.company_name || "Unknown";
+        const existing = companyRevenueMap.get(companyName) || { revenue: 0, shifts: 0 };
+        companyRevenueMap.set(companyName, {
+          revenue: existing.revenue + revenue,
+          shifts: existing.shifts + 1
+        });
+      });
+
+      // Fetch certificate revenue
+      let certificateQuery = supabase
+        .from("certificates")
+        .select("price, created_at")
+        .eq("status", "approved");
+
+      if (timeRange !== "all") {
+        certificateQuery = certificateQuery
+          .gte("created_at", start.toISOString())
+          .lte("created_at", end.toISOString());
+      }
+
+      const { data: certificates, error: certError } = await certificateQuery;
+
+      if (certError) throw certError;
+
+      const certificateRevenue = certificates?.reduce((sum, cert) => sum + Number(cert.price || 0), 0) || 0;
+      totalRevenue += certificateRevenue;
+
+      // Calculate growth (compare with previous period)
+      const { start: prevStart, end: prevEnd } = getDateRange(timeRange);
+      let previousRevenue = 0;
+
+      if (timeRange !== "all") {
+        const { data: prevShifts } = await supabase
+          .from("shifts")
+          .select("payRate, startTime, endTime")
+          .eq("status", "completed")
+          .gte("date", previousStart.toISOString().split('T')[0])
+          .lte("date", previousEnd.toISOString().split('T')[0]);
+
+        previousRevenue = prevShifts?.reduce((sum, shift) => {
+          const hours = calculateShiftHours(shift.startTime, shift.endTime);
+          return sum + (Number(shift.payRate || 0) * hours);
+        }, 0) || 0;
+      }
+
+      const revenueGrowth = previousRevenue > 0 
+        ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 
+        : 0;
+
+      // Convert maps to arrays
+      const timeSeriesArray: TimeSeriesData[] = Array.from(timeSeriesMap.entries())
+        .map(([date, revenue]) => ({ date, revenue }))
+        .sort((a, b) => a.date.localeCompare(b.date));
+
+      const companyRevenueArray: CompanyRevenue[] = Array.from(companyRevenueMap.entries())
+        .map(([company, data]) => ({
+          company,
+          revenue: data.revenue,
+          shiftCount: data.shifts
+        }))
+        .sort((a, b) => b.revenue - a.revenue);
+
+      setStats({
+        shiftRevenue,
+        certificateRevenue,
+        revenueGrowth,
+        totalRevenue
+      });
+      setTimeSeriesData(timeSeriesArray);
+      setCompanyRevenue(companyRevenueArray);
+    } catch (error) {
+      console.error("Error fetching revenue stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [timeRange, isAuthenticated, user]);
+
   useEffect(() => {
     if (isAuthenticated && isAdminLike(user?.role)) {
       fetchRevenueStats();
     }
-  }, [isAuthenticated, user, timeRange]);
+  }, [isAuthenticated, user, fetchRevenueStats]);
 
   const calculateShiftHours = (startTime: string, endTime: string): number => {
     const [startHour, startMin] = startTime.split(':').map(Number);
@@ -147,167 +266,7 @@ export default function RevenueAnalytics() {
     return { start, end, previousStart, previousEnd };
   };
 
-  const fetchRevenueStats = async () => {
-    try {
-      setLoading(true);
-      
-      const { start, end, previousStart, previousEnd } = getDateRange(timeRange);
-      
-      // Build query with date filter
-      let shiftsQuery = supabase
-        .from("shifts")
-        .select("*, profiles!shifts_company_id_fkey(company_name)")
-        .eq("status", "completed");
-
-      if (timeRange !== "all") {
-        shiftsQuery = shiftsQuery
-          .gte("date", start.toISOString().split('T')[0])
-          .lte("date", end.toISOString().split('T')[0]);
-      }
-
-      const { data: shifts, error: shiftsError } = await shiftsQuery;
-
-      if (shiftsError) throw shiftsError;
-
-      // Get previous period data for comparison
-      let previousShiftsQuery = supabase
-        .from("shifts")
-        .select("*")
-        .eq("status", "completed");
-
-      if (timeRange !== "all" && previousEnd > previousStart) {
-        previousShiftsQuery = previousShiftsQuery
-          .gte("date", previousStart.toISOString().split('T')[0])
-          .lte("date", previousEnd.toISOString().split('T')[0]);
-      } else {
-        previousShiftsQuery = previousShiftsQuery.limit(0);
-      }
-
-      const { data: previousShifts } = await previousShiftsQuery;
-
-      // Get time logs
-      const { data: timeLogs, error: timeLogsError } = await supabase
-        .from("time_logs")
-        .select("total_hours, earnings, created_at");
-
-      if (timeLogsError) throw timeLogsError;
-
-      // Get certificate revenue
-      let certificateRevenue = 0;
-      try {
-        const { data: certPayments } = await supabase
-          .from("certificate_payments")
-          .select("amount, status, created_at")
-          .eq("status", "completed");
-
-        if (certPayments && timeRange !== "all") {
-          certificateRevenue = certPayments
-            .filter(p => {
-              const date = new Date(p.created_at);
-              return date >= start && date <= end;
-            })
-            .reduce((sum, p) => sum + Number(p.amount || 0), 0);
-        } else if (certPayments) {
-          certificateRevenue = certPayments.reduce((sum, p) => sum + Number(p.amount || 0), 0);
-        }
-      } catch (err) {
-        console.warn("Certificate payments not available:", err);
-      }
-
-      // Calculate statistics
-      const filteredTimeLogs = timeLogs?.filter(log => {
-        if (timeRange === "all") return true;
-        const logDate = new Date(log.created_at);
-        return logDate >= start && logDate <= end;
-      }) || [];
-
-      const totalHoursWorked = filteredTimeLogs.reduce((sum, log) => sum + (log.total_hours || 0), 0);
-      const totalEarnings = filteredTimeLogs.reduce((sum, log) => sum + (log.earnings || 0), 0);
-
-      // Calculate shift-based revenue
-      let totalShiftRevenue = 0;
-      let paidAmount = 0;
-      let unpaidAmount = 0;
-      const companyRevenueMap = new Map<string, { revenue: number; shifts: number; hours: number }>();
-      const timeSeriesMap = new Map<string, { revenue: number; paid: number; unpaid: number; shifts: number }>();
-
-      shifts?.forEach(shift => {
-        const hours = calculateShiftHours(shift.start_time, shift.end_time);
-        const revenue = (shift.pay_rate || 0) * hours;
-        totalShiftRevenue += revenue;
-
-        if (shift.is_paid) {
-          paidAmount += revenue;
-        } else {
-          unpaidAmount += revenue;
-        }
-
-        // Company revenue breakdown
-        const companyName = (shift.profiles as any)?.company_name || "Unknown";
-        const existing = companyRevenueMap.get(companyName) || { revenue: 0, shifts: 0, hours: 0 };
-        companyRevenueMap.set(companyName, {
-          revenue: existing.revenue + revenue,
-          shifts: existing.shifts + 1,
-          hours: existing.hours + hours
-        });
-
-        // Time series data
-        const dateKey = format(new Date(shift.date), "MMM dd");
-        const existingDate = timeSeriesMap.get(dateKey) || { revenue: 0, paid: 0, unpaid: 0, shifts: 0 };
-        timeSeriesMap.set(dateKey, {
-          revenue: existingDate.revenue + revenue,
-          paid: existingDate.paid + (shift.is_paid ? revenue : 0),
-          unpaid: existingDate.unpaid + (shift.is_paid ? 0 : revenue),
-          shifts: existingDate.shifts + 1
-        });
-      });
-
-      // Previous period revenue
-      let previousPeriodRevenue = 0;
-      previousShifts?.forEach(shift => {
-        const hours = calculateShiftHours(shift.start_time, shift.end_time);
-        previousPeriodRevenue += (shift.pay_rate || 0) * hours;
-      });
-
-      const revenueGrowth = previousPeriodRevenue > 0 
-        ? ((totalShiftRevenue - previousPeriodRevenue) / previousPeriodRevenue) * 100 
-        : 0;
-
-      const averageHourlyRate = totalHoursWorked > 0 ? totalEarnings / totalHoursWorked : 0;
-
-      // Convert maps to arrays and sort
-      const sortedTimeSeries = Array.from(timeSeriesMap.entries())
-        .map(([date, data]) => ({ date, ...data }))
-        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-
-      const sortedCompanyRevenue = Array.from(companyRevenueMap.entries())
-        .map(([companyName, data]) => ({ companyName, ...data }))
-        .sort((a, b) => b.revenue - a.revenue)
-        .slice(0, 10); // Top 10 companies
-
-      setStats({
-        totalShiftRevenue,
-        completedShifts: shifts?.length || 0,
-        totalHoursWorked,
-        paidAmount,
-        unpaidAmount,
-        averageHourlyRate,
-        thisMonthRevenue: totalShiftRevenue, // For current period
-        previousPeriodRevenue,
-        revenueGrowth,
-        certificateRevenue,
-        totalRevenue: totalShiftRevenue + certificateRevenue
-      });
-
-      setTimeSeriesData(sortedTimeSeries);
-      setCompanyRevenue(sortedCompanyRevenue);
-
-    } catch (error) {
-      console.error("Error fetching revenue stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const exportData = () => {
 
   const exportData = () => {
     const csv = [
