@@ -24,6 +24,8 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExportButton } from "@/components/admin/shared/ExportButton";
+import { HelpTooltip } from "@/components/ui/HelpTooltip";
+import { tooltips } from "@/config/tooltips";
 
 interface PromoterFiltersProps {
   searchTerm: string;
