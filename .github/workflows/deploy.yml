@@ -18,6 +18,14 @@ jobs:
       run: npm ci
     - name: Build
       run: npm run build
+    - name: Check dist contents
+      run: |
+        echo "=== dist/ contents ==="
+        ls -la ./dist/
+        echo "=== dist/assets/ contents ==="
+        ls -la ./dist/assets/
+        echo "=== index.html ==="
+        head -20 ./dist/index.html
     - name: Deploy to Hostinger via SFTP
       env:
         FTP_PASS: ${{ secrets.FTP_PASSWORD }}
@@ -29,6 +37,7 @@ jobs:
         set net:max-retries 3
         set net:timeout 30
         set cmd:fail-exit no
+        debug
         cd /home/u649563468/public_html/smart/
         mirror -R --overwrite -x .git -x .github -x index.html ./dist/ .
         put -O . ./dist/index.html
