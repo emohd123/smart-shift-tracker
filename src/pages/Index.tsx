@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { motion, useMotionValue, useSpring } from "framer-motion";
 import { useEffect, useMemo, useState, useCallback, useRef } from "react";
@@ -17,6 +17,8 @@ import {
 import HowItWorks from "@/components/landing/HowItWorks";
 import ForCompanies from "@/components/landing/ForCompanies";
 import ForPartTimers from "@/components/landing/ForPartTimers";
+import UserProfile from "@/components/layout/UserProfile";
+import { useAuth } from "@/context/AuthContext";
 
 // Animated Particle Component
 const Particle = ({ delay = 0 }: { delay?: number }) => {
@@ -76,6 +78,34 @@ const AnimatedGrid = () => {
         />
       </div>
     </div>
+  );
+};
+
+
+// Auth-aware navigation header - shows logout for logged-in users, login/signup for guests
+const AuthHeaderNav = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  if (user) {
+    return <UserProfile />;
+  }
+
+  return (
+    <>
+      <Link to="/login">
+        <Button variant="ghost" size="sm" className="gap-2 hover-lift">
+          <User size={16} />
+          <span className="hidden sm:inline">Login</span>
+        </Button>
+      </Link>
+      <Link to="/signup">
+        <Button size="sm" className="gap-2 hover-lift shadow-lg bg-gradient-to-r from-primary to-primary-light">
+          <UserPlus size={16} />
+          <span className="hidden sm:inline">Sign Up</span>
+        </Button>
+      </Link>
+    </>
   );
 };
 
@@ -341,18 +371,7 @@ const Index = () => {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
           >
-            <Link to="/login">
-              <Button variant="ghost" size="sm" className="gap-2 hover-lift">
-                <User size={16} />
-                <span className="hidden sm:inline">Login</span>
-              </Button>
-            </Link>
-            <Link to="/signup">
-              <Button size="sm" className="gap-2 hover-lift shadow-lg bg-gradient-to-r from-primary to-primary-light">
-                <UserPlus size={16} />
-                <span className="hidden sm:inline">Sign Up</span>
-              </Button>
-            </Link>
+            <AuthHeaderNav />
           </motion.div>
         </div>
       </header>
