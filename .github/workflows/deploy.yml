@@ -1,37 +1,31 @@
 name: Deploy to Hostinger
-
 on:
   push:
     branches: [ main ]
   workflow_dispatch:
-
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-
-    - name: Setup Node.js
+    - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         cache: 'npm'
-
     - name: Install dependencies
       run: npm ci
-
     - name: Build
       run: npm run build
-
-    - name: Deploy to Hostinger via SSH
-      uses: easingthemes/ssh-deploy@main
+    - name: Deploy to Hostinger via SFTP
       env:
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        ARGS: "-rltgoDzvO --delete"
-        SOURCE: "dist/"
-        REMOTE_HOST: "191.101.230.56"
-        REMOTE_PORT: "65002"
-        REMOTE_USER: "u649563468"
-        TARGET: "/home/u649563468/domains/onestoneads.com/public_html/smart/"
+        FTP_PASS: ${{ secrets.FTP_PASSWORD }}
+      run: |
+        sudo apt-get update && sudo apt-get install -y lftp
+        lftp -u u649563468,$FTP_PASS sftp://191.101.230.56:65002 -e "
+        set sftp:auto-confirm yes
+        set ssl:verify-certificate no
+        mirror -R -e -x .git -x .github ./dist/ /public_html/smart/
+        bye
+        "
