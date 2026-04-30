@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { 
   CalendarDays, ChevronDown, 
   ClipboardList, Clock, Home, MessageCircle, 
-  Settings, UserRound, Users, FileBarChart2, Eraser, Award, DollarSign, Receipt
+  Settings, UserRound, Users, FileBarChart2, Eraser, Award, DollarSign, Receipt, LogOut
 } from "lucide-react";
 import { UserRole } from "@/types/database";
 import {
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 export const NavigationLinks = () => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   
   // Custom link component to handle active styles
   const AppLink = ({ to, children, icon, className = "" }) => (
@@ -132,6 +132,11 @@ export const NavigationLinks = () => {
               <UserRound className="mr-2 h-4 w-4" />
               <span>Profile & Settings</span>
             </NavLink>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => { logout(); window.location.href = "/login"; }} className="cursor-pointer text-red-500 hover:text-red-600">
+            <LogOut className="mr-2 h-4 w-4" />
+            <span>Logout</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
