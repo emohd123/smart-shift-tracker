@@ -19,27 +19,15 @@ jobs:
     - name: Build
       run: npm run build
     - name: Check dist contents
-      run: |
-        echo "=== dist/ contents ==="
-        ls -la ./dist/
-        echo "=== dist/assets/ contents ==="
-        ls -la ./dist/assets/
-        echo "=== index.html ==="
-        head -20 ./dist/index.html
-    - name: Deploy to Hostinger via SFTP
-      env:
-        FTP_PASS: ${{ secrets.FTP_PASSWORD }}
-      run: |
-        sudo apt-get update && sudo apt-get install -y lftp
-        lftp -u u649563468,$FTP_PASS sftp://191.101.230.56:65002 -e "
-        set sftp:auto-confirm yes
-        set ssl:verify-certificate no
-        set net:max-retries 3
-        set net:timeout 30
-        set cmd:fail-exit no
-        debug
-        cd /home/u649563468/public_html/smart/
-        mirror -R --overwrite -x .git -x .github -x index.html ./dist/ .
-        put -O . ./dist/index.html
-        bye
-        "
+      run: ls -la ./dist/
+    - name: Deploy to Hostinger via FTPS
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: 191.101.230.56
+        username: u649563468
+        password: ${{ secrets.FTP_PASSWORD }}
+        port: 65002
+        protocol: ftps
+        local-dir: ./dist/
+        server-dir: /public_html/smart/
+        dangerous-clean-slate: false
