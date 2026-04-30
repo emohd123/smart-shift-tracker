@@ -147,6 +147,7 @@ export default function AppLayout({ children, title }: AppLayoutProps) {
           sidebarOpen={sidebarOpen}
           setSidebarOpen={setSidebarOpen}
           isMobile={isMobile}
+          user={user}
         />
 
         {/* Sidebar toggle for non-mobile */}
