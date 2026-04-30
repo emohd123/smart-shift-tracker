@@ -1,5 +1,4 @@
-import { Menu, Bell, Search } from "lucide-react";
-import UserProfile from "@/components/layout/UserProfile";
+import { Menu, Bell, Search, UserCircle, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
@@ -7,6 +6,15 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { User } from "@/context/AuthContext";
+import { useAuth } from "@/context/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface AppHeaderProps {
   title?: string;
@@ -24,6 +32,21 @@ export function AppHeader({
   user
 }: AppHeaderProps) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setTimeout(() => navigate("/login", { replace: true }), 100);
+    } catch (error) {
+      console.error("Logout error:", error);
+      navigate("/login", { replace: true });
+    }
+  };
+
+  const initials = user?.email
+    ? user.email.split('@')[0].substring(0, 2).toUpperCase()
+    : '??';
 
   return (
     <motion.header 
@@ -73,7 +96,39 @@ export function AppHeader({
 
         <NotificationBadge />
 
-        <UserProfile user={user} />
+        {user && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                className="rounded-full h-8 w-8 bg-primary text-primary-foreground text-xs font-semibold hover:bg-primary/90"
+              >
+                {initials}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="font-normal">
+                <div className="flex flex-col space-y-1">
+                  <p className="text-sm font-medium leading-none">{user.email}</p>
+                  <p className="text-xs leading-none text-muted-foreground capitalize">
+                    {user.role}
+                  </p>
+                </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => navigate("/profile")}>
+                <UserCircle className="mr-2 h-4 w-4" />
+                Profile & Settings
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleLogout}>
+                <LogOut className="mr-2 h-4 w-4" />
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
     </motion.header>
   );
