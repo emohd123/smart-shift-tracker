@@ -30,6 +30,7 @@ jobs:
         set net:timeout 30
         set cmd:fail-exit no
         mkdir -p /home/u649563468/public_html/smart/
-        mirror -R --overwrite -x .git -x .github ./dist/ /home/u649563468/public_html/smart/
+        mirror -R --overwrite -x .git -x .github -x index.html ./dist/ /home/u649563468/public_html/smart/
+        put -O /home/u649563468/public_html/smart/ ./dist/index.html
         bye
         "
