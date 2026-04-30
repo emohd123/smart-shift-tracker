@@ -12,22 +12,20 @@ jobs:
     - name: Setup Node
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
-        cache: 'npm'
+        node-version: "20"
+        cache: "npm"
     - name: Install dependencies
       run: npm ci
     - name: Build
       run: npm run build
-    - name: Check dist contents
-      run: ls -la ./dist/
-    - name: Deploy to Hostinger via FTPS
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+    - name: Deploy via SSH/rsync
+      uses: burnett01/rsync-deployments@7.0.1
       with:
-        server: 191.101.230.56
-        username: u649563468
-        password: ${{ secrets.FTP_PASSWORD }}
-        port: 65002
-        protocol: ftps
-        local-dir: ./dist/
-        server-dir: /public_html/smart/
-        dangerous-clean-slate: false
+        switches: -avzr --delete
+        path: dist/
+        remote_path: /home/u649563468/domains/onestoneads.com/public_html/smart/
+        remote_host: 191.101.230.56
+        remote_port: 65002
+        remote_user: u649563468
+        remote_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
