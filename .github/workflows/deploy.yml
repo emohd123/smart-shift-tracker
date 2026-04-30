@@ -26,6 +26,7 @@ jobs:
         lftp -u u649563468,$FTP_PASS sftp://191.101.230.56:65002 -e "
         set sftp:auto-confirm yes
         set ssl:verify-certificate no
-        mirror -R -e -x .git -x .github ./dist/ /public_html/smart/
+        mkdir -p /home/u649563468/public_html/smart/
+        mirror -R -e -x .git -x .github ./dist/ /home/u649563468/public_html/smart/
         bye
         "
