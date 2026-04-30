@@ -28,7 +28,8 @@ jobs:
         set ssl:verify-certificate no
         set net:max-retries 3
         set net:timeout 30
+        set cmd:fail-exit no
         mkdir -p /home/u649563468/public_html/smart/
-        mirror -R --overwrite --delete-first -x .git -x .github ./dist/ /home/u649563468/public_html/smart/
+        mirror -R --overwrite -x .git -x .github ./dist/ /home/u649563468/public_html/smart/
         bye
         "
