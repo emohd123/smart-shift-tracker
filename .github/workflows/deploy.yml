@@ -27,6 +27,6 @@ jobs:
         set sftp:auto-confirm yes
         set ssl:verify-certificate no
         mkdir -p /home/u649563468/public_html/smart/
-        mirror -R -e -x .git -x .github ./dist/ /home/u649563468/public_html/smart/
+        mirror -R -x .git -x .github ./dist/ /home/u649563468/public_html/smart/
         bye
         "
