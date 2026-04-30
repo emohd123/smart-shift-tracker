@@ -1,5 +1,6 @@
 
-import { Menu, Bell, User, Search } from "lucide-react";
+import { Menu, Bell, Search } from "lucide-react";
+import UserProfile from "@/components/layout/UserProfile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
@@ -70,17 +71,7 @@ export function AppHeader({
         
         <NotificationBadge />
         
-        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            className="rounded-full hover:bg-secondary"
-            onClick={() => navigate("/profile")}
-            aria-label="User profile"
-          >
-            <User size={20} />
-          </Button>
-        </motion.div>
+        <UserProfile />
       </div>
     </motion.header>
   );
