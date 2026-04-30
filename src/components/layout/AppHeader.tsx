@@ -1,4 +1,3 @@
-
 import { Menu, Bell, Search } from "lucide-react";
 import UserProfile from "@/components/layout/UserProfile";
 import { Button } from "@/components/ui/button";
@@ -7,19 +6,22 @@ import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { User } from "@/context/AuthContext";
 
 interface AppHeaderProps {
   title?: string;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   isMobile: boolean;
+  user?: User | null;
 }
 
 export function AppHeader({ 
   title, 
   sidebarOpen, 
   setSidebarOpen, 
-  isMobile 
+  isMobile,
+  user
 }: AppHeaderProps) {
   const navigate = useNavigate();
 
@@ -59,7 +61,7 @@ export function AppHeader({
           {title || "Dashboard"}
         </h1>
       </div>
-      
+
       <div className="flex items-center gap-2">
         <div className="relative hidden md:flex items-center mr-2">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -68,10 +70,10 @@ export function AppHeader({
             className="pl-9 h-9 w-64 bg-secondary/50 focus:border-primary/30 transition-all duration-300" 
           />
         </div>
-        
+
         <NotificationBadge />
-        
-        <UserProfile />
+
+        <UserProfile user={user} />
       </div>
     </motion.header>
   );
