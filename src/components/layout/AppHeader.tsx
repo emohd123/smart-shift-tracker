@@ -3,10 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { User } from "@/context/AuthContext";
 import { useAuth } from "@/context/AuthContext";
+import HelpGuide from "./HelpGuide";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +35,7 @@ export function AppHeader({
 }: AppHeaderProps) {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -122,12 +125,18 @@ export function AppHeader({
                 Profile & Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setHelpOpen(true)}>
+                <HelpCircle className="mr-2 h-4 w-4" />
+                Help & Guide
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        <HelpGuide open={helpOpen} onOpenChange={setHelpOpen} />
         )}
       </div>
     </motion.header>
