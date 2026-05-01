@@ -24,6 +24,7 @@ interface UserProfileProps {
 export default function UserProfile({ user: propUser, onLogout: propLogout }: UserProfileProps = {}) {
   const { user: contextUser, logout: contextLogout } = useAuth();
   const navigate = useNavigate();
+  const [helpOpen, setHelpOpen] = useState(false);
   
   // Use props if provided, otherwise fall back to context
   const user = propUser || contextUser;
