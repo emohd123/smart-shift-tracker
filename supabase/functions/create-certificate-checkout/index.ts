@@ -83,18 +83,14 @@ serve(async (req) => {
       });
     }
 
-    // Create payment record in BHD
-    // BHD is a 3-decimal currency: 3.000 BHD = 3000 fils
-    const CERTIFICATE_PRICE_BHD = 3.000;
-    const CERTIFICATE_AMOUNT_FILS = 3000; // 3.000 BHD × 1000 fils
-
+    // Create payment record
     const { data: payment, error: paymentError } = await supabaseClient
       .from('certificate_payments')
       .insert({
         user_id: user.id,
         certificate_id: certificateId,
-        amount: CERTIFICATE_PRICE_BHD,
-        currency: 'bhd',
+        amount: 4.99,
+        currency: 'usd',
         status: 'pending',
       })
       .select()
@@ -105,19 +101,19 @@ serve(async (req) => {
       throw new Error('Failed to create payment record');
     }
 
-    // Create Stripe Checkout Session with BHD currency
+    // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       payment_method_types: ['card'],
       line_items: [
         {
           price_data: {
-            currency: 'bhd',
+            currency: 'usd',
             product_data: {
               name: 'Professional Work Certificate',
               description: `Certificate ${certificate.reference_number}`,
             },
-            unit_amount: CERTIFICATE_AMOUNT_FILS, // 3000 fils = 3.000 BHD
+            unit_amount: 499, // $4.99 in cents
           },
           quantity: 1,
         },
