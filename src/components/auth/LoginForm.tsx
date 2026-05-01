@@ -18,7 +18,7 @@ interface LoginFormProps {
 }
 
 export default function LoginForm({ onError }: LoginFormProps) {
-  const { login, loading, authError, isAuthenticated } = useAuth();
+  const { login, loading, authError, isAuthenticated, user } = useAuth();
   const navigate = useNavigate();
   const { addError } = useError();
   const { csrfToken, rateLimit } = useSecurity();
@@ -40,10 +40,15 @@ export default function LoginForm({ onError }: LoginFormProps) {
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (!isAuthenticated) return;
+    if (user?.role === "company") {
+      navigate("/company");
+    } else if (user?.role === "admin" || user?.role === "superadmin") {
+      navigate("/dashboard");
+    } else {
       navigate("/dashboard");
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, user?.role, navigate]);
 
   // Clear form error when inputs change
   useEffect(() => {
