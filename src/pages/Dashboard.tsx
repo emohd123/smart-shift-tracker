@@ -32,9 +32,12 @@ const Dashboard = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
+      return;
     }
-  }, [isAuthenticated, navigate]);
-
+    if (user?.role === "company") {
+      navigate("/company");
+    }
+  }, [isAuthenticated, user?.role, navigate]);
   if (!isAuthenticated) {
     return null; // Don't render anything while redirecting
   }
@@ -102,10 +105,6 @@ const Dashboard = () => {
     );
   }
 
-  if (user?.role === "company") {
-    navigate("/company");
-    return null;
-  }
 
   // Promoter Dashboard
   return (
