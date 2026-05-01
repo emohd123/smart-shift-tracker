@@ -1,4 +1,3 @@
-
 import { ShiftStatus } from "@/types/database";
 import { Shift } from "../types/ShiftTypes";
 
@@ -51,12 +50,13 @@ export const getStatusColor = (status: ShiftStatus): string => {
 };
 
 export const getEffectiveStatus = (shift: Shift): ShiftStatus => {
-  // If manual override is enabled, use override status
+  // ALWAYS recalculate from dates for accurate real-time status
+  // Only use manual override if explicitly set
   if (shift.manual_status_override && shift.override_status) {
     return shift.override_status as ShiftStatus;
   }
-  // Otherwise use the calculated status
-  return shift.status as ShiftStatus;
+  // Recalculate from dates to handle past shifts correctly
+  return calculateShiftStatus(shift);
 };
 
 export const getStatusLabel = (status: ShiftStatus): string => {
