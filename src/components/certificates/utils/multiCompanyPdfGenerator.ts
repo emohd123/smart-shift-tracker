@@ -1,4 +1,4 @@
-﻿import jsPDF from 'jspdf';
+import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import QRCode from 'qrcode';
 import { MultiCompanyCertificate } from '../types/certificate';
@@ -44,14 +44,15 @@ export async function generateMultiCompanyPDF(
   let yPos = margin;
 
   /* ------------------------------------------------
-     Colors
+     Colors � Navy / Gold / Cream theme
   ------------------------------------------------ */
 
-  const primary: [number, number, number] = [37, 99, 235];
-  const muted: [number, number, number] = [100, 116, 139];
+  const navy: [number, number, number] = [13, 33, 55];
+  const gold: [number, number, number] = [184, 134, 11];
+  const cream: [number, number, number] = [245, 240, 232];
   const dark: [number, number, number] = [15, 23, 42];
-  const border: [number, number, number] = [226, 232, 240];
-  const bg: [number, number, number] = [248, 250, 252];
+  const border: [number, number, number] = [184, 134, 11];
+  const bg: [number, number, number] = [245, 240, 232];
 
   /* ------------------------------------------------
      WATERMARK (SUBTLE)
@@ -72,13 +73,13 @@ export async function generateMultiCompanyPDF(
   ------------------------------------------------ */
 
   doc.setFontSize(18);
-  doc.setTextColor(...primary);
+  doc.setTextColor(...navy);
   doc.text('WORK EXPERIENCE CERTIFICATE', pageWidth / 2, yPos, { align: 'center' });
 
   yPos += 8;
 
   doc.setFontSize(9);
-  doc.setTextColor(...muted);
+  doc.setTextColor(...gold);
   doc.text(
     'This document certifies verified work experience completed via SmartShift',
     pageWidth / 2,
@@ -111,7 +112,7 @@ export async function generateMultiCompanyPDF(
   doc.text(data.promoterName, textX, profileY + 5);
 
   doc.setFontSize(8);
-  doc.setTextColor(...muted);
+  doc.setTextColor(...gold);
   doc.text('Promoter', textX, profileY + 11);
 
   const issueDate = new Date(data.issueDate || new Date()).toLocaleDateString(
@@ -173,7 +174,7 @@ export async function generateMultiCompanyPDF(
     const companyAny = company.company as any;
     if (companyAny.industry) {
       doc.setFontSize(8);
-      doc.setTextColor(...muted);
+      doc.setTextColor(...gold);
       doc.setFont('helvetica', 'normal');
       doc.text(companyAny.industry, cx, cy);
       cy += 5;
@@ -183,7 +184,7 @@ export async function generateMultiCompanyPDF(
     const location = [companyAny.city, companyAny.country].filter(Boolean).join(', ');
     if (location) {
       doc.setFontSize(7.5);
-      doc.setTextColor(...muted);
+      doc.setTextColor(...gold);
       doc.text(`Location: ${location}`, cx, cy);
       cy += 5;
     }
@@ -191,7 +192,7 @@ export async function generateMultiCompanyPDF(
     /* Website */
     if (company.company.website) {
       doc.setFontSize(7.5);
-      doc.setTextColor(...muted);
+      doc.setTextColor(...gold);
       doc.text(`Website: ${company.company.website}`, cx, cy);
       cy += 5;
     }
@@ -199,7 +200,7 @@ export async function generateMultiCompanyPDF(
     /* Email */
     if (company.company.email) {
       doc.setFontSize(7.5);
-      doc.setTextColor(...muted);
+      doc.setTextColor(...gold);
       doc.text(`Email: ${company.company.email}`, cx, cy);
       cy += 5;
     }
@@ -207,7 +208,7 @@ export async function generateMultiCompanyPDF(
     /* Phone */
     if (company.company.phone_number) {
       doc.setFontSize(7.5);
-      doc.setTextColor(...muted);
+      doc.setTextColor(...gold);
       doc.text(`Phone: ${company.company.phone_number}`, cx, cy);
       cy += 5;
     }
@@ -215,7 +216,7 @@ export async function generateMultiCompanyPDF(
     /* Contact Person - only if it exists in data */
     if (company.company.contact_person) {
       doc.setFontSize(7.5);
-      doc.setTextColor(...muted);
+      doc.setTextColor(...gold);
       doc.text(`Contact: ${company.company.contact_person}`, cx, cy);
       cy += 5;
     }
@@ -238,7 +239,7 @@ export async function generateMultiCompanyPDF(
 
     /* Work Assignments */
     doc.setFontSize(8);
-    doc.setTextColor(...muted);
+    doc.setTextColor(...gold);
     doc.text('Work Assignments', margin + 12, yPos);
 
     yPos += 4;
@@ -249,7 +250,7 @@ export async function generateMultiCompanyPDF(
       tableWidth: cardWidth - 24,
       head: [['Event / Campaign', 'Date', 'Location', 'Hours']],
       body: company.shifts.map(s => [
-        s.title || '—',
+        s.title || '�',
         new Date(s.dateFrom).toLocaleDateString('en-US', {
           month: 'short',
           day: '2-digit',
@@ -266,8 +267,8 @@ export async function generateMultiCompanyPDF(
         lineWidth: 0.2
       },
       headStyles: {
-        fillColor: bg,
-        textColor: dark,
+        fillColor: [13, 33, 55],
+        textColor: [245, 240, 232],
         fontStyle: 'bold'
       },
       columnStyles: {
@@ -291,12 +292,13 @@ export async function generateMultiCompanyPDF(
   const verifyUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(data.referenceNumber)}`;
   const qr = await QRCode.toDataURL(verifyUrl, { width: 120 });
 
-  doc.setFillColor(235, 245, 255);
-  doc.rect(margin, yPos, cardWidth, 20, 'F');
+  doc.setFillColor(245, 240, 232);
+  doc.setDrawColor(184, 134, 11);
+  doc.rect(margin, yPos, cardWidth, 20, 'FD');
 
   doc.setFontSize(15);
   doc.setFont('helvetica', 'bold');
-  doc.setTextColor(...primary);
+  doc.setTextColor(...navy);
   doc.text(
     `${roundHours(data.grandTotalHours)} VERIFIED WORK HOURS`,
     margin + 10,
@@ -313,7 +315,7 @@ export async function generateMultiCompanyPDF(
 
   doc.setFontSize(7);
   doc.setFont('helvetica', 'normal');
-  doc.setTextColor(...muted);
+  doc.setTextColor(...gold);
   doc.text(
     `Certificate Reference: ${data.referenceNumber}`,
     pageWidth / 2,
@@ -322,7 +324,7 @@ export async function generateMultiCompanyPDF(
   );
 
   doc.text(
-    'Generated digitally by SmartShift Tracker • Verifiable via QR code',
+    'Generated digitally by SmartShift Tracker � Verifiable via QR code',
     pageWidth / 2,
     pageHeight - 8,
     { align: 'center' }
