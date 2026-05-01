@@ -100,6 +100,7 @@ export function AppHeader({
         <NotificationBadge />
 
         {user && (
+          <>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button 
@@ -136,7 +137,8 @@ export function AppHeader({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        <HelpGuide open={helpOpen} onOpenChange={setHelpOpen} />
+          <HelpGuide open={helpOpen} onOpenChange={setHelpOpen} />
+          </>
         )}
       </div>
     </motion.header>
