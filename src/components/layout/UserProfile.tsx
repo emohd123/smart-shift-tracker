@@ -80,9 +80,11 @@ export default function UserProfile({ user: propUser, onLogout: propLogout }: Us
             Profile & Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <div className="px-1 py-0.5">
-            <HelpGuide />
-          </div>
+          <DropdownMenuItem asChild>
+            <div className="px-0 py-0">
+              <HelpGuide />
+            </div>
+          </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" />
