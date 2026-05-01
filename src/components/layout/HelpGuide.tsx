@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -9,11 +8,11 @@ import { HelpCircle, ChevronRight, ArrowRight, Shield, Users, Building2, Clock, 
 import { useAuth } from "@/context/AuthContext";
 
 interface HelpGuideProps {
-  onOpenChange?: (open: boolean) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export default function HelpGuide({ onOpenChange }: HelpGuideProps) {
-  const [open, setOpen] = useState(false);
+export default function HelpGuide({ open, onOpenChange }: HelpGuideProps) {
   const { user } = useAuth();
   const role = user?.role || "user";
 
@@ -21,21 +20,8 @@ export default function HelpGuide({ onOpenChange }: HelpGuideProps) {
   const isCompany = role === "company";
   const isAdmin = role === "admin";
 
-  const handleOpenChange = (newOpen: boolean) => {
-    setOpen(newOpen);
-    onOpenChange?.(newOpen);
-  };
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <button
-        onClick={() => handleOpenChange(true)}
-        className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-accent hover:text-accent-foreground w-full text-left"
-      >
-        <HelpCircle className="mr-2 h-4 w-4" />
-        <span>Help & Guide</span>
-      </button>
-
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
