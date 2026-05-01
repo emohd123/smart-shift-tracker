@@ -1,11 +1,10 @@
-
 import { ShiftStatus } from "@/types/database";
 import { Shift } from "../types/ShiftTypes";
 import { Calendar, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import React from "react";
 
 /**
- * Format date to display in a more readable format
+ * Format date to display in English (en-GB) to avoid locale inconsistencies
  */
 export const formatDate = (dateString: string) => {
   const options: Intl.DateTimeFormatOptions = { 
@@ -14,7 +13,7 @@ export const formatDate = (dateString: string) => {
     month: 'long', 
     day: 'numeric' 
   };
-  return new Date(dateString).toLocaleDateString(undefined, options);
+  return new Date(dateString).toLocaleDateString('en-GB', options);
 };
 
 /**
