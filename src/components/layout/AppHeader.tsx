@@ -1,4 +1,4 @@
-import { Menu, Bell, Search, UserCircle, LogOut } from "lucide-react";
+import { Menu, Bell, Search, UserCircle, LogOut, HelpCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import NotificationBadge from "@/components/notifications/NotificationBadge";
