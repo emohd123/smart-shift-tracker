@@ -1,120 +1,124 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/context/AuthContext";
-import { Shield, Download, Share2, Mail, Eye, CheckCircle, Lock } from "lucide-react";
-import { TimePeriod, CertificateType } from "./types/certificate";
-import { useUnifiedCertificateGeneration } from "./hooks/useUnifiedCertificateGeneration";
-import { isAdminLike } from "@/utils/role";
-import { AdminCertificateSelector } from "./AdminCertificateSelector";
-import { TimePeriodSelector } from "./TimePeriodSelector";
-import { ShiftSelector } from "./ShiftSelector";
-import { EnhancedCertificatePreview } from "./EnhancedCertificatePreview";
-import { CertificateCustomizer } from "./CertificateCustomizer";
-import { AdminStampConfig } from "./AdminStampConfig";
-import { CompanyStampConfig } from "./CompanyStampConfig";
-import { useCertificatePayment } from "@/hooks/useCertificatePayment";
 import { toast } from "sonner";
+import { Shield, CheckCircle, Download, Share2, Mail, Eye, Settings } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import AdminCertificateSelector from "./AdminCertificateSelector";
+import TimePeriodSelector from "./generator/TimePeriodSelector";
+import { ShiftSelector } from "./generator/ShiftSelector";
+import { CertificateCustomizer } from "./generator/CertificateCustomizer";
+import { EnhancedCertificatePreview } from "./EnhancedCertificatePreview";
+import { AdminStampConfig } from "./generator/AdminStampConfig";
+import { CompanyStampConfig } from "./generator/CompanyStampConfig";
+import { TimePeriod, CertificateType, WorkExperienceData } from "./types/certificate";
+import { useUnifiedCertificateGeneration } from "./hooks/useUnifiedCertificateGeneration";
+import { useCertificatePayment } from "@/hooks/useCertificatePayment";
+import PaymentButton from "./generator/PaymentButton";
+import GenerateButton from "./generator/GenerateButton";
+import { isAdminLike } from "@/utils/roleUtils";
 
-interface EnhancedWorkCertificateGeneratorProps {
-  userId?: string;
-  certificateType?: CertificateType;
-}
-
-export function EnhancedWorkCertificateGenerator({ 
-  userId: initialUserId, 
-  certificateType = "work_experience" 
-}: EnhancedWorkCertificateGeneratorProps) {
-  const { user } = useAuth();
-  const [timePeriod, setTimePeriod] = useState<TimePeriod>("all");
+export default function EnhancedWorkCertificateGenerator() {
+  const { user, isAuthenticated } = useAuth();
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>("6months");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [selectedShifts, setSelectedShifts] = useState<string[]>([]);
-  const [selectedUserId, setSelectedUserId] = useState<string>(initialUserId || "");
   const [showPreview, setShowPreview] = useState(false);
-  const [certificateId, setCertificateId] = useState<string | null>(null);
-
-  const [certificateTemplate, setCertificateTemplate] = useState("standard");
+  const [certificateTemplate, setCertificateTemplate] = useState("professional");
   const [includeDescription, setIncludeDescription] = useState(true);
   const [includeMetrics, setIncludeMetrics] = useState(true);
   const [customMessage, setCustomMessage] = useState("");
-
-  const isAdmin = isAdminLike(user?.role);
-  const isPromoter = user?.role === 'promoter' || user?.role === 'part_timer';
-
-  const { 
-    generateCertificate, 
-    certificateData, 
-    loading, 
-    downloading, 
-    sharing,
-    handleDownload, 
-    handleShare, 
-    handleEmail,
-    fetchPromoters,
-  } = useUnifiedCertificateGeneration(
-    selectedUserId || user?.id || "", 
-    timePeriod, 
-    certificateType
-  );
-
-  const { initiateCertificatePayment, loadingPayment } = useCertificatePayment();
-
   const [promoters, setPromoters] = useState<any[]>([]);
   const [loadingPromoters, setLoadingPromoters] = useState(false);
-
-  const loadPromoters = async () => {
-    setLoadingPromoters(true);
-    try {
-      const data = await fetchPromoters();
-      setPromoters(data || []);
-    } catch (error) {
-      console.error("Failed to load promoters:", error);
-    } finally {
-      setLoadingPromoters(false);
+  const [generatedCertificateId, setGeneratedCertificateId] = useState<string | null>(null);
+  
+  const {
+    generateCertificate,
+    certificateData,
+    loading,
+    downloading,
+    sharing,
+    fetchPromoters,
+    handleDownload,
+    handleShare,
+    handleEmail
+  } = useUnifiedCertificateGeneration(selectedUserId || user?.id || "", timePeriod, "work_experience");
+  
+  const {
+    isProcessing,
+    checkPaymentStatus,
+    initiateCertificatePayment,
+  } = useCertificatePayment();
+  
+  // Set initial user ID
+  useEffect(() => {
+    if (user) {
+      setSelectedUserId(user.id);
     }
-  };
-
-  useState(() => {
+  }, [user]);
+  
+  // Fetch promoters if user is admin
+  useEffect(() => {
     if (isAdminLike(user?.role)) {
+      const loadPromoters = async () => {
+        setLoadingPromoters(true);
+        try {
+          const promotersList = await fetchPromoters();
+          setPromoters(promotersList || []);
+        } catch (error) {
+          console.error("Failed to load promoters:", error);
+          toast.error("Failed to load promoters list");
+        } finally {
+          setLoadingPromoters(false);
+        }
+      };
+      
       loadPromoters();
     }
-  });
-
+  }, [user, fetchPromoters]);
+  
   const handleGenerate = async () => {
+    if (!isAuthenticated) {
+      toast.error("Please login to generate certificates");
+      return;
+    }
+    
+    if (!selectedUserId && isAdminLike(user?.role)) {
+      toast.error("Please select a promoter");
+      return;
+    }
+    
+    if (selectedShifts.length === 0) {
+      toast.error("Please select at least one shift");
+      return;
+    }
+    
+    setShowPreview(false);
+    
     try {
       const result = await generateCertificate();
       if (result && result.certificateId) {
-        setCertificateId(result.certificateId);
-        setShowPreview(true);
-
-        if (isAdmin) {
-          toast.success("Certificate generated successfully! Download is free for admin.");
-        } else if (isPromoter) {
-          toast.info("Certificate generated. Complete payment to download.");
-        }
+        setGeneratedCertificateId(result.certificateId);
       }
+      setShowPreview(true);
+      toast.success("Certificate generated! Please proceed with payment to download.");
     } catch (error) {
-      console.error("Generation failed:", error);
+      console.error("Failed to generate certificate:", error);
+      toast.error("Failed to generate certificate. Please try again.");
     }
   };
 
-  const handlePayAndDownload = async () => {
-    if (!certificateId) {
-      toast.error("No certificate to purchase");
+  const handlePayment = async () => {
+    if (!generatedCertificateId) {
+      toast.error("Please generate a certificate first");
       return;
     }
-
-    try {
-      await initiateCertificatePayment(certificateId);
-    } catch (error) {
-      console.error("Payment failed:", error);
-      toast.error("Payment initiation failed. Please try again.");
-    }
+    
+    await initiateCertificatePayment(generatedCertificateId);
   };
-
-  const isAuthenticated = !!user;
 
   return (
     <div className="w-full max-w-6xl mx-auto space-y-6">
@@ -127,18 +131,16 @@ export function EnhancedWorkCertificateGenerator({
                 Enhanced Work Certificate Generator
               </CardTitle>
               <CardDescription className="mt-2 text-base">
-                {isAdmin 
-                  ? "Generate comprehensive work certificates for any promoter. Free as admin." 
-                  : "Generate your verified work experience certificate. Payment required to download."}
+                Generate comprehensive work certificates with selective shift history, detailed descriptions, and professional branding
               </CardDescription>
             </div>
             <Badge variant="outline" className="px-4 py-2 border-primary/30 bg-primary/5">
               <CheckCircle className="h-4 w-4 mr-2 text-primary" />
-              {isAdmin ? "Admin — Free" : "Promoter — BHD 3.000"}
+              Professional Document
             </Badge>
           </div>
         </CardHeader>
-
+        
         <CardContent className="p-6">
           {!isAuthenticated && (
             <Alert variant="destructive" className="mb-6">
@@ -148,33 +150,21 @@ export function EnhancedWorkCertificateGenerator({
               </AlertDescription>
             </Alert>
           )}
-
-          {isPromoter && (
-            <Alert className="mb-6 bg-blue-50 border-blue-200">
-              <Lock className="h-4 w-4 text-blue-600" />
-              <AlertTitle>Payment Required</AlertTitle>
-              <AlertDescription>
-                As a promoter, generating a certificate costs <strong>BHD 3.000</strong> per certificate. 
-                You can preview the certificate for free. Payment is required only when you download the PDF.
-                Admin-generated certificates are free.
-              </AlertDescription>
-            </Alert>
-          )}
-
+          
           <Tabs defaultValue="generate" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-6">
               <TabsTrigger value="generate">Generate Certificate</TabsTrigger>
               <TabsTrigger value="customize">Customize Design</TabsTrigger>
-              {(isAdmin || user?.role === 'company') && (
+              {(isAdminLike(user?.role) || user?.role === 'company') && (
                 <TabsTrigger value="settings">
-                  {isAdmin ? 'Admin Settings' : 'Company Settings'}
+                  {isAdminLike(user?.role) ? 'Admin Settings' : 'Company Settings'}
                 </TabsTrigger>
               )}
             </TabsList>
-
+            
             <TabsContent value="generate" className="space-y-6">
               {/* Admin can select a user */}
-              {isAdmin && (
+              {isAdminLike(user?.role) && (
                 <AdminCertificateSelector
                   selectedUserId={selectedUserId}
                   setSelectedUserId={setSelectedUserId}
@@ -182,23 +172,23 @@ export function EnhancedWorkCertificateGenerator({
                   loadingPromoters={loadingPromoters}
                 />
               )}
-
+              
               <TimePeriodSelector 
                 timePeriod={timePeriod} 
                 setTimePeriod={setTimePeriod} 
               />
-
+              
               <ShiftSelector
                 userId={selectedUserId || user?.id || ""}
                 timePeriod={timePeriod}
                 selectedShifts={selectedShifts}
                 setSelectedShifts={setSelectedShifts}
               />
-
-              <div className="flex flex-col items-center gap-3">
+              
+              <div className="flex justify-center">
                 <Button 
                   onClick={handleGenerate}
-                  disabled={loading || !user || (isAdmin && selectedUserId === "") || selectedShifts.length === 0}
+                  disabled={loading || !user || (isAdminLike(user.role) && selectedUserId === "") || selectedShifts.length === 0}
                   size="lg"
                   className="px-8 py-3 text-lg"
                 >
@@ -210,19 +200,13 @@ export function EnhancedWorkCertificateGenerator({
                   ) : (
                     <>
                       <Shield className="h-5 w-5 mr-2" />
-                      {isAdmin ? "Generate Free Certificate" : "Generate Certificate Preview"}
+                      Generate Enhanced Certificate
                     </>
                   )}
                 </Button>
-
-                {isPromoter && (
-                  <p className="text-sm text-muted-foreground">
-                    Preview is free. Payment of <strong>BHD 3.000</strong> required to download PDF.
-                  </p>
-                )}
               </div>
             </TabsContent>
-
+            
             <TabsContent value="customize" className="space-y-6">
               <CertificateCustomizer
                 template={certificateTemplate}
@@ -235,8 +219,8 @@ export function EnhancedWorkCertificateGenerator({
                 setCustomMessage={setCustomMessage}
               />
             </TabsContent>
-
-            {isAdmin && (
+            
+            {isAdminLike(user?.role) && (
               <TabsContent value="settings" className="space-y-6">
                 <AdminStampConfig />
               </TabsContent>
@@ -250,7 +234,7 @@ export function EnhancedWorkCertificateGenerator({
           </Tabs>
         </CardContent>
       </Card>
-
+      
       {showPreview && certificateData && (
         <Card className="border border-primary/20">
           <CardHeader className="bg-secondary/30">
@@ -259,68 +243,31 @@ export function EnhancedWorkCertificateGenerator({
               Certificate Preview
             </CardTitle>
             <CardDescription>
-              {isAdmin 
-                ? "Review the certificate before downloading (free)" 
-                : "Review your certificate. Complete payment to download the PDF."}
+              Review your enhanced work certificate before downloading
             </CardDescription>
           </CardHeader>
-
+          
           <CardContent className="p-6">
             <EnhancedCertificatePreview 
               certificateData={certificateData}
               template={certificateTemplate}
             />
-
+            
             <div className="flex flex-wrap gap-3 justify-center mt-8">
-              {isAdmin ? (
-                /* Admin sees free download */
-                <Button 
-                  onClick={handleDownload}
-                  disabled={downloading}
-                  size="lg"
-                  className="px-6"
-                >
-                  {downloading ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                  ) : (
-                    <Download className="h-4 w-4 mr-2" />
-                  )}
-                  Download PDF (Free)
-                </Button>
-              ) : (
-                /* Promoter sees pay to download */
-                <>
-                  <Button 
-                    onClick={handlePayAndDownload}
-                    disabled={loadingPayment || !certificateId}
-                    size="lg"
-                    className="px-6 bg-emerald-600 hover:bg-emerald-700"
-                  >
-                    {loadingPayment ? (
-                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                    ) : (
-                      <Lock className="h-4 w-4 mr-2" />
-                    )}
-                    Pay BHD 3.000 & Download
-                  </Button>
-
-                  <Button 
-                    onClick={handleDownload}
-                    disabled={downloading}
-                    variant="outline"
-                    size="lg"
-                    className="px-6"
-                  >
-                    {downloading ? (
-                      <div className="w-4 h-4 border-2 border-primary/30 border-t-primary rounded-full animate-spin mr-2" />
-                    ) : (
-                      <Download className="h-4 w-4 mr-2" />
-                    )}
-                    Test Download (Preview Only)
-                  </Button>
-                </>
-              )}
-
+              <Button 
+                onClick={handleDownload}
+                disabled={downloading}
+                size="lg"
+                className="px-6"
+              >
+                {downloading ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
+                ) : (
+                  <Download className="h-4 w-4 mr-2" />
+                )}
+                Download PDF
+              </Button>
+              
               <Button 
                 onClick={handleShare}
                 disabled={sharing}
@@ -335,7 +282,7 @@ export function EnhancedWorkCertificateGenerator({
                 )}
                 Share Certificate
               </Button>
-
+              
               <Button 
                 onClick={handleEmail}
                 variant="outline"
@@ -345,7 +292,7 @@ export function EnhancedWorkCertificateGenerator({
                 <Mail className="h-4 w-4 mr-2" />
                 Email Certificate
               </Button>
-
+              
               <Button 
                 onClick={() => window.open(`/verify-certificate/${certificateData.referenceNumber}`, '_blank')}
                 variant="outline"
