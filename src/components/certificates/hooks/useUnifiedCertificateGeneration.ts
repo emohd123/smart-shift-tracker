@@ -3,7 +3,6 @@ import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { CertificateType, TimePeriod, CertificateData, WorkExperienceData } from "../types/certificate";
-// Removed dependency on useCertificateGeneration
 import { useWorkExperienceData } from "./useWorkExperienceData";
 import { generateEnhancedWorkExperiencePDF } from "../utils/enhancedPdfGenerator";
 import { useUserData } from "./useShiftData";
@@ -19,7 +18,9 @@ export const useUnifiedCertificateGeneration = (
   const [downloading, setDownloading] = useState(false);
   const [sharing, setSharing] = useState(false);
 
-  // Hooks for certificate data
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  const isPromoter = user?.role === 'promoter' || user?.role === 'part_timer';
+
   const { fetchWorkExperienceData } = useWorkExperienceData();
   const { fetchPromoters } = useUserData();
 
@@ -33,11 +34,9 @@ export const useUnifiedCertificateGeneration = (
     setCertificateData(null);
 
     try {
-      // Generate work experience certificate (unified for both types)
       const workData = await fetchWorkExperienceData(userId, timePeriod);
       if (workData) {
         setCertificateData(workData);
-        // Save certificate to database and get the ID
         const certificateId = await saveCertificateToDatabase(workData);
         return { certificateId };
       }
@@ -51,6 +50,14 @@ export const useUnifiedCertificateGeneration = (
 
   const saveCertificateToDatabase = async (data: WorkExperienceData): Promise<string | null> => {
     try {
+      // Admin generates for FREE (paid = true)
+      // Promoter must pay (paid = false) - they'll pay via Stripe before downloading
+      const shouldBeFree = isAdmin;
+
+      if (isPromoter && !shouldBeFree) {
+        toast.info("Certificate preview generated. Complete payment to download.");
+      }
+
       const { data: certData, error } = await supabase
         .from('certificates')
         .insert([{
@@ -65,7 +72,7 @@ export const useUnifiedCertificateGeneration = (
           skills_gained: ['Time Management', 'Reliability', 'Customer Service', 'Adaptability'],
           issued_by: user?.id,
           status: 'approved',
-          paid: false
+          paid: shouldBeFree  // true for admin (free), false for promoter (must pay)
         }])
         .select('id')
         .single();
@@ -158,7 +165,7 @@ export const useUnifiedCertificateGeneration = (
     try {
       const subject = `${certificateType === "skills" ? "Skills" : "Work Experience"} Certificate - ${certificateData.promoterName}`;
       const body = certificateType === "skills"
-        ? `Dear Hiring Manager,%0D%0A%0D%0AI am pleased to share my professional skills certificate (Reference: ${certificateData.referenceNumber}).%0D%0A%0D%0AThis certificate validates my experience and competencies in the roles I have undertaken.%0D%0A%0D%0AYou can verify this certificate at: ${window.location.origin}/verify-certificate/${certificateData.referenceNumber}%0D%0A%0D%0ABest regards,%0D%0A${certificateData.promoterName}`
+        ? `Dear Hiring Manager,%0D%0A%0D%0AI am pleased to share my professional skills certificate (Reference: ${certificateData.referenceNumber}).%0D%0A%0D%0AYou can verify this certificate at: ${window.location.origin}/verify-certificate/${certificateData.referenceNumber}%0D%0A%0D%0ABest regards,%0D%0A${certificateData.promoterName}`
         : `Dear Hiring Manager,%0D%0A%0D%0AI am pleased to share my comprehensive work experience certificate (Reference: ${certificateData.referenceNumber}).%0D%0A%0D%0AWork Summary:%0D%0A- Total Hours: ${(certificateData as WorkExperienceData).totalHours} hours%0D%0A- Total Shifts: ${(certificateData as WorkExperienceData).totalShifts} shifts%0D%0A- Work Period: ${(certificateData as WorkExperienceData).workPeriod.startDate} to ${(certificateData as WorkExperienceData).workPeriod.endDate}%0D%0A- Performance Rating: ${certificateData.performanceRating}/5%0D%0A%0D%0AYou can verify this certificate at: ${window.location.origin}/verify-certificate/${certificateData.referenceNumber}%0D%0A%0D%0ABest regards,%0D%0A${certificateData.promoterName}`;
 
       const mailtoLink = `mailto:?subject=${subject}&body=${body}`;
@@ -177,6 +184,8 @@ export const useUnifiedCertificateGeneration = (
     loading,
     downloading,
     sharing,
+    isAdmin,
+    isPromoter,
     handleDownload,
     handleShare,
     handleEmail,
