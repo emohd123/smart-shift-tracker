@@ -9,8 +9,9 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
-import { UserCircle, LogOut } from "lucide-react";
+import { UserCircle, LogOut, HelpCircle } from "lucide-react";
 import HelpGuide from "./HelpGuide";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import NotificationBadge from "../notifications/NotificationBadge";
 import { User } from "@/context/AuthContext";
@@ -80,10 +81,9 @@ export default function UserProfile({ user: propUser, onLogout: propLogout }: Us
             Profile & Settings
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <div className="px-0 py-0">
-              <HelpGuide />
-            </div>
+          <DropdownMenuItem onClick={() => setHelpOpen(true)}>
+            <HelpCircle className="mr-2 h-4 w-4" />
+            Help & Guide
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
@@ -91,6 +91,7 @@ export default function UserProfile({ user: propUser, onLogout: propLogout }: Us
             Logout
           </DropdownMenuItem>
         </DropdownMenuContent>
+        <HelpGuide open={helpOpen} onOpenChange={setHelpOpen} />
       </DropdownMenu>
     </div>
   );
