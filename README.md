@@ -210,3 +210,6 @@ For custom domains, we recommend using Netlify. Visit [Custom domains guide](htt
 ---
 
 **Built with ❤️ using Lovable, React, TypeScript, and Supabase**
+
+
+<!-- AUTO-DEPLOY-ENABLED: GitHub Actions auto-deploy configured -->
