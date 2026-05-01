@@ -7,253 +7,192 @@
   <link rel="stylesheet" href="./styles.css" />
 </head>
 <body>
-  <!-- Print frame (kept subtle; no ornaments/watermarks) -->
-  <div class="certificate-frame"></div>
-  <div class="security-watermark" aria-hidden="true"></div>
+  <div class="outer-frame"></div>
+  <div class="inner-frame"></div>
+  <div class="watermark"></div>
 
-  <!-- Header -->
-  <header class="topbar">
-    <div class="topbar-inner">
-      <div class="doc-title">
-        <h1>CERTIFICATE OF EMPLOYMENT</h1>
-        <div class="subtitle">Official Documentation of Professional Work Experience</div>
-      </div>
-    </div>
-  </header>
+  <div class="content">
+    <!-- Header -->
+    <header class="cert-header">
+      <div class="header-title">Certificate</div>
+      <div class="header-subtitle">of Employment</div>
+      <div class="header-line"></div>
+      <div class="header-ornament">&#9670; &#9670; &#9670;</div>
+    </header>
 
-  <!-- Document metadata -->
-  <div class="meta-bar">
-    <div>
-      <span class="label">Document ID</span>
-      <span class="value">{{certificate.id}}</span>
-    </div>
-    <div class="sep"></div>
-    <div>
-      <span class="label">Reference No.</span>
-      <span class="value">{{certificate.ref}}</span>
-    </div>
-    <div class="sep"></div>
-    <div>
-      <span class="label">Issue Date</span>
-      <span class="value">{{certificate.issueDate}}</span>
-    </div>
-    <div class="sep"></div>
-    <div>
-      <span class="label">Status</span>
-      <span class="value">{{#if certificate.verified}}Verified{{else}}Pending{{/if}}</span>
-    </div>
-  </div>
-
-  <main>
-    <!-- Certification statement -->
-    <div class="certification-statement">
-      This is to certify that <strong>{{partTimer.fullName}}</strong> has successfully completed 
-      the work assignments detailed herein, demonstrating professional competence and dedication 
-      in their role as a <strong>{{partTimer.roleLabel}}</strong>.
-    </div>
-
-    <!-- Identity Card -->
-    <section class="identity">
-      <div class="identity-left">
-        <div class="avatar">
+    <!-- Main Body -->
+    <main class="main-body">
+      <!-- Left Column: Promoter Info -->
+      <div class="left-column">
+        <div class="photo-frame">
           {{#if partTimer.photoDataUri}}
-            <img alt="Part-timer photo" src="{{partTimer.photoDataUri}}">
+            <img src="{{partTimer.photoDataUri}}" alt="Promoter photo">
           {{else}}
-            <div class="avatar-fallback">{{partTimer.initials}}</div>
+            <div class="photo-placeholder">{{partTimer.initials}}</div>
           {{/if}}
         </div>
-
-        <div class="identity-info">
-          <div class="name">{{partTimer.fullName}}</div>
-          <div class="badges">
-            <span class="badge badge-role">{{partTimer.roleLabel}}</span>
-            {{#if certificate.verified}}
-              <span class="badge badge-verified">✓ Verified</span>
-            {{else}}
-              <span class="badge badge-pending">Pending</span>
-            {{/if}}
-          </div>
-          <div class="details">
-            <div class="details-row">
-              <span class="detail"><strong>Nationality:</strong> {{partTimer.nationality}}</span>
-              <span class="dot">•</span>
-              <span class="detail"><strong>Age:</strong> {{partTimer.age}} years</span>
-            </div>
-            <div class="details-row">
-              <span class="detail"><strong>Contact:</strong> {{partTimer.phone}}</span>
-              <span class="dot">•</span>
-              <span class="detail">{{partTimer.email}}</span>
-            </div>
-          </div>
+        <div class="promoter-name">{{partTimer.fullName}}</div>
+        <div class="promoter-role">{{partTimer.roleLabel}}</div>
+        <div class="info-panel">
+          <strong>Nationality:</strong> {{partTimer.nationality}}<br>
+          <strong>Code:</strong> {{partTimer.promoCode}}<br>
+          <strong>Phone:</strong> {{partTimer.phone}}<br>
+          <strong>Email:</strong> {{partTimer.email}}<br>
+          <strong>Issued:</strong> {{certificate.issueDate}}
         </div>
       </div>
 
-      <div class="identity-right">
-        <div class="hours-pill">
-          <div class="hours-pill-value">{{summary.totalHours}}</div>
-          <div class="hours-pill-label">Total Hours</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Section title -->
-    <div class="section-title">Employment Record</div>
-
-    <!-- Employer Card(s) -->
-    {{#if employers}}
-      {{#each employers}}
-        <section class="card">
-          <div class="card-header">
-            <div class="employer">
-              {{#if this.employer.logoDataUri}}
-                <img class="employer-logo" alt="{{this.employer.name}} logo" src="{{this.employer.logoDataUri}}">
-              {{else}}
-                <div class="employer-logo-fallback">{{this.employer.initials}}</div>
-              {{/if}}
-              <div class="employer-text">
-                <div class="employer-name">{{this.employer.name}}</div>
-                <div class="employer-sub">
-                  <span>Reg: {{this.employer.registration}}</span>
-                  <span class="sep">|</span>
-                  <span>Tel: {{this.employer.phone}}</span>
-                  <span class="sep">|</span>
-                  <span>{{this.employer.email}}</span>
-                </div>
+      <!-- Right Column: Companies and Work Details -->
+      <div class="right-column">
+        <!-- Multi-company support -->
+        {{#if employers}}
+          {{#each employers}}
+            <div class="company-section">
+              <div class="company-name">{{this.employer.name}}</div>
+              <div class="company-industry">{{this.employer.industry}}</div>
+              <div class="company-details">
+                {{#if this.employer.website}}Website: {{this.employer.website}}<br>{{/if}}
+                {{#if this.employer.email}}Email: {{this.employer.email}}<br>{{/if}}
+                {{#if this.employer.registration}}CR/Reg. No: {{this.employer.registration}}<br>{{/if}}
               </div>
+              <div class="verified-badge">VERIFIED EMPLOYER</div>
             </div>
 
-            <div class="pill">
-              <span>{{this.totalHours}}</span><span class="muted"> hrs</span>
+            <div class="work-section">
+              <div class="section-heading">Work Assignments</div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Event / Campaign</th>
+                    <th>Date</th>
+                    <th>Location</th>
+                    <th style="text-align:right">Hours</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#each this.assignments}}
+                    <tr>
+                      <td>{{this.event}}</td>
+                      <td>{{this.date}}</td>
+                      <td>{{this.location}}</td>
+                      <td class="hours-cell">{{this.hours}}</td>
+                    </tr>
+                  {{/each}}
+                </tbody>
+              </table>
             </div>
+          {{/each}}
+        {{else}}
+          <!-- Single company fallback -->
+          <div class="company-section">
+            <div class="company-name">{{employer.name}}</div>
+            <div class="company-industry">{{employer.industry}}</div>
+            <div class="company-details">
+              {{#if employer.website}}Website: {{employer.website}}<br>{{/if}}
+              {{#if employer.email}}Email: {{employer.email}}<br>{{/if}}
+              {{#if employer.registration}}CR/Reg. No: {{employer.registration}}<br>{{/if}}
+            </div>
+            <div class="verified-badge">VERIFIED EMPLOYER</div>
           </div>
 
-          <div class="table-wrap">
+          <div class="work-section">
+            <div class="section-heading">Work Assignments</div>
             <table>
               <thead>
                 <tr>
-                  <th style="width:40%">Event / Campaign</th>
-                  <th style="width:18%">Date</th>
-                  <th style="width:24%">Location</th>
-                  <th style="width:18%; text-align:right;">Hours</th>
+                  <th>Event / Campaign</th>
+                  <th>Date</th>
+                  <th>Location</th>
+                  <th style="text-align:right">Hours</th>
                 </tr>
               </thead>
               <tbody>
-                {{#each this.assignments}}
+                {{#each assignments}}
                   <tr>
                     <td>{{this.event}}</td>
                     <td>{{this.date}}</td>
                     <td>{{this.location}}</td>
-                    <td style="text-align:right;">{{this.hours}}</td>
+                    <td class="hours-cell">{{this.hours}}</td>
                   </tr>
                 {{/each}}
               </tbody>
             </table>
           </div>
-        </section>
-      {{/each}}
-    {{else}}
-    <section class="card">
-      <div class="card-header">
-        <div class="employer">
-          {{#if employer.logoDataUri}}
-            <img class="employer-logo" alt="{{employer.name}} logo" src="{{employer.logoDataUri}}">
-          {{else}}
-            <div class="employer-logo-fallback">{{employer.initials}}</div>
-          {{/if}}
-          <div class="employer-text">
-            <div class="employer-name">{{employer.name}}</div>
-              <div class="employer-sub">
-                <span>Reg: {{employer.registration}}</span>
-                <span class="sep">|</span>
-                <span>Tel: {{employer.phone}}</span>
-                <span class="sep">|</span>
-                <span>{{employer.email}}</span>
-            </div>
-          </div>
-        </div>
+        {{/if}}
 
-        <div class="pill">
-          <span>{{summary.totalHours}}</span><span class="muted"> hrs</span>
+        <!-- Total Hours Box -->
+        <div class="total-box">
+          <div class="total-label">Total Verified Work Experience</div>
+          <div class="total-value">{{summary.totalHours}} {{summary.hoursLabel}}</div>
+          <div class="total-org">Across {{summary.companyCount}} organization{{#ifCond summary.companyCount '>' 1}}s{{/ifCond}}</div>
         </div>
       </div>
+    </main>
 
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-                <th style="width:40%">Event / Campaign</th>
-              <th style="width:18%">Date</th>
-              <th style="width:24%">Location</th>
-                <th style="width:18%; text-align:right;">Hours</th>
-            </tr>
-          </thead>
-          <tbody>
-            {{#each assignments}}
-              <tr>
-                <td>{{this.event}}</td>
-                <td>{{this.date}}</td>
-                <td>{{this.location}}</td>
-                <td style="text-align:right;">{{this.hours}}</td>
-              </tr>
-            {{/each}}
-          </tbody>
-        </table>
-      </div>
-    </section>
-    {{/if}}
-
-    <!-- Signatures + Verification -->
-    <section class="bottom">
-      <div class="sig">
-        <div class="sig-title">Authorized Signature</div>
-        <div class="sig-box">
-          {{#if certificate.signatureDataUri}}
-            <img class="sig-img" alt="Signature" src="{{certificate.signatureDataUri}}">
-          {{else}}
-            <div class="sig-placeholder">Signature</div>
-          {{/if}}
-        </div>
-        <div class="sig-small muted">This document is digitally verified and does not require a physical signature.</div>
-      </div>
-
-      <div class="date-box">
-        <div class="date-label">Date of Issue</div>
-        <div class="date-value">{{certificate.issueDate}}</div>
-      </div>
-
-      <div class="verify">
-        <div class="verify-left">
-        <div class="check">✓</div>
-        </div>
-        <div class="verify-text">
-          <div class="verify-title">Authenticated</div>
-          <div class="verify-desc">This certificate has been digitally verified and confirms the completion of documented work assignments.</div>
-          {{#if certificate.verifyUrl}}
-            <div class="verify-url">
-              Verify online:
-              <span class="mono">
-                {{#if certificate.verifyDisplay}}
-                  {{certificate.verifyDisplay}}
-                {{else}}
-                  /verify-certificate/{{certificate.ref}}
-                {{/if}}
-              </span>
-            </div>
-          {{/if}}
-        </div>
+    <!-- Bottom Section -->
+    <section class="bottom-section">
+      <div class="qr-area">
         {{#if certificate.qrDataUri}}
-          <div class="verify-qr">
-            <img class="qr" alt="Verification QR" src="{{certificate.qrDataUri}}">
-            <div class="qr-cap muted">Scan to verify</div>
+          <img class="qr-code" src="{{certificate.qrDataUri}}" alt="QR Code">
+        {{else}}
+          <div class="qr-placeholder">
+            <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+              <rect x="10" y="10" width="25" height="25" fill="#0d2137"/>
+              <rect x="65" y="10" width="25" height="25" fill="#0d2137"/>
+              <rect x="10" y="65" width="25" height="25" fill="#0d2137"/>
+              <rect x="40" y="40" width="20" height="20" fill="#b8860b"/>
+              <rect x="15" y="15" width="15" height="15" fill="white"/>
+              <rect x="70" y="15" width="15" height="15" fill="white"/>
+              <rect x="15" y="70" width="15" height="15" fill="white"/>
+              <rect x="42" y="42" width="16" height="16" fill="white"/>
+              <rect x="45" y="45" width="10" height="10" fill="#0d2137"/>
+              <rect x="40" y="10" width="5" height="5" fill="#0d2137"/>
+              <rect x="50" y="10" width="5" height="5" fill="#0d2137"/>
+              <rect x="40" y="20" width="5" height="5" fill="#0d2137"/>
+              <rect x="55" y="20" width="5" height="5" fill="#0d2137"/>
+              <rect x="10" y="40" width="5" height="5" fill="#0d2137"/>
+              <rect x="20" y="45" width="5" height="5" fill="#0d2137"/>
+              <rect x="10" y="55" width="5" height="5" fill="#0d2137"/>
+              <rect x="65" y="40" width="5" height="5" fill="#0d2137"/>
+              <rect x="75" y="45" width="5" height="5" fill="#0d2137"/>
+              <rect x="85" y="50" width="5" height="5" fill="#0d2137"/>
+              <rect x="65" y="55" width="5" height="5" fill="#0d2137"/>
+              <rect x="75" y="65" width="5" height="5" fill="#0d2137"/>
+              <rect x="85" y="70" width="5" height="5" fill="#0d2137"/>
+              <rect x="65" y="75" width="5" height="5" fill="#0d2137"/>
+              <rect x="85" y="85" width="5" height="5" fill="#0d2137"/>
+              <rect x="40" y="65" width="5" height="5" fill="#0d2137"/>
+              <rect x="50" y="70" width="5" height="5" fill="#0d2137"/>
+              <rect x="40" y="80" width="5" height="5" fill="#0d2137"/>
+              <rect x="55" y="85" width="5" height="5" fill="#0d2137"/>
+              <rect x="50" y="55" width="5" height="5" fill="#0d2137"/>
+            </svg>
           </div>
         {{/if}}
+        <div class="qr-label">Scan to Verify</div>
+      </div>
+
+      <div class="signature-area">
+        <div class="seal">
+          <div class="seal-inner">
+            <div class="seal-text">Official<br>Seal</div>
+          </div>
+        </div>
+        <div class="sig-line"></div>
+        <div class="sig-label">Authorized Signature</div>
+      </div>
+
+      <div class="date-area">
+        <div class="date-label">Date of Issue</div>
+        <div class="date-value">{{certificate.issueDate}}</div>
+        <div class="ref-number">{{certificate.ref}}</div>
       </div>
     </section>
-  </main>
+  </div>
 
+  <!-- Footer -->
   <footer class="footer">
-    <div>{{brand.footerLeft}}</div>
-    <div>Document Reference: <b>{{certificate.ref}}</b></div>
+    <span class="footer-brand">{{brand.name}}</span> &mdash; This certificate was generated digitally and is verifiable via QR code or online at {{brand.verifyUrl}}
   </footer>
 </body>
 </html>
