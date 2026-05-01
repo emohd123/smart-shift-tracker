@@ -19,7 +19,7 @@ jobs:
     - name: Build
       env:
         VITE_SUPABASE_URL: https://eiyhtvzfayoczpblecbz.supabase.co
-        VITE_SUPABASE_PUBLISHABLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVpaHl0dnpmYXlvY3picGxlY2J6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjYyNTI1NDIsImV4cCI6MjA4MTgyODU0Mn0.cXRzTi9pHqTx19DNOu8DOOghQ2c66DG8IsBo4_WQOTM
+        VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_CDEJpGbfVFE0RpZyEZkGfg_jTCjmoFq
       run: npm run build
     - name: Deploy via SSH/rsync
       uses: burnett01/rsync-deployments@7.0.1
