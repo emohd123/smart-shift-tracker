@@ -1,218 +1,390 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Building2, Calendar, Clock, MapPin, Mail, Phone, Globe, User, Hash, Briefcase, Tag, FileText } from "lucide-react";
-import { format } from "date-fns";
 import QRCode from "react-qr-code";
 import { MultiCompanyCertificate, CompanyWorkEntry } from "../types/certificate";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-
-// Helper to format hours as whole numbers
-const formatHours = (hours: number) => Math.round(hours);
+import { format } from "date-fns";
 
 // Re-export for backward compatibility
 export type { CompanyWorkEntry };
+
+const GOLD = "#C5A028";
+const NAVY = "#1a2e4a";
+const CREAM = "#FAF8F0";
+const CREAM_DARK = "#F0EDE0";
+const VERIFIED_BTN = "#1a3a2a";
+
+const formatHours = (hours: number) => Math.round(hours);
 
 interface MultiCompanyCertificatePreviewProps {
   data: MultiCompanyCertificate;
 }
 
 export default function MultiCompanyCertificatePreview({ data }: MultiCompanyCertificatePreviewProps) {
-  const isPreview = data.referenceNumber === 'PREVIEW';
+  const isPreview = data.referenceNumber === "PREVIEW";
   const verificationUrl = `${window.location.origin}/verify-certificate/${encodeURIComponent(data.referenceNumber)}`;
 
-  return (
-    <Card className="max-w-4xl mx-auto">
-      <CardHeader className="text-center border-b bg-gradient-to-r from-primary/5 to-secondary/5">
-        <div className="space-y-2">
-          <Badge variant="outline" className="mb-2 bg-green-500/10 text-green-600 border-green-500/20">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Verified Work Certificate
-          </Badge>
-          <CardTitle className="text-2xl font-bold">
-            WORK EXPERIENCE CERTIFICATE
-          </CardTitle>
-          <p className="text-sm text-muted-foreground">
-            This certifies that the following work has been completed and approved
-          </p>
-        </div>
-      </CardHeader>
+  const initials = data.promoterName
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .substring(0, 2)
+    .toUpperCase();
 
-      <CardContent className="p-6 space-y-6">
-        {/* Promoter Info */}
-        <div className="bg-secondary/20 rounded-lg p-4 border">
-          <div className="flex items-start gap-4">
-            {data.promoter?.profile_photo_url && (
-              <Avatar className="h-20 w-20 border-2 border-primary/50">
-                <AvatarImage src={data.promoter.profile_photo_url} alt={data.promoterName} />
-                <AvatarFallback>{data.promoterName.charAt(0)}</AvatarFallback>
-              </Avatar>
-            )}
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-primary">{data.promoterName}</h2>
-              <p className="text-sm text-muted-foreground">Promoter</p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Issued on: {format(new Date(data.issueDate), 'MMMM dd, yyyy')}
+  const issueDateFormatted = (() => {
+    try {
+      return format(new Date(data.issueDate), "MMM dd, yyyy");
+    } catch {
+      return data.issueDate;
+    }
+  })();
+
+  return (
+    <div
+      id="certificate-content"
+      style={{
+        fontFamily: "Georgia, 'Times New Roman', serif",
+        background: CREAM,
+        padding: "6px",
+        border: `3px solid ${NAVY}`,
+        maxWidth: "860px",
+        margin: "0 auto",
+      }}
+    >
+      {/* Inner gold border */}
+      <div style={{ border: `2px solid ${GOLD}`, padding: "40px 48px 32px" }}>
+
+        {/* ── HEADER ── */}
+        <div style={{ textAlign: "center", marginBottom: "28px" }}>
+          <h1
+            style={{
+              fontSize: "38px",
+              fontWeight: "bold",
+              letterSpacing: "10px",
+              color: GOLD,
+              margin: 0,
+              lineHeight: 1.2,
+            }}
+          >
+            CERTIFICATE
+          </h1>
+          <p style={{ fontSize: "16px", color: NAVY, fontWeight: "600", margin: "6px 0 14px" }}>
+            of Employment
+          </p>
+          <div style={{ borderBottom: `2px solid ${GOLD}`, width: "200px", margin: "0 auto 12px" }} />
+          <span style={{ color: GOLD, fontSize: "20px", letterSpacing: "8px" }}>◆ ◆ ◆</span>
+        </div>
+
+        {/* ── BODY: two columns ── */}
+        <div style={{ display: "flex", gap: "28px", alignItems: "flex-start" }}>
+
+          {/* LEFT COLUMN */}
+          <div style={{ width: "36%", flexShrink: 0, textAlign: "center" }}>
+            {/* Avatar circle */}
+            <div
+              style={{
+                width: "120px",
+                height: "120px",
+                borderRadius: "50%",
+                border: `3px solid ${GOLD}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 14px",
+                background: CREAM,
+              }}
+            >
+              {data.promoter?.profile_photo_url ? (
+                <img
+                  src={data.promoter.profile_photo_url}
+                  alt={data.promoterName}
+                  style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover" }}
+                />
+              ) : (
+                <span style={{ fontSize: "34px", fontWeight: "bold", color: NAVY }}>{initials}</span>
+              )}
+            </div>
+
+            {/* Name & role */}
+            <p style={{ fontSize: "20px", fontWeight: "bold", color: NAVY, margin: "0 0 4px" }}>
+              {data.promoterName}
+            </p>
+            <p style={{ fontSize: "11px", letterSpacing: "3px", color: GOLD, fontWeight: "700", margin: "0 0 20px" }}>
+              PROMOTER
+            </p>
+
+            {/* Info card */}
+            <div
+              style={{
+                background: CREAM_DARK,
+                borderRadius: "4px",
+                padding: "14px 16px",
+                textAlign: "left",
+                fontSize: "12.5px",
+                lineHeight: "1.8",
+              }}
+            >
+              <p style={{ margin: 0 }}>
+                <span style={{ color: GOLD, fontWeight: "700" }}>Nationality:</span>{" "}
+                {data.promoter?.nationality || "—"}
               </p>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
-                {data.promoter?.email && (
-                  <p className="flex items-center gap-1">
-                    <Mail className="h-3 w-3" /> {data.promoter.email}
-                  </p>
-                )}
-                {data.promoter?.phone_number && (
-                  <p className="flex items-center gap-1">
-                    <Phone className="h-3 w-3" /> {data.promoter.phone_number}
-                  </p>
-                )}
-                {data.promoter?.nationality && (
-                  <p className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> {data.promoter.nationality}
-                  </p>
-                )}
-                {data.promoter?.unique_code && (
-                  <p className="flex items-center gap-1">
-                    <Tag className="h-3 w-3" /> {data.promoter.unique_code}
-                  </p>
-                )}
-              </div>
+              <p style={{ margin: 0 }}>
+                <span style={{ color: GOLD, fontWeight: "700" }}>Code:</span>{" "}
+                {data.promoter?.unique_code || data.referenceNumber}
+              </p>
+              <p style={{ margin: 0 }}>
+                <span style={{ color: GOLD, fontWeight: "700" }}>Phone:</span>{" "}
+                {data.promoter?.phone_number || "—"}
+              </p>
+              <p style={{ margin: 0 }}>
+                <span style={{ color: GOLD, fontWeight: "700" }}>Email:</span>{" "}
+                {data.promoter?.email || "—"}
+              </p>
+              <p style={{ margin: 0 }}>
+                <span style={{ color: GOLD, fontWeight: "700" }}>Issued:</span>{" "}
+                {issueDateFormatted}
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* Companies Section */}
-        <div className="space-y-6">
-          {data.companies.map((companyEntry, idx) => (
-            <div key={idx} className="border rounded-lg p-4 bg-secondary/20">
-              {/* Company Header */}
-              <div className="flex items-start gap-4 mb-4 pb-4 border-b">
-                {companyEntry.company.logo_url && (
-                  <img 
-                    src={companyEntry.company.logo_url} 
-                    alt={companyEntry.company.name}
-                    className="w-16 h-16 object-contain"
-                  />
-                )}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-primary" />
-                    <h3 className="font-semibold text-lg">{companyEntry.company.name}</h3>
-                  </div>
-                  {(companyEntry.company as any).industry && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Briefcase className="h-3 w-3" /> {(companyEntry.company as any).industry}
+          {/* RIGHT COLUMN */}
+          <div style={{ flex: 1 }}>
+            {data.companies.map((entry, idx) => (
+              <div key={idx} style={{ marginBottom: idx < data.companies.length - 1 ? "28px" : 0 }}>
+
+                {/* Company card */}
+                <div
+                  style={{
+                    background: CREAM_DARK,
+                    borderRadius: "4px",
+                    padding: "16px",
+                    marginBottom: "18px",
+                  }}
+                >
+                  {entry.company.logo_url && (
+                    <img
+                      src={entry.company.logo_url}
+                      alt={entry.company.name}
+                      style={{ height: "40px", objectFit: "contain", marginBottom: "8px" }}
+                    />
+                  )}
+                  <p style={{ fontSize: "16px", fontWeight: "bold", color: NAVY, margin: "0 0 2px" }}>
+                    {entry.company.name}
+                  </p>
+                  <p style={{ fontSize: "10px", letterSpacing: "2px", color: "#888", margin: "0 0 10px" }}>
+                    ADVERTISING AND PROMOTION
+                  </p>
+                  {entry.company.website && (
+                    <p style={{ fontSize: "12px", margin: "0 0 2px" }}>
+                      Website: {entry.company.website}
                     </p>
                   )}
-                  {((companyEntry.company as any).city || (companyEntry.company as any).country) && (
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <MapPin className="h-3 w-3" /> {[(companyEntry.company as any).city, (companyEntry.company as any).country].filter(Boolean).join(', ')}
+                  {entry.company.email && (
+                    <p style={{ fontSize: "12px", margin: "0 0 2px" }}>
+                      Email: {entry.company.email}
                     </p>
                   )}
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-muted-foreground mt-2">
-                    {companyEntry.company.website && (
-                      <p className="flex items-center gap-1">
-                        <Globe className="h-3 w-3" /> <a href={companyEntry.company.website} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">{companyEntry.company.website}</a>
-                      </p>
-                    )}
-                    {companyEntry.company.email && (
-                      <p className="flex items-center gap-1">
-                        <Mail className="h-3 w-3" /> {companyEntry.company.email}
-                      </p>
-                    )}
-                    {companyEntry.company.phone_number && (
-                      <p className="flex items-center gap-1">
-                        <Phone className="h-3 w-3" /> {companyEntry.company.phone_number}
-                      </p>
-                    )}
-                    {(companyEntry.company as any).contact_person && (
-                      <p className="flex items-center gap-1">
-                        <User className="h-3 w-3" /> {(companyEntry.company as any).contact_person}
-                      </p>
-                    )}
-                    {((companyEntry.company as any).cr_number || companyEntry.company.registration_number) && (
-                      <p className="flex items-center gap-1 col-span-2">
-                        <FileText className="h-3 w-3" /> CR/Reg. No: {(companyEntry.company as any).cr_number || companyEntry.company.registration_number}
-                      </p>
-                    )}
+                  {((entry.company as any).cr_number || entry.company.registration_number) && (
+                    <p style={{ fontSize: "12px", margin: "0 0 10px" }}>
+                      CR/Reg. No: {(entry.company as any).cr_number || entry.company.registration_number}
+                    </p>
+                  )}
+                  <div
+                    style={{
+                      display: "inline-block",
+                      background: VERIFIED_BTN,
+                      color: "white",
+                      padding: "5px 14px",
+                      fontSize: "10px",
+                      letterSpacing: "1px",
+                      fontWeight: "700",
+                      borderRadius: "2px",
+                    }}
+                  >
+                    VERIFIED EMPLOYER
                   </div>
-                  <Badge variant="secondary" className="mt-2">
-                    {formatHours(companyEntry.totalHours)} Verified Hours Total
-                  </Badge>
                 </div>
-              </div>
 
-              {/* Shifts Table */}
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-muted-foreground">Work Assignments</h4>
-                <div className="rounded-md border">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/50">
-                      <tr>
-                        <th className="text-left p-2 font-medium">Event/Campaign</th>
-                        <th className="text-left p-2 font-medium">Date</th>
-                        <th className="text-left p-2 font-medium">Location</th>
-                        <th className="text-right p-2 font-medium">Hours</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {companyEntry.shifts.map((shift, shiftIdx) => (
-                        <tr key={shiftIdx} className="border-t">
-                          <td className="p-2">{shift.title}</td>
-                          <td className="p-2">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="h-3 w-3" />
-                              {format(new Date(shift.dateFrom), 'MMM dd, yyyy')}
-                            </div>
-                          </td>
-                          <td className="p-2">
-                            <div className="flex items-center gap-1">
-                              <MapPin className="h-3 w-3" />
-                              {shift.location || 'On-site'}
-                            </div>
-                          </td>
-                          <td className="p-2 text-right font-medium">
-                            <div className="flex items-center justify-end gap-1">
-                              <Clock className="h-3 w-3" />
-                              {formatHours(shift.totalHours)}h
-                            </div>
+                {/* Work Assignments */}
+                <p style={{ fontWeight: "700", fontSize: "14px", color: NAVY, margin: "0 0 8px" }}>
+                  Work Assignments
+                </p>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "12px" }}>
+                  <thead>
+                    <tr style={{ background: NAVY, color: "white" }}>
+                      <th style={{ padding: "8px 10px", textAlign: "left", fontWeight: "600" }}>
+                        Event / Campaign
+                      </th>
+                      <th style={{ padding: "8px 10px", textAlign: "left", fontWeight: "600" }}>Date</th>
+                      <th style={{ padding: "8px 10px", textAlign: "left", fontWeight: "600" }}>Location</th>
+                      <th style={{ padding: "8px 10px", textAlign: "right", fontWeight: "600" }}>Hours</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {entry.shifts.map((shift, si) => {
+                      const dateStr = (() => {
+                        try {
+                          return format(new Date(shift.dateFrom), "MMM dd, yyyy");
+                        } catch {
+                          return shift.dateFrom;
+                        }
+                      })();
+                      return (
+                        <tr
+                          key={si}
+                          style={{ background: si % 2 === 0 ? CREAM : CREAM_DARK }}
+                        >
+                          <td style={{ padding: "7px 10px" }}>{shift.title}</td>
+                          <td style={{ padding: "7px 10px" }}>{dateStr}</td>
+                          <td style={{ padding: "7px 10px" }}>{shift.location || "On-site"}</td>
+                          <td style={{ padding: "7px 10px", textAlign: "right", fontWeight: "700" }}>
+                            {formatHours(shift.totalHours)}h
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      );
+                    })}
+                  </tbody>
+                </table>
+
+                {/* Total experience box (per company) */}
+                <div
+                  style={{
+                    marginTop: "14px",
+                    border: `1px solid #ddd`,
+                    borderRadius: "4px",
+                    padding: "16px",
+                    textAlign: "center",
+                    background: CREAM_DARK,
+                  }}
+                >
+                  <p
+                    style={{
+                      fontSize: "10px",
+                      letterSpacing: "2px",
+                      color: "#888",
+                      margin: "0 0 4px",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Total Verified Work Experience
+                  </p>
+                  <p style={{ fontSize: "30px", fontWeight: "bold", color: NAVY, margin: "0 0 2px" }}>
+                    {formatHours(entry.totalHours)} Hour{formatHours(entry.totalHours) !== 1 ? "s" : ""}
+                  </p>
+                  <p style={{ fontSize: "12px", color: "#888", margin: 0 }}>
+                    Across 1 organization
+                  </p>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+
+            {/* Grand total if multiple companies */}
+            {data.companies.length > 1 && (
+              <div
+                style={{
+                  marginTop: "16px",
+                  border: `2px solid ${GOLD}`,
+                  borderRadius: "4px",
+                  padding: "16px",
+                  textAlign: "center",
+                  background: CREAM,
+                }}
+              >
+                <p style={{ fontSize: "10px", letterSpacing: "2px", color: "#888", margin: "0 0 4px", textTransform: "uppercase" }}>
+                  Grand Total Work Experience
+                </p>
+                <p style={{ fontSize: "30px", fontWeight: "bold", color: GOLD, margin: "0 0 2px" }}>
+                  {formatHours(data.grandTotalHours)} Hours
+                </p>
+                <p style={{ fontSize: "12px", color: "#888", margin: 0 }}>
+                  Across {data.companies.length} organizations
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Summary */}
-        <div className="flex items-center justify-between p-4 bg-primary/5 rounded-lg border border-primary/20">
-          <div>
-            <p className="text-sm text-muted-foreground">Total Work Experience</p>
-            <p className="text-2xl font-bold text-primary">{formatHours(data.grandTotalHours)} Hours</p>
-            <p className="text-xs text-muted-foreground">
-              Across {data.companies.length} organization{data.companies.length > 1 ? 's' : ''}
-            </p>
-          </div>
-          
-          {!isPreview && (
-            <div className="text-center">
-              <div className="bg-white p-2 rounded border">
+        {/* ── BOTTOM ROW ── */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            marginTop: "36px",
+            paddingTop: "20px",
+            borderTop: `1px solid #ddd`,
+          }}
+        >
+          {/* QR Code */}
+          <div style={{ textAlign: "center" }}>
+            {!isPreview ? (
+              <div style={{ background: "white", padding: "6px", display: "inline-block" }}>
                 <QRCode value={verificationUrl} size={80} />
               </div>
-              <p className="text-xs text-muted-foreground mt-1">Scan to verify</p>
+            ) : (
+              <div
+                style={{
+                  width: "80px",
+                  height: "80px",
+                  border: "1px solid #ccc",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <span style={{ fontSize: "9px", color: "#aaa", textAlign: "center" }}>QR Code</span>
+              </div>
+            )}
+            <p style={{ fontSize: "10px", color: "#888", margin: "6px 0 0" }}>Scan to Verify</p>
+          </div>
+
+          {/* Official Seal + Signature */}
+          <div style={{ textAlign: "center" }}>
+            <div
+              style={{
+                width: "100px",
+                height: "100px",
+                borderRadius: "50%",
+                border: `2px solid ${GOLD}`,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                margin: "0 auto 10px",
+                background: CREAM,
+              }}
+            >
+              <div>
+                <p style={{ fontSize: "10px", color: GOLD, fontWeight: "700", margin: 0, textAlign: "center" }}>
+                  OFFICIAL
+                </p>
+                <p style={{ fontSize: "10px", color: GOLD, fontWeight: "700", margin: 0, textAlign: "center" }}>
+                  SEAL
+                </p>
+              </div>
             </div>
-          )}
+            <div style={{ borderTop: "1px solid #555", width: "160px", margin: "0 auto", paddingTop: "5px" }}>
+              <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>Authorized Signature</p>
+            </div>
+          </div>
+
+          {/* Date of Issue + Cert ID */}
+          <div style={{ textAlign: "right" }}>
+            <p style={{ fontSize: "10px", color: "#888", margin: "0 0 2px" }}>Date of Issue</p>
+            <p style={{ fontSize: "16px", fontWeight: "bold", color: NAVY, margin: "0 0 4px" }}>
+              {issueDateFormatted}
+            </p>
+            <p style={{ fontSize: "10px", color: GOLD, letterSpacing: "1px", margin: 0 }}>
+              {isPreview ? "PREVIEW-ONLY" : `CERT-${data.referenceNumber}`}
+            </p>
+          </div>
         </div>
 
-        {/* Reference */}
-        <div className="text-center text-xs text-muted-foreground border-t pt-4">
-          <p>Certificate Reference: {isPreview ? 'PREVIEW-ONLY' : data.referenceNumber}</p>
-          <p className="mt-1">
-            This certificate was generated digitally by Smart Shift Tracker.
+        {/* ── FOOTER ── */}
+        <div style={{ borderTop: `1px solid #ddd`, marginTop: "20px", paddingTop: "12px", textAlign: "center" }}>
+          <p style={{ fontSize: "10px", color: "#888", margin: 0 }}>
+            <strong>SmartShift Tracker</strong> — This certificate was generated digitally and is verifiable via QR
+            code or online at smart.onestoneads.com
           </p>
         </div>
-      </CardContent>
-    </Card>
+
+      </div>
+    </div>
   );
 }
