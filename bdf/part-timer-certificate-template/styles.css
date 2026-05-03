@@ -269,6 +269,15 @@ body {
   color: #1a1a2e;
 }
 
+/* Title case for event names and locations */
+.event-cell {
+  text-transform: capitalize;
+}
+
+.location-cell {
+  text-transform: capitalize;
+}
+
 /* Total box */
 .total-box {
   background: #f5f0e8;
