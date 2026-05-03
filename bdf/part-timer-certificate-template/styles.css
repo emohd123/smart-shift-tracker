@@ -19,7 +19,7 @@ html, body {
 
 body {
   font-family: 'Georgia', 'Times New Roman', serif;
-  background: #faf9f6;
+  background: #faf8f5;
   width: 210mm;
   height: 297mm;
   position: relative;
@@ -34,7 +34,7 @@ body {
   left: 8mm;
   right: 8mm;
   bottom: 8mm;
-  border: 3pt solid #0d2137;
+  border: 3pt solid #1a1a2e;
   pointer-events: none;
 }
 
@@ -45,7 +45,7 @@ body {
   left: 10mm;
   right: 10mm;
   bottom: 10mm;
-  border: 1.5pt solid #b8860b;
+  border: 1.5pt solid #c9a84c;
   pointer-events: none;
 }
 
@@ -58,8 +58,8 @@ body {
   bottom: 15mm;
   opacity: 0.03;
   background-image:
-    repeating-linear-gradient(45deg, #0d2137 0, #0d2137 1px, transparent 1px, transparent 20px),
-    repeating-linear-gradient(-45deg, #b8860b 0, #b8860b 1px, transparent 1px, transparent 20px);
+    repeating-linear-gradient(45deg, #1a1a2e 0, #1a1a2e 1px, transparent 1px, transparent 20px),
+    repeating-linear-gradient(-45deg, #c9a84c 0, #c9a84c 1px, transparent 1px, transparent 20px);
   pointer-events: none;
 }
 
@@ -82,7 +82,7 @@ body {
 .header-title {
   font-size: 24pt;
   font-weight: 700;
-  color: #b8860b;
+  color: #c9a84c;
   letter-spacing: 3pt;
   text-transform: uppercase;
   margin-bottom: 2mm;
@@ -90,7 +90,7 @@ body {
 
 .header-subtitle {
   font-size: 12pt;
-  color: #0d2137;
+  color: #1a1a2e;
   letter-spacing: 1pt;
   font-weight: 600;
 }
@@ -98,13 +98,13 @@ body {
 .header-line {
   width: 60mm;
   height: 1pt;
-  background: #b8860b;
+  background: #c9a84c;
   margin: 4mm auto;
 }
 
 .header-ornament {
   font-size: 10pt;
-  color: #b8860b;
+  color: #c9a84c;
   margin-bottom: 2mm;
 }
 
@@ -125,7 +125,7 @@ body {
   width: 40mm;
   height: 40mm;
   border-radius: 50%;
-  border: 3pt solid #b8860b;
+  border: 3pt solid #c9a84c;
   margin: 0 auto 4mm auto;
   background: #f5f0e8;
   display: flex;
@@ -143,19 +143,19 @@ body {
 .photo-placeholder {
   font-size: 16pt;
   font-weight: 700;
-  color: #0d2137;
+  color: #1a1a2e;
 }
 
 .promoter-name {
   font-size: 14pt;
   font-weight: 700;
-  color: #0d2137;
+  color: #1a1a2e;
   margin-bottom: 1mm;
 }
 
 .promoter-role {
   font-size: 9pt;
-  color: #b8860b;
+  color: #c9a84c;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1pt;
@@ -168,12 +168,12 @@ body {
   border-radius: 2mm;
   text-align: left;
   font-size: 8pt;
-  color: #0d2137;
+  color: #1a1a2e;
   line-height: 1.8;
 }
 
 .info-panel strong {
-  color: #b8860b;
+  color: #c9a84c;
 }
 
 /* Right column */
@@ -187,19 +187,19 @@ body {
   padding: 4mm;
   border-radius: 2mm;
   margin-bottom: 4mm;
-  border-left: 3pt solid #b8860b;
+  border-left: 3pt solid #c9a84c;
 }
 
 .company-name {
   font-size: 12pt;
   font-weight: 700;
-  color: #0d2137;
+  color: #1a1a2e;
   margin-bottom: 1mm;
 }
 
 .company-industry {
   font-size: 8pt;
-  color: #b8860b;
+  color: #c9a84c;
   text-transform: uppercase;
   letter-spacing: 1pt;
   margin-bottom: 2mm;
@@ -215,7 +215,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 2mm;
-  background: #0d5c2f;
+  background: #1a1a2e;
   color: white;
   padding: 2mm 4mm;
   border-radius: 2mm;
@@ -232,10 +232,10 @@ body {
 .section-heading {
   font-size: 10pt;
   font-weight: 700;
-  color: #0d2137;
+  color: #1a1a2e;
   margin-bottom: 3mm;
   padding-bottom: 1mm;
-  border-bottom: 1pt solid #b8860b;
+  border-bottom: 1pt solid #c9a84c;
 }
 
 .work-section table {
@@ -245,7 +245,7 @@ body {
 }
 
 .work-section thead th {
-  background: #0d2137;
+  background: #1a1a2e;
   color: white;
   padding: 2mm 3mm;
   text-align: left;
@@ -260,13 +260,13 @@ body {
 }
 
 .work-section tbody tr:last-child td {
-  border-bottom: 2pt solid #b8860b;
+  border-bottom: 2pt solid #c9a84c;
 }
 
 .hours-cell {
   text-align: right;
   font-weight: 700;
-  color: #0d2137;
+  color: #1a1a2e;
 }
 
 /* Total box */
@@ -276,7 +276,7 @@ body {
   border-radius: 2mm;
   text-align: center;
   margin-bottom: 4mm;
-  border: 1pt solid #b8860b;
+  border: 1pt solid #c9a84c;
 }
 
 .total-label {
@@ -289,7 +289,7 @@ body {
 .total-value {
   font-size: 18pt;
   font-weight: 700;
-  color: #0d2137;
+  color: #1a1a2e;
 }
 
 .total-org {
@@ -345,7 +345,7 @@ body {
   width: 25mm;
   height: 25mm;
   margin: 0 auto 2mm auto;
-  border: 2pt solid #b8860b;
+  border: 2pt solid #c9a84c;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -356,7 +356,7 @@ body {
 .seal-inner {
   width: 20mm;
   height: 20mm;
-  border: 1pt solid #b8860b;
+  border: 1pt solid #c9a84c;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -366,7 +366,7 @@ body {
 
 .seal-text {
   font-size: 6pt;
-  color: #b8860b;
+  color: #c9a84c;
   font-weight: 700;
   text-transform: uppercase;
   text-align: center;
@@ -376,7 +376,7 @@ body {
 .sig-line {
   width: 50mm;
   height: 1pt;
-  background: #0d2137;
+  background: #1a1a2e;
   margin: 4mm auto 2mm auto;
 }
 
@@ -398,12 +398,12 @@ body {
 .date-value {
   font-size: 10pt;
   font-weight: 700;
-  color: #0d2137;
+  color: #1a1a2e;
 }
 
 .ref-number {
   font-size: 7pt;
-  color: #b8860b;
+  color: #c9a84c;
   font-family: 'Courier New', monospace;
   margin-top: 2mm;
 }
@@ -423,7 +423,7 @@ body {
 
 .footer-brand {
   font-weight: 700;
-  color: #0d2137;
+  color: #1a1a2e;
 }
 
 /* Print optimizations */
