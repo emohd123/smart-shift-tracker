@@ -44,7 +44,7 @@ export async function generateMultiCompanyPDF(
   let yPos = margin;
 
   /* ------------------------------------------------
-     Colors � Navy / Gold / Cream theme
+     Colors - Navy / Gold / Cream theme
   ------------------------------------------------ */
 
   const navy: [number, number, number] = [13, 33, 55];
@@ -65,7 +65,7 @@ export async function generateMultiCompanyPDF(
     'SMARTSHIFT',
     pageWidth / 2,
     pageHeight / 2 + 20,
-    { align: 'center', angle: 25 }
+    { align: 'center' }
   );
 
   /* ------------------------------------------------
@@ -250,7 +250,7 @@ export async function generateMultiCompanyPDF(
       tableWidth: cardWidth - 24,
       head: [['Event / Campaign', 'Date', 'Location', 'Hours']],
       body: company.shifts.map(s => [
-        s.title || '�',
+        s.title || 'Unnamed Event',
         new Date(s.dateFrom).toLocaleDateString('en-US', {
           month: 'short',
           day: '2-digit',
@@ -300,7 +300,7 @@ export async function generateMultiCompanyPDF(
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(...navy);
   doc.text(
-    `${roundHours(data.grandTotalHours)} VERIFIED WORK HOURS`,
+    `${roundHours(data.grandTotalHours)} VERIFIED WORK HOUR${data.grandTotalHours === 1 ? '' : 'S'}`,
     margin + 10,
     yPos + 13
   );
@@ -324,7 +324,7 @@ export async function generateMultiCompanyPDF(
   );
 
   doc.text(
-    'Generated digitally by SmartShift Tracker � Verifiable via QR code',
+    'Generated digitally by SmartShift Tracker — Verifiable via QR code',
     pageWidth / 2,
     pageHeight - 8,
     { align: 'center' }
