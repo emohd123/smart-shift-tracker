@@ -9,6 +9,14 @@ declare module 'jspdf' {
   }
 }
 
+// Helper to format text with proper title case
+const toTitleCase = (str: string): string => {
+  if (!str) return str;
+  return str.toLowerCase().split(' ').map(word => 
+    word.charAt(0).toUpperCase() + word.slice(1)
+  ).join(' ');
+};
+
 export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData): Promise<Blob> => {
   const doc = new jsPDF();
   const pageWidth = 210;
@@ -73,7 +81,7 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   // Diamonds
   doc.setTextColor(gold[0], gold[1], gold[2]);
   doc.setFontSize(10);
-  doc.text('◆  ◆  ◆', pageWidth / 2, y + 22, { align: 'center' });
+  doc.text('\u25C6  \u25C6  \u25C6', pageWidth / 2, y + 22, { align: 'center' });
 
   y = 56;
 
@@ -114,7 +122,7 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   doc.setTextColor(gold[0], gold[1], gold[2]);
   doc.setFontSize(11);
   doc.setFont('helvetica', 'bold');
-  doc.text(data.positionTitle.toUpperCase(), leftColX + leftColW / 2, photoY + photoSize + 15, { align: 'center', charSpacing: 3 });
+  doc.text(data.positionTitle.toUpperCase(), leftColX + leftColW / 2, photoY + photoSize + 15, { align: 'center' });
 
   // Info card
   const cardY = photoY + photoSize + 22;
@@ -193,14 +201,6 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   doc.line(rightColX, companyCardY + 43, rightColX + rightColW, companyCardY + 43);
 
   // Work table
-  // Helper to format text with proper title case
-  const toTitleCase = (str: string) => {
-    if (!str) return str;
-    return str.toLowerCase().split(' ').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  };
-
   const tableData = data.shifts.map(shift => [
     toTitleCase(shift.title || shift.eventName || 'Event'),
     new Date(shift.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
