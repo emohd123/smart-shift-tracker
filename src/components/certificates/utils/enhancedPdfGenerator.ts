@@ -193,10 +193,18 @@ export const generateEnhancedWorkExperiencePDF = async (data: WorkExperienceData
   doc.line(rightColX, companyCardY + 43, rightColX + rightColW, companyCardY + 43);
 
   // Work table
+  // Helper to format text with proper title case
+  const toTitleCase = (str: string) => {
+    if (!str) return str;
+    return str.toLowerCase().split(' ').map(word => 
+      word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+  };
+
   const tableData = data.shifts.map(shift => [
-    shift.title || shift.eventName || 'Event',
+    toTitleCase(shift.title || shift.eventName || 'Event'),
     new Date(shift.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
-    shift.location || 'On-site',
+    toTitleCase(shift.location || 'On-site'),
     `${shift.hours.toFixed(0)}h`
   ]);
 
