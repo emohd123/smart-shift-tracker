@@ -131,10 +131,17 @@ export async function generateMultiCompanyPDF(
   doc.line(PW / 2 - 25, yHeader, PW / 2 + 25, yHeader);
 
   yHeader += 5;
-  // ◆ ◆ ◆  (approximated with text)
-  doc.setFontSize(10);
-  doc.setTextColor(...GOLD);
-  doc.text('◆  ◆  ◆', PW / 2, yHeader, { align: 'center' });
+  // Draw three diamonds manually (jsPDF helvetica lacks ◆ glyph)
+  const dSize = 2.5;
+  const dY = yHeader - dSize / 2;
+  for (let i = -1; i <= 1; i++) {
+    const dCX = PW / 2 + i * 8;
+    doc.setFillColor(...GOLD);
+    doc.lines(
+      [[dSize, dSize], [dSize, -dSize], [-dSize, -dSize], [-dSize, dSize]],
+      dCX - dSize, dY, [1, 1], 'F', true
+    );
+  }
 
   /* ================================================
      BODY: two columns
@@ -285,8 +292,8 @@ export async function generateMultiCompanyPDF(
     }
 
     // VERIFIED EMPLOYER button
-    const btnW = 28;
-    const btnH = 5;
+    const btnW = 36;
+    const btnH = 5.5;
     const btnX = rightX + rightW - btnW - 3;
     const btnY = compCardStartY + compCardH - btnH - 3;
     doc.setFillColor(...VERIFIED_GREEN);
@@ -467,7 +474,7 @@ export async function generateMultiCompanyPDF(
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(7);
   doc.setTextColor(...GOLD);
-  doc.text(isPreview ? 'PREVIEW-ONLY' : `CERT-${data.referenceNumber}`, dateX, rowY + 13, { align: 'right' });
+  doc.text(isPreview ? 'PREVIEW-ONLY' : data.referenceNumber, dateX, rowY + 13, { align: 'right' });
 
   /* ================================================
      FOOTER
